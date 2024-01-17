@@ -1,0 +1,2 @@
+add_subdirectory(peripheral_device)
+add_subdirectory(omega_master)

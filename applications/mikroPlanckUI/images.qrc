@@ -1,0 +1,26 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/btn_level.png</file>
+        <file>images/btn_level_hover.png</file>
+        <file>images/company_name.png</file>
+        <file>images/icon_normal.png</file>
+        <file>images/icon_time.png</file>
+        <file>images/icon_warning.png</file>
+        <file>images/logo_title.png</file>
+        <file>images/initbg.png</file>
+        <file>images/logo.png</file>
+        <file>images/freambg.png</file>
+        <file>images/shutdown.png</file>
+        <file>images/lock.png</file>
+        <file>images/unlock.png</file>
+        <file>images/bg_mainpage_common.png</file>
+        <file>images/isoppositedir.png</file>
+        <file>images/ispositivedir.png</file>
+        <file>images/oppositedir.png</file>
+        <file>images/positivedir.png</file>
+        <file>images/down.png</file>
+        <file>images/isdown.png</file>
+        <file>images/isup.png</file>
+        <file>images/up.png</file>
+    </qresource>
+</RCC>

@@ -1,0 +1,11 @@
+prefix=/usr/local
+exec_prefix=/usr/local
+libdir=/usr/local/lib
+includedir=/usr/local/include
+
+Name: libcifx
+Description: Hilscher cifX user space library
+Requires: pciaccess
+Version: "V2.1.1.0"
+Libs: -L/usr/local/lib -lcifx -lpthread -lrt -lpciaccess -ldl
+Cflags: -I/usr/local/include/cifx

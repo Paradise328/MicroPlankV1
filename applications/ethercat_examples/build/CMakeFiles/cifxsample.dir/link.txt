@@ -1,0 +1,1 @@
+/usr/bin/cc   -rdynamic CMakeFiles/cifxsample.dir/cifxsample/cifxlinuxsample.o  -o cifxsample -lcifx -lpthread -lrt -lpciaccess -ldl -lpciaccess -ldl 

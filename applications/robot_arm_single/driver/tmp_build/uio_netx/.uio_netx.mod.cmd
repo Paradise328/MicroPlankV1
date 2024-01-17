@@ -1,0 +1,1 @@
+cmd_/home/haosibo/Desktop/MicroSurgery-notGithub/testProject/lib/driver/tmp_build/uio_netx/uio_netx.mod := { echo  /home/haosibo/Desktop/MicroSurgery-notGithub/testProject/lib/driver/tmp_build/uio_netx/uio_netx.o;  echo; } > /home/haosibo/Desktop/MicroSurgery-notGithub/testProject/lib/driver/tmp_build/uio_netx/uio_netx.mod

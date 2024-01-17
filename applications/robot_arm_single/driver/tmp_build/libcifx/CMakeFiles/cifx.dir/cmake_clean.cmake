@@ -1,0 +1,26 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/cifx.dir/OS_Linux.c.o"
+  "CMakeFiles/cifx.dir/Toolkit/Source/Hilcrc32.c.o"
+  "CMakeFiles/cifx.dir/Toolkit/Source/Hilmd5.c.o"
+  "CMakeFiles/cifx.dir/Toolkit/Source/cifXDownload.c.o"
+  "CMakeFiles/cifx.dir/Toolkit/Source/cifXEndianess.c.o"
+  "CMakeFiles/cifx.dir/Toolkit/Source/cifXFunctions.c.o"
+  "CMakeFiles/cifx.dir/Toolkit/Source/cifXHWFunctions.c.o"
+  "CMakeFiles/cifx.dir/Toolkit/Source/cifXInit.c.o"
+  "CMakeFiles/cifx.dir/Toolkit/Source/cifXInterrupt.c.o"
+  "CMakeFiles/cifx.dir/Toolkit/Source/netX5x_hboot.c.o"
+  "CMakeFiles/cifx.dir/Toolkit/Source/netX5xx_hboot.c.o"
+  "CMakeFiles/cifx.dir/Toolkit/Source/netX90_netX4x00.c.o"
+  "CMakeFiles/cifx.dir/USER_Linux.c.o"
+  "CMakeFiles/cifx.dir/cifxlinux.c.o"
+  "CMakeFiles/cifx.dir/netx_tap/netx_tap.c.o"
+  "libcifx.pdb"
+  "libcifx.so"
+  "libcifx.so.2"
+  "libcifx.so.2.1.1"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang C)
+  include(CMakeFiles/cifx.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()
