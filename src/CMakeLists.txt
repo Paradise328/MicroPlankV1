@@ -1,0 +1,5 @@
+MESSAGE("-- Go to directory src/lib")
+ADD_SUBDIRECTORY(lib)
+MESSAGE("-- Go to directory src/module")
+ADD_SUBDIRECTORY(module)
+ADD_SUBDIRECTORY(application)

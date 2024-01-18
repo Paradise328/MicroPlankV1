@@ -1,3 +1,8 @@
+# folder
+/build
+/galilCode
+/qtfolder
+
 # Prerequisites
 *.d
 

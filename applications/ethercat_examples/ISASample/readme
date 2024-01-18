@@ -1,0 +1,19 @@
+***********************************************************************************************************
+*** Overview ISA device handling **************************************************************************
+***********************************************************************************************************
+
+ISA cards can be initialized in two ways:
+
+1. Pass the device specific parameter (dpm address, dpm length, irq) to the kernel mode driver uio_netx
+   Example passing ISA device to uio_netx driver (for detailed information refer to the Linux cifX Driver documentation):
+   modprobe uio_netx custom_dpm_addr=0xD0000 custom_dpm_len=0x4000 custom_irq=5 (example values need to be replaced)
+
+2. Pass the device specific parameter (dpm address, dpm length,...) to the user space library libcifx
+   For an example see ISASample.c
+
+___________________________________________________________________________________________________________
+NOTE:
+Method 1. allows interrupt support, while method 2. does not provide interrupt support.
+The parameter (in methode 1.) need to passed when loading the uio_netx kernel module. Loading/reloading is
+not possible in case the module is already loaded and still in use by another application.
+For detailed information refer to the Linux cifX Driver documentation.

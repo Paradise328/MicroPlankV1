@@ -1,0 +1,9 @@
+/home/haosibo/Desktop/MicroSurgery-notGithub/testProject/lib/driver/tmp_build/libcifx/CMakeFiles/install/local.dir
+/home/haosibo/Desktop/MicroSurgery-notGithub/testProject/lib/driver/tmp_build/libcifx/CMakeFiles/install.dir
+/home/haosibo/Desktop/MicroSurgery-notGithub/testProject/lib/driver/tmp_build/libcifx/CMakeFiles/list_install_components.dir
+/home/haosibo/Desktop/MicroSurgery-notGithub/testProject/lib/driver/tmp_build/libcifx/CMakeFiles/rebuild_cache.dir
+/home/haosibo/Desktop/MicroSurgery-notGithub/testProject/lib/driver/tmp_build/libcifx/CMakeFiles/edit_cache.dir
+/home/haosibo/Desktop/MicroSurgery-notGithub/testProject/lib/driver/tmp_build/libcifx/CMakeFiles/netx-spm.dir
+/home/haosibo/Desktop/MicroSurgery-notGithub/testProject/lib/driver/tmp_build/libcifx/CMakeFiles/install/strip.dir
+/home/haosibo/Desktop/MicroSurgery-notGithub/testProject/lib/driver/tmp_build/libcifx/CMakeFiles/cifx_static.dir
+/home/haosibo/Desktop/MicroSurgery-notGithub/testProject/lib/driver/tmp_build/libcifx/CMakeFiles/cifx.dir
