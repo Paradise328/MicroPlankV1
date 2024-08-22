@@ -1,0 +1,74 @@
+[ZeroErr_PDO]
+[ZeroErr_PDO.RxPDO]
+ControlWord = {type = "UINT", offset = 0}
+OperationMode = {type = "SINT", offset = 2}
+TargetPos = {type = "DINT", offset = 3}
+TargetVel = {type = "DINT", offset = 7}
+TargetTrq = {type = "INT", offset = 11}
+VelOffset = {type = "DINT", offset = 13}
+TrqOffset = {type = "INT", offset = 17}
+DigitalOutputs = {type = "UDINT", offset = 19}
+ProfileVel = {type = "UDINT", offset = 23}
+ProfileAcc = {type = "UDINT", offset = 27}
+ProfileDec = {type = "UDINT", offset = 31}
+MaxProfileVel = {type = "UDINT", offset = 35}
+PosTrqLimit = {type = "UINT", offset = 39}
+NegTrqLimit = {type = "UINT", offset = 41}
+DummyByte = {type = "USINT", offset = 43}
+[ZeroErr_PDO.TxPDO]
+StatusWord = {type = "UINT", offset = 0}
+ModeDisplay = {type = "SINT", offset = 2}
+ErrorCode = {type = "UINT", offset = 3}
+ActPos = {type = "DINT", offset = 5}
+ActVel = {type = "DINT", offset = 9}
+ActTrq = {type = "INT", offset = 13}
+ActCur = {type = "INT", offset = 15}
+DigitalInputs = {type = "UDINT", offset = 17}
+FollowingPosErr = {type = "DINT", offset = 21}
+DummyByte = {type = "USINT", offset = 25}
+[MOONS_PDO]
+[MOONS_PDO.RxPDO]
+ControlWord = {type = "UINT", offset = 0}
+OperationMode = {type = "SINT", offset = 2}
+TargetPos = {type = "DINT", offset = 3}
+TargetVel = {type = "DINT", offset = 7}
+ProfileAcc = {type = "UDINT", offset = 11}
+ProfileDec = {type = "UDINT", offset = 15}
+DigitalOutputs = {type = "UDINT", offset =19}
+HomeMethod = {type = "SINT", offset = 23}
+HomeVel = {type = "UDINT", offset = 24}
+HomeAcc = {type = "UDINT", offset = 28}
+HomeOffset = {type = "DINT", offset = 32}
+[MOONS_PDO.TxPDO]
+StatusWord = {type = "UINT", offset = 0}
+ModeDisplay = {type = "SINT", offset = 2}
+ErrorCode = {type = "UINT", offset = 3}
+ActPos = {type = "DINT", offset = 5}
+ActVel = {type = "DINT", offset = 9}
+DigitalInputs = {type = "UDINT", offset = 13}
+FollowingPosErr = {type = "DINT", offset = 17}
+
+[Maxon_PDO]
+[Maxon_PDO.RxPDO]
+ControlWord = {type = "UINT", offset = 0}
+TargetVel = {type = "DINT", offset = 2}
+TargetPos = {type = "DINT", offset = 6}
+TargetTrq = {type = "INT", offset = 10}
+VelOffset = {type = "DINT", offset = 12}
+PosOffset = {type = "DINT", offset = 16}
+TrqOffset = {type = "INT", offset = 20}
+ProfileAcc = {type = "UDINT", offset = 22}
+ProfileDec = {type = "UDINT", offset = 26}
+ProfileVel = {type = "UDINT", offset = 30}
+OperationMode = {type = "SINT", offset = 34}
+DigitalOutputs = {type = "UDINT", offset = 35}
+[Maxon_PDO.TxPDO]
+StatusWord = {type = "UINT", offset = 0}
+ErrorCode = {type = "UINT", offset = 2}
+ActPos = {type = "DINT", offset = 4}
+ActVel = {type = "DINT", offset = 8}
+ActTrq = {type = "INT", offset = 12}
+ActCur = {type = "DINT", offset = 14}
+FollowingPosErr = {type = "DINT", offset = 18}
+ModeDisplay = {type = "SINT", offset = 22}
+DigitalInputs = {type = "UDINT", offset = 23}

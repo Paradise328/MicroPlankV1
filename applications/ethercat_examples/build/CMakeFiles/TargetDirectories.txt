@@ -1,4 +1,0 @@
-/home/dishi/Desktop/mikroPlanck/applications/ethercat_examples/build/CMakeFiles/rebuild_cache.dir
-/home/dishi/Desktop/mikroPlanck/applications/ethercat_examples/build/CMakeFiles/edit_cache.dir
-/home/dishi/Desktop/mikroPlanck/applications/ethercat_examples/build/CMakeFiles/cifxsample.dir
-/home/dishi/Desktop/mikroPlanck/applications/ethercat_examples/build/CMakeFiles/speedTest.dir

@@ -1,1 +1,0 @@
-/usr/bin/cc   -rdynamic CMakeFiles/speedTest.dir/speedTest/speedTest.o  -o speedTest -lcifx -lpthread -lrt -lpciaccess -ldl -lpciaccess -ldl 

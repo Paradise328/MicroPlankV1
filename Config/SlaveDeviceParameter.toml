@@ -1,0 +1,49 @@
+[SlaveDevice_Left]
+SlaveDeviceInitPose = {roty = -60, rotx = 30, rotz = 0}
+[SlaveDevice_Left.Gimbal]
+[SlaveDevice_Left.Gimbal.Gimbal_Screw]
+Lead = {type = "INT", Default = 2}
+Stroke = {type = "INT", Default = 2}
+[SlaveDevice_Left.Gimbal.Gimbal_Motor]
+decelerationRatio = {type = "DOUBLE", Default = [1, 1, 1]}
+revolution = {type = "INT", Default = [1024, 1024, 1024]}
+torqueLimit = {type = "DOUBLE", Default = [1.5, 1.5, 1.5]}
+torquePeek = {type = "DOUBLE", Default = [5.0, 5.0, 5.0]}
+minEncoder = {type = "INT", Default = [-8000, -8000,-8000]}
+maxEncoder = {type = "INT", Default = [-120000, -120000,-120000]}
+kGimbalSpeed = {type = "INIT", Defalut = [1280000,1706667,2000000]}
+gimbalSpeedLimit = {type = "INIT", Defalut = [1024000,1024000,1024000]}
+[SlaveDevice_Left.EndEffector]
+[SlaveDevice_Left.EndEffector.EndEffector_Motor]
+kForcepPosition = {type = "4MM", 8MM = [113.75,182.04,162.00,162.00], 4MM = [106.7,91.02,87.38,87.38]}
+CompensationRatio = {type = "4MM", 8MM = 1.18, 4MM = 1.04}
+speedDirection = {type = "INIT", Defalut = [1, -1, -1, 1, 1, 1, 1, 1]}
+kForcepSpeed = {type = "INT", offset = 50000}
+ForcepSpeedLimit = {type = "INT", offset = 150000}
+[SlaveDevice_Right]
+SlaveDeviceInitPose = {roty = -60, rotx = -30, rotz = 0}
+[SlaveDevice_Right.Gimbal]
+[SlaveDevice_Right.Gimbal.Gimbal_Screw]
+Lead = {type = "INT", Default = 2}
+Stroke = {type = "INT", Default = 2}
+[SlaveDevice_Right.Gimbal.Gimbal_Motor]
+decelerationRatio = {type = "DOUBLE", Default = [1, 1, 1]}
+revolution = {type = "INT", Default = [1024, 1024, 1024]}
+torqueLimit = {type = "DOUBLE", Default = [1.5, 1.5, 1.5]}
+torquePeek = {type = "DOUBLE", Default = [5.0, 5.0, 5.0]}
+minEncoder = {type = "INT", Default = [-8000, -8000,-8000]}
+maxEncoder = {type = "INT", Default = [-120000, -120000,-120000]}
+kGimbalSpeed = {type = "INIT", Defalut = [1280000,1706667,2000000]}
+gimbalSpeedLimit = {type = "INIT", Defalut = [1024000,1024000,1024000]}
+[SlaveDevice_Right.EndEffector]
+[SlaveDevice_Right.EndEffector.EndEffector_Motor]
+kForcepPosition = {type = "4MM", 8MM = [113.75,182.04,162.00,162.00], 4MM = [106.7,91.02,75.38,75.38]}
+CompensationRatio = {type = "4MM", 8MM = 1.18, 4MM = 1.04}
+speedDirection = {type = "INIT", Defalut = [1, -1, -1, 1, 1, -1, 1, 1]}
+kForcepSpeed = {type = "INT", offset = 50000}
+ForcepSpeedLimit = {type = "INT", offset = 150000}
+
+[MasterDevice]
+MasterDeviceInitPose = {roty = -120, rotx = 0, rotz = 0}
+MotionScaling = {Number = "4", Default = [20,12,10,7]}
+

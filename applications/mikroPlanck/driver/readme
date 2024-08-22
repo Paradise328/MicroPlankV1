@@ -1,8 +1,0 @@
-How to install the driver
-
-- Open the console and change in the directory containing this document.
-- Enter driver folder and run "./build_install_driver"
-- Follow the instructions (root during installation requested)
-
-For a more detailed information of the installation process or further
-configuration settings see the Linux cifX Driver documentation.
