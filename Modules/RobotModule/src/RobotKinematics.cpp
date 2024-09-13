@@ -132,7 +132,7 @@ void RobotKinematics::readMyInitData()
     {
         LOG(ERROR) << "Failed to parse toml file: " << err.what();
     }
-
+    std::cout <<"1111111" << std::endl;
     loadEndeffectorConfig();
 }
 

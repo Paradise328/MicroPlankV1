@@ -1,22 +1,14 @@
 #include"microPlank.h"
 
-
-
 void MicroPlank::startSystem()
 {
     std::cout << "start system !!!" << std::endl;
-
-    // initMotorDriverThread();
-    initMasterConsoleThread();
-
-    while(true)
-    {
-        auto MasterData = m_masterConsole.returnHandlePose();
-        auto MasterPNOData = MasterData.returnPNOData();
-
-        std::cout << MasterPNOData << std::endl;
-        usleep(2000); 
-    }
+    initLoggerConfig();
+    initMotorDriverThread();
+    initMotor();
+    startMasterConsoleThread();
+    startTeleoperationControlThread();
+    while(true){};
 }
 
 void MicroPlank::initLoggerConfig()
@@ -35,18 +27,57 @@ void MicroPlank::initMotorDriverThread()
     std::promise<bool> promiseCommunication;
     std::future<bool> futureCommunication = promiseCommunication.get_future();
     const std::string pathPDOMapping = "../Config/PDO_mapping.toml";
-    int endMotorNum = 4;
+    int endMotorNum = 1;
     int gimbalMotorNum = 0;
-    int slaveNum  = 4;
+    int slaveNum  = 1;
     m_motorDriver = MotorDriver::getInstance(pathPDOMapping, endMotorNum, gimbalMotorNum, slaveNum);
     m_motorDriver->startThread(promiseCommunication);
     auto flagCommunication = futureCommunication.get();
     LOG(INFO) << "EtherCat Communication thread status: " << flagCommunication << std::endl;
 }
 
-void MicroPlank::initMasterConsoleThread()
+void MicroPlank::initMotor()
+{
+    m_motorDriver->enableMotor(MotorType::MAXON,joint_A,true);
+    m_motorDriver->setOperationMode(MotorType::MAXON, joint_A, OperationMode::CSP);
+
+}
+
+void MicroPlank::startMasterConsoleThread()
 {
     m_masterConsole.startUpdateConsoleDataThread();
+}
+
+void MicroPlank::startTeleoperationControlThread()
+{
+    m_teleoperationThread = std::thread(&MicroPlank::teleoperationControlThread, this);
+    LOG(INFO) << "Start teleoperation thread";
+    m_teleoperationThread.detach();
+}
+
+void MicroPlank::teleoperationControlThread()
+{
+    std::ofstream outputFile("output3ms.txt");  // 打开文件进行写入
+    if (!outputFile.is_open()) {
+        std::cerr << "无法打开文件！" << std::endl;
+        return;
+    }
+    int i = 0;
+    while(true)
+    {
+        i++;
+        auto MasterData = m_masterConsole.returnHandlePose();
+        auto MasterPNOData = MasterData.returnPNOData();
+        auto position = m_motorDriver->getActualPos(MotorType::MAXON, joint_A);
+        auto velocity = m_motorDriver->getActualVel(MotorType::MAXON, joint_A);
+
+        // m_motorDriver.s
+        // m_motorDriver->getActualPos(MotorType::MAXON, joint_A);
+        m_motorDriver->setTargetPos(MotorType::MAXON, joint_A, static_cast<int>(MasterPNOData[1][3]*500));
+        
+        outputFile <<i<<" "<<static_cast<int>(MasterPNOData[1][3]*500) <<" "<< position << " " << velocity << std::endl;
+        usleep(3000); 
+    }
 }
 
 

@@ -1,5 +1,5 @@
-#ifndef SHAREDSTRUCT_H
-#define SHAREDSTRUCT_H
+#ifndef SYSTEMUTILS_H
+#define SYSTEMUTILS_H
 #include <iostream>
 #include <stdio.h>
 #include <iostream>
@@ -8,8 +8,6 @@
 #include <unistd.h>
 #include <vector>
 #include <array>
-
-
 
 //Data Type used in viper_transmitter.h
 struct _handleOtherData
@@ -318,6 +316,15 @@ enum class GraspCase
     LoseAction      = 0x02,
     KeepGrasping    = 0x03,
 };
+
+constexpr int joint_A = 0;
+constexpr int joint_B = 1;
+constexpr int joint_C = 2;
+constexpr int joint_D = 3;
+constexpr int joint_E = 4;
+constexpr int joint_F = 5;
+constexpr int joint_G = 6;
+
 
 #endif // SHAREDSTRUCT_H
 

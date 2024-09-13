@@ -6,7 +6,8 @@
 #include <condition_variable>
 #include <mutex>
 #include "viper_ui.h"
-#include "SharedStruct.h"
+#include "../SystemUtilsModule/include/SystemUtils.h"
+#include "FdOmega.h"
 
 enum class MasterConsoleType
 {
@@ -23,7 +24,6 @@ public:
     MasterConsole() = delete;
     explicit MasterConsole(MasterConsoleType masterConsoleType):
                             m_MasterConsoleType(masterConsoleType)
-                            // m_FilterCase(FilterCase::FilterOFF)
                             {
                                 m_FilterCase.store(static_cast<int>(FilterCase::FilterOFF));
                             };
@@ -38,6 +38,8 @@ private:
 
     MasterConsoleType           m_MasterConsoleType; //Console Type;
     viper_ui                    m_viper;
+    FdOmega                     m_omega;
+
     std::thread                 m_updateConsoleDataThread;
     void                        assembleDataFromUSBAndEthernet();
 

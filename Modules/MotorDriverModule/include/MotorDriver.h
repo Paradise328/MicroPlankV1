@@ -27,7 +27,7 @@
 
 
 #define CIFX_DEV "PROFIBUS"
-#define JOINT_NUM 3
+#define JOINT_NUM 1
 #define MAX_PROFILE_VEL ((uint32_t) 314572)   // 314572 counts/s
 #define PROFILE_ACC ((uint32_t) 3048575)  // 1048575 counts/s^2
 #define PROFILE_DEC ((uint32_t) 3048575)  // 1048575 counts/s^2
@@ -296,8 +296,8 @@ private:
 
     CIFX_PACKET m_tSendPkt = {{0}};
     CIFX_PACKET m_tRecvPkt = {{0}};
-    unsigned char m_abSendData[156] = {0};
-    unsigned char m_abRecvData[108] = {0};
+    unsigned char m_abSendData[39] = {0};
+    unsigned char m_abRecvData[27] = {0};
     std::string m_mappingPath;
     PDOConfig m_config[3] = {};
     struct CIFX_LINUX_INIT m_init;

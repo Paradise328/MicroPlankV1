@@ -1,0 +1,23 @@
+
+{
+    "version": 4,
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/opt/ros/humble/include/**",
+                "/usr/include",
+                "/usr/local/lib",
+                "/home/chenxinbo/Desktop/yunxiao/MikroPlanckV1/Modules",
+                "/home/chenxinbo/Desktop/yunxiao/MikroPlanckV1",
+                "/home/chenxinbo/Documents/sdk-3.17.6-linux-x86_64-gcc/sdk-3.17.6/lib/release/lin-x86_64-gcc"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x64"
+        }
+    ]
+}

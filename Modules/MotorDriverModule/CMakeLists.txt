@@ -1,3 +1,5 @@
+project(MotorDriverModule)
+
 set(ROBOTMODULE_SOURCES
     src/MotorDriver.cpp
 )
@@ -11,3 +13,5 @@ target_link_libraries(motorDriverModule_lib PUBLIC
                       mathModule_lib
                       /usr/lib/x86_64-linux-gnu/libatomic.so.1
                       /usr/local/lib/libcifx.so.2)
+
+                      

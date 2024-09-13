@@ -1,0 +1,11 @@
+module masterModule_msgs {
+    module msg {
+        struct MasterHandleData {
+            double data1;
+            double data2;
+            double data3;
+            double data4;
+            int32 status;
+        };
+    };
+};

@@ -54,14 +54,15 @@ ControlWord = {type = "UINT", offset = 0}
 TargetVel = {type = "DINT", offset = 2}
 TargetPos = {type = "DINT", offset = 6}
 TargetTrq = {type = "INT", offset = 10}
-VelOffset = {type = "DINT", offset = 12}
-PosOffset = {type = "DINT", offset = 16}
-TrqOffset = {type = "INT", offset = 20}
-ProfileAcc = {type = "UDINT", offset = 22}
-ProfileDec = {type = "UDINT", offset = 26}
-ProfileVel = {type = "UDINT", offset = 30}
-OperationMode = {type = "SINT", offset = 34}
-DigitalOutputs = {type = "UDINT", offset = 35}
+ProfileAcc = {type = "UDINT", offset = 12}
+ProfileDec = {type = "UDINT", offset = 16}
+ProfileVel = {type = "UDINT", offset = 20}
+PosOffset = {type = "DINT", offset = 24}
+TrqOffset = {type = "INT", offset = 28}
+OperationMode = {type = "SINT", offset = 30}
+DigitalOutputs = {type = "UDINT", offset = 31}
+InterpolationTime = {type = "UDINT", offset = 35}
+
 [Maxon_PDO.TxPDO]
 StatusWord = {type = "UINT", offset = 0}
 ErrorCode = {type = "UINT", offset = 2}

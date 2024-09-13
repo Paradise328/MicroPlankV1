@@ -22,26 +22,34 @@
 #include "Modules/MathModule/include/MathUtils.h"
 #include "Modules/MotorDriverModule/include/MotorDriver.h"
 #include "Modules/RobotModule/include/RobotKinematics.h"
-
-
-
+#include "Modules/SystemUtilsModule/include/SystemUtils.h"
 
 
 class MicroPlank
 {
 public:
     MicroPlank();
-    MicroPlank(const MasterConsoleType& MasterConsoleType):m_masterConsole(MasterConsoleType){};
+    MicroPlank(const MasterConsoleType& MasterConsoleType, 
+               const std::string& robotConfigPath):
+               m_masterConsole(MasterConsoleType),
+               m_robotKinematics(robotConfigPath)
+               {};
 
     void        startSystem();
-    void        initLoggerConfig();
-    void        initMotorDriverThread();
-    void        initMasterConsoleThread();
 
 private:
     MasterConsoleType   m_masterConsoleType;
     MasterConsole       m_masterConsole;
     MotorDriver*        m_motorDriver;
+    RobotKinematics     m_robotKinematics;
+    std::thread         m_teleoperationThread;
+    void        initLoggerConfig();
+    void        initMotorDriverThread();
+    void        initMotor();
+    void        startTeleoperationControlThread();
+    void        teleoperationControlThread();
+    void        startMasterConsoleThread();
+
 };
 
 #endif // MICROPLANK_H

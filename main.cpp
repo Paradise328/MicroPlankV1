@@ -11,7 +11,8 @@ INITIALIZE_EASYLOGGINGPP
 
 int main(){
 
-    MicroPlank MicroPlank(MasterConsoleType::Viper);
+    std::string configFilePath = "/home/chenxinbo/Desktop/yunxiao/MikroPlanckV1/RobotData.toml";
+    MicroPlank MicroPlank(MasterConsoleType::Omega,configFilePath);
     MicroPlank.startSystem();
 
     return 1;

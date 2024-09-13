@@ -12,25 +12,68 @@ void MasterConsole::updateConsoleDataThread()
 
 void MasterConsole::startUpdateConsoleDataThread()
 {
+   //init Master
+   std::promise<bool> masterPromise;
+   std::future<bool> masterFuture = masterPromise.get_future();
    if(m_MasterConsoleType == MasterConsoleType::Viper)
    {
       //Start Read-Viper-Data thread;
       m_viper.viper_start_directly();
       auto flagViper = m_viper.getReadyFuture().get();
       LOG(INFO) << "flagViper thread status: " << flagViper;
-      if(flagViper == 1)
+      if(flagViper == true)
+      {
+         m_isViperOk == true;
+      }
+      else
+      {
+         m_isViperOk == false;
+         //send to security
+      }
+
+      bool flag422 = true;
+      if(flag422 == true)
+      {
+         m_is422Ok == true;
+      }
+      else
+      {
+         m_is422Ok == false;
+         //send to security
+      }
+
+
+      if(flagViper == true && flag422 == true)
       {
          m_updateConsoleDataThread = std::thread(&MasterConsole::updateConsoleDataThread, this);
          LOG(INFO) << "MasterConsole Data Update thread ID: " << m_updateConsoleDataThread.get_id();
          m_updateConsoleDataThread.detach();
-         m_isViperOk == true;
+         //send to Security everything is ok;
+      }
+   }
+
+   if(m_MasterConsoleType == MasterConsoleType::Omega)
+   {
+      m_omega.startThread(masterPromise);
+      const auto flagOmega = masterFuture.get();
+      LOG(INFO) << "Master handle thread (Omega) starts!";
+      bool flag422 = true;
+      if(flag422 == true)
+      {
+         m_is422Ok == true;
+      }
+      else
+      {
+         m_is422Ok == false;
+         //send to security
       }
 
-      //Read Data from 422;
-      auto flag422 = flagViper;
-      if(flag422 = true)
+      if(flagOmega == true && flag422 == true)
       {
-         m_is422Ok = true;
+         m_updateConsoleDataThread = std::thread(&MasterConsole::updateConsoleDataThread, this);
+         LOG(INFO) << "MasterConsole Data Update thread ID: " << m_updateConsoleDataThread.get_id();
+         m_updateConsoleDataThread.detach();
+         //send to Security everything is ok;
       }
    }
 }
@@ -38,7 +81,14 @@ void MasterConsole::startUpdateConsoleDataThread()
 void MasterConsole::assembleDataFromUSBAndEthernet()
 {
    auto posDataFromViperTmp = m_viper.return_viperData();
+   if(m_MasterConsoleType == MasterConsoleType::Omega){
+      auto posDataFromOmegaTmp = m_omega.return_omegaData();
+      posDataFromViperTmp[1] = posDataFromOmegaTmp;
+      }
+   
    handleOtherData otherDataFromWhere;//Get other Data From other Device;
+
+
 
    HandlePose handlePose_Tmp, handlePoseIR_Tmp, handlePoseIIR_Tmp;
    auto handlePNO_Tmp = posDataFromViperTmp;

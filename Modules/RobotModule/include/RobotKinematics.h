@@ -3,9 +3,9 @@
 
 #include <cmath>
 #include <toml++/toml.h>
-#include "easylogging++.h"
 #include "MathUtils.h"
-#include "SharedStruct.h"
+#include "../SystemUtilsModule/include/SystemUtils.h"
+#include "../LoggerModule/include/easylogging++.h"
 
 constexpr int ControlValueNum = 8;
 constexpr int MotorNum = 7;
@@ -16,15 +16,18 @@ public:
     explicit RobotKinematics(const std::string& robotConfigPath): 
                 m_configFilePath(robotConfigPath)
                 {
-                    readMyInitData();
-                    initiAllData();
+                    // readMyInitData();
+                    // initiAllData();
                 };
 
     // void        positionControl(const HandlePose& masterHandlePose, const std::array<int, MotorNum>& motorPosition_Cur,  const int& controlLoopCount);
     std::array<std::array<int,MotorNum>,3> positionControl(const HandlePose& masterHandlePose, const std::array<int, MotorNum>& motorPosition_Cur,  const int& controlLoopCount);
-            
-            
+
 private:
+    void                            readMyInitData();
+    void                            loadEndeffectorConfig();
+    void                            initiAllData();
+        
     std::string                     m_configFilePath;
     std::string                     m_robotConfigPath = "../Config/RobotData.toml";
     mutable std::string             m_endEffectorLeft   = "CZQ_4MM_1";
@@ -79,9 +82,7 @@ private:
     mutable std::array<int, MotorNum>                m_MotorPositionInit_L = {0};
     mutable std::array<int, MotorNum>                m_MotorPositionInit_R = {0};
 
-    void                    readMyInitData();
-    void                    loadEndeffectorConfig();
-    void                    initiAllData();
+
     
     std::array<std::array<int, MotorNum>,3>   calTargetPosition(const std::array<double, ControlValueNum>& controlValue_Prev, const std::array<double, ControlValueNum>& controlValue_Cur, 
                                                     const std::array<int, MotorNum>& motorPosition_Init, const std::array<int, MotorNum>& motorPosition_Cur,

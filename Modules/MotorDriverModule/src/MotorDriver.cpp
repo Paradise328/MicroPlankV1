@@ -236,6 +236,13 @@ int32_t MotorDriver::getActualVel(const MotorType& type, const int& index){
                                              m_abRecvData[variable.offset + moons_sizeRecvData * index + 2],
                                              m_abRecvData[variable.offset + moons_sizeRecvData * index + 3]);
             return actualVel;
+        }        
+        else if (type == MotorType::MAXON){
+            const auto actualPos = hex2Int32(m_abRecvData[moons_sizeRecvData * m_motorNum + variable.offset + maxon_sizeRecvData * index],
+                                             m_abRecvData[moons_sizeRecvData * m_motorNum + variable.offset + maxon_sizeRecvData * index + 1],
+                                             m_abRecvData[moons_sizeRecvData * m_motorNum + variable.offset + maxon_sizeRecvData * index + 2],
+                                             m_abRecvData[moons_sizeRecvData * m_motorNum + variable.offset + maxon_sizeRecvData * index + 3]);
+            return actualPos;
         }
         else{
             LOG(ERROR) << "Error: The input motor type is undefined, please check motor type!";

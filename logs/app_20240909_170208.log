@@ -1,0 +1,39 @@
+2024-09-09 17:02:08,662 MotorDriver.cpp:44 [INFO] MAXON RxPDO are as follow: 
+2024-09-09 17:02:08,662 MotorDriver.cpp:46 [INFO] TrqOffset, INT, 28
+2024-09-09 17:02:08,662 MotorDriver.cpp:46 [INFO] ProfileVel, UDINT, 20
+2024-09-09 17:02:08,662 MotorDriver.cpp:46 [INFO] ProfileDec, UDINT, 16
+2024-09-09 17:02:08,662 MotorDriver.cpp:46 [INFO] TargetTrq, INT, 10
+2024-09-09 17:02:08,662 MotorDriver.cpp:46 [INFO] ProfileAcc, UDINT, 12
+2024-09-09 17:02:08,662 MotorDriver.cpp:46 [INFO] TargetVel, DINT, 2
+2024-09-09 17:02:08,662 MotorDriver.cpp:46 [INFO] TargetPos, DINT, 6
+2024-09-09 17:02:08,662 MotorDriver.cpp:46 [INFO] OperationMode, SINT, 30
+2024-09-09 17:02:08,662 MotorDriver.cpp:46 [INFO] InterpolationTime, UDINT, 35
+2024-09-09 17:02:08,662 MotorDriver.cpp:46 [INFO] PosOffset, DINT, 24
+2024-09-09 17:02:08,662 MotorDriver.cpp:46 [INFO] DigitalOutputs, UDINT, 31
+2024-09-09 17:02:08,662 MotorDriver.cpp:46 [INFO] ControlWord, UINT, 0
+2024-09-09 17:02:08,662 MotorDriver.cpp:48 [INFO] MAXON TxPDO are as follow: 
+2024-09-09 17:02:08,662 MotorDriver.cpp:50 [INFO] StatusWord, UINT, 0
+2024-09-09 17:02:08,662 MotorDriver.cpp:50 [INFO] ModeDisplay, SINT, 22
+2024-09-09 17:02:08,662 MotorDriver.cpp:50 [INFO] FollowingPosErr, DINT, 18
+2024-09-09 17:02:08,662 MotorDriver.cpp:50 [INFO] DigitalInputs, UDINT, 23
+2024-09-09 17:02:08,662 MotorDriver.cpp:50 [INFO] ErrorCode, UINT, 2
+2024-09-09 17:02:08,662 MotorDriver.cpp:50 [INFO] ActVel, DINT, 8
+2024-09-09 17:02:08,662 MotorDriver.cpp:50 [INFO] ActTrq, INT, 12
+2024-09-09 17:02:08,662 MotorDriver.cpp:50 [INFO] ActPos, DINT, 4
+2024-09-09 17:02:08,662 MotorDriver.cpp:50 [INFO] ActCur, DINT, 14
+2024-09-09 17:02:08,662 MotorDriver.cpp:1514 [INFO] EtherCat thread ID: 127519380473408
+2024-09-09 17:02:15,995 MotorDriver.cpp:1504 [INFO]  Set promise value to true!
+2024-09-09 17:02:15,995 microPlank.cpp:35 [INFO]  Set promise value to true!EtherCat Communication thread status: 1
+
+2024-09-09 17:02:15,995 MotorDriver.cpp:1143 [INFO] Starting initialize Motor Type 2: joint 1
+2024-09-09 17:02:16,045 MotorDriver.cpp:1150 [INFO] 1: the control word is: 128 status word is: 0x240
+2024-09-09 17:02:16,095 MotorDriver.cpp:1157 [INFO] 2: the control word is: 6 status word is: 0x 221
+2024-09-09 17:02:16,145 MotorDriver.cpp:1164 [INFO] 3: the control word is: 7 status word is: 0x 223
+2024-09-09 17:02:16,195 MotorDriver.cpp:1171 [INFO] 4: the control word is: f status word is: 0x 221f
+2024-09-09 17:02:16,195 MotorDriver.cpp:1174 [INFO] successfully enable Motor Type2: joint 1
+2024-09-09 17:02:16,195 FdOmega.cpp:61 [INFO] Start master handle thread: 
+2024-09-09 17:02:17,013 FdOmega.cpp:17 [INFO] Initializing haptic device...
+2024-09-09 17:02:18,772 FdOmega.cpp:55 [INFO] omega.7 (right-hand) device detected.
+2024-09-09 17:02:18,773 MasterConsole.cpp:59 [INFO] Master handle thread (Omega) starts!
+2024-09-09 17:02:18,773 MasterConsole.cpp:74 [INFO] MasterConsole Data Update thread ID: 73fa69800640
+2024-09-09 17:02:18,774 microPlank.cpp:52 [INFO] Start teleoperation thread
