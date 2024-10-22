@@ -40,7 +40,8 @@ void MicroPlank::initMotor()
 {
     m_motorDriver->enableMotor(MotorType::MAXON,joint_A,true);
     m_motorDriver->setOperationMode(MotorType::MAXON, joint_A, OperationMode::CSP);
-
+    auto statusWord = m_motorDriver->getStatusWord(MotorType::MAXON, joint_A);
+    std::cout << "statusWord: " << statusWord << std::endl;
 }
 
 void MicroPlank::startMasterConsoleThread()
@@ -63,19 +64,29 @@ void MicroPlank::teleoperationControlThread()
         return;
     }
     int i = 0;
+    std::array<std::array<double, 7>, 2> initMotorPos ={{0}};
+
     while(true)
     {
         i++;
         auto MasterData = m_masterConsole.returnHandlePose();
         auto MasterPNOData = MasterData.returnPNOData();
+        if (i == 1)
+        {
+            initMotorPos = MasterPNOData;
+        }
         auto position = m_motorDriver->getActualPos(MotorType::MAXON, joint_A);
         auto velocity = m_motorDriver->getActualVel(MotorType::MAXON, joint_A);
-
+        auto errCode  = m_motorDriver->getErrorCode(MotorType::MAXON, joint_A);
+        auto statusWord = m_motorDriver->getStatusWord(MotorType::MAXON, joint_A);
         // m_motorDriver.s
         // m_motorDriver->getActualPos(MotorType::MAXON, joint_A);
-        m_motorDriver->setTargetPos(MotorType::MAXON, joint_A, static_cast<int>(MasterPNOData[1][3]*500));
+        // std::cout << "errCode: " << errCode << std::endl;
+        // std::cout << "statusWord: " << statusWord << std::endl;
+
+        m_motorDriver->setTargetPos(MotorType::MAXON, joint_A, static_cast<int>((MasterPNOData[1][3]-initMotorPos[1][3])*100));
         
-        outputFile <<i<<" "<<static_cast<int>(MasterPNOData[1][3]*500) <<" "<< position << " " << velocity << std::endl;
+        // outputFile <<i<<" "<<static_cast<int>(MasterPNOData[1][3]*500) <<" "<< position << " " << velocity << std::endl;
         usleep(3000); 
     }
 }
