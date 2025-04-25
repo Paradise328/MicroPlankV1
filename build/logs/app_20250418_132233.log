@@ -1,0 +1,15 @@
+2025-04-18 13:22:33,443 INFO [default] Successfully init Logger Config Module 
+2025-04-18 13:22:33,444 INFO [default] 422 open successful
+2025-04-18 13:22:33,674 INFO [default] Successfully set connections in UI Interface 
+2025-04-18 13:22:33,674 ERROR [default] Failed to parse toml file: File could not be opened for reading
+2025-04-18 13:22:33,674 ERROR [default] 422 open fail
+2025-04-18 13:22:36,885 INFO [default] Alreay set value to True in Read Viper Continuous
+2025-04-18 13:22:36,885 INFO [default] flagViper thread status: 1
+2025-04-18 13:22:36,885 INFO [default] MasterConsole Data Update thread ID: 140400996116224
+2025-04-18 13:22:36,886 INFO [default] Successfully start Master Console Thread 
+2025-04-18 13:22:36,886 ERROR [default] Failed to parse toml file: File could not be opened for reading
+2025-04-18 13:22:36,886 INFO [default] EtherCat thread ID: 140400979330816
+2025-04-18 13:22:46,886 INFO [default] Successfully start Message Thread 
+2025-04-18 13:22:49,381 ERROR [default] Error opening Bus connection! Error Code: 0x800c0021
+2025-04-18 13:22:49,381 FATAL [default] cifX driver cannot be initialized, hence, motor driver thread cannot be started.
+2025-04-18 13:22:49,381 WARNING [default] Aborting application. Reason: Fatal log at [../../Modules/MotorDriverModule/MotorDriver.cpp:910]

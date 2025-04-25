@@ -1,0 +1,70 @@
+2025-04-23 11:03:18,760 main.cpp:46 [INFO] Successfully init Logger Config Module 
+2025-04-23 11:03:18,761 viper_transmitter.cpp:33 [INFO] connect successful
+2025-04-23 11:03:18,761 viper_transmitter.cpp:7 [INFO] 422 open successful
+2025-04-23 11:03:19,032 UIinterface.cpp:151 [INFO] Successfully set connections in UI Interface 
+2025-04-23 11:03:19,033 MotorDriver.cpp:46 [INFO] Moons RxPDO are as follow: 
+2025-04-23 11:03:19,033 MotorDriver.cpp:48 [INFO] ProfileVel, UDINT, 15
+2025-04-23 11:03:19,033 MotorDriver.cpp:48 [INFO] ProfileDec, UDINT, 23
+2025-04-23 11:03:19,033 MotorDriver.cpp:48 [INFO] ProfileAcc, UDINT, 19
+2025-04-23 11:03:19,033 MotorDriver.cpp:48 [INFO] TargetVel, DINT, 7
+2025-04-23 11:03:19,033 MotorDriver.cpp:48 [INFO] TargetPos, DINT, 3
+2025-04-23 11:03:19,033 MotorDriver.cpp:48 [INFO] OperationMode, SINT, 2
+2025-04-23 11:03:19,033 MotorDriver.cpp:48 [INFO] DigitalOutputs, DINT, 11
+2025-04-23 11:03:19,033 MotorDriver.cpp:48 [INFO] ControlWord, UINT, 0
+2025-04-23 11:03:19,033 MotorDriver.cpp:50 [INFO] Moons TxPDO are as follow: 
+2025-04-23 11:03:19,033 MotorDriver.cpp:52 [INFO] StatusWord, UINT, 0
+2025-04-23 11:03:19,033 MotorDriver.cpp:52 [INFO] ModeDisplay, SINT, 2
+2025-04-23 11:03:19,033 MotorDriver.cpp:52 [INFO] FollowingPosErr, DINT, 13
+2025-04-23 11:03:19,033 MotorDriver.cpp:52 [INFO] DigitalInputs, UDINT, 19
+2025-04-23 11:03:19,033 MotorDriver.cpp:52 [INFO] ErrorCode, UINT, 17
+2025-04-23 11:03:19,033 MotorDriver.cpp:52 [INFO] ActVel, DINT, 7
+2025-04-23 11:03:19,033 MotorDriver.cpp:52 [INFO] ActPos, DINT, 3
+2025-04-23 11:03:19,033 MotorDriver.cpp:52 [INFO] ActCur, INT, 11
+2025-04-23 11:03:19,033 MotorDriver.cpp:54 [INFO] ZeroErr RxPDO are as follow: 
+2025-04-23 11:03:19,033 MotorDriver.cpp:56 [INFO] ControlWord, UINT, 0
+2025-04-23 11:03:19,033 MotorDriver.cpp:56 [INFO] TrqOffset, INT, 17
+2025-04-23 11:03:19,033 MotorDriver.cpp:56 [INFO] DigitalOutputs, UDINT, 19
+2025-04-23 11:03:19,033 MotorDriver.cpp:56 [INFO] VelOffset, DINT, 13
+2025-04-23 11:03:19,033 MotorDriver.cpp:56 [INFO] ProfileAcc, UDINT, 27
+2025-04-23 11:03:19,033 MotorDriver.cpp:56 [INFO] NegTrqLimit, UINT, 41
+2025-04-23 11:03:19,033 MotorDriver.cpp:56 [INFO] MaxProfileVel, UDINT, 35
+2025-04-23 11:03:19,033 MotorDriver.cpp:56 [INFO] OperationMode, SINT, 2
+2025-04-23 11:03:19,033 MotorDriver.cpp:56 [INFO] PosTrqLimit, UINT, 39
+2025-04-23 11:03:19,033 MotorDriver.cpp:56 [INFO] TargetPos, DINT, 3
+2025-04-23 11:03:19,033 MotorDriver.cpp:56 [INFO] TargetTrq, INT, 11
+2025-04-23 11:03:19,033 MotorDriver.cpp:56 [INFO] TargetVel, DINT, 7
+2025-04-23 11:03:19,033 MotorDriver.cpp:56 [INFO] ProfileDec, UDINT, 31
+2025-04-23 11:03:19,033 MotorDriver.cpp:56 [INFO] DummyByte, USINT, 43
+2025-04-23 11:03:19,033 MotorDriver.cpp:56 [INFO] ProfileVel, UDINT, 23
+2025-04-23 11:03:19,034 MotorDriver.cpp:58 [INFO] MAXON TxPDO are as follow: 
+2025-04-23 11:03:19,034 MotorDriver.cpp:60 [INFO] StatusWord, UINT, 0
+2025-04-23 11:03:19,034 MotorDriver.cpp:60 [INFO] ModeDisplay, SINT, 2
+2025-04-23 11:03:19,034 MotorDriver.cpp:60 [INFO] FollowingPosErr, DINT, 21
+2025-04-23 11:03:19,034 MotorDriver.cpp:60 [INFO] DigitalInputs, UDINT, 17
+2025-04-23 11:03:19,034 MotorDriver.cpp:60 [INFO] ErrorCode, UINT, 3
+2025-04-23 11:03:19,034 MotorDriver.cpp:60 [INFO] ActVel, DINT, 9
+2025-04-23 11:03:19,034 MotorDriver.cpp:60 [INFO] ActTrq, INT, 13
+2025-04-23 11:03:19,034 MotorDriver.cpp:60 [INFO] ActPos, DINT, 5
+2025-04-23 11:03:19,034 MotorDriver.cpp:60 [INFO] DummyByte, USINT, 25
+2025-04-23 11:03:19,034 MotorDriver.cpp:60 [INFO] ActCur, INT, 15
+2025-04-23 11:03:19,034 MotorDriver.cpp:62 [INFO] MAXON RxPDO are as follow: 
+2025-04-23 11:03:19,034 MotorDriver.cpp:64 [INFO] ProfileVel, UDINT, 12
+2025-04-23 11:03:19,034 MotorDriver.cpp:64 [INFO] ProfileDec, UDINT, 20
+2025-04-23 11:03:19,034 MotorDriver.cpp:64 [INFO] TargetVel, DINT, 2
+2025-04-23 11:03:19,034 MotorDriver.cpp:64 [INFO] TargetPos, DINT, 6
+2025-04-23 11:03:19,034 MotorDriver.cpp:64 [INFO] OperationMode, SINT, 30
+2025-04-23 11:03:19,034 MotorDriver.cpp:64 [INFO] InterpolationTime, USINT, 29
+2025-04-23 11:03:19,034 MotorDriver.cpp:64 [INFO] TargetTrq, INT, 10
+2025-04-23 11:03:19,034 MotorDriver.cpp:64 [INFO] ProfileAcc, UDINT, 16
+2025-04-23 11:03:19,034 MotorDriver.cpp:64 [INFO] HomeVel, UDINT, 25
+2025-04-23 11:03:19,034 MotorDriver.cpp:64 [INFO] HomeMethod, SINT, 24
+2025-04-23 11:03:19,034 MotorDriver.cpp:64 [INFO] DigitalOutputs, UDINT, 31
+2025-04-23 11:03:19,034 MotorDriver.cpp:64 [INFO] ControlWord, UINT, 0
+2025-04-23 11:03:19,034 MotorDriver.cpp:66 [INFO] MAXON TxPDO are as follow: 
+2025-04-23 11:03:19,034 MotorDriver.cpp:68 [INFO] StatusWord, UINT, 0
+2025-04-23 11:03:19,034 MotorDriver.cpp:68 [INFO] ModeDisplay, SINT, 22
+2025-04-23 11:03:19,034 MotorDriver.cpp:68 [INFO] FollowingPosErr, DINT, 18
+2025-04-23 11:03:19,034 MotorDriver.cpp:68 [INFO] DigitalInputs, UDINT, 23
+2025-04-23 11:03:19,034 MotorDriver.cpp:68 [INFO] ErrorCode, UINT, 2
+2025-04-23 11:03:19,034 MotorDriver.cpp:68 [INFO] ActVel, DINT, 8
+2025-04-23 11:03:19,034 MotorDriver.cpp:68 [INFO] ActTrq, INT, 12

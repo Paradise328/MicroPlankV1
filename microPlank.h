@@ -18,37 +18,88 @@
 #include <signal.h>
 #include <unistd.h>
 #include <regex>
-#include "Modules/MasterModule/MasterConsole.h"
-#include "Modules/MathModule/include/MathUtils.h"
-#include "Modules/MotorDriverModule/include/MotorDriver.h"
-#include "Modules/RobotModule/include/RobotKinematics.h"
-#include "Modules/SystemUtilsModule/include/SystemUtils.h"
+#include <QObject>
+#include <QThread>
+#include <memory>
+#include <QGuiApplication>
+#include <QQmlApplicationEngine>
+//#include <ruckig/ruckig.hpp> //Trajectory planning
+//#include "Modules/MasterModule/MasterConsole.h"
+#include "Modules/MathModule/MathUtils.h"
+#include "Modules/SystemUtilsModule/SystemUtils.h"
+#include "Modules/MsgModule/messagequeue.h"
+#include "Modules/SecurityModule/security.h"
+#include "Modules/UIModule/UIinterface.h"
+//#include "Modules/MotorDriverModule/MotorDriver.h"
+// #include "Modules/RobotControlModule/RobotControl.h"
 
-
-class MicroPlank
+class MicroPlank:public QObject
 {
 public:
-    MicroPlank();
-    MicroPlank(const MasterConsoleType& MasterConsoleType, 
-               const std::string& robotConfigPath):
-               m_masterConsole(MasterConsoleType),
-               m_robotKinematics(robotConfigPath)
-               {};
+    MicroPlank() = delete;
+    explicit MicroPlank(QGuiApplication &app,
+                        const MasterConsoleType& MasterConsoleType,
+                        const MotorDriverParameter& motorDriverParameter):
+                        m_app(app),
+                        m_masterConsoleType(MasterConsoleType),
+                        m_motorDriverParameter(motorDriverParameter)
+                        {
+                            connect(&m_uiInterface, &UIinterface::startWholeSystemSignal,this, &MicroPlank::startStarSystemThread);
 
-    void        startSystem();
+//                            initLoggerConfig();
+
+                         };
+
+    void        startStarSystemThread();
+public slots:
+    void        onSendMeg(Message_Inner_T &msg);
 
 private:
+
+    QGuiApplication   &m_app;
+
+    MessageQueue      m_MsgPool = MessageQueue(nullptr);
+
+    MotorDriverParameter m_motorDriverParameter;
+
+    std::thread       m_msgThread;
+
+    void              startSystem();
+
+    std::thread       m_startSystemThread;
+
     MasterConsoleType   m_masterConsoleType;
-    MasterConsole       m_masterConsole;
-    MotorDriver*        m_motorDriver;
-    RobotKinematics     m_robotKinematics;
-    std::thread         m_teleoperationThread;
-    void        initLoggerConfig();
-    void        initMotorDriverThread();
-    void        initMotor();
-    void        startTeleoperationControlThread();
-    void        teleoperationControlThread();
-    void        startMasterConsoleThread();
+
+    MasterConsole       m_masterConsole = MasterConsole(m_masterConsoleType, m_MsgPool);
+
+    Security            m_security = Security(m_MsgPool);
+
+    UIinterface         m_uiInterface = UIinterface(m_app, m_MsgPool);
+
+    MotorDriver*        m_motorDriver = new MotorDriver(m_motorDriverParameter, m_MsgPool);//为一个指针
+
+    RobotControl        m_robotControl = RobotControl(m_masterConsole, m_motorDriver, m_MsgPool);
+
+    bool                flagMsgPool = true;
+
+    std::atomic<bool>   flagRemoteControl = false;
+
+    void                startMasterConsole();
+
+    void                startSecurityModule();
+
+    std::thread         m_initMotorDriverThread;
+
+    void                initMotorDriver();//std::promise<bool> &promiseInitMotorDriver
+
+    void                initMotorDriverThread();//std::promise<bool> &promiseInitMotorDriver
+    void                startRobotControl();
+
+    void            initLoggerConfig();
+    void            startMsgThread();
+    void            messagePoll();
+    void            setRemoteControlFlag(bool startRemoteControlflag);
+
 
 };
 

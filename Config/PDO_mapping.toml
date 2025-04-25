@@ -32,21 +32,19 @@ ControlWord = {type = "UINT", offset = 0}
 OperationMode = {type = "SINT", offset = 2}
 TargetPos = {type = "DINT", offset = 3}
 TargetVel = {type = "DINT", offset = 7}
-ProfileAcc = {type = "UDINT", offset = 11}
-ProfileDec = {type = "UDINT", offset = 15}
-DigitalOutputs = {type = "UDINT", offset =19}
-HomeMethod = {type = "SINT", offset = 23}
-HomeVel = {type = "UDINT", offset = 24}
-HomeAcc = {type = "UDINT", offset = 28}
-HomeOffset = {type = "DINT", offset = 32}
+DigitalOutputs = {type = "DINT", offset =11}
+ProfileVel = {type = "UDINT", offset = 15}
+ProfileAcc = {type = "UDINT", offset = 19}
+ProfileDec = {type = "UDINT", offset = 23}
 [MOONS_PDO.TxPDO]
 StatusWord = {type = "UINT", offset = 0}
 ModeDisplay = {type = "SINT", offset = 2}
-ErrorCode = {type = "UINT", offset = 3}
-ActPos = {type = "DINT", offset = 5}
-ActVel = {type = "DINT", offset = 9}
-DigitalInputs = {type = "UDINT", offset = 13}
-FollowingPosErr = {type = "DINT", offset = 17}
+ActPos = {type = "DINT", offset = 3}
+ActVel = {type = "DINT", offset = 7}
+ActCur = {type = "INT", offset = 11}
+FollowingPosErr = {type = "DINT", offset = 13}
+ErrorCode = {type = "UINT", offset = 17}
+DigitalInputs = {type = "UDINT", offset = 19}
 
 [Maxon_PDO]
 [Maxon_PDO.RxPDO]
@@ -54,14 +52,14 @@ ControlWord = {type = "UINT", offset = 0}
 TargetVel = {type = "DINT", offset = 2}
 TargetPos = {type = "DINT", offset = 6}
 TargetTrq = {type = "INT", offset = 10}
-ProfileAcc = {type = "UDINT", offset = 12}
-ProfileDec = {type = "UDINT", offset = 16}
-ProfileVel = {type = "UDINT", offset = 20}
-PosOffset = {type = "DINT", offset = 24}
-TrqOffset = {type = "INT", offset = 28}
+ProfileVel = {type = "UDINT", offset = 12}
+ProfileAcc = {type = "UDINT", offset = 16}
+ProfileDec = {type = "UDINT", offset = 20}
+HomeMethod = {type = "SINT", offset = 24}
+HomeVel = {type = "UDINT", offset = 25}
+InterpolationTime = {type = "USINT", offset = 29}
 OperationMode = {type = "SINT", offset = 30}
 DigitalOutputs = {type = "UDINT", offset = 31}
-InterpolationTime = {type = "UDINT", offset = 35}
 
 [Maxon_PDO.TxPDO]
 StatusWord = {type = "UINT", offset = 0}
