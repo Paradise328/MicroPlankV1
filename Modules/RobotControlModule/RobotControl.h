@@ -5,14 +5,11 @@
 #include "../MotorDriverModule/MotorDriver.h"
 #include "../MasterModule/MasterConsole_Lib/viper_transmitter.h"
 #include "../SystemUtilsModule/SystemUtils.h"
-#include "../peripheral_device/CRC16.h"
+#include "../PeripheralDeviceModule/CRC16.h"
 #include <QtSerialPort/qserialportglobal.h>
-
-
 #include "BlasControl/actuators_controler.h"
 #include "BlasControl/BLA_API.h"
 #include "BlasControl/communication.h"
-
 #include <boost/statechart/event.hpp>
 #include <boost/statechart/state_machine.hpp>
 #include <boost/statechart/simple_state.hpp>

@@ -1,6 +1,6 @@
 #ifndef VIPER_TRANSMITTER_H
 #define VIPER_TRANSMITTER_H
-#include "../../peripheral_device/peripheral_device.h"
+#include "../../PeripheralDeviceModule//peripheral_device.h"
 #include "../../LoggerModule/easylogging++.h"
 #include "../../SystemUtilsModule/SystemUtils.h"
 #include "../Viper_Lib/viper_ui.h"

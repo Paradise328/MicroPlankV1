@@ -64,8 +64,8 @@ SOURCES       = ../../Modules/LoggerModule/easylogging++.cc \
 		../../Modules/RobotControlModule/RobotControl.cpp \
 		../../Modules/SecurityModule/security.cpp \
 		../../Modules/UIModule/UIinterface.cpp \
-		../../Modules/peripheral_device/CRC16.cpp \
-		../../Modules/peripheral_device/peripheral_device.cpp \
+		../../Modules/PeripheralDeviceModule/CRC16.cpp \
+		../../Modules/PeripheralDeviceModule/peripheral_device.cpp \
 		../../main.cpp \
 		../../microPlank.cpp \
 		../../Modules/RobotControlModule/BlasControl/BLA_API.cpp \
@@ -507,9 +507,9 @@ DIST          = ../../Config/EndeffectorData.toml \
 		../../Modules/SecurityModule/security.h \
 		../../Modules/SystemUtilsModule/SystemUtils.h \
 		../../Modules/UIModule/UIinterface.h \
-		../../Modules/peripheral_device/CRC16.h \
-		../../Modules/peripheral_device/CommunicationProtol.h \
-		../../Modules/peripheral_device/peripheral_device.h \
+		../../Modules/PeripheralDeviceModule/CRC16.h \
+		../../Modules/PeripheralDeviceModule/CommunicationProtol.h \
+		../../Modules/PeripheralDeviceModule/peripheral_device.h \
 		../../microPlank.h \
 		../../Modules/RobotControlModule/BlasControl/BLA_API.h \
 		../../Modules/RobotControlModule/BlasControl/communication.h \
@@ -525,8 +525,8 @@ DIST          = ../../Config/EndeffectorData.toml \
 		../../Modules/RobotControlModule/RobotControl.cpp \
 		../../Modules/SecurityModule/security.cpp \
 		../../Modules/UIModule/UIinterface.cpp \
-		../../Modules/peripheral_device/CRC16.cpp \
-		../../Modules/peripheral_device/peripheral_device.cpp \
+		../../Modules/PeripheralDeviceModule/CRC16.cpp \
+		../../Modules/PeripheralDeviceModule/peripheral_device.cpp \
 		../../main.cpp \
 		../../microPlank.cpp \
 		../../Modules/RobotControlModule/BlasControl/BLA_API.cpp \
@@ -1338,8 +1338,8 @@ distdir: FORCE
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents ../../Modules/UIModule/qrc/images.qrc ../../Modules/UIModule/qrc/qml.qrc ../../Modules/UIModule/qrc/translator.qrc $(DISTDIR)/
 	$(COPY_FILE) --parents ../../../../Qt/6.8.2/gcc_64/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents ../../Modules/LoggerModule/easylogging++.h ../../Modules/MasterModule/MasterConsole.h ../../Modules/MasterModule/MasterConsole_Lib/viper_transmitter.h ../../Modules/MasterModule/Omega_Lib/FdOmega.h ../../Modules/MasterModule/Omega_Lib/dhdc.h ../../Modules/MasterModule/Omega_Lib/drdc.h ../../Modules/MasterModule/Viper_Lib/ViperInterface.h ../../Modules/MasterModule/Viper_Lib/libusb.h Modules/MasterModule/Viper_Lib/viperInterface.h ../../Modules/MasterModule/Viper_Lib/viper_queue.h ../../Modules/MasterModule/Viper_Lib/viper_ui.h ../../Modules/MasterModule/Viper_Lib/viper_usb.h ../../Modules/MathModule/MathUtils.h ../../Modules/MotorDriverModule/MotorDriver.h ../../Modules/MotorDriverModule/cifXEndianess.h ../../Modules/MsgModule/messagequeue.h ../../Modules/MsgModule/threadsafequeue.h ../../Modules/RobotControlModule/RobotControl.h ../../Modules/SecurityModule/security.h ../../Modules/SystemUtilsModule/SystemUtils.h ../../Modules/UIModule/UIinterface.h ../../Modules/peripheral_device/CRC16.h ../../Modules/peripheral_device/CommunicationProtol.h ../../Modules/peripheral_device/peripheral_device.h ../../microPlank.h ../../Modules/RobotControlModule/BlasControl/BLA_API.h ../../Modules/RobotControlModule/BlasControl/communication.h ../../Modules/RobotControlModule/BlasControl/actuators_controler.h $(DISTDIR)/
-	$(COPY_FILE) --parents ../../Modules/LoggerModule/easylogging++.cc ../../Modules/MasterModule/MasterConsole.cpp ../../Modules/MasterModule/MasterConsole_Lib/viper_transmitter.cpp ../../Modules/MasterModule/Omega_Lib/FdOmega.cpp ../../Modules/MasterModule/Viper_Lib/viper_queue.cpp ../../Modules/MasterModule/Viper_Lib/viper_ui.cpp ../../Modules/MasterModule/Viper_Lib/viper_usb.cpp ../../Modules/MotorDriverModule/MotorDriver.cpp ../../Modules/MsgModule/messagequeue.cpp ../../Modules/RobotControlModule/RobotControl.cpp ../../Modules/SecurityModule/security.cpp ../../Modules/UIModule/UIinterface.cpp ../../Modules/peripheral_device/CRC16.cpp ../../Modules/peripheral_device/peripheral_device.cpp ../../main.cpp ../../microPlank.cpp ../../Modules/RobotControlModule/BlasControl/BLA_API.cpp ../../Modules/RobotControlModule/BlasControl/communication.cpp ../../Modules/RobotControlModule/BlasControl/actuators_controler.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents ../../Modules/LoggerModule/easylogging++.h ../../Modules/MasterModule/MasterConsole.h ../../Modules/MasterModule/MasterConsole_Lib/viper_transmitter.h ../../Modules/MasterModule/Omega_Lib/FdOmega.h ../../Modules/MasterModule/Omega_Lib/dhdc.h ../../Modules/MasterModule/Omega_Lib/drdc.h ../../Modules/MasterModule/Viper_Lib/ViperInterface.h ../../Modules/MasterModule/Viper_Lib/libusb.h Modules/MasterModule/Viper_Lib/viperInterface.h ../../Modules/MasterModule/Viper_Lib/viper_queue.h ../../Modules/MasterModule/Viper_Lib/viper_ui.h ../../Modules/MasterModule/Viper_Lib/viper_usb.h ../../Modules/MathModule/MathUtils.h ../../Modules/MotorDriverModule/MotorDriver.h ../../Modules/MotorDriverModule/cifXEndianess.h ../../Modules/MsgModule/messagequeue.h ../../Modules/MsgModule/threadsafequeue.h ../../Modules/RobotControlModule/RobotControl.h ../../Modules/SecurityModule/security.h ../../Modules/SystemUtilsModule/SystemUtils.h ../../Modules/UIModule/UIinterface.h ../../Modules/PeripheralDeviceModule/CRC16.h ../../Modules/PeripheralDeviceModule/CommunicationProtol.h ../../Modules/PeripheralDeviceModule/peripheral_device.h ../../microPlank.h ../../Modules/RobotControlModule/BlasControl/BLA_API.h ../../Modules/RobotControlModule/BlasControl/communication.h ../../Modules/RobotControlModule/BlasControl/actuators_controler.h $(DISTDIR)/
+	$(COPY_FILE) --parents ../../Modules/LoggerModule/easylogging++.cc ../../Modules/MasterModule/MasterConsole.cpp ../../Modules/MasterModule/MasterConsole_Lib/viper_transmitter.cpp ../../Modules/MasterModule/Omega_Lib/FdOmega.cpp ../../Modules/MasterModule/Viper_Lib/viper_queue.cpp ../../Modules/MasterModule/Viper_Lib/viper_ui.cpp ../../Modules/MasterModule/Viper_Lib/viper_usb.cpp ../../Modules/MotorDriverModule/MotorDriver.cpp ../../Modules/MsgModule/messagequeue.cpp ../../Modules/RobotControlModule/RobotControl.cpp ../../Modules/SecurityModule/security.cpp ../../Modules/UIModule/UIinterface.cpp ../../Modules/PeripheralDeviceModule/CRC16.cpp ../../Modules/PeripheralDeviceModule/peripheral_device.cpp ../../main.cpp ../../microPlank.cpp ../../Modules/RobotControlModule/BlasControl/BLA_API.cpp ../../Modules/RobotControlModule/BlasControl/communication.cpp ../../Modules/RobotControlModule/BlasControl/actuators_controler.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -1668,7 +1668,7 @@ moc_MasterConsole.cpp: ../../Modules/MasterModule/MasterConsole.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtQml/qqmlerror.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtQml/qqmlabstracturlinterceptor.h \
 		../../Modules/MasterModule/MasterConsole_Lib/viper_transmitter.h \
-		../../Modules/peripheral_device/peripheral_device.h \
+		../../Modules/PeripheralDeviceModule/peripheral_device.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QTcpSocket \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qtcpsocket.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qabstractsocket.h \
@@ -1676,8 +1676,8 @@ moc_MasterConsole.cpp: ../../Modules/MasterModule/MasterConsole.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qiodevice.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QHostInfo \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qhostinfo.h \
-		../../Modules/peripheral_device/CommunicationProtol.h \
-		../../Modules/peripheral_device/CRC16.h \
+		../../Modules/PeripheralDeviceModule/CommunicationProtol.h \
+		../../Modules/PeripheralDeviceModule/CRC16.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QTime \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QThread \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QCoreApplication \
@@ -2130,7 +2130,7 @@ moc_RobotControl.cpp: ../../Modules/RobotControlModule/RobotControl.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtQml/qqmlerror.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtQml/qqmlabstracturlinterceptor.h \
 		../../Modules/MasterModule/MasterConsole_Lib/viper_transmitter.h \
-		../../Modules/peripheral_device/peripheral_device.h \
+		../../Modules/PeripheralDeviceModule/peripheral_device.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QTcpSocket \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qtcpsocket.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qabstractsocket.h \
@@ -2138,8 +2138,8 @@ moc_RobotControl.cpp: ../../Modules/RobotControlModule/RobotControl.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qiodevice.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QHostInfo \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qhostinfo.h \
-		../../Modules/peripheral_device/CommunicationProtol.h \
-		../../Modules/peripheral_device/CRC16.h \
+		../../Modules/PeripheralDeviceModule/CommunicationProtol.h \
+		../../Modules/PeripheralDeviceModule/CRC16.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QTime \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QThread \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QCoreApplication \
@@ -2383,7 +2383,7 @@ moc_security.cpp: ../../Modules/SecurityModule/security.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtQml/qqmlerror.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtQml/qqmlabstracturlinterceptor.h \
 		../../Modules/MasterModule/MasterConsole_Lib/viper_transmitter.h \
-		../../Modules/peripheral_device/peripheral_device.h \
+		../../Modules/PeripheralDeviceModule/peripheral_device.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QTcpSocket \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qtcpsocket.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qabstractsocket.h \
@@ -2391,8 +2391,8 @@ moc_security.cpp: ../../Modules/SecurityModule/security.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qiodevice.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QHostInfo \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qhostinfo.h \
-		../../Modules/peripheral_device/CommunicationProtol.h \
-		../../Modules/peripheral_device/CRC16.h \
+		../../Modules/PeripheralDeviceModule/CommunicationProtol.h \
+		../../Modules/PeripheralDeviceModule/CRC16.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QTime \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QTimer \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qtimer.h \
@@ -2868,7 +2868,7 @@ moc_UIinterface.cpp: ../../Modules/UIModule/UIinterface.h \
 		../../../../Qt/6.8.2/gcc_64/libexec/moc
 	/home/a/Qt/6.8.2/gcc_64/libexec/moc $(DEFINES) --include /home/a/Desktop/MicroPlank_QTVersion/build/Desktop_Qt_6_8_2-Debug/moc_predefs.h -I/home/a/Qt/6.8.2/gcc_64/mkspecs/linux-g++ -I/home/a/Desktop/MicroPlank_QTVersion -I/usr/local/include -I/home/a/Desktop/install_packages/force_dimension_driver/sdk-3.17.6-linux-x86_64-gcc/sdk-3.17.6/lib/release/lin-x86_64-gcc -I/home/a/Qt/6.8.2/gcc_64/include -I/home/a/Qt/6.8.2/gcc_64/include/QtConcurrent -I/home/a/Qt/6.8.2/gcc_64/include/QtVirtualKeyboard -I/home/a/Qt/6.8.2/gcc_64/include/QtQuick -I/home/a/Qt/6.8.2/gcc_64/include/QtOpenGL -I/home/a/Qt/6.8.2/gcc_64/include/QtMultimedia -I/home/a/Qt/6.8.2/gcc_64/include/QtGui -I/home/a/Qt/6.8.2/gcc_64/include/QtQmlMeta -I/home/a/Qt/6.8.2/gcc_64/include/QtQmlModels -I/home/a/Qt/6.8.2/gcc_64/include/QtQmlWorkerScript -I/home/a/Qt/6.8.2/gcc_64/include/QtQml -I/home/a/Qt/6.8.2/gcc_64/include/QtQmlIntegration -I/home/a/Qt/6.8.2/gcc_64/include/QtNetwork -I/home/a/Qt/6.8.2/gcc_64/include/QtSerialPort -I/home/a/Qt/6.8.2/gcc_64/include/QtTest -I/home/a/Qt/6.8.2/gcc_64/include/QtCore -I. -I/usr/include/c++/11 -I/usr/include/x86_64-linux-gnu/c++/11 -I/usr/include/c++/11/backward -I/usr/lib/gcc/x86_64-linux-gnu/11/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include ../../Modules/UIModule/UIinterface.h -o moc_UIinterface.cpp
 
-moc_peripheral_device.cpp: ../../Modules/peripheral_device/peripheral_device.h \
+moc_peripheral_device.cpp: ../../Modules/PeripheralDeviceModule/peripheral_device.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QObject \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qobject.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qobjectdefs.h \
@@ -2994,8 +2994,8 @@ moc_peripheral_device.cpp: ../../Modules/peripheral_device/peripheral_device.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/q23utility.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QHostInfo \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qhostinfo.h \
-		../../Modules/peripheral_device/CommunicationProtol.h \
-		../../Modules/peripheral_device/CRC16.h \
+		../../Modules/PeripheralDeviceModule/CommunicationProtol.h \
+		../../Modules/PeripheralDeviceModule/CRC16.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QTime \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qdatetime.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qcalendar.h \
@@ -3042,7 +3042,7 @@ moc_peripheral_device.cpp: ../../Modules/peripheral_device/peripheral_device.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qstack.h \
 		moc_predefs.h \
 		../../../../Qt/6.8.2/gcc_64/libexec/moc
-	/home/a/Qt/6.8.2/gcc_64/libexec/moc $(DEFINES) --include /home/a/Desktop/MicroPlank_QTVersion/build/Desktop_Qt_6_8_2-Debug/moc_predefs.h -I/home/a/Qt/6.8.2/gcc_64/mkspecs/linux-g++ -I/home/a/Desktop/MicroPlank_QTVersion -I/usr/local/include -I/home/a/Desktop/install_packages/force_dimension_driver/sdk-3.17.6-linux-x86_64-gcc/sdk-3.17.6/lib/release/lin-x86_64-gcc -I/home/a/Qt/6.8.2/gcc_64/include -I/home/a/Qt/6.8.2/gcc_64/include/QtConcurrent -I/home/a/Qt/6.8.2/gcc_64/include/QtVirtualKeyboard -I/home/a/Qt/6.8.2/gcc_64/include/QtQuick -I/home/a/Qt/6.8.2/gcc_64/include/QtOpenGL -I/home/a/Qt/6.8.2/gcc_64/include/QtMultimedia -I/home/a/Qt/6.8.2/gcc_64/include/QtGui -I/home/a/Qt/6.8.2/gcc_64/include/QtQmlMeta -I/home/a/Qt/6.8.2/gcc_64/include/QtQmlModels -I/home/a/Qt/6.8.2/gcc_64/include/QtQmlWorkerScript -I/home/a/Qt/6.8.2/gcc_64/include/QtQml -I/home/a/Qt/6.8.2/gcc_64/include/QtQmlIntegration -I/home/a/Qt/6.8.2/gcc_64/include/QtNetwork -I/home/a/Qt/6.8.2/gcc_64/include/QtSerialPort -I/home/a/Qt/6.8.2/gcc_64/include/QtTest -I/home/a/Qt/6.8.2/gcc_64/include/QtCore -I. -I/usr/include/c++/11 -I/usr/include/x86_64-linux-gnu/c++/11 -I/usr/include/c++/11/backward -I/usr/lib/gcc/x86_64-linux-gnu/11/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include ../../Modules/peripheral_device/peripheral_device.h -o moc_peripheral_device.cpp
+	/home/a/Qt/6.8.2/gcc_64/libexec/moc $(DEFINES) --include /home/a/Desktop/MicroPlank_QTVersion/build/Desktop_Qt_6_8_2-Debug/moc_predefs.h -I/home/a/Qt/6.8.2/gcc_64/mkspecs/linux-g++ -I/home/a/Desktop/MicroPlank_QTVersion -I/usr/local/include -I/home/a/Desktop/install_packages/force_dimension_driver/sdk-3.17.6-linux-x86_64-gcc/sdk-3.17.6/lib/release/lin-x86_64-gcc -I/home/a/Qt/6.8.2/gcc_64/include -I/home/a/Qt/6.8.2/gcc_64/include/QtConcurrent -I/home/a/Qt/6.8.2/gcc_64/include/QtVirtualKeyboard -I/home/a/Qt/6.8.2/gcc_64/include/QtQuick -I/home/a/Qt/6.8.2/gcc_64/include/QtOpenGL -I/home/a/Qt/6.8.2/gcc_64/include/QtMultimedia -I/home/a/Qt/6.8.2/gcc_64/include/QtGui -I/home/a/Qt/6.8.2/gcc_64/include/QtQmlMeta -I/home/a/Qt/6.8.2/gcc_64/include/QtQmlModels -I/home/a/Qt/6.8.2/gcc_64/include/QtQmlWorkerScript -I/home/a/Qt/6.8.2/gcc_64/include/QtQml -I/home/a/Qt/6.8.2/gcc_64/include/QtQmlIntegration -I/home/a/Qt/6.8.2/gcc_64/include/QtNetwork -I/home/a/Qt/6.8.2/gcc_64/include/QtSerialPort -I/home/a/Qt/6.8.2/gcc_64/include/QtTest -I/home/a/Qt/6.8.2/gcc_64/include/QtCore -I. -I/usr/include/c++/11 -I/usr/include/x86_64-linux-gnu/c++/11 -I/usr/include/c++/11/backward -I/usr/lib/gcc/x86_64-linux-gnu/11/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include ../../Modules/PeripheralDeviceModule/peripheral_device.h -o moc_peripheral_device.cpp
 
 moc_actuators_controler.cpp: ../../Modules/RobotControlModule/BlasControl/actuators_controler.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QObject \
@@ -3525,7 +3525,7 @@ MasterConsole.o: ../../Modules/MasterModule/MasterConsole.cpp ../../Modules/Mast
 		../../../../Qt/6.8.2/gcc_64/include/QtQml/qqmlerror.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtQml/qqmlabstracturlinterceptor.h \
 		../../Modules/MasterModule/MasterConsole_Lib/viper_transmitter.h \
-		../../Modules/peripheral_device/peripheral_device.h \
+		../../Modules/PeripheralDeviceModule/peripheral_device.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QTcpSocket \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qtcpsocket.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qabstractsocket.h \
@@ -3533,8 +3533,8 @@ MasterConsole.o: ../../Modules/MasterModule/MasterConsole.cpp ../../Modules/Mast
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qiodevice.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QHostInfo \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qhostinfo.h \
-		../../Modules/peripheral_device/CommunicationProtol.h \
-		../../Modules/peripheral_device/CRC16.h \
+		../../Modules/PeripheralDeviceModule/CommunicationProtol.h \
+		../../Modules/PeripheralDeviceModule/CRC16.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QTime \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QThread \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QCoreApplication \
@@ -3553,7 +3553,7 @@ MasterConsole.o: ../../Modules/MasterModule/MasterConsole.cpp ../../Modules/Mast
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o MasterConsole.o ../../Modules/MasterModule/MasterConsole.cpp
 
 viper_transmitter.o: ../../Modules/MasterModule/MasterConsole_Lib/viper_transmitter.cpp ../../Modules/MasterModule/MasterConsole_Lib/viper_transmitter.h \
-		../../Modules/peripheral_device/peripheral_device.h \
+		../../Modules/PeripheralDeviceModule/peripheral_device.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QObject \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qobject.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qobjectdefs.h \
@@ -3679,8 +3679,8 @@ viper_transmitter.o: ../../Modules/MasterModule/MasterConsole_Lib/viper_transmit
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/q23utility.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QHostInfo \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qhostinfo.h \
-		../../Modules/peripheral_device/CommunicationProtol.h \
-		../../Modules/peripheral_device/CRC16.h \
+		../../Modules/PeripheralDeviceModule/CommunicationProtol.h \
+		../../Modules/PeripheralDeviceModule/CRC16.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QTime \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qdatetime.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qcalendar.h \
@@ -4568,7 +4568,7 @@ RobotControl.o: ../../Modules/RobotControlModule/RobotControl.cpp ../../Modules/
 		../../../../Qt/6.8.2/gcc_64/include/QtQml/qqmlerror.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtQml/qqmlabstracturlinterceptor.h \
 		../../Modules/MasterModule/MasterConsole_Lib/viper_transmitter.h \
-		../../Modules/peripheral_device/peripheral_device.h \
+		../../Modules/PeripheralDeviceModule/peripheral_device.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QTcpSocket \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qtcpsocket.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qabstractsocket.h \
@@ -4576,8 +4576,8 @@ RobotControl.o: ../../Modules/RobotControlModule/RobotControl.cpp ../../Modules/
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qiodevice.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QHostInfo \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qhostinfo.h \
-		../../Modules/peripheral_device/CommunicationProtol.h \
-		../../Modules/peripheral_device/CRC16.h \
+		../../Modules/PeripheralDeviceModule/CommunicationProtol.h \
+		../../Modules/PeripheralDeviceModule/CRC16.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QTime \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QThread \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QCoreApplication \
@@ -4819,7 +4819,7 @@ security.o: ../../Modules/SecurityModule/security.cpp ../../Modules/SecurityModu
 		../../../../Qt/6.8.2/gcc_64/include/QtQml/qqmlerror.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtQml/qqmlabstracturlinterceptor.h \
 		../../Modules/MasterModule/MasterConsole_Lib/viper_transmitter.h \
-		../../Modules/peripheral_device/peripheral_device.h \
+		../../Modules/PeripheralDeviceModule/peripheral_device.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QTcpSocket \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qtcpsocket.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qabstractsocket.h \
@@ -4827,8 +4827,8 @@ security.o: ../../Modules/SecurityModule/security.cpp ../../Modules/SecurityModu
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qiodevice.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QHostInfo \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qhostinfo.h \
-		../../Modules/peripheral_device/CommunicationProtol.h \
-		../../Modules/peripheral_device/CRC16.h \
+		../../Modules/PeripheralDeviceModule/CommunicationProtol.h \
+		../../Modules/PeripheralDeviceModule/CRC16.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QTime \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QTimer \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qtimer.h \
@@ -5096,10 +5096,10 @@ UIinterface.o: ../../Modules/UIModule/UIinterface.cpp ../../Modules/UIModule/UIi
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QDeadlineTimer
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o UIinterface.o ../../Modules/UIModule/UIinterface.cpp
 
-CRC16.o: ../../Modules/peripheral_device/CRC16.cpp ../../Modules/peripheral_device/CRC16.h
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o CRC16.o ../../Modules/peripheral_device/CRC16.cpp
+CRC16.o: ../../Modules/PeripheralDeviceModule/CRC16.cpp ../../Modules/PeripheralDeviceModule/CRC16.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o CRC16.o ../../Modules/PeripheralDeviceModule/CRC16.cpp
 
-peripheral_device.o: ../../Modules/peripheral_device/peripheral_device.cpp ../../Modules/peripheral_device/peripheral_device.h \
+peripheral_device.o: ../../Modules/PeripheralDeviceModule/peripheral_device.cpp ../../Modules/PeripheralDeviceModule/peripheral_device.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QObject \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qobject.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qobjectdefs.h \
@@ -5225,8 +5225,8 @@ peripheral_device.o: ../../Modules/peripheral_device/peripheral_device.cpp ../..
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/q23utility.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QHostInfo \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qhostinfo.h \
-		../../Modules/peripheral_device/CommunicationProtol.h \
-		../../Modules/peripheral_device/CRC16.h \
+		../../Modules/PeripheralDeviceModule/CommunicationProtol.h \
+		../../Modules/PeripheralDeviceModule/CRC16.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QTime \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qdatetime.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qcalendar.h \
@@ -5273,7 +5273,7 @@ peripheral_device.o: ../../Modules/peripheral_device/peripheral_device.cpp ../..
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qstack.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QTcpServer \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qtcpserver.h
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o peripheral_device.o ../../Modules/peripheral_device/peripheral_device.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o peripheral_device.o ../../Modules/PeripheralDeviceModule/peripheral_device.cpp
 
 main.o: ../../main.cpp ../../../../Qt/6.8.2/gcc_64/include/QtCore/QCoreApplication \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qcoreapplication.h \
@@ -5496,7 +5496,7 @@ main.o: ../../main.cpp ../../../../Qt/6.8.2/gcc_64/include/QtCore/QCoreApplicati
 		../../Modules/MasterModule/Omega_Lib/dhdc.h \
 		../../Modules/MasterModule/Omega_Lib/drdc.h \
 		../../Modules/MasterModule/MasterConsole_Lib/viper_transmitter.h \
-		../../Modules/peripheral_device/peripheral_device.h \
+		../../Modules/PeripheralDeviceModule/peripheral_device.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QTcpSocket \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qtcpsocket.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qabstractsocket.h \
@@ -5504,8 +5504,8 @@ main.o: ../../main.cpp ../../../../Qt/6.8.2/gcc_64/include/QtCore/QCoreApplicati
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qiodevice.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QHostInfo \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qhostinfo.h \
-		../../Modules/peripheral_device/CommunicationProtol.h \
-		../../Modules/peripheral_device/CRC16.h \
+		../../Modules/PeripheralDeviceModule/CommunicationProtol.h \
+		../../Modules/PeripheralDeviceModule/CRC16.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QTime \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QTimer \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qtimer.h \
@@ -5782,7 +5782,7 @@ microPlank.o: ../../microPlank.cpp ../../microPlank.h \
 		../../Modules/MasterModule/Omega_Lib/dhdc.h \
 		../../Modules/MasterModule/Omega_Lib/drdc.h \
 		../../Modules/MasterModule/MasterConsole_Lib/viper_transmitter.h \
-		../../Modules/peripheral_device/peripheral_device.h \
+		../../Modules/PeripheralDeviceModule/peripheral_device.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QTcpSocket \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qtcpsocket.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qabstractsocket.h \
@@ -5790,8 +5790,8 @@ microPlank.o: ../../microPlank.cpp ../../microPlank.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qiodevice.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/QHostInfo \
 		../../../../Qt/6.8.2/gcc_64/include/QtNetwork/qhostinfo.h \
-		../../Modules/peripheral_device/CommunicationProtol.h \
-		../../Modules/peripheral_device/CRC16.h \
+		../../Modules/PeripheralDeviceModule/CommunicationProtol.h \
+		../../Modules/PeripheralDeviceModule/CRC16.h \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QTime \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/QTimer \
 		../../../../Qt/6.8.2/gcc_64/include/QtCore/qtimer.h \

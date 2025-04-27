@@ -43,8 +43,8 @@ SOURCES += \
         Modules/RobotControlModule/RobotControl.cpp \
         Modules/SecurityModule/security.cpp \
         Modules/UIModule/UIinterface.cpp \
-        Modules/peripheral_device/CRC16.cpp \
-        Modules/peripheral_device/peripheral_device.cpp \
+        Modules/PeripheralDeviceModule/CRC16.cpp \
+        Modules/PeripheralDeviceModule/peripheral_device.cpp \
         main.cpp \
         microPlank.cpp \
         Modules/RobotControlModule/BlasControl/BLA_API.cpp \
@@ -79,9 +79,9 @@ HEADERS += \
     Modules/SecurityModule/security.h \
     Modules/SystemUtilsModule/SystemUtils.h \
     Modules/UIModule/UIinterface.h \
-    Modules/peripheral_device/CRC16.h \
-    Modules/peripheral_device/CommunicationProtol.h \
-    Modules/peripheral_device/peripheral_device.h \
+    Modules/PeripheralDeviceModule/CRC16.h \
+    Modules/PeripheralDeviceModule/CommunicationProtol.h \
+    Modules/PeripheralDeviceModule/peripheral_device.h \
     microPlank.h \
     Modules/RobotControlModule/BlasControl/BLA_API.h \
     Modules/RobotControlModule/BlasControl/communication.h \

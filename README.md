@@ -56,3 +56,9 @@ to call the LiftColumn program
 # Update Log
 
 # Todo List
+修改路径：
+1. 在 main.cpp 中修改 log config 的路径
+2. 在 motorDriver.h 中修改 m _mappingPath
+3. 在 robotControl.h 中修改 m_configFilePath 以及 m_robotConfigPath
+
+
