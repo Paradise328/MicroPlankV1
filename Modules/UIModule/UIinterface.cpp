@@ -4,8 +4,6 @@ UIinterface::UIinterface(QGuiApplication &app,MessageQueue&  messagePool) :m_app
 {
      m_Engine.rootContext()->setContextProperty("qmlLanguage", &m_qmlLanguage);
      m_Engine.rootContext()->setContextProperty("UIinterface", this);
-//     qmlRegisterUncreatableType<RobotControlAction_E>("RobotControlAction_E", 1, 0, "RobotControlAction", "Cannot create RobotControlAction in QML");
-
 
      m_url = QUrl(QStringLiteral("qrc:/main.qml"));
         QObject::connect(&m_Engine, &QQmlApplicationEngine::objectCreated,
@@ -23,7 +21,6 @@ UIinterface::UIinterface(QGuiApplication &app,MessageQueue&  messagePool) :m_app
      setInitStatus();
 
      connect(this,&UIinterface::DealMsgSignal,this,&UIinterface::dealWithMsg);
-
 }
 
 void UIinterface::setQMLComponent()
@@ -80,7 +77,6 @@ void UIinterface::setQMLComponent()
     this->m_IO_Text_UsedTime_L = this->m_Engine.rootObjects().first()->findChild<QObject*>("io_txtUsedTime_L");
     this->m_IO_Text_UsedTime_R = this->m_Engine.rootObjects().first()->findChild<QObject*>("io_txtUsedTime_R");
 
-
     this->m_IO_Image_Level1 = this->m_Engine.rootObjects().first()->findChild<QObject*>("io_level1");
     this->m_IO_Image_Level2 = this->m_Engine.rootObjects().first()->findChild<QObject*>("io_level2");
     this->m_IO_Image_Level3 = this->m_Engine.rootObjects().first()->findChild<QObject*>("io_level3");
@@ -101,7 +97,6 @@ void UIinterface::setQMLComponent()
      this->m_IO_Image_InstrumentAxisE_L_Back = this->m_Engine.rootObjects().first()->findChild<QObject*>("io_picCondition_Axis_E_Back_l");
      this->m_IO_Image_InstrumentAxisF_L_Back = this->m_Engine.rootObjects().first()->findChild<QObject*>("io_picCondition_Axis_F_Back_l");
      this->m_IO_Image_InstrumentAxisG_L_Back = this->m_Engine.rootObjects().first()->findChild<QObject*>("io_picCondition_Axis_G_Back_l");
-
 
      this->m_IO_Image_InstrumentAxisA_R_Front = this->m_Engine.rootObjects().first()->findChild<QObject*>("io_picCondition_Axis_A_Front_r");
      this->m_IO_Image_InstrumentAxisB_R_Front = this->m_Engine.rootObjects().first()->findChild<QObject*>("io_picCondition_Axis_B_Front_r");
@@ -154,7 +149,6 @@ void UIinterface::setConnections()
 void UIinterface::initAllData()
 {
     m_systemMode = 0;
-
 }
 
 void UIinterface::setInitStatus()
@@ -269,7 +263,6 @@ void UIinterface::SetReserveButtonSta(int sta)
     }
 }
 
-
 void UIinterface::setMasterConsoleCheckString(QString s)
 {
     if(this->m_INIT_Text_MasterConsoleCheck!=nullptr)
@@ -279,6 +272,18 @@ void UIinterface::setMasterConsoleCheckString(QString s)
     }
 }
 
+void UIinterface::setMasterConsoleStatus(QString statusWord)
+{
+    if(statusWord == "Ok")
+    {
+        LOG(INFO) << "UIInterface: Master Console Successfully Connected ";
+
+    }
+    else if(statusWord == "Err")
+    {
+        LOG(INFO) << "UIInterface: Master Console Successfully Connected ";
+    }
+}
 
 void UIinterface::SetLiftingcheckString(QString s)
 {
@@ -307,7 +312,6 @@ void UIinterface::SetLeftfinialcheckString(QString s)
     }
 }
 
-
 void UIinterface::SetRightfinialcheckString(QString s)
 {
     if(this->m_INIT_Text_RightFinialCheck!=nullptr)
@@ -316,7 +320,6 @@ void UIinterface::SetRightfinialcheckString(QString s)
         QMetaObject::invokeMethod(this->m_INIT_Text_RightFinialCheck, "doLayout");
     }
 }
-
 
 void UIinterface::onButton_CaliGimbalL_Clicked()//点击左云台归零
 {
@@ -330,8 +333,8 @@ void UIinterface::onButton_CaliGimbalL_Clicked()//点击左云台归零
         SendInnerMsg(Module_Inner_E::RobotControl,static_cast<int>(RobotControlAction_E::StartEndJointMotorHoming),"l");
         m_GimbalCalibrationFlag_L = 1;
     }
-
 }
+
 void UIinterface::onButton_CaliGimbalR_Clicked()//点击右云台归零
 {
     LOG(INFO)<<"Gimbal calibration button has been clicked: Gimbal calibration right";
@@ -344,8 +347,8 @@ void UIinterface::onButton_CaliGimbalR_Clicked()//点击右云台归零
         SendInnerMsg(Module_Inner_E::RobotControl,static_cast<int>(RobotControlAction_E::StartEndJointMotorHoming),"r");
         m_GimbalCalibrationFlag_R = 1;
     }
-
 }
+
 void UIinterface::onButton_CaliInstrumentL_Clicked()//点击器械归零
 {
     printf("instrument CaliInstrumentL\n");
@@ -358,8 +361,8 @@ void UIinterface::onButton_CaliInstrumentL_Clicked()//点击器械归零
 //        SendInnerMsg(Module_Inner_E::Slave,static_cast<int>(SlaveAction_E::INSTRUMENT_Calibration_Start),"l");
         m_InstrumentCalibrationFlag_L = 1;
     }
-
 }
+
 void UIinterface::onButton_CaliInstrumentR_Clicked()
 {
     printf("instrument CaliInstrumentR\n");
@@ -372,7 +375,6 @@ void UIinterface::onButton_CaliInstrumentR_Clicked()
         SendInnerMsg(Module_Inner_E::RobotControl,static_cast<int>(RobotControlAction_E::StartEndEffectorMotorHoming),"r");
         m_InstrumentCalibrationFlag_R = 1;
     }
-
 }
 
 void UIinterface::resetButton_Calibration()
@@ -387,7 +389,6 @@ void UIinterface::resetButton_Calibration()
     SetButtonSta(this->m_PO_Button_CaliInstrument_L,UI_Button_Default);
     SetButtonSta(this->m_PO_Button_CaliInstrument_R,UI_Button_Default);
 }
-
 
 void UIinterface::PO_GoToOperation_Clicked()
 {
@@ -579,7 +580,6 @@ void UIinterface::SetHandle_R_En(bool en)
     }
 
 }
-
 
 void UIinterface::SetAxisLimit(QString Axis,QString limitsta)
 {
@@ -829,7 +829,6 @@ void UIinterface::onButton_Slowdown_Released()
 {
      qDebug()<<"onButton_Slowdown_Released()";
     SendInnerMsg(Module_Inner_E::AssistDevice_Lifting,static_cast<int>(AssistDevice_LiftingAction_E::FootSupportBrake),"");
-
 }
 
 void UIinterface::liftingBrake()
@@ -981,7 +980,7 @@ void UIinterface::dealWithMsg()//与robotcontrol部分通信
                         QStringList slist = i.value().split(":");
                         if(slist[0] == "Master")
                         {
-
+                            setMasterConsoleStatus(slist[1]);
                         }
                         else if(slist[0] == "RobotConrol")
                         {

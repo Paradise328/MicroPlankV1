@@ -5,7 +5,7 @@
         <file>../InitPage.qml</file>
         <file>../InOpreation.qml</file>
         <file>../main.qml</file>
+        <file>../PreOperation.qml</file>
         <file>../MainPage.qml</file>
-        <file>../PreOpreation.qml</file>
     </qresource>
 </RCC>

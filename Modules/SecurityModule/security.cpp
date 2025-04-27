@@ -24,10 +24,12 @@ void Security::systemMonitor(MasterConsole& masterConsole)
         auto masterConsoleStatus_Prev = systemModuleStatus_Prev[0];
         if(masterConsoleStatus_Prev == false && masterConsoleStatus_Cur == true)
         {
+            LOG(INFO) << "Master Console Successfully Connected! ";
             SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvModulesStatus),"Master:Ok");
         }
         else if(masterConsoleStatus_Prev == true && masterConsoleStatus_Cur == false)
         {
+            LOG(INFO) << "Master Console Connection! ";
             SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvModulesStatus),"Master:Err");
         }
 

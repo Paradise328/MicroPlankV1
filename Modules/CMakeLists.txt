@@ -1,6 +1,0 @@
-add_subdirectory(LoggerModule)
-add_subdirectory(RobotModule)
-add_subdirectory(MasterModule)
-add_subdirectory(MathModule)
-add_subdirectory(MotorDriverModule)
-add_subdirectory(SystemUtilsModule)

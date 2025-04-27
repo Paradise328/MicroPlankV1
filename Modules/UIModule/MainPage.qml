@@ -34,7 +34,7 @@ Item {
 //        smooth: true
 //    }
 
-    PreOpreation{
+    PreOperation{
         id: preOpreationPage
         visible:true
     }

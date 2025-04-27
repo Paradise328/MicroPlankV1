@@ -129,6 +129,9 @@ public:
     void SetLeftfinialcheckString(QString s);
     void SetRightfinialcheckString(QString s);
 
+    void setModulesStatusPopUpWindow();
+
+
     void SetReserveButtonSta(int sta);
     void SetAxisLimit(QString Axis,QString limitsta);
 

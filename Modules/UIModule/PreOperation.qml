@@ -1,10 +1,9 @@
 ﻿import QtQuick 2.0
 import QtQuick.Window 2.12
 import QtQuick.Controls 2.12
-// in operation page
 
+/*术前准备页面*/
 Rectangle {
-    id: robotMain
     property string signalLamp1: "Normal"
     property string signalLamp2: "Warning"
     property string signalLamp3: "Normal"
@@ -20,8 +19,8 @@ Rectangle {
         currentMinSpeed = json[axis][level].speedMin;
         currentMaxSpeed = json[axis][level].speedMax;
         currentSpeedVal = json[axis][level].speedVal;
-
     }
+
     function changeSpeed(axis,level,val){
         updateJson[axis][level].speedVal = val;
         currentSpeedVal = val;
@@ -34,6 +33,7 @@ Rectangle {
         level4.state = "unselected"
         level5.state = "unselected"
     }
+
     function readPara(){
         btnType1.state = json.type;
         btnType2.state = json.type;
@@ -48,13 +48,16 @@ Rectangle {
         axis5.state = "unselected";
         setSpeed("axis0","level1");
     }
-    Image {
+
+    Image
+    {
         id: preOpreationPageBg
         source: "images/bg_preopration.png"
         width: 1920//parent.width//Screen.desktopAvailableWidth
         height: 1080//Screen.desktopAvailableheight
         smooth: true
     }
+
     //指示灯状态id为signal1～signal5：id.state == "Normal/Warning"，显示为正常/警示灯
      Column{
          spacing: 32
@@ -151,16 +154,6 @@ Rectangle {
                     name: "opposite"
                 }
             ]
-//            Connections{
-//                target: uiInterface
-//                onKinematicsStateChanged:{
-//                   console.log("kinematics state was "+kinematicsState)
-//                    btnType1.state = !kinematicsState ? "positive" : "opposite"
-//                    btnType2.state = !kinematicsState ? "positive" : "opposite"
-//                   console.log("kinematics state was "+kinematicsState)
-//                }
-//            }
-
         }
 
 //        Text {
@@ -1429,11 +1422,3 @@ Rectangle {
             }
          }
 }
-
-
-
-/*##^##
-Designer {
-    D{i:0;autoSize:true;formeditorZoom:0.5;height:480;width:640}D{i:61;annotation:"1 //;;//  //;;//  //;;// <!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\np, li { white-space: pre-wrap; }\n</style></head><body style=\" font-family:'SimSun'; font-size:9pt; font-weight:400; font-style:normal;\">\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html> //;;// 1681695823";customId:"speedName1"}
-}
-##^##*/

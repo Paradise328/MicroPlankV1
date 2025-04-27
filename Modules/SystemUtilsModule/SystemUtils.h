@@ -422,6 +422,12 @@ enum class RobotControlMode
     TestOperation,
 };
 
+enum class SystemModule
+{
+    MasterConsole = 0xA0,
+    RobotControlMode,
+};
+
 constexpr int adcValueOpen_L = 2845;
 constexpr int adcValueClose_L = 3030;
 
