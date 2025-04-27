@@ -1,5 +1,7 @@
 # folder
 /build
+/build*
+/logs
 /galilCode
 /qtfolder
 
@@ -35,3 +37,7 @@
 *.exe
 *.out
 *.app
+
+# qt build files
+*.pro.user*
+*.stash
