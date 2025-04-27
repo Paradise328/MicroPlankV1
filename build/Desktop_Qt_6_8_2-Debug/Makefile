@@ -1431,9 +1431,9 @@ qrc_images.cpp: ../../Modules/UIModule/qrc/images.qrc \
 qrc_qml.cpp: ../../Modules/UIModule/qrc/qml.qrc \
 		../../../../Qt/6.8.2/gcc_64/libexec/rcc \
 		../../Modules/UIModule/InitPage.qml \
-		../../Modules/UIModule/PreOpreation.qml \
 		../../Modules/UIModule/MainPage.qml \
 		../../Modules/UIModule/BasicComboBox.qml \
+		../../Modules/UIModule/PreOperation.qml \
 		../../Modules/UIModule/CanvasWave.qml \
 		../../Modules/UIModule/InOpreation.qml \
 		../../Modules/UIModule/main.qml
