@@ -7,26 +7,25 @@ you must construct the project as following structure:
 ```
 mikroPlack root folder
 |- build
-|- bin
-|- src
-    |- lib
-    |- ui
-    |- module
-    |- external
-    |- utils
-|- history
-|- log
+|- config(用于放置log的配置文件、 EtherCAT的PDO文件、 机器人的参数文件)
+|- log(日志文件)
+|- Modules(模块)
+    |- LoggerModule(日志打印模块)
+    |- MasterModule(主手模块)
+    |- MathModule(数学模块，包含一些计算函数)
+    |- MotorDriverModule(EtherCAT通信模块)
+    |- MsgModule(消息队列模块)
+    |- PeripheralDeviceModule(外部设备(422、232等库))
+    |- SecurityModule(系统安全模块)
+    |- SystemUtilsModule(系统不同模块都需要调用的参数、结构体等)
 |- gitignore
 |- README.md
-|- CMAkeLists.txt
 ```
 
 # instructions
 
 
 ## some commands
-
-
 
 to start cifx card:
 sudo modprobe uio_netx
@@ -35,23 +34,8 @@ to start com card:
 sudo emp2init
 
 ## build
-at project top dir, run in terminal:
-
-```
-mkdir build
-cd build
-cmake ..
-make
-```
-
-if you run on your own computer which doesnt contain all the peripheral devices, go to applications, comment the subdirectories which you doesnt need.
 
 ## run:
-the executable programmes are in build/run/.For example, at build directory, run:
-```
-./run/LiftColumn 
-```
-to call the LiftColumn program
 
 # Update Log
 
