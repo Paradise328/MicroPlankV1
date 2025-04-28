@@ -2,6 +2,7 @@
 
 Security::Security(MessageQueue& messagePool):m_messagePool(messagePool)
 {
+    m_systemOperationMode.store(SystemMode::BootSelfCheck);
     selfCheckStep.store(SelfCheckStepEnum::No_Checking);
     checkShutDownSystem.store(shutDownSystemEnum::No_ShutDown);
     m_systemModuleStatus = {false, false, false, false, false};
@@ -19,20 +20,30 @@ void Security::systemMonitor(MasterConsole& masterConsole)
     while(!m_flagIsSystemTerminated)
     {
         auto systemModuleStatus_Prev = m_systemModuleStatus.load();
-
         auto masterConsoleStatus_Cur = masterConsole.returnMasterConsoleStatus();
+        LOG(INFO) << "masterConsoleStatus_Cur: " << masterConsoleStatus_Cur << "systemModuleStatus_Prev: " << systemModuleStatus_Prev;
         auto masterConsoleStatus_Prev = systemModuleStatus_Prev[0];
-        if(masterConsoleStatus_Prev == false && masterConsoleStatus_Cur == true)
+        if(m_systemOperationMode.load() == SystemMode::BootSelfCheck)
         {
-            LOG(INFO) << "Master Console Successfully Connected! ";
-            SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvModulesStatus),"Master:Ok");
+            if(masterConsoleStatus_Prev == false && masterConsoleStatus_Cur == true)
+            {
+                LOG(INFO) << "Master Console Successfully Connected! ";
+                SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvBootSelfCheckStatus),"Master:Ok");
+            }
         }
-        else if(masterConsoleStatus_Prev == true && masterConsoleStatus_Cur == false)
+        else
         {
-            LOG(INFO) << "Master Console Connection! ";
-            SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvModulesStatus),"Master:Err");
+            if(masterConsoleStatus_Prev == false && masterConsoleStatus_Cur == true)
+            {
+                LOG(INFO) << "Master Console Successfully Reconnected! ";
+                SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvModulesStatus),"Master:Ok");
+            }
+            else if(masterConsoleStatus_Prev == true && masterConsoleStatus_Cur == false)
+            {
+                LOG(INFO) << "Master Console Connection Lost! ";
+                SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvModulesStatus),"Master:Err");
+            }
         }
-
         std::this_thread::sleep_for(std::chrono::seconds(5));
         setModuleStatus(masterConsoleStatus_Cur, true, true);
     }

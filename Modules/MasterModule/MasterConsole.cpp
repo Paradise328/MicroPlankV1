@@ -84,7 +84,7 @@ void MasterConsole::startUpdateConsoleDataThread()
             m_updateConsoleDataThread = std::thread(&MasterConsole::updateConsoleDataThread, this);
             LOG(INFO) << "MasterConsole Data Update thread ID: " << m_updateConsoleDataThread.get_id();
             m_updateConsoleDataThread.detach();
-            SendInnerMsg(Module_Inner_E::Security, static_cast<int>(SecurityAction_E::RecvMasterSelfCheckResults), "ok");
+            // SendInnerMsg(Module_Inner_E::Security, static_cast<int>(SecurityAction_E::RecvMasterSelfCheckResults), "ok");
         }
     }
 }

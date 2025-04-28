@@ -43,6 +43,7 @@ enum class _shutDownSystemEnum
 };
 using shutDownSystemEnum = _shutDownSystemEnum;
 
+
 class Security:public QObject
 {
     Q_OBJECT
@@ -68,6 +69,9 @@ private:
     std::atomic<bool>       flagShutDownSystem = true;
 
     SystemWarningStatus m_systemWarningStatus = SystemWarningStatus::Normal;
+
+    /*系统当前运行模式*/
+    std::atomic<SystemMode>   m_systemOperationMode;
 
     /*监控所有模块运行状态*/
     bool            m_flagIsSystemTerminated = false;

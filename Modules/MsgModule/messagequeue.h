@@ -76,8 +76,7 @@ using MasterConsoleAction_E = enum _MasterConsoleAction_E;
 
 enum class _SecurityAction_E
 {
-    RecvBootSelfCheckSta = 0x50,
-    RecvMasterSelfCheckResults,
+    RecvBootSelfCheckStatus = 0x50,
     RecvModulesStatus,
     RecvMotorDriverShutDown,
     RecvMasterConsoleShutDown,

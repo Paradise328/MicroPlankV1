@@ -229,7 +229,7 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
             handlePoseTmp.handlePoseR_OpenAngle = openAngle[1];
 
         }
-        else if(cftemp.payload.args[0]==Dev_Sta_LEFTHANDLE_ERROR)
+        else if(cftemp.payload.args[0]== Dev_Sta_LEFTHANDLE_ERROR)
         {
             std::cout <<"LEFTHANDLE_ERROR!" << std::endl;
         }

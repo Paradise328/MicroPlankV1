@@ -261,7 +261,7 @@ public:
             m_jointEnabled = new bool[t_motorDriverParameter.motorNum];
             for(int i = 0; i < t_motorDriverParameter.motorNum; i++){m_jointEnabled[i] = false;}
             connect(this, &MotorDriver::DealMsgSignal, this, &MotorDriver::dealWithMsg);
-        };
+        }
 
     friend class RobotControl;
 

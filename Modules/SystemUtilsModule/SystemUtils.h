@@ -428,6 +428,14 @@ enum class SystemModule
     RobotControlMode,
 };
 
+enum class SystemMode
+{
+    BootSelfCheck = 0x00,
+    PreOperation,
+    InOperation_TeleOperation,
+    InOperation_Collaboration,
+};
+
 constexpr int adcValueOpen_L = 2845;
 constexpr int adcValueClose_L = 3030;
 

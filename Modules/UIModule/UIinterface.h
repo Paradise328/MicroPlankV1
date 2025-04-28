@@ -226,11 +226,8 @@ private:
     QObject                 *m_PO_GoToOperation = nullptr;
     QObject                 *m_IO_BackToPrepare = nullptr;
 
-
-
     QObject                 *m_IO_Text_Enable_L = nullptr;
     QObject                 *m_IO_Text_Enable_R = nullptr;
-
 
     QObject                 *m_IO_Text_InstrumentType_L = nullptr;
     QObject                 *m_IO_Text_InstrumentType_R = nullptr;

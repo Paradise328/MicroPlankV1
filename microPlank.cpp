@@ -10,7 +10,7 @@ void MicroPlank::startStarSystemThread()
 
 void MicroPlank::startSystem()
 {
-    LOG(INFO) << "start system " << std::endl;
+    LOG(INFO) << "start system ";
 
     startMasterConsole();
 
@@ -41,7 +41,6 @@ void MicroPlank::initLoggerConfig()
 void MicroPlank::startMasterConsole()
 {
     m_masterConsole.startUpdateConsoleDataThread();
-    LOG(INFO)<<"Successfully start Master Console Thread ";
 }
 
 void MicroPlank::startSecurityModule()
