@@ -13,9 +13,8 @@
   */
 Peripheral_Device::Peripheral_Device()
 {
-//    this->GetData=nullptr;
     this->ConnSta=DISCONNECTED;
-   this->start();
+    this->start();
 }
 
 /**
@@ -23,7 +22,7 @@ Peripheral_Device::Peripheral_Device()
   * @param ip和端口
   * @retval None
   */
-Peripheral_Device::Peripheral_Device(QString ip,quint16 port)
+Peripheral_Device::Peripheral_Device(QString ip, quint16 port)
 {
     qRegisterMetaType<QByteArray>("QByteArray");
     qRegisterMetaType<QByteArray>("QByteArray&");
@@ -35,23 +34,26 @@ Peripheral_Device::Peripheral_Device(QString ip,quint16 port)
     connect(this,&Peripheral_Device::FlushConns,this,&Peripheral_Device::OnFlushConns);
 
     //建立一个连接
-    QTcpSocket *m_sockettemp=nullptr;
-    m_sockettemp=new QTcpSocket();
+    QTcpSocket *m_sockettemp = nullptr;
+    m_sockettemp = new QTcpSocket();
     this->connect(m_sockettemp,&QTcpSocket::readyRead,this,&Peripheral_Device::on_Data_In);
- //   this->connect(m_sockettemp,&QTcpSocket::connected,this,&Peripheral_Device::on_Connected);
+
     this->connect(m_sockettemp,&QTcpSocket::disconnected,this,&Peripheral_Device::on_Disconnected);
+
     QObject::connect(this, SIGNAL(Resend(QByteArray&)), this, SLOT(onResend(QByteArray&)));
 
     QHostAddress hostarrd(this->Ip);
+
     m_sockettemp->connectToHost(hostarrd,this->Port);
+
     m_sockettemp->waitForConnected(5000);
 
     if(m_sockettemp->isOpen())
     {
         ConList.append(m_sockettemp);
 
-        this->m_socket=ConList[0];
-        this->m_socketport=this->m_socket->peerPort();
+        this->m_socket = ConList[0];
+        this->m_socketport = this->m_socket->peerPort();
         this->ConnSta = CONNECTED;
     }
 
@@ -61,7 +63,7 @@ Peripheral_Device::Peripheral_Device(QString ip,quint16 port)
     this->ConnTimer->start(3000);
 
     //断线重连定时器
-    this->ReconnTimer=new QTimer;
+    this->ReconnTimer = new QTimer;
     connect(this->ReconnTimer,&QTimer::timeout,this,&Peripheral_Device::ReconnTimer_Callback);
 
     this->start();
@@ -74,27 +76,26 @@ Peripheral_Device::Peripheral_Device(QString ip,quint16 port)
   */
 void Peripheral_Device::ConnTimer_Callback(void)
 {
-    int ConCount=this->ConList.length();
-    if(ConCount>=CON_COUNT_MAX){this->ConnTimer->stop();return;}
+    int ConCount = this->ConList.length();
+    if(ConCount >= CON_COUNT_MAX){this->ConnTimer->stop();return;}
 
-    QTcpSocket *m_sockettemp=nullptr;
-    m_sockettemp=new QTcpSocket();
-    this->connect(m_sockettemp,&QTcpSocket::readyRead,this,&Peripheral_Device::on_Data_In);
-   // this->connect(m_sockettemp,&QTcpSocket::connected,this,&Peripheral_Device::on_Connected);
-    this->connect(m_sockettemp,&QTcpSocket::disconnected,this,&Peripheral_Device::on_Disconnected);
+    QTcpSocket *m_sockettemp = nullptr;
+    m_sockettemp = new QTcpSocket();
+    this->connect(m_sockettemp, &QTcpSocket::readyRead, this, &Peripheral_Device::on_Data_In);
+    this->connect(m_sockettemp, &QTcpSocket::disconnected, this, &Peripheral_Device::on_Disconnected);
     QObject::connect(this, SIGNAL(Resend(QByteArray&)), this, SLOT(onResend(QByteArray&)));
 
     m_sockettemp->setSocketOption(QAbstractSocket::KeepAliveOption, true);
     QHostAddress hostarrd(this->Ip);
-    m_sockettemp->connectToHost(hostarrd,this->Port+ConCount);
+    m_sockettemp->connectToHost(hostarrd, this->Port+ConCount);
     m_sockettemp->waitForConnected(1000);
 
     if(m_sockettemp->isOpen())
     {
         ConList.append(m_sockettemp);
-        if(this->ConnSta==DISCONNECTED )
+        if(this->ConnSta == DISCONNECTED )
         {
-            this->m_socket=m_sockettemp;
+            this->m_socket = m_sockettemp;
             qDebug()<<"this->m_socket=m_sockettemp;";
         }
         this->ConnSta = CONNECTED;
@@ -215,7 +216,7 @@ Send2:
         m_socket->waitForBytesWritten(1000);
         return SEND_SUCCESS;
     }
-    else if(mlen==-1)
+    else if(mlen == -1)
     {
         if(this->Change_Usable_Con())goto Send2;
         else{
@@ -223,10 +224,9 @@ Send2:
             this->ReconnTimer->start(1500);
             return SEND_ERROR;/*或者加异常处理代码*/
         }
-        qDebug()<<"send error,mlen="<<mlen;
-//        return SEND_ERROR;
+        std::cout << "send error,mlen=" << mlen << std::endl;
     }
-    else if(mlen<datalen)
+    else if(mlen < datalen)
     {
         if(this->Change_Usable_Con())goto Send2;
         else{qDebug()<<"Send 4 All Connection Lost";
@@ -234,8 +234,7 @@ Send2:
             return SEND_ERROR;/*或者加异常处理代码*/
         }
         m_socket->waitForBytesWritten(1000);
-        qDebug()<<"send abort,mlen="<<mlen;
-//        return SEND_ERROR;
+        std::cout << "send abort, mlen = " << mlen << std::endl;
     }
     return SEND_ERROR;
 
@@ -543,8 +542,8 @@ void Peripheral_Device::run()
   */
 void Peripheral_Device::onResend(QByteArray& dat)
 {
-       qDebug()<<"Resend!!!";
-       Send_Data(dat);
+    std::cout << "Resend!!!" << std::endl;
+    Send_Data(dat);
 }
 
 /**
@@ -565,10 +564,10 @@ void Peripheral_Device::on_Connected(void)
   */
 void Peripheral_Device::on_Disconnected(void)
 {
-    qDebug()<<"DisConnected！！！";
+    qDebug() << "DisConnected！！！";
     this->ConnSta = DISCONNECTED;
     if(this->m_socketport!=0)
-    qDebug()<<"lose:this->m_socketport="<<this->m_socketport;
+    qDebug() << "lose:this->m_socketport=" << this->m_socketport;
     this->ReconnPortList.append(this->m_socketport);
     if(this-> Change_Usable_Con() == false)
     {
@@ -585,8 +584,9 @@ void Peripheral_Device::on_Disconnected(void)
 
 void Peripheral_Device::DynamicsDelay(int nms)
 {
-    auto Qtime_next=QTime::currentTime().addMSecs(nms);
-    while(QTime::currentTime()<Qtime_next)
+    auto Qtime_next = QTime::currentTime().addMSecs(nms);
+    while(QTime::currentTime() < Qtime_next)
+    {
         QCoreApplication::processEvents(QEventLoop::AllEvents,10);
-
+    }
 }

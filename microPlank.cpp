@@ -50,7 +50,6 @@ void MicroPlank::startSecurityModule()
     LOG(INFO)<<"Successfully start Master Console Thread ";
 }
 
-
 void MicroPlank::initMotorDriver() //std::promise<bool> &promiseInitMotorDriver
 {
     m_initMotorDriverThread = std::thread(&MicroPlank::initMotorDriverThread, this);

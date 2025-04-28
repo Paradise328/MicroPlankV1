@@ -216,7 +216,7 @@ void RobotControl::loadEndeffectorConfig()
         std::cerr << "Parse error: " << err.what() << std::endl;
         LOG(ERROR)<< "Parsing failed:\n" << err;
     }
-};
+}
 
 void RobotControl::initiAllData()
 {
