@@ -30,10 +30,11 @@ bool Viper_Transmitter::openSerialPort(qint32 baud)
     if (m_serial_422->open(QIODevice::ReadWrite))
     {
         connect(m_serial_422, &QSerialPort::readyRead, this, &Viper_Transmitter::On422DataIn);
-            LOG(INFO)<<"connect successful";
+        LOG(INFO)<<"Connect Successful";
         return true;
     }else
     {
+        LOG(INFO)<<"Connect Failed";
         return false;
     }
 }
@@ -227,7 +228,6 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
 
             handlePoseTmp.handlePoseL_OpenAngle = openAngle[0];
             handlePoseTmp.handlePoseR_OpenAngle = openAngle[1];
-
         }
         else if(cftemp.payload.args[0]== Dev_Sta_LEFTHANDLE_ERROR)
         {

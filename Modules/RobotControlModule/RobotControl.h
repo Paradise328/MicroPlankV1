@@ -3,7 +3,7 @@
 
 #include "../MasterModule/MasterConsole.h"
 #include "../MotorDriverModule/MotorDriver.h"
-#include "../MasterModule/MasterConsole_Lib/viper_transmitter.h"
+// #include "../MasterModule/MasterConsole_Lib/viper_transmitter.h"
 #include "../SystemUtilsModule/SystemUtils.h"
 #include "../PeripheralDeviceModule/CRC16.h"
 #include <QtSerialPort/qserialportglobal.h>
@@ -92,7 +92,7 @@ public:
                      m_ruckigInputState.max_acceleration = {150000.0, 150000.0, 150000.0};//6000
                      m_ruckigInputState.max_jerk = {200000.0, 200000.0, 200000.0};//3000
 
-                     openTorqueSensor();
+                     // openTorqueSensor();
                 };
 
 

@@ -11,7 +11,7 @@ void MasterConsole::updateConsoleDataThread()
 
 void MasterConsole::startUpdateConsoleDataThread()
 {
-   //init Master
+   /*根据外设初始化主手*/
    std::promise<bool> masterPromise;
    std::future<bool> masterFuture = masterPromise.get_future();
    if(m_MasterConsoleType == MasterConsoleType::Viper)
@@ -76,16 +76,12 @@ void MasterConsole::startUpdateConsoleDataThread()
         }
     }
 
-   if(m_MasterConsoleType == MasterConsoleType::DessightMaster)
-   {
-        m_is422Ok = m_transmitter.return422Status();
-        if(m_is422Ok == true)
-        {
-            m_updateConsoleDataThread = std::thread(&MasterConsole::updateConsoleDataThread, this);
-            LOG(INFO) << "MasterConsole Data Update thread ID: " << m_updateConsoleDataThread.get_id();
-            m_updateConsoleDataThread.detach();
-            // SendInnerMsg(Module_Inner_E::Security, static_cast<int>(SecurityAction_E::RecvMasterSelfCheckResults), "ok");
-        }
+    if(m_MasterConsoleType == MasterConsoleType::DessightMaster)
+    {
+        LOG(INFO) << "MasterConsoleType: DessightMaster";
+        m_updateConsoleDataThread = std::thread(&MasterConsole::updateConsoleDataThread, this);
+        LOG(INFO) << "MasterConsole Data Update thread ID: " << m_updateConsoleDataThread.get_id();
+        m_updateConsoleDataThread.detach();
     }
 }
 
@@ -214,7 +210,7 @@ void MasterConsole::masterConsoleStatusCheck()
     auto masterConsoleType = m_MasterConsoleType;
     switch(static_cast<int>(masterConsoleType))
     {
-    case static_cast<int>(MasterConsoleType::DessightMaster):
+        case static_cast<int>(MasterConsoleType::DessightMaster):
         {
             bool is422Ok = m_transmitter.return422Status();
             m_isMasterConsoleOk.store(is422Ok);
@@ -302,8 +298,6 @@ void MasterConsole::dealWithMsg()
                     SendInnerMsg(Module_Inner_E::Security, static_cast<int>(SecurityAction_E::RecvMotorDriverShutDown), "Ok");
                     break;
                 }
-
-
                 default:break;
             }
             i++;

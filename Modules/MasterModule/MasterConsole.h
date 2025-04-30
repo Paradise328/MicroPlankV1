@@ -17,7 +17,6 @@ enum class MasterConsoleType
     Omega           = 0x01,
     Touch           = 0x02,
     DessightMaster  = 0x03,
-
 };
 
 class MasterConsole: public QObject
@@ -28,15 +27,19 @@ public:
     MasterConsole() = delete;
     explicit MasterConsole(MasterConsoleType masterConsoleType, MessageQueue&  messagePool):
                             m_MasterConsoleType(masterConsoleType),
-                            m_messagePool(messagePool)
+                            m_messagePool(messagePool),
+                            m_isSystemTerminated(false),
+                            m_isSystemReset(false),
+                            m_FilterCase(static_cast<int>(FilterCase::IIRFilterOn))
                             {
-                                m_FilterCase.store(static_cast<int>(FilterCase::IIRFilterOn));
+                                LOG(INFO) << "构造主手函数";
                                 connect(this, &MasterConsole::DealMsgSignal, this, &MasterConsole::dealWithMsg);//当第一个函数被触发后，就执行第二个函数
                             }
 
     void                        updateConsoleDataThread();
+
+    /*外部调用*/
     void                        startUpdateConsoleDataThread();
-    //Eigen::Matrix3d ToMasterRotationMatrix(double q_x, double q_y, double q_z);
 
     /*用于RobotControl类调用主控台中主手信息*/
     HandlePose                  returnHandlePose(){return m_handlePose_Cur.load();}//3个位置和3个姿态
@@ -44,7 +47,7 @@ public:
     /*用于Security调用主控台状态*/
     bool                        returnMasterConsoleStatus(){return m_isMasterConsoleOk.load();}
 
-    //MessageQueue relative function
+    /*消息队列*/
     void                        GetAmMsg(Message_Inner_T msg);
 
 private:
@@ -67,8 +70,8 @@ private:
     void                        masterConsoleBootSelfCheck();
 
     /*系统是否关闭，是否复位, 关闭时关闭所有线程*/
-    bool                        m_isSystemTerminated = false;
-    bool                        m_isSystemReset = false;
+    std::atomic<bool>           m_isSystemTerminated = false;
+    std::atomic<bool>           m_isSystemReset = false;
 
     mutable HandlePose          m_handlePose_Pre;
     mutable HandlePose          m_handlePose_PrePre;

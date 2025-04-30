@@ -2,25 +2,27 @@
 
 UIinterface::UIinterface(QGuiApplication &app,MessageQueue&  messagePool) :m_app(app),m_messagePool(messagePool)
 {
-     m_Engine.rootContext()->setContextProperty("qmlLanguage", &m_qmlLanguage);
-     m_Engine.rootContext()->setContextProperty("UIinterface", this);
+    m_Engine.rootContext()->setContextProperty("qmlLanguage", &m_qmlLanguage);
+    m_Engine.rootContext()->setContextProperty("UIinterface", this);
 
-     m_url = QUrl(QStringLiteral("qrc:/main.qml"));
-        QObject::connect(&m_Engine, &QQmlApplicationEngine::objectCreated,
-                         &m_app, [this](QObject *obj, const QUrl &objUrl) {
-            if (!obj && m_url == objUrl)
-                QCoreApplication::exit(-1);
-        }, Qt::QueuedConnection);
+    m_url = QUrl(QStringLiteral("qrc:/main.qml"));
+    QObject::connect(&m_Engine, &QQmlApplicationEngine::objectCreated,
+                     &m_app, [this](QObject *obj, const QUrl &objUrl) {
+        if (!obj && m_url == objUrl)
+            QCoreApplication::exit(-1);
+    }, Qt::QueuedConnection);
 
-     m_Engine.load(m_url);
+    m_Engine.load(m_url);
 
-     std::cout << "Open UI " << std::endl;
+    LOG(INFO) << "Open UI ";
 
-     setQMLComponent();
-     setConnections();
-     setInitStatus();
+    setQMLComponent();
 
-     connect(this,&UIinterface::DealMsgSignal,this,&UIinterface::dealWithMsg);
+    setConnections();
+
+    setInitStatus();
+
+    connect(this,&UIinterface::DealMsgSignal,this,&UIinterface::dealWithMsg);
 }
 
 void UIinterface::setQMLComponent()
@@ -38,7 +40,6 @@ void UIinterface::setQMLComponent()
     this->m_INIT_Text_RightFinialCheck = this->m_Engine.rootObjects().first()->findChild<QObject*>("init_txt_rightfinialcheck");
 
     this->m_INIT_Button_Reserve = this->m_Engine.rootObjects().first()->findChild<QObject*>("init_ContinuousBtn");
-
 
     this->m_PO_Text_InstrumentInstallSta_L = this->m_Engine.rootObjects().first()->findChild<QObject*>("po_txtInstrumentInstallSta_L");
     this->m_PO_Text_InstrumentInstallSta_R = this->m_Engine.rootObjects().first()->findChild<QObject*>("po_txtInstrumentInstallSta_R");

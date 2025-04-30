@@ -1,14 +1,12 @@
 #include <QCoreApplication>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDebug>
+#include <QFile>
+#include <QTextStream>
 #include <signal.h>
 #include <unistd.h>
 #include "Modules/LoggerModule/easylogging++.h"
 #include "microPlank.h"
-
-#include <QFile>
-#include <QTextStream>
-
 
 INITIALIZE_EASYLOGGINGPP
 #define ELPP_THREAD_SAFE
@@ -31,11 +29,6 @@ int main(int argc, char *argv[])
    motorDriverParameter.endJointMotorNum = 3;//大轴转动电机
    motorDriverParameter.slaveNum = 10;//EtherCAT 从站的数量
    motorDriverParameter.motorNum = 10;
-
-//    motorDriverParameter.endGimbalMotorNum = 1;
-//    motorDriverParameter.endJointMotorNum = 4;
-//    motorDriverParameter.slaveNum = 4;
-//    motorDriverParameter.motorNum = 4;
 
    //Log File Configuration
    const auto timeStamp = getCurrentTimeAsString();//时间戳生成

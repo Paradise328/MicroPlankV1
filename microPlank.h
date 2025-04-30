@@ -31,10 +31,11 @@
 #include "Modules/SecurityModule/security.h"
 #include "Modules/UIModule/UIinterface.h"
 //#include "Modules/MotorDriverModule/MotorDriver.h"
-// #include "Modules/RobotControlModule/RobotControl.h"
+#include "Modules/RobotControlModule/RobotControl.h"
 
 class MicroPlank:public QObject
 {
+
 public:
     MicroPlank() = delete;
     explicit MicroPlank(QGuiApplication &app,
@@ -42,34 +43,63 @@ public:
                         const MotorDriverParameter& motorDriverParameter):
                         m_app(app),
                         m_masterConsoleType(MasterConsoleType),
-                        m_motorDriverParameter(motorDriverParameter)
+                        m_motorDriverParameter(motorDriverParameter),
+                        m_isSystemTerminated(false)
                         {
                             connect(&m_uiInterface, &UIinterface::startWholeSystemSignal,this, &MicroPlank::startStarSystemThread);
-
-//                            initLoggerConfig();
-
-                         };
+                        }
 
     void        startStarSystemThread();
+
 public slots:
+
     void        onSendMeg(Message_Inner_T &msg);
 
 private:
 
-    QGuiApplication   &m_app;
-
-    MessageQueue      m_MsgPool = MessageQueue(nullptr);
-
-    MotorDriverParameter m_motorDriverParameter;
-
-    std::thread       m_msgThread;
-
-    void              startSystem();
-
-    std::thread       m_startSystemThread;
+    QGuiApplication     &m_app;
 
     MasterConsoleType   m_masterConsoleType;
 
+    /*整机系统开启线程*/
+    void                startSystem();
+
+    std::thread         m_startSystemThread;
+
+    std::atomic<bool>   m_isSystemTerminated;
+
+    /*开启通信模块线程*/
+    MessageQueue        m_MsgPool = MessageQueue(nullptr);
+
+    std::thread         m_msgThread;
+
+    void                startMsgThread();
+
+    void                messagePoll();
+
+    /*开启EtherCAT通讯线程*/
+    MotorDriverParameter m_motorDriverParameter;
+
+    std::thread         m_initMotorDriverThread;
+
+    void                initMotorDriver();//std::promise<bool> &promiseInitMotorDriver
+
+    void                initMotorDriverThread();//std::promise<bool> &promiseInitMotorDriver
+
+
+    /*开启主手初始化线程*/
+
+    void                startMasterConsole();
+
+    /*开启安全模块线程*/
+    void                startSecurityModule();
+
+
+    /*开启机器人控制模块线程*/
+    void                startRobotControl();
+
+
+    /*各模块定义及初始化*/
     MasterConsole       m_masterConsole = MasterConsole(m_masterConsoleType, m_MsgPool);
 
     Security            m_security = Security(m_MsgPool);
@@ -79,28 +109,6 @@ private:
     MotorDriver*        m_motorDriver = new MotorDriver(m_motorDriverParameter, m_MsgPool);//为一个指针
 
     RobotControl        m_robotControl = RobotControl(m_masterConsole, m_motorDriver, m_MsgPool);
-
-    bool                flagMsgPool = true;
-
-    std::atomic<bool>   flagRemoteControl = false;
-
-    void                startMasterConsole();
-
-    void                startSecurityModule();
-
-    std::thread         m_initMotorDriverThread;
-
-    void                initMotorDriver();//std::promise<bool> &promiseInitMotorDriver
-
-    void                initMotorDriverThread();//std::promise<bool> &promiseInitMotorDriver
-    void                startRobotControl();
-
-    void            initLoggerConfig();
-    void            startMsgThread();
-    void            messagePoll();
-    void            setRemoteControlFlag(bool startRemoteControlflag);
-
-
 };
 
 #endif // MICROPLANK_H

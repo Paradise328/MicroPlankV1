@@ -1317,10 +1317,11 @@ int MotorDriver::motorDriverInit(){
         LOG(ERROR) << "Error initializing driver! Error code: 0x" << std::hex << lRet ;
         return lRet;
     }
-//    if (CIFX_NO_ERROR != (lRet = xDriverRestartDevice(&m_hDriver, CIFX_DEV, NULL)) ){
-//        LOG(ERROR) << "Error restart cifX driver! Error code: 0x" << std::hex << lRet ;
-//        return lRet;
-//    }
+    if (CIFX_NO_ERROR != (lRet = xDriverRestartDevice(&m_hDriver, CIFX_DEV, NULL)) )
+    {
+       LOG(ERROR) << "Error restart cifX driver! Error code: 0x" << std::hex << lRet ;
+       return lRet;
+    }
 
     // open connection/handle to cifX driver
     if (CIFX_NO_ERROR != (lRet = xDriverOpen(&m_hDriver)) ){
@@ -2317,7 +2318,7 @@ void MotorDriver::displayMotorErrCode(){
 void MotorDriver::motorDriverThread(std::promise<bool> &promiseCommunication){
     auto lRet = m_selfPointer->motorDriverInit();
     if(lRet != CIFX_NO_ERROR){
-        LOG(FATAL) << "cifX driver cannot be initialized, hence, motor driver thread cannot be started.";
+        LOG(ERROR) << "cifX driver cannot be initialized, hence, motor driver thread cannot be started.";
         m_selfPointer->m_threadTerminated.store(true, std::memory_order_release);
         return;
     }

@@ -43,18 +43,18 @@ typedef enum UI_Button_e
 
 class UIinterface: public QObject
 {
-    // UI Interface array
-    //
-    // [0]setSpeedLevel--1/2/3/4/5
-    // [1]setKinematicsState--0 forwardkinematics/1 inversekinematics
-    // [2]setLockState--0 disable/1 enable
-    // [3]setStepState--0 stepforward/1 stepbackward
-    // [4]axis1SoftLimit--0 normal/1 abnormal
-    // [5]axis2SoftLimit--0 normal/1 abnormal
-    // [6]axis3SoftLimit--0 normal/1 abnormal
-    // [7]safety--0 safe/1 danger
-    // [8]conserve1
-    // [9]conserve2
+    /* UI Interface array
+        [0]setSpeedLevel--1/2/3/4/5
+        [1]setKinematicsState--0 forwardkinematics/1 inversekinematics
+        [2]setLockState--0 disable/1 enable
+        [3]setStepState--0 stepforward/1 stepbackward
+        [4]axis1SoftLimit--0 normal/1 abnormal
+        [5]axis2SoftLimit--0 normal/1 abnormal
+        [6]axis3SoftLimit--0 normal/1 abnormal
+        [7]safety--0 safe/1 danger
+        [8]conserve1
+        [9]conserve2
+    */
 
     Q_OBJECT
 

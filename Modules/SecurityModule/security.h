@@ -10,6 +10,7 @@
 #include "Modules/MsgModule/messagequeue.h"
 #include "Modules/LoggerModule/easylogging++.h"
 #include "Modules/RobotControlModule/RobotControl.h"
+// #include "Modules/UIModule/UIinterface.h"
 
 enum class _SelfCheckStepEnum
 {
@@ -49,6 +50,7 @@ class Security:public QObject
     Q_OBJECT
     friend class MasterConsole;
     friend class RobotControle;
+    // friend class UIinterface;
 
 public:
     Security(MessageQueue& messagePool);

@@ -14,7 +14,7 @@ void MicroPlank::startSystem()
 
     startMasterConsole();
 
-    // initMotorDriver();
+    initMotorDriver();
 
     std::this_thread::sleep_for(std::chrono::seconds(10));
 
@@ -25,17 +25,6 @@ void MicroPlank::startSystem()
     startSecurityModule();
 
     m_security.systemBootSelfCheck();
-}
-
-void MicroPlank::initLoggerConfig()
-{
-    //Log File Configuration
-    const auto timeStamp = getCurrentTimeAsString();
-    const auto logFileName = "../logs/app_" + timeStamp + ".log";
-    el::Configurations conf("/home/chenxinbo/Desktop/CodeRepository/MicroPlank_QTVersion/MicroPlank_QTVersion/Config/logConf.conf");  // path have to be adapted
-    conf.setGlobally(el::ConfigurationType::Filename, logFileName);
-    el::Loggers::reconfigureAllLoggers(conf);
-    LOG(INFO)<< "Successfully init Logger Config Module ";
 }
 
 void MicroPlank::startMasterConsole()
@@ -83,13 +72,13 @@ void MicroPlank::startRobotControl()
 void MicroPlank::startMsgThread()
 {
     m_msgThread = std::thread(&MicroPlank::messagePoll, this);
-    LOG(INFO)<<"Successfully start Message Thread ";
     m_msgThread.detach();
+    LOG(INFO)<<"Successfully start Message Thread ";
 }
 
 void MicroPlank::messagePoll()
 {
-    while(flagMsgPool)
+    while(!m_isSystemTerminated)
     {
          Message_Inner_T msg_t = m_MsgPool.GetMessage();
          switch (msg_t.Sender)
@@ -122,20 +111,3 @@ void MicroPlank::messagePoll()
          }
     }
 }
-
-void MicroPlank::setRemoteControlFlag(bool startRemoteControlflag)
-{
-    std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    if(startRemoteControlflag == true)
-    {
-        flagRemoteControl.store(startRemoteControlflag);
-//        std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    }
-    else if(startRemoteControlflag == false)
-    {
-        flagRemoteControl.store(startRemoteControlflag);
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
-//        m_motorDriver->
-    }
-}
-

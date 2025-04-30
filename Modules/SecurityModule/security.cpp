@@ -21,7 +21,7 @@ void Security::systemMonitor(MasterConsole& masterConsole)
     {
         auto systemModuleStatus_Prev = m_systemModuleStatus.load();
         auto masterConsoleStatus_Cur = masterConsole.returnMasterConsoleStatus();
-        LOG(INFO) << "masterConsoleStatus_Cur: " << masterConsoleStatus_Cur << "systemModuleStatus_Prev: " << systemModuleStatus_Prev;
+        LOG(INFO) << "masterConsoleStatus_Cur: " << masterConsoleStatus_Cur << "  systemModuleStatus_Prev: " << systemModuleStatus_Prev[0];
         auto masterConsoleStatus_Prev = systemModuleStatus_Prev[0];
         if(m_systemOperationMode.load() == SystemMode::BootSelfCheck)
         {
