@@ -72,3 +72,28 @@ ActCur = {type = "DINT", offset = 14}
 FollowingPosErr = {type = "DINT", offset = 18}
 ModeDisplay = {type = "SINT", offset = 22}
 DigitalInputs = {type = "UDINT", offset = 23}
+AnalogInputs = {type = "INT", offset = 27}
+
+[Kunwei_PDO]
+[Kunwei_PDO.RxPDO]
+DigitalOutputs = {type = "UDINT", offset = 0}
+[Kunwei_PDO.TxPDO]
+ForceX = {type = "DINT", offset = 0}
+ForceY = {type = "DINT", offset = 4}
+ForceZ = {type = "DINT", offset = 8}
+MomentX = {type = "DINT", offset = 12}
+MomentY = {type = "DINT", offset = 16}
+MomentZ = {type = "DINT", offset = 20}
+
+[ATI_PDO]
+[ATI_PDO.RxPDO]
+ControlCode = {type = "UDINT", offset = 0}
+[ATI_PDO.TxPDO]
+ForceX = {type = "DINT", offset = 0}
+ForceY = {type = "DINT", offset = 4}
+ForceZ = {type = "DINT", offset = 8}
+MomentX = {type = "DINT", offset = 12}
+MomentY = {type = "DINT", offset = 16}
+MomentZ = {type = "DINT", offset = 20}
+StatusCode = {type = "UDINT", offset = 24}
+SampleCounter = {type = "UDINT", offset = 28}

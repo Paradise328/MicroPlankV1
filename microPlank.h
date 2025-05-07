@@ -84,18 +84,14 @@ private:
 
     void                initMotorDriverThread();//std::promise<bool> &promiseInitMotorDriver
 
-
     /*开启主手初始化线程*/
-
     void                startMasterConsole();
 
     /*开启安全模块线程*/
     void                startSecurityModule();
 
-
     /*开启机器人控制模块线程*/
     void                startRobotControl();
-
 
     /*各模块定义及初始化*/
     MasterConsole       m_masterConsole = MasterConsole(m_masterConsoleType, m_MsgPool);

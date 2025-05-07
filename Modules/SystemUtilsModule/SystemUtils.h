@@ -405,12 +405,17 @@ enum class FilterCase
 
 struct MotorDriverParameter
 {
-    int endMotorNum; //5
-    int endJointMotorNum; //4个转动电机
-    int endGimbalMotorNum; //1云台
-    int jointMotorNum; //关节电机数量
-    int motorNum;//总电机数
-    int slaveNum;//从站个数
+    int guidingJointMotorNum;           /* number of motor to control the guiding arm */
+    int armNum ;
+    int endGimbalMotorNum ;             /* total number of motor to control end-effector gimbal */
+    int endGimbalMotorNumPerArm ;       /* number of motor to control end-effector gimbal on each arm */
+    int endJointMotorNum ;              /* total number of motor to control end-effector joint */
+    int endJointMotorNumPerArm ;        /* number of motor to control end-effector joint on each arm */
+    int endInstrumentMotorNum;          /* total number of motor to control end-effector instruments */
+    int endInstrumentMotorNumPerArm;    /* number of motor to control end-effector instruments on each arm */
+    int slaveNum;                       /* total number of ethercat slaves */
+    int motorNum;                       /* total number of ethercat controlled motors */
+    int forceSensorNumPerArm;           /* 每个臂上有几个forceSensor*/
 };
 
 enum class RobotControlMode

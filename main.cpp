@@ -12,7 +12,8 @@ INITIALIZE_EASYLOGGINGPP
 #define ELPP_THREAD_SAFE
 #define ELPP_QT_LOGGING
 
-/* To run the haptic device, need to give the permission
+/*
+  To run the haptic device, need to give the permission
   lsusb Force Dimension omega.x haptic device
   sudo chmod o+w /dev/bus/usb/001/003  (use the real port entry)
 */
@@ -23,15 +24,21 @@ int main(int argc, char *argv[])
    QGuiApplication app(argc, argv);
 
    MotorDriverParameter motorDriverParameter;
-   motorDriverParameter.jointMotorNum = 0;
-   motorDriverParameter.endMotorNum = 6;//末端电机的数量
-   motorDriverParameter.endGimbalMotorNum = 1;//云台
-   motorDriverParameter.endJointMotorNum = 3;//大轴转动电机
-   motorDriverParameter.slaveNum = 10;//EtherCAT 从站的数量
-   motorDriverParameter.motorNum = 10;
 
-   //Log File Configuration
-   const auto timeStamp = getCurrentTimeAsString();//时间戳生成
+   motorDriverParameter.guidingJointMotorNum = 3;           /* number of motor to control the arm */
+   motorDriverParameter.armNum = 2;
+   motorDriverParameter.endGimbalMotorNum = 2;              /* total number of motor to control end-effector gimbal */
+   motorDriverParameter.endGimbalMotorNumPerArm = 2;        /* number of motor to control end-effector gimbal on each arm */
+   motorDriverParameter.endJointMotorNum = 6;               /* total number of motor to control end-effector joint */
+   motorDriverParameter.endJointMotorNumPerArm = 6;         /* number of motor to control end-effector joint on each arm */
+   motorDriverParameter.endInstrumentMotorNum = 12;         /* total number of motor to control end-effector instruments */
+   motorDriverParameter.endInstrumentMotorNumPerArm = 12;   /* number of motor to control end-effector instruments on each arm */
+   motorDriverParameter.slaveNum = 23;                      /* total number of ethercat slaves*/
+   motorDriverParameter.motorNum = 23;                      /* total number of ethercat slaves*/
+   motorDriverParameter.forceSensorNumPerArm = 0;
+
+   /* Log File Configuration */
+   const auto timeStamp = getCurrentTimeAsString();
    const auto logFileName = "../logs/app_" + timeStamp + ".log";
    el::Configurations conf("/home/a/Desktop/MicroPlank_QTVersion/Config/logConf.conf");  // path have to be adapted
    conf.setGlobally(el::ConfigurationType::Filename, logFileName);
@@ -40,5 +47,5 @@ int main(int argc, char *argv[])
 
    MicroPlank MicroPlank(app, MasterConsoleType::DessightMaster, motorDriverParameter);//初始化MicroPlank，输入值为Viper，和电机信息
 
-   return app.exec();//对于Ethercat这步保证了实时控制
+   return app.exec();
 }

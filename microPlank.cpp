@@ -46,7 +46,6 @@ void MicroPlank::initMotorDriver() //std::promise<bool> &promiseInitMotorDriver
 void MicroPlank::initMotorDriverThread()//std::promise<bool> &promiseInitMotorDriver
 {
     //Start MotorDriver thread
-
     std::promise<bool> promiseCommunication;//通信是否成功
     std::future<bool> futureCommunication = promiseCommunication.get_future();//用于主线程等待并获取通信线程的初始化结果
 

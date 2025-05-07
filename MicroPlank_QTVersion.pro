@@ -132,3 +132,17 @@ else:unix: LIBS += -L$$PWD/../install_packages/force_dimension_driver/sdk-3.17.6
 
 INCLUDEPATH += $$PWD/../install_packages/force_dimension_driver/sdk-3.17.6-linux-x86_64-gcc/sdk-3.17.6/lib/release/lin-x86_64-gcc
 DEPENDPATH += $$PWD/../install_packages/force_dimension_driver/sdk-3.17.6-linux-x86_64-gcc/sdk-3.17.6/lib/release/lin-x86_64-gcc
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../install_packages/force_dimension_driver/sdk-3.17.6-linux-x86_64-gcc/sdk-3.17.6/lib/release/lin-x86_64-gcc/release/ -ldrd
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../install_packages/force_dimension_driver/sdk-3.17.6-linux-x86_64-gcc/sdk-3.17.6/lib/release/lin-x86_64-gcc/debug/ -ldrd
+else:unix: LIBS += -L$$PWD/../../install_packages/force_dimension_driver/sdk-3.17.6-linux-x86_64-gcc/sdk-3.17.6/lib/release/lin-x86_64-gcc/ -ldrd
+
+INCLUDEPATH += $$PWD/../../install_packages/force_dimension_driver/sdk-3.17.6-linux-x86_64-gcc/sdk-3.17.6/include
+DEPENDPATH += $$PWD/../../install_packages/force_dimension_driver/sdk-3.17.6-                           linux-x86_64-gcc/sdk-3.17.6/include
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../install_packages/force_dimension_driver/sdk-3.17.6-linux-x86_64-gcc/sdk-3.17.6/lib/release/lin-x86_64-gcc/release/ -ldhd
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../install_packages/force_dimension_driver/sdk-3.17.6-linux-x86_64-gcc/sdk-3.17.6/lib/release/lin-x86_64-gcc/debug/ -ldhd
+else:unix: LIBS += -L$$PWD/../../install_packages/force_dimension_driver/sdk-3.17.6-linux-x86_64-gcc/sdk-3.17.6/lib/release/lin-x86_64-gcc/ -ldhd
+
+INCLUDEPATH += $$PWD/''
+DEPENDPATH += $$PWD/''

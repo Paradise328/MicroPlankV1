@@ -93,7 +93,7 @@ public:
                      m_ruckigInputState.max_jerk = {200000.0, 200000.0, 200000.0};//3000
 
                      // openTorqueSensor();
-                };
+                }
 
 
     // void        positionControl(const HandlePose& masterHandlePose, const std::array<int, MotorNum>& motorPosition_Cur,  const int& controlLoopCount);

@@ -83,17 +83,17 @@ constexpr int zeroErr_sizeRecvData = 26;
 constexpr int zeroErr_sizeSendData = 44;
 constexpr int moons_sizeRecvData   = 23;
 constexpr int moons_sizeSendData   = 27;
-constexpr int maxon_sizeRecvData   = 27;
+constexpr int maxon_sizeRecvData   = 29;
 constexpr int maxon_sizeSendData   = 35;
 
-constexpr int endGimbal_sizeRecvData = 23;
-constexpr int endGimbal_sizeSendData = 27;
-constexpr int endJoint_sizeRecvData = 26;
-constexpr int endJoint_sizeSendData = 44;
-constexpr int joint_sizeRecvData = 26;//从电机获得
-constexpr int joint_sizeSendData = 44;//发给电机
-constexpr int endMotor_sizeRecvData = 27;
-constexpr int endMotor_sizeSendData = 35;
+constexpr int endGimbalMotor_sizeRecvData = 23;
+constexpr int endGimbalMotor_sizeSendData = 27;
+constexpr int endJointMotor_sizeRecvData = 26;
+constexpr int endJointMotor_sizeSendData = 44;
+constexpr int guidingJointMotor_sizeRecvData = 26;          /* receive from motor */
+constexpr int guidingJointMotor_sizeSendData = 44;          /* send to motor */
+constexpr int endInstrumentMotor_sizeRecvData = 29;
+constexpr int endInstrumentMotor_sizeSendData = 35;
 
 constexpr int lengthSDODataHeader  = 18;
 constexpr int timeOutOpenBus       = 10000;               // timeout value for open bus
@@ -177,7 +177,9 @@ enum class SDO_COMMAND {
 enum class MotorType {
     MOONS    = 0,
     ZERO_ERR = 1,
-    MAXON    = 2
+    MAXON    = 2,
+    KUNWEI   = 3,
+    ATI   = 4
 };
 
 /*Define the operation mode of servo.
@@ -233,17 +235,25 @@ public:
     explicit MotorDriver(const MotorDriverParameter& t_motorDriverParameter, MessageQueue&  messagePool):
         m_motorDriverparameter(t_motorDriverParameter),
         m_messagePool(messagePool),
-        m_endMotorNum(t_motorDriverParameter.endMotorNum),
-        m_endGimbalMotorNum(t_motorDriverParameter.endGimbalMotorNum),
-        m_endJointMotorNum(t_motorDriverParameter.endJointMotorNum),
-        m_jointMotorNum(t_motorDriverParameter.jointMotorNum),
-        m_slaveNum(t_motorDriverParameter.slaveNum),
-        m_motorNum(t_motorDriverParameter.motorNum),
         m_threadTerminated(false),
-        m_isMotorDriverOk(false)
+        m_isMotorDriverOk(false),
+        m_endInstrumentMotorNum(t_motorDriverParameter.endInstrumentMotorNum),
+        m_endInstrumentMotorNumPerArm(t_motorDriverParameter.endInstrumentMotorNumPerArm),
+        m_endJointMotorNum(t_motorDriverParameter.endJointMotorNum),
+        m_endJointMotorNumPerArm(t_motorDriverParameter.endJointMotorNumPerArm),
+        m_endGimbalMotorNum(t_motorDriverParameter.endGimbalMotorNum),
+        m_endGimbalMotorNumPerArm(t_motorDriverParameter.endGimbalMotorNumPerArm),
+        m_guidingJointMotorNum(t_motorDriverParameter.guidingJointMotorNum),
+        m_forceSensorNumPerArm(t_motorDriverParameter.forceSensorNumPerArm),
+        m_motorNum(t_motorDriverParameter.motorNum),
+        m_slaveNum(t_motorDriverParameter.slaveNum)
         {
+
+            LOG(INFO) << "Start motorDriver construction! ";
+
             loadPDOMapping();
             m_init.init_options = CIFX_DRIVER_INIT_AUTOSCAN;
+
             m_init.iCardNumber = 0;
             m_init.fEnableCardLocking = 0;
             m_init.base_dir = NULL;
@@ -253,14 +263,28 @@ public:
             m_init.user_card_cnt = 0;
             m_init.user_cards = NULL;
 
-            m_abSendDataByteNum = m_jointMotorNum * joint_sizeSendData + m_endGimbalMotorNum * endGimbal_sizeSendData +
-                                  m_endJointMotorNum * endJoint_sizeSendData + m_endMotorNum * endMotor_sizeSendData;
-            m_abSendDataByteNum = m_jointMotorNum * joint_sizeRecvData + m_endGimbalMotorNum * endGimbal_sizeRecvData +
-                                  m_endJointMotorNum * endJoint_sizeRecvData + m_endMotorNum * endMotor_sizeRecvData;
+            m_abSendDataByteNum = m_motorDriverparameter.guidingJointMotorNum * guidingJointMotor_sizeSendData +
+                                  (m_motorDriverparameter.endJointMotorNumPerArm * endJointMotor_sizeSendData +
+                                   m_motorDriverparameter.endGimbalMotorNumPerArm * endGimbalMotor_sizeSendData +
+                                   m_motorDriverparameter.endInstrumentMotorNumPerArm * endInstrumentMotor_sizeSendData
+                                   ) * m_motorDriverparameter.armNum;
+            m_abRecvDataByteNum = m_motorDriverparameter.guidingJointMotorNum * guidingJointMotor_sizeRecvData +
+                                  (m_motorDriverparameter.endJointMotorNumPerArm * endJointMotor_sizeRecvData +
+                                   m_motorDriverparameter.endGimbalMotorNumPerArm * endGimbalMotor_sizeRecvData +
+                                   m_motorDriverparameter.endInstrumentMotorNumPerArm * endInstrumentMotor_sizeRecvData
+                                   ) * m_motorDriverparameter.armNum;
 
+            LOG(INFO) << "m_abSendDataByteNum: " << m_abSendDataByteNum;
+            LOG(INFO) << "m_abRecvDataByteNum: " << m_abRecvDataByteNum;
+
+            m_abRecvDataGuiding = m_motorDriverparameter.guidingJointMotorNum * guidingJointMotor_sizeRecvData;
+            m_abSendDataGuiding = m_motorDriverparameter.guidingJointMotorNum * guidingJointMotor_sizeSendData;
 
             m_jointEnabled = new bool[t_motorDriverParameter.motorNum];
-            for(int i = 0; i < t_motorDriverParameter.motorNum; i++){m_jointEnabled[i] = false;}
+            for(int i = 0; i < t_motorDriverParameter.motorNum; i++){
+                m_jointEnabled[i] = false;
+            }
+
             connect(this, &MotorDriver::DealMsgSignal, this, &MotorDriver::dealWithMsg);
         }
 
@@ -269,44 +293,44 @@ public:
     void loadPDOMapping();
     void initMyData();
     void dumpPacket(CIFX_PACKET* ptPacket);  
-    void dumpData(unsigned char* data, unsigned long dataLength);  
+    void dumpData(unsigned char* data, unsigned long dataLength);
 
-    // parse information from unsigned char array m_abRecvData, which belongs to TxPDO
-    uint16_t getErrorCode(const MotorType& type, const int& index);
-    uint16_t getStatusWord(const MotorType& type, const int& index);
-    int16_t getOperationMode(const MotorType& type, const int& index);
-    int32_t getActualPos(const MotorType& motorType, const int& index);
-    int32_t getActualVel(const MotorType& type, const int& index);
-    int16_t getActualTrq(const MotorType& type, const int& index);
-    int16_t getActualCur(const MotorType& type, const int& index);
-    std::array<int, 8> getDigitalInputs(const MotorType& type, const int& index);
-    int32_t getFollowingPosErr(const MotorType& type, const int& index);
+    /* parse information from unsigned char array m_abRecvData, which belongs to TxPDO */
+    uint16_t getErrorCode(const MotorType& type, const int& index, const int& armNum = 0);
+    uint16_t getStatusWord(const MotorType& type, const int& index, const int& armNum = 0);
+    int16_t getOperationMode(const MotorType& type, const int& index, const int& armNum = 0);
+    int32_t getActualPos(const MotorType& motorType, const int& index, const int& armNum = 0);
+    int32_t getActualVel(const MotorType& type, const int& index, const int& armNum = 0);
+    int16_t getActualTrq(const MotorType& type, const int& index, const int& armNum = 0);
+    int16_t getActualCur(const MotorType& type, const int& index, const int& armNum = 0);
+    std::array<int, 8> getDigitalInputs(const MotorType& type, const int& index, const int& armNum = 0);
+    int32_t getFollowingPosErr(const MotorType& type, const int& index, const int& armNum = 0);
 
-    //write data to m_abSendData, which belongs to RxPDO, return 1 if succeed, else return 0
-    int setControlWord(const MotorType& type, const int& index, const ControlCommand& cmd);
-    int setOperationMode(const MotorType& type, const int& index, const OperationMode& mode);
-    int setTargetPos(const MotorType& type, const int& index, const int32_t& targetPos);
-    int setTargetVel(const MotorType& type, const int& index, const int32_t& targetVel);
-    int setTargetTrq(const MotorType& type, const int& index, const int16_t& targetTrq);
-    int setVelOffset(const MotorType& type, const int& index, const int32_t& velOffset);
-    int setTrqOffset(const MotorType& type, const int& index, const int16_t& trqOffset);
-    int setDigitalOutputs(const MotorType& type, const int& index, const uint32_t& digitalOutputs);
-    int setProfileVel(const MotorType& type, const int& index, const uint32_t& profileVel);
-    int setProfileAcc(const MotorType& type, const int& index, const uint32_t& profileAcc);
-    int setProfileDec(const MotorType& type, const int& index, const uint32_t& profileDec);
-    int setMaxProfileVel(const MotorType& type, const int& index, const uint32_t& maxProfileVel);
-    int setTrqPosLimit(const MotorType& type, const int& index, const uint16_t& trqPosLimit);
-    int setTrqNegLimit(const MotorType& type, const int& index, const uint16_t& trqNegLimit);
+    /* write data to m_abSendData, which belongs to RxPDO, return 1 if succeed, else return 0 */
+    int setControlWord(const MotorType& type, const int& index, const ControlCommand& cmd, const int& armNum = 0);
+    int setOperationMode(const MotorType& type, const int& index, const OperationMode& mode, const int& armNum = 0);
+    int setTargetPos(const MotorType& type, const int& index, const int32_t& targetPos, const int& armNum = 0);
+    int setTargetVel(const MotorType& type, const int& index, const int32_t& targetVel, const int& armNum = 0);
+    int setTargetTrq(const MotorType& type, const int& index, const int16_t& targetTrq, const int& armNum = 0);
+    int setVelOffset(const MotorType& type, const int& index, const int32_t& velOffset, const int& armNum = 0);
+    int setTrqOffset(const MotorType& type, const int& index, const int16_t& trqOffset, const int& armNum = 0);
+    int setDigitalOutputs(const MotorType& type, const int& index, const uint32_t& digitalOutputs, const int& armNum = 0);
+    int setProfileVel(const MotorType& type, const int& index, const uint32_t& profileVel, const int& armNum = 0);
+    int setProfileAcc(const MotorType& type, const int& index, const uint32_t& profileAcc, const int& armNum = 0);
+    int setProfileDec(const MotorType& type, const int& index, const uint32_t& profileDec, const int& armNum = 0);
+    int setMaxProfileVel(const MotorType& type, const int& index, const uint32_t& maxProfileVel, const int& armNum = 0);
+    int setTrqPosLimit(const MotorType& type, const int& index, const uint16_t& trqPosLimit, const int& armNum = 0);
+    int setTrqNegLimit(const MotorType& type, const int& index, const uint16_t& trqNegLimit, const int& armNum = 0);
 
-    int setHomeMethod(const MotorType& type, const int& index, const int& homeMethod);
-    int setHomeAcc(const MotorType& type, const int& index, const int32_t& homeAcc);
-    int setHomeOffset(const MotorType& type, const int& index, const int32_t& homeOffset);
-    int setHomeVel(const MotorType& type, const int& index, const int32_t& homeVel);
-    int setInterpolationTime(const MotorType& type, const int& index, const int& interpolationTime);
-    int setBias(const int& controlWord);
+    int setHomeMethod(const MotorType& type, const int& index, const int& homeMethod, const int& armNum = 0);
+    int setHomeAcc(const MotorType& type, const int& index, const int32_t& homeAcc, const int& armNum = 0);
+    int setHomeOffset(const MotorType& type, const int& index, const int32_t& homeOffset, const int& armNum = 0);
+    int setHomeVel(const MotorType& type, const int& index, const int32_t& homeVel, const int& armNum = 0);
+    int setInterpolationTime(const MotorType& type, const int& index, const int& interpolationTime, const int& armNum = 0);
+    int setBias(const int& controlWord, const int& armNum = 0);
 
-    //write SDO data, write specific value to a specific object index
-    /*Format of the packet for SDO writing, Packet head information, refer to the definition of CIFX_PACKET*/
+    /* write SDO data, write specific value to a specific object index */
+    /* Format of the packet for SDO writing, Packet head information, refer to the definition of CIFX_PACKET */
     int setBrake(const int& jointIndex, const SDO_COMMAND& sdoCmd);
     int setMaxVelErr(const MotorType& type, const int& jointIndex, const SDO_COMMAND& sdoCmd);
     int setMaxPosErr(const MotorType& type, const int& jointIndex, const SDO_COMMAND& sdoCmd);
@@ -316,7 +340,7 @@ public:
     void motorLockOpen(const MotorType& type, const int& index, const MotorServoObjectIndex& sdo_index);
     void motorLockClosed(const MotorType& type, const int& index, const MotorServoObjectIndex& sdo_index);
 
-    // set and get master state and slave state.
+    /* set and get master state and slave state. */
     int setECatMasterState(const MasterState& targetState);
     int getECatMasterState();
     int setECatSlaveState(const SlaveState& targetState, const int& slaveIdx);
@@ -328,7 +352,7 @@ public:
     int closeBusConnection();
     int cyclicDataTransfer();
 
-    //Different Modes, CSP/CSV/CST, change of modes are only possible in enabled still state.
+    /* Different Modes, CSP/CSV/CST, change of modes are only possible in enabled still state. */
     void enableMotor(const MotorType& type, const int& index);  // before starting motor/after release brake
     void enableMotor_PP(const MotorType& type, const int& index);
     void enableMotor_Homing(const MotorType &type, const int &index);
@@ -352,7 +376,7 @@ public:
 
     bool returnMotorDriverStatus(){return m_isMotorDriverOk.load();}
 
-    //MessageQueue relative function
+    /* MessageQueue relative function */
     void GetAmMsg(Message_Inner_T msg);
 
 private:
@@ -361,21 +385,31 @@ private:
     CIFX_PACKET m_tRecvPkt = {{0}};
     int           m_abSendDataByteNum;
     int           m_abRecvDataByteNum;
-    unsigned char m_abSendData[369] = {0}; //203
-    unsigned char m_abRecvData[263] = {0}; //127
+    unsigned char m_abSendData[870] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON */
+    unsigned char m_abRecvData[628] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON */
     std::string m_mappingPath = "/home/a/Desktop/MicroPlank_QTVersion/Config/PDO_mapping.toml";
-    PDOConfig m_config[3] = {};
+    PDOConfig m_config[5] = {};
     struct CIFX_LINUX_INIT m_init;
     CIFXHANDLE m_hDriver = NULL;
     CIFXHANDLE m_hChannel = NULL;
     
-    MotorDriverParameter m_motorDriverparameter; 
-    int m_endMotorNum;
+    MotorDriverParameter m_motorDriverparameter;
+
+    int m_endInstrumentMotorNum;
+    int m_endInstrumentMotorNumPerArm;
     int m_endJointMotorNum;
+    int m_endJointMotorNumPerArm;
     int m_endGimbalMotorNum;
-    int m_jointMotorNum;
+    int m_endGimbalMotorNumPerArm;
+    int m_guidingJointMotorNum;
+    int m_forceSensorNum;
+    int m_forceSensorNumPerArm;
     int m_motorNum;
     int m_slaveNum;
+    int m_abRecvDataPerArm;
+    int m_abSendDataPerArm;
+    int m_abRecvDataGuiding;
+    int m_abSendDataGuiding;
 
     static MotorDriver *m_selfPointer;
     bool m_flagSDO;
