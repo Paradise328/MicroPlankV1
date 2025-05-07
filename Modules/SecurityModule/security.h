@@ -7,6 +7,7 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <vector>
 #include "Modules/MsgModule/messagequeue.h"
 #include "Modules/LoggerModule/easylogging++.h"
 #include "Modules/RobotControlModule/RobotControl.h"
@@ -61,8 +62,18 @@ public:
     void        GetAmMsg(Message_Inner_T msg);
     void        setSelfCheckStep(SelfCheckStepEnum selfcheckstep);
 
+    template<typename T>
+    void addModule(T& module) {
+        module.emplace_back(module.name(), [&module]() {
+            return module.selfCheck();
+        });
+    }
+
+    /*外部开启开机自检模块*/
+    void        performSystemCheck(MasterConsole& masterConsole, RobotControl& robotControl);
+
     /*外部开启系统监控线程*/
-    void        startSystemMonitor(MasterConsole& masterConsole);
+    void        startSystemMonitor(MasterConsole& masterConsole,  MotorDriver* motorDriver);
 
 private:
     std::atomic<SelfCheckStepEnum> selfCheckStep;
@@ -78,8 +89,8 @@ private:
     /*监控所有模块运行状态*/
     bool            m_flagIsSystemTerminated = false;
     std::thread     m_systemMonitorThread;
-    void            systemMonitor(MasterConsole& masterConsole);
-    std::atomic<std::array<bool, SystemModuleNum>> m_systemModuleStatus;
+    void            systemMonitor(MasterConsole& masterConsole, MotorDriver* motorDriver);
+    std::atomic<std::array<bool, SystemModuleNum>> m_systemModuleStatus; /*[MasterConsole, MotorDriver]*/
     void            setModuleStatus(const bool& masterConsoleStatus, const bool& robotControlStatus, const bool& liftingArmStatus);
 
     /*设置系统当前状态*/

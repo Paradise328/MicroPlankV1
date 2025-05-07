@@ -26,6 +26,7 @@ ActCur = {type = "INT", offset = 15}
 DigitalInputs = {type = "UDINT", offset = 17}
 FollowingPosErr = {type = "DINT", offset = 21}
 DummyByte = {type = "USINT", offset = 25}
+
 [MOONS_PDO]
 [MOONS_PDO.RxPDO]
 ControlWord = {type = "UINT", offset = 0}

@@ -9,26 +9,49 @@ Security::Security(MessageQueue& messagePool):m_messagePool(messagePool)
     connect(this, &Security::DealMsgSignal, this, &Security::dealWithMsg);
 }
 
-void Security::startSystemMonitor(MasterConsole& masterConsole)
+void Security::startSystemMonitor(MasterConsole& masterConsole, MotorDriver* motorDriver)
 {
-    m_systemMonitorThread = std::thread(&Security::systemMonitor, this, std::ref(masterConsole));
-    m_systemMonitorThread.detach();
+    try {
+        m_systemMonitorThread = std::thread(&Security::systemMonitor, this, std::ref(masterConsole), motorDriver);
+        m_systemMonitorThread.detach();
+    } catch (const std::exception& e) {
+        LOG(ERROR) << "Failed to start system monitor thread: " << e.what() << std::endl;
+    }
 }
 
-void Security::systemMonitor(MasterConsole& masterConsole)
+void Security::performSystemCheck(MasterConsole& masterConsole, RobotControl& robotControl)
+{
+
+}
+
+void Security::systemMonitor(MasterConsole& masterConsole, MotorDriver* motorDriver)
 {
     while(!m_flagIsSystemTerminated)
     {
         auto systemModuleStatus_Prev = m_systemModuleStatus.load();
         auto masterConsoleStatus_Cur = masterConsole.returnMasterConsoleStatus();
-        LOG(INFO) << "masterConsoleStatus_Cur: " << masterConsoleStatus_Cur << "  systemModuleStatus_Prev: " << systemModuleStatus_Prev[0];
+        auto etherCATCommunicationStatus_Cur = motorDriver->returnMotorDriverStatus();
+
         auto masterConsoleStatus_Prev = systemModuleStatus_Prev[0];
+        auto etherCATCommunicationStatus_Prev = systemModuleStatus_Prev[1];
+        LOG(INFO) << "masterConsoleStatus_Cur: " << masterConsoleStatus_Cur << "  systemModuleStatus_Prev: " << systemModuleStatus_Prev[0];
+
         if(m_systemOperationMode.load() == SystemMode::BootSelfCheck)
         {
             if(masterConsoleStatus_Prev == false && masterConsoleStatus_Cur == true)
             {
                 LOG(INFO) << "Master Console Successfully Connected! ";
                 SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvBootSelfCheckStatus),"Master:Ok");
+            }
+            if(etherCATCommunicationStatus_Prev == false && etherCATCommunicationStatus_Cur == true)
+            {
+                LOG(INFO) << "Master Console Successfully Connected! ";
+                SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvBootSelfCheckStatus),"EtherCAT:Ok");
+            }
+            if(masterConsoleStatus_Cur == true && etherCATCommunicationStatus_Cur == true)
+            {
+                LOG(INFO) << "All Modules Successfully Connected! ";
+                SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvBootSelfCheckStatus),"All:Ok");
             }
         }
         else
@@ -176,6 +199,8 @@ void Security::systemBootSelfCheck()
     });
     systemBootSelfCheckThread.detach();
 }
+
+
 
 void Security::SendInnerMsg(Module_Inner_E recever, int Action, QString arg)
 {

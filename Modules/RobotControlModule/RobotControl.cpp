@@ -1842,22 +1842,31 @@ void RobotControl::onTorqueSensorDataIn()
                     if(Crctemp==(crchigh*256+crclow))
                     {
 
-                        qDebug()<<"CRC OK";
+                      // qDebug()<<"CRC OK";
                         uint8_t errorcode=datatemp.at(2);
-                        // if(errorcode==0){
-                        //         TorqueSensorData
+                        TorqueSensorData torqueSensorData_Left_Temp;
+                        torqueSensorData_Left_Temp.ErrorCode=errorcode;
+                        if(errorcode==0x00)
+                        {
+                            torqueSensorData_Left_Temp.TorqueValueSensor1=covertQbytearrayToFloat(m_Data_Torque_Sensor_Serial_Receved,3);
+                            torqueSensorData_Left_Temp.TorqueValueSensor2=covertQbytearrayToFloat(m_Data_Torque_Sensor_Serial_Receved,7);
+                            torqueSensorData_Left_Temp.TorqueValueSensor3=covertQbytearrayToFloat(m_Data_Torque_Sensor_Serial_Receved,11);
+                            torqueSensorData_Left_Temp.TorqueValueSensor4=covertQbytearrayToFloat(m_Data_Torque_Sensor_Serial_Receved,15);
+                        }
+                        else
+                        {
+                            torqueSensorData_Left_Temp.TorqueValueSensor1=0;
+                            torqueSensorData_Left_Temp.TorqueValueSensor2=0;
+                            torqueSensorData_Left_Temp.TorqueValueSensor3=0;
+                            torqueSensorData_Left_Temp.TorqueValueSensor4=0;
+                        }
+                        m_torqueSensorData_Left.store(torqueSensorData_Left_Temp);
 
-                        // }
-
-
-                        // qDebug()<<"Crctemp="<<Crctemp;
-                        // qDebug()<<"crclow="<<crclow;
-                        // qDebug()<<"crchigh="<<crchigh;
                     }
 
                     //readHandleOtherData(datatemp);
                 }
-                m_Data_Torque_Sensor_Serial_Receved.remove(0,86);
+                m_Data_Torque_Sensor_Serial_Receved.remove(0,23);
                 len=this->m_Data_Torque_Sensor_Serial_Receved.length();
             }
         }

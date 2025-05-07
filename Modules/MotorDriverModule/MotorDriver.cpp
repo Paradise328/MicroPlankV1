@@ -2323,7 +2323,6 @@ void MotorDriver::motorDriverThread(std::promise<bool> &promiseCommunication){
         return;
     }
 
-    bool loopStarted = false;
     while(!m_selfPointer->m_threadTerminated){
 
         if(m_selfPointer->checkECatStationState() != T_NOERROR){
@@ -2336,6 +2335,7 @@ void MotorDriver::motorDriverThread(std::promise<bool> &promiseCommunication){
             std::lock_guard<std::mutex> lock(m_selfPointer->m_myMutex);
             if (T_NOERROR != (lRet = m_selfPointer->mailboxPacketTransfer())){
                 LOG(ERROR) << "SDO service is offline, connection may be lost." ;
+                // m_isMotorDriverOk.store(false);
                 break;
             }
             m_selfPointer->m_flagSDO = false;
@@ -2344,11 +2344,8 @@ void MotorDriver::motorDriverThread(std::promise<bool> &promiseCommunication){
 
         if (T_NOERROR != (lRet = m_selfPointer->cyclicDataTransfer())){
             LOG(ERROR) << "PDO service is offline, connection may be lost." ;
+            // m_isMotorDriverOk.store(false);
             break;
-        }
-        if (!loopStarted){
-            promiseCommunication.set_value(true);
-            loopStarted = true;
         }
     }
 

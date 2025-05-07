@@ -239,7 +239,8 @@ public:
         m_jointMotorNum(t_motorDriverParameter.jointMotorNum),
         m_slaveNum(t_motorDriverParameter.slaveNum),
         m_motorNum(t_motorDriverParameter.motorNum),
-        m_threadTerminated(false)
+        m_threadTerminated(false),
+        m_isMotorDriverOk(false)
         {
             loadPDOMapping();
             m_init.init_options = CIFX_DRIVER_INIT_AUTOSCAN;
@@ -338,21 +339,21 @@ public:
     void gotoTargetPos_PPMode(const MotorType& type, const int& index, const int32_t& targetVel, const int32_t& targetPos);
     void operationHOME(const MotorType& type, const int& index);
     void motorDriverExit();
-//    void motorDriverThread(std::promise<bool> &promiseCommunication);//(std::promise<bool> &promiseCommunication)
 
     static void motorDriverThread(std::promise<bool> &promiseCommunication);//(std::promise<bool> &promiseCommunication)
     static MotorDriver* getInstance(const MotorDriverParameter motorDriverParameter, MessageQueue&  messagePool);
 
     void startThread(std::promise<bool> &promiseCommunication);//    void startThread(std::promise<bool> &promiseCommunication);
-    int checkECatStationState();
-    int checkMotorState();
+    int  checkECatStationState();
+    int  checkMotorState();
     void displayMotorErrCode();
 
     bool isMotorDriverThreadTerminated();
 
+    bool returnMotorDriverStatus(){return m_isMotorDriverOk.load();}
+
     //MessageQueue relative function
-    void    GetAmMsg(Message_Inner_T msg);
-    MotorDriverParameter    returnInfo(){return m_motorDriverparameter;}
+    void GetAmMsg(Message_Inner_T msg);
 
 private:
 
@@ -376,12 +377,12 @@ private:
     int m_motorNum;
     int m_slaveNum;
 
-
+    static MotorDriver *m_selfPointer;
     bool m_flagSDO;
     bool *m_jointEnabled = nullptr;
-    bool m_isMotorDriverOk = false;
-    static MotorDriver *m_selfPointer;
+    std::atomic<bool> m_isMotorDriverOk;
     std::atomic<bool> m_threadTerminated;
+
     std::mutex m_myMutex;
     std::thread m_etherCatThread;
 

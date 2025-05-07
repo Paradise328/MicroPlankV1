@@ -3,28 +3,27 @@
 
 void MicroPlank::startStarSystemThread()
 {
-    m_startSystemThread = std::thread(&MicroPlank::startSystem,this);
-    m_startSystemThread.detach();
+    std::thread startSystemThread = std::thread(&MicroPlank::startSystem,this);
+    startSystemThread.detach();
 }
-
 
 void MicroPlank::startSystem()
 {
     LOG(INFO) << "start system ";
 
-    startMasterConsole();
+    startMasterConsole(); /*开启主手线程，并进行对m_isMasterConsoleOk的赋值*/
 
-    initMotorDriver();
+    initMotorDriver(); /*开启MotorDriver线程*/
 
     std::this_thread::sleep_for(std::chrono::seconds(10));
 
     startMsgThread();
 
-    // startRobotControl();
+    // startRobotControl(); /*开启robotControl线程*/
 
-    startSecurityModule();
+    // m_security.performSystemCheck();
 
-    m_security.systemBootSelfCheck();
+    startSecurityModule(); /*开启security监控线程*/
 }
 
 void MicroPlank::startMasterConsole()
@@ -34,7 +33,7 @@ void MicroPlank::startMasterConsole()
 
 void MicroPlank::startSecurityModule()
 {
-    m_security.startSystemMonitor(m_masterConsole);
+    m_security.startSystemMonitor(m_masterConsole, m_motorDriver);
     LOG(INFO)<<"Successfully start Master Console Thread ";
 }
 

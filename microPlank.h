@@ -64,8 +64,6 @@ private:
     /*整机系统开启线程*/
     void                startSystem();
 
-    std::thread         m_startSystemThread;
-
     std::atomic<bool>   m_isSystemTerminated;
 
     /*开启通信模块线程*/
