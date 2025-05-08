@@ -42,6 +42,8 @@ void Security::systemMonitor(MasterConsole& masterConsole, MotorDriver* motorDri
             {
                 LOG(INFO) << "Master Console Successfully Connected! ";
                 SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvBootSelfCheckStatus),"Master:Ok");
+                SendInnerMsg(Module_Inner_E::Uiinterface,static_cast<int>(UIAction_E::RecvSystemBootSta),"Ok");
+
             }
             if(etherCATCommunicationStatus_Prev == false && etherCATCommunicationStatus_Cur == true)
             {

@@ -19,9 +19,10 @@ void MicroPlank::startSystem()
 
     startMsgThread();
 
-    // startRobotControl(); /*开启robotControl线程*/
+    startRobotControl(); /*开启robotControl线程*/
 
     // m_security.performSystemCheck();
+    m_security.systemBootSelfCheck();
 
     startSecurityModule(); /*开启security监控线程*/
 }

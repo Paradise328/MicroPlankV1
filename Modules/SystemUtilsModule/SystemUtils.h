@@ -498,8 +498,9 @@ constexpr double TimePerControlLoop = 0.01; //s
 constexpr double GimbalMotionThreshold = 0.01;
 constexpr double InstrumentMotionThreshold = 0.01;
 
-
-
+constexpr int arm_0 = 0;
+constexpr int arm_1 = 1;
+constexpr int arm_guiding = -1;
 
 enum class GraspCase
 {

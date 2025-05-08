@@ -1621,7 +1621,7 @@ int MotorDriver::setBrake(const int& jointIndex, const SDO_COMMAND& sdoCmd){
 }
 
 
-int MotorDriver::setMaxPosErr(const MotorType& type, const int& jointIndex, const SDO_COMMAND& sdoCmd){
+int MotorDriver::setMaxPosErr(const MotorType& type, const int& jointIndex, const SDO_COMMAND& sdoCmd, const int& armNum){
 
     if(type == MotorType::MOONS || type == MotorType::MAXON){
         LOG(WARNING) << "WARNING: Setting max position error is not supported for moons or maxon motor!";
@@ -1673,7 +1673,7 @@ int MotorDriver::setMaxPosErr(const MotorType& type, const int& jointIndex, cons
     return T_NOERROR;
 }
 
-int MotorDriver::setMaxVelErr(const MotorType& type, const int& jointIndex, const SDO_COMMAND& sdoCmd){
+int MotorDriver::setMaxVelErr(const MotorType& type, const int& jointIndex, const SDO_COMMAND& sdoCmd, const int& armNum){
     if(type == MotorType::MOONS || type == MotorType::MAXON){
         LOG(WARNING) << "WARNING: Setting max velocity error is not supported for moons or maxon motor!";
         return T_ERROR;
@@ -1784,11 +1784,11 @@ void MotorDriver::motorLockOpen(const MotorType& type, const int& index, const M
         setMotorLock(type, sdo_index);
         usleep(50*1000);
 
-        if(setDigitalOutputs(type, index, 0x20000) != T_NOERROR){
-            LOG(ERROR) << "Error set DigitalOutputs  error!" ;
-            return;
-        }
-        usleep(50*1000);
+        // if(setDigitalOutputs(type, index, 0x20000, armNum) != T_NOERROR){
+        //     LOG(ERROR) << "Error set DigitalOutputs  error!" ;
+        //     return;
+        // }
+        // usleep(50*1000);
 
     }else{
         LOG(ERROR) << "Error: This function is not supported for this motor type.";
@@ -1800,16 +1800,16 @@ void MotorDriver::motorLockClosed(const MotorType& type, const int& index, const
     setMotorLock(type, sdo_index);
     usleep(50*1000);
 
-    if(MotorType::MOONS == type){
-        if(setDigitalOutputs(type, index, 0) != T_NOERROR){
-            LOG(ERROR) << "Error set DigitalOutputs!" ;
-            return;
-        }
-        usleep(50*1000);
-    }
-    else{
-        LOG(ERROR) << "Error: This function is not supported for this motor type.";
-    }
+    // if(MotorType::MOONS == type){
+    //     if(setDigitalOutputs(type, index, 0) != T_NOERROR){
+    //         LOG(ERROR) << "Error set DigitalOutputs!" ;
+    //         return;
+    //     }
+    //     usleep(50*1000);
+    // }
+    // else{
+    //     LOG(ERROR) << "Error: This function is not supported for this motor type.";
+    // }
 }
 
 int MotorDriver::setECatMasterState(const MasterState& targetState){
@@ -2086,90 +2086,90 @@ int MotorDriver::cyclicDataTransfer(){
     return T_NOERROR;
 }
 
-void MotorDriver::enableMotor(const MotorType& type, const int& index){
+void MotorDriver::enableMotor(const MotorType& type, const int& index, const int& armNum){
 
     switch(type){
         case MotorType::MOONS:{
             // TODO
-            if(m_jointEnabled[m_endGimbalMotorNum + index]){
-                LOG(INFO) << "Moons Motor " << index + 1 << " is already enabled." ;
-                break;
-            }
+            // if(m_jointEnabled[m_endGimbalMotorNum + index]){
+            //     LOG(INFO) << "Moons Motor " << index + 1 << " is already enabled." ;
+            //     break;
+            // }
             LOG(INFO) << "Starting initialize Moons Motor:" << " motor " << index + 1;
-            if(setControlWord(type, index, ControlCommand::CLEAR_ERROR) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to clear error for Moons motor!" ;
                 break;
             }
             usleep(50*1000);
-            LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index, armNum);
 
-            if(setControlWord(type, index, ControlCommand::SHUT_DOWN) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::SHUT_DOWN, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to shut down Moons motor!" ;
                 break;
             }
             usleep(50*1000);
-            LOG(INFO) << "2: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "2: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum) ;
 
-            if(setControlWord(type, index, ControlCommand::SWITCH_ON) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::SWITCH_ON, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to switch on Moons motor!";
                 break;
             }
             usleep(50*1000);
-            LOG(INFO) << "3: the control word is: " << static_cast<int>(ControlCommand::SWITCH_ON) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "3: the control word is: " << static_cast<int>(ControlCommand::SWITCH_ON) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-            if(setControlWord(type, index, ControlCommand::ENABLE) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::ENABLE, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to enable Moons motor!";
                 break;
             }
             usleep(50*1000);
-            LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-            m_jointEnabled[index] = true;
+            // m_jointEnabled[index] = true;
             LOG(INFO) << "Successfully enable Moons motor " << index + 1 ;
             break;
         }
         case MotorType::ZERO_ERR:{
 
-            auto statusword = getStatusWord(type, index);
+            auto statusword = getStatusWord(type, index, armNum);
             LOG(INFO) << "current ZeroErr " << index + 1 << " status word is: " << std::hex <<statusword;
 
-            auto errCode = getErrorCode(type,index);
+            auto errCode = getErrorCode(type, index, armNum);
             LOG(INFO) << "current ZeroErr " << index + 1 << " error code is: " << std::hex <<errCode;
 
-            //TODO
-            if (m_jointEnabled[m_endGimbalMotorNum + m_endGimbalMotorNum + index]){// && (statusword == 1237 || statusword == 1637 || statusword == 5687)
-                LOG(INFO) << "ZeroErr Motor " << index + 1 << " is already enabled." ;
-                break;
-            }
-            LOG(INFO) << "Starting initialize ZeroErr Motor: " <<  " motor" << index + 1;
+            // //TODO
+            // if (m_jointEnabled[m_endGimbalMotorNum + m_endGimbalMotorNum + index]){// && (statusword == 1237 || statusword == 1637 || statusword == 5687)
+            //     LOG(INFO) << "ZeroErr Motor " << index + 1 << " is already enabled." ;
+            //     break;
+            // }
+            // LOG(INFO) << "Starting initialize ZeroErr Motor: " <<  " motor" << index + 1;
 
-            if(setControlWord(type, index, ControlCommand::CLEAR_ERROR) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to clear error for ZeroErr motor!" ;
                 break;
             }
             usleep(50*1000);
-            LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index, armNum);
 
-            if(setControlWord(type, index, ControlCommand::SHUT_DOWN) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::SHUT_DOWN, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to shut down ZeroErr motor!" ;
                 break;
             }
             usleep(50*1000);
-            LOG(INFO) << "2: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "2: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-            if(setControlWord(type, index, ControlCommand::SWITCH_ON) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::SWITCH_ON, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to switch on ZeroErr motor!";
                 break;
             }
             usleep(50*1000);
-            LOG(INFO) << "3: the control word is: " << static_cast<int>(ControlCommand::SWITCH_ON) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "3: the control word is: " << static_cast<int>(ControlCommand::SWITCH_ON) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-            if(setControlWord(type, index, ControlCommand::ENABLE) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::ENABLE, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to enable ZeroErr motor!";
                 break;
             }
             usleep(50*1000);
-            LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
             //TODO
             m_jointEnabled[m_endGimbalMotorNum + m_endJointMotorNum + index] = true;
@@ -2178,40 +2178,40 @@ void MotorDriver::enableMotor(const MotorType& type, const int& index){
         }
         case MotorType::MAXON:{
             //TODO
-            if(m_jointEnabled[m_endJointMotorNum + m_endGimbalMotorNum + m_endJointMotorNum + index]){
-                LOG(INFO) << "Maxon motor " << index + 1 << " is already enabled." ;
-                break;
-            }
+            // if(m_jointEnabled[m_endJointMotorNum + m_endGimbalMotorNum + m_endJointMotorNum + index]){
+            //     LOG(INFO) << "Maxon motor " << index + 1 << " is already enabled." ;
+            //     break;
+            // }
             LOG(INFO) << "Starting initialize Maxon Motor:" << " motor " << index + 1;
             usleep(50 * 1000);
 
-            if(setControlWord(type, index, ControlCommand::CLEAR_ERROR) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to clear error for Maxon motor!";
                 break;
             }
             usleep(50 * 1000);
-            LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index, armNum);
 
-            if (setControlWord(type, index, ControlCommand::SHUT_DOWN) != T_NOERROR){
+            if (setControlWord(type, index, ControlCommand::SHUT_DOWN, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to shut down Maxon motor!";
                 break;
             }
             usleep(50 * 1000);
-            LOG(INFO) << "2: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "2: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-            if(setControlWord(type, index, ControlCommand::SWITCH_ON) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::SWITCH_ON, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error switching on motor!";
                 return;
             }
             usleep(50*1000);
-            LOG(INFO) << "3: the control word is: " << static_cast<int>(ControlCommand::SWITCH_ON) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "3: the control word is: " << static_cast<int>(ControlCommand::SWITCH_ON) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-            if (setControlWord(type, index, ControlCommand::ENABLE) != T_NOERROR) {
+            if (setControlWord(type, index, ControlCommand::ENABLE, armNum) != T_NOERROR) {
                 LOG(ERROR) << "Error: Failed to enable max motor!";
                 break;
             }
             usleep(50*1000);
-            LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
             //TODO
             m_jointEnabled[m_endJointMotorNum + m_endGimbalMotorNum + m_endJointMotorNum + index] = true;
             LOG(INFO) << "Successfully enable Maxon motor " << index + 1 ;
@@ -2224,47 +2224,47 @@ void MotorDriver::enableMotor(const MotorType& type, const int& index){
     }
 }
 
-void MotorDriver::enableMotor_PP(const MotorType& type, const int& index){
+void MotorDriver::enableMotor_PP(const MotorType& type, const int& index, const int& armNum = 0){
 
     switch(type){
 
     case MotorType::MOONS:{
                LOG(INFO) << "Starting initialize Moons Motor:" << " motor " << index + 1;
-               if(setControlWord(type, index, ControlCommand::CLEAR_ERROR) != T_NOERROR){
+               if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
                    LOG(ERROR) << "Error: Failed to clear error for Moons motor!" ;
                    break;
                }
                usleep(50*1000);
-               LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index);
+               LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index, armNum);
 
-               if(setControlWord(type, index, ControlCommand::SHUT_DOWN) != T_NOERROR){
+               if(setControlWord(type, index, ControlCommand::SHUT_DOWN, armNum) != T_NOERROR){
                    LOG(ERROR) << "Error: Failed to shut down Moons motor!" ;
                    break;
                }
                usleep(50*1000);
-               LOG(INFO) << "2: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+               LOG(INFO) << "2: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-               if(setControlWord(type, index, ControlCommand::SWITCH_ON) != T_NOERROR){
+               if(setControlWord(type, index, ControlCommand::SWITCH_ON, armNum) != T_NOERROR){
                    LOG(ERROR) << "Error: Failed to switch on Moons motor!";
                    break;
                }
                usleep(50*1000);
-               LOG(INFO) << "3: the control word is: " << static_cast<int>(ControlCommand::SWITCH_ON) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+               LOG(INFO) << "3: the control word is: " << static_cast<int>(ControlCommand::SWITCH_ON) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-               if(setControlWord(type, index, ControlCommand::ENABLE) != T_NOERROR){
+               if(setControlWord(type, index, ControlCommand::ENABLE, armNum) != T_NOERROR){
                    LOG(ERROR) << "Error: Failed to enable Moons motor!";
                    break;
                }
                usleep(50*1000);
-               LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+               LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
 
-               if(setControlWord(type, index, ControlCommand::NEW_SET_POINT_MOONS) != T_NOERROR){
+               if(setControlWord(type, index, ControlCommand::NEW_SET_POINT_MOONS, armNum) != T_NOERROR){
                    LOG(ERROR) << "Error: Failed to Set Point relavtive of Moons motor!";
                    break;
                }
                usleep(50*1000);
-               LOG(INFO) << "5: the control word is: " << static_cast<int>(ControlCommand::NEW_SET_POINT_MOONS) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+               LOG(INFO) << "5: the control word is: " << static_cast<int>(ControlCommand::NEW_SET_POINT_MOONS) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
 
                m_jointEnabled[index] = true;
@@ -2275,33 +2275,33 @@ void MotorDriver::enableMotor_PP(const MotorType& type, const int& index){
 
             LOG(INFO) << "Starting initialize ZeroErr Motor in PP Mode: " <<  " motor" << index + 1;
 
-            if(setControlWord(type, index, ControlCommand::CLEAR_ERROR) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to clear error for ZeroErr motor!" ;
                 break;
             }
             usleep(50*1000);
-            LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index, armNum);
 
-            if(setControlWord(type, index, ControlCommand::SHUT_DOWN) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::SHUT_DOWN, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to shut down ZeroErr motor!" ;
                 break;
             }
             usleep(50*1000);
-            LOG(INFO) << "2: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "2: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-            if(setControlWord(type, index, ControlCommand::SWITCH_ON) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::SWITCH_ON, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to switch on ZeroErr motor!";
                 break;
             }
             usleep(50*1000);
-            LOG(INFO) << "3: the control word is: " << static_cast<int>(ControlCommand::SWITCH_ON) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "3: the control word is: " << static_cast<int>(ControlCommand::SWITCH_ON) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-            if(setControlWord(type, index, ControlCommand::ENABLE_PP) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::ENABLE_PP, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to enable ZeroErr motor!";
                 break;
             }
             usleep(50*1000);
-            LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE_PP) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE_PP) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
             //TODO
             m_jointEnabled[m_endGimbalMotorNum + m_endJointMotorNum + index] = true;
@@ -2310,38 +2310,38 @@ void MotorDriver::enableMotor_PP(const MotorType& type, const int& index){
         }
         case MotorType::MAXON:{
             //TODO
-            if(m_jointEnabled[m_endJointMotorNum + m_endGimbalMotorNum + m_endJointMotorNum + index]){
-                LOG(INFO) << "Maxon Motor " << index + 1 << " is already enabled." ;
-                break;
-            }
+            // if(m_jointEnabled[m_endJointMotorNum + m_endGimbalMotorNum + m_endJointMotorNum + index]){
+            //     LOG(INFO) << "Maxon Motor " << index + 1 << " is already enabled." ;
+            //     break;
+            // }
             LOG(INFO) << "Starting initialize Maxon Motor:" << " motor " << index + 1;
 
-            if(setControlWord(type, index, ControlCommand::CLEAR_ERROR) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to clear error for maxon motor!";
                 break;
             }
             usleep(50 * 1000);
-            LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index, armNum);
 
-            if (setControlWord(type, index, ControlCommand::SHUT_DOWN) != T_NOERROR){
+            if (setControlWord(type, index, ControlCommand::SHUT_DOWN, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to shut down maxon motor!";
                 break;
             }
             usleep(50 * 1000);
-            LOG(INFO) << "2: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "2: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-            if(setControlWord(type, index, ControlCommand::SWITCH_ON) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::SWITCH_ON, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error switching on motor!";
                 return;
             }
             usleep(50*1000);
 
-            if (setControlWord(type, index, ControlCommand::ENABLE) != T_NOERROR) {
+            if (setControlWord(type, index, ControlCommand::ENABLE, armNum) != T_NOERROR) {
                 LOG(ERROR) << "Error: Failed to enable max motor!";
                 break;
             }
             usleep(50*1000);
-            LOG(INFO) << "3: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "3: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
             //TODO
             m_jointEnabled[m_endJointMotorNum + m_endGimbalMotorNum + m_endJointMotorNum + index] = true;
             LOG(INFO) << "Successfully enable Maxon motor " << index + 1 ;
@@ -2354,37 +2354,37 @@ void MotorDriver::enableMotor_PP(const MotorType& type, const int& index){
     }
 }
 
-void MotorDriver::enableMotor_Homing(const MotorType &type, const int &index)
+void MotorDriver::enableMotor_Homing(const MotorType &type, const int &index, const int& armNum = 0)
 {
     switch (type) {
         case MotorType::MAXON: {
-            if(setControlWord(type, index, ControlCommand::CLEAR_ERROR) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to clear error for MAXON motor!" ;
                 break;
             }
             usleep(50 * 1000);
-            LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index, armNum);
 
-            if(setControlWord(type, index, ControlCommand::SHUT_DOWN) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::SHUT_DOWN, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to shut down Moons motor!" ;
                 break;
             }
             usleep(50 * 1000);
-            LOG(INFO) << "2: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "2: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-            if(setControlWord(type, index, ControlCommand::ENABLE) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::ENABLE, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to enable Moons motor!";
                 break;
             }
             usleep(50 * 1000);
-            LOG(INFO) << "3: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "3: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-            if(setControlWord(type, index, ControlCommand::MOTION_START_HOMING) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::MOTION_START_HOMING, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to enable Moons motor!";
                 break;
             }
             usleep(50 * 1000);
-            LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::MOTION_START_HOMING) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::MOTION_START_HOMING) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
             break;
             }
 
@@ -2396,7 +2396,7 @@ void MotorDriver::enableMotor_Homing(const MotorType &type, const int &index)
 }
 
 
-void MotorDriver::operationCSP(const MotorType& type, const int& index){
+void MotorDriver::operationCSP(const MotorType& type, const int& index, const int& armNum){
     switch(type){
         case MotorType::MOONS:{
 
@@ -2404,96 +2404,96 @@ void MotorDriver::operationCSP(const MotorType& type, const int& index){
 
             usleep(20 * 1000);
 
-            if(setProfileVel(type, index, PROFILE_VEL_MOONS_CSP) != T_NOERROR){
+            if(setProfileVel(type, index, PROFILE_VEL_MOONS_CSP, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set max profile vel for Moons motor!" ;
                 break;
             }
             usleep(20 * 1000);
 
-            if(setProfileAcc(type, index, PROFILE_ACC_MOONS_CSP) != T_NOERROR){
+            if(setProfileAcc(type, index, PROFILE_ACC_MOONS_CSP, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set profile acceleration for Moons motor!" ;
                 break;
             }
             usleep(20 * 1000);
 
-            if(setProfileDec(type, index, PROFILE_DEC_MOONS_CSP) != T_NOERROR){
+            if(setProfileDec(type, index, PROFILE_DEC_MOONS_CSP, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set profile deceleration for Moons motor!" ;
                 break;
             }
             usleep(20 * 1000);
 
-            if (setMaxPosErr(type, index, SDO_COMMAND::MAX_POS_ERR) != T_NOERROR){
+            if (setMaxPosErr(type, index, SDO_COMMAND::MAX_POS_ERR, armNum) != T_NOERROR){
                 LOG(ERROR) << " Failed to set SDO 0x6065: Max Position Error for Moons motor!" ;
                 break;
             }
             usleep(20 * 1000);
 
-            if(setOperationMode(type, index, OperationMode::CSP) != T_NOERROR){
+            if(setOperationMode(type, index, OperationMode::CSP, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set operation mode to CSP for Moons motor!" ;
                 break;
             }
 
             usleep(50*1000);
-            enableMotor(type, index);
+            enableMotor(type, index, armNum);
             break;
         }
         case MotorType::ZERO_ERR:{
 
             LOG(INFO) << "Start setting operation mode to CSP for ZeroErr." ;
 
-            const auto actualPos = getActualPos(type, index);
+            const auto actualPos = getActualPos(type, index, armNum);
             LOG(DEBUG) << "current pos encoder is: " << std::dec << actualPos;
-            if(setTargetPos(type, index, actualPos) != T_NOERROR){
+            if(setTargetPos(type, index, actualPos, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set actual pos to target pos for ZeroErr!" ;
                 break;
             }
             usleep(20 * 1000);
 
-            if(setMaxProfileVel(type, index, MAX_PROFILE_VEL) != T_NOERROR){
+            if(setMaxProfileVel(type, index, MAX_PROFILE_VEL, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set max profile vel for ZeroErr!" ;
                 break;
             }
             usleep(20 * 1000);
 
-            if(setProfileAcc(type, index, PROFILE_ACC) != T_NOERROR){
+            if(setProfileAcc(type, index, PROFILE_ACC, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set profile acceleration for ZeroErr!" ;
                 break;
             }
             usleep(20 * 1000);
 
-            if(setProfileDec(type, index, PROFILE_DEC) != T_NOERROR){
+            if(setProfileDec(type, index, PROFILE_DEC, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set profile deceleration for ZeroErr!" ;
                 break;
             }
             usleep(20 * 1000);
 
-            if (setMaxPosErr(type, index, SDO_COMMAND::MAX_POS_ERR) != T_NOERROR){
+            if (setMaxPosErr(type, index, SDO_COMMAND::MAX_POS_ERR, armNum) != T_NOERROR){
                 LOG(ERROR) << " Failed to set SDO 0x6065: Max Position Error for ZeroErr!" ;
                 break;
             }
             usleep(20 * 1000);
 
-            if(setOperationMode(type, index, OperationMode::CSP) != T_NOERROR){
+            if(setOperationMode(type, index, OperationMode::CSP, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set operation mode to CSP for ZeroErr!" ;
                 break;
             }
 
             usleep(50*1000);
-            enableMotor(type, index);
+            enableMotor(type, index, armNum);
             break;
         }
         case MotorType::MAXON:{
             LOG(INFO) << "Start setting operation mode to CSP for Maxon." ;
 
-            const auto actualPos = getActualPos(type, index);
+            const auto actualPos = getActualPos(type, index, armNum);
             LOG(DEBUG) << "current pos encoder is: " << std::dec << actualPos;
-            if(setTargetPos(type, index, actualPos) != T_NOERROR){
+            if(setTargetPos(type, index, actualPos, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set actual pos to target pos for MAXON!" ;
                 break;
             }
             usleep(20 * 1000);
 
-            if(setInterpolationTime(type, index, interpolationTime_maxonMotor) != T_NOERROR){
+            if(setInterpolationTime(type, index, interpolationTime_maxonMotor, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to set interpolation time!";
                 break;
             }
@@ -2511,12 +2511,12 @@ void MotorDriver::operationCSP(const MotorType& type, const int& index){
 //            }
 //            usleep(20 * 1000);
 
-            if(setOperationMode(type, index, OperationMode::CSP) != T_NOERROR){
+            if(setOperationMode(type, index, OperationMode::CSP, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to set operation mode to CSP for maxon motor!";
                 break;
             }
 
-            enableMotor(type, index);
+            enableMotor(type, index, armNum);
             break;
         }
         default:{
@@ -2527,66 +2527,66 @@ void MotorDriver::operationCSP(const MotorType& type, const int& index){
 
 }
 
-void MotorDriver::operationCSV(const MotorType& type, const int& index){
+void MotorDriver::operationCSV(const MotorType& type, const int& index, const int& armNum = 0){
     switch(type){
         case MotorType::MOONS:{
             LOG(INFO) << "Start setting operation mode to CSV for MOONS." ;
-            if(setOperationMode(type, index, OperationMode::CSV) != T_NOERROR){
+            if(setOperationMode(type, index, OperationMode::CSV, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set operation mode to CSV for MOONS!";
                 break;
             }
             usleep(50 * 1000);
-            if(setTargetVel(type, index, zeroVel) != T_NOERROR){
+            if(setTargetVel(type, index, zeroVel, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set current vel to 0 for MOONS!";
                 break;
             }
-            enableMotor(type, index);
+            enableMotor(type, index, armNum);
             usleep(50*1000);
             break;
         }
         case MotorType::ZERO_ERR:{
             LOG(INFO) << "Start setting operation mode to CSV for ZeroErr." ;
-            if(setOperationMode(type, index, OperationMode::CSV) != T_NOERROR){
+            if(setOperationMode(type, index, OperationMode::CSV, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set operation mode to CSV for ZeroErr!" << std::endl;
                 break;
             }
-            if(setTargetVel(type, index, zeroVel) != T_NOERROR){
+            if(setTargetVel(type, index, zeroVel, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set current vel to 0 for ZeroErr!" << std::endl;
                 break;
             }
-            if(setMaxProfileVel(type, index, MAX_PROFILE_VEL) != T_NOERROR){
+            if(setMaxProfileVel(type, index, MAX_PROFILE_VEL, armNum) != T_NOERROR){
                 LOG(ERROR)<< "Failed to set max profile vel for ZeroErr!" << std::endl;
                 return;
             }
-            if(setProfileAcc(type, index, PROFILE_ACC) != T_NOERROR){
+            if(setProfileAcc(type, index, PROFILE_ACC, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set profile acceleration for ZeroErr!" << std::endl;
                 break;
             }
-            if(setProfileDec(type, index, PROFILE_DEC) != T_NOERROR){
+            if(setProfileDec(type, index, PROFILE_DEC, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set profile deceleration for ZeroErr!" << std::endl;
                 break;
             }
-            if (setMaxVelErr(type, index, SDO_COMMAND::MAX_VEL_ERR) != T_NOERROR){
+            if (setMaxVelErr(type, index, SDO_COMMAND::MAX_VEL_ERR, armNum) != T_NOERROR){
                 LOG(ERROR) << " Failed to set SDO 0x3B60: Max Velocity Error for ZeroErr!" << std::endl;
                 break;
             }
             usleep(50*1000);
-            enableMotor(type, index);
+            enableMotor(type, index, armNum);
             break;
         }
         case MotorType::MAXON:{
             LOG(INFO) << "Start setting operation mode to CSV for Maxon." ;
 
-            if(setOperationMode(type, index, OperationMode::CSV) != T_NOERROR){
+            if(setOperationMode(type, index, OperationMode::CSV, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to set operation mode to CSV for maxon motor!";
                 break;
             }
-            if(setInterpolationTime(type, index, interpolationTime_maxonMotor) != T_NOERROR){
+            if(setInterpolationTime(type, index, interpolationTime_maxonMotor, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to set interpolation time!";
                 break;
             }
             usleep(50 * 1000);
-            enableMotor(type, index);
+            enableMotor(type, index, armNum);
             break;
         }
         default:{
@@ -2596,7 +2596,7 @@ void MotorDriver::operationCSV(const MotorType& type, const int& index){
     }
 }
 
-void MotorDriver::operationCST(const MotorType& type, const int& index){
+void MotorDriver::operationCST(const MotorType& type, const int& index, const int& armNum = 0){
 
     if(type == MotorType::MOONS){
         LOG(WARNING) << "This function is not implemented for MOONS Motor.";
@@ -2605,18 +2605,18 @@ void MotorDriver::operationCST(const MotorType& type, const int& index){
 
     LOG(INFO) << "Starting set operation mode to CST for ZeroErr";
 
-    if(setOperationMode(type, index, OperationMode::CST) != T_NOERROR){
+    if(setOperationMode(type, index, OperationMode::CST, armNum) != T_NOERROR){
         LOG(ERROR) << "Failed to set operation mode to CST for ZeroErr!" ;
         return;
     }
 
     const int16_t trq = 0;
-    if(setTargetTrq(type, index, trq) != T_NOERROR){
+    if(setTargetTrq(type, index, trq, armNum) != T_NOERROR){
         LOG(ERROR) << "Failed to set current torque to 0 for ZeroErr!" ;
         return;
     }
 
-    if(setMaxProfileVel(type, index, MAX_PROFILE_VEL) != T_NOERROR){
+    if(setMaxProfileVel(type, index, MAX_PROFILE_VEL, armNum) != T_NOERROR){
         LOG(ERROR) << "Failed to set max profile vel for ZeroErr!" ;
         return;
     }
@@ -2627,20 +2627,20 @@ void MotorDriver::operationCST(const MotorType& type, const int& index){
      * -------------------------------------------------------- */
 
     usleep(50*1000);
-    enableMotor(type, index);
+    enableMotor(type, index, armNum);
 }
 
-void MotorDriver::operationPP(const MotorType& type, const int& index){
+void MotorDriver::operationPP(const MotorType& type, const int& index, const int& armNum){
 
     switch(type){
         case MotorType::MOONS:{
-        if(setOperationMode(type, index, OperationMode::PP) != T_NOERROR){
+        if(setOperationMode(type, index, OperationMode::PP, armNum) != T_NOERROR){
             LOG(ERROR) << "Failed to set operation mode to PP for Moons!" ;
             break;
         }
         usleep(150 * 1000);
 
-        if(setProfileVel(type, index, PROFILE_VEL_MOONS) != T_NOERROR)
+        if(setProfileVel(type, index, PROFILE_VEL_MOONS, armNum) != T_NOERROR)
         {
             LOG(ERROR) << "Failed to set max profile vel for Moons!";
             std::cout << "最大速度： " << PROFILE_VEL_MOONS << std::endl;
@@ -2648,13 +2648,13 @@ void MotorDriver::operationPP(const MotorType& type, const int& index){
         }
         usleep(50 * 1000);
 
-        if(setProfileAcc(type, index, PROFILE_ACC_MOONS) != T_NOERROR){
+        if(setProfileAcc(type, index, PROFILE_ACC_MOONS, armNum) != T_NOERROR){
             LOG(ERROR) << "Failed to set profile acceleration for ZeroErr!";
             break;
         }
         usleep(50 * 1000);
 
-        if(setProfileDec(type, index, PROFILE_DEC_MOONS) != T_NOERROR){
+        if(setProfileDec(type, index, PROFILE_DEC_MOONS, armNum) != T_NOERROR){
             LOG(ERROR) << "Failed to set profile deceleration for ZeroErr!";
             break;
         }
@@ -2667,28 +2667,28 @@ void MotorDriver::operationPP(const MotorType& type, const int& index){
         case MotorType::ZERO_ERR:{
             LOG(INFO) << "Starting set operation mode to PP for ZeroErr." ;
 //            const auto actualPos = getActualPos(type, index);
-//            if(setTargetPos(type, index, actualPos) != T_NOERROR){
+//            if(setTargetPos(type, index, actualPos, armNum) != T_NOERROR){
 //                LOG(ERROR) << "Failed to set actual pos to target pos for ZeroErr!" ;
 //                break;
 //            }
 //            usleep(5 * 1000);
 
-            if(setOperationMode(type, index, OperationMode::PP) != T_NOERROR){
+            if(setOperationMode(type, index, OperationMode::PP, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set operation mode to PP for ZeroErr!" ;
                 break;
             }
             usleep(50*1000);
-            if(setMaxProfileVel(type, index, MAX_PROFILE_VEL) != T_NOERROR){
+            if(setMaxProfileVel(type, index, MAX_PROFILE_VEL, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set max profile vel for ZeroErr!";
                 break;
             }
 
-            if(setProfileAcc(type, index, PROFILE_ACC) != T_NOERROR){
+            if(setProfileAcc(type, index, PROFILE_ACC, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set profile acceleration for ZeroErr!";
                 break;
             }
 
-            if(setProfileDec(type, index, PROFILE_DEC) != T_NOERROR){
+            if(setProfileDec(type, index, PROFILE_DEC, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set profile deceleration for ZeroErr!";
                 break;
             }
@@ -2709,12 +2709,12 @@ void MotorDriver::operationPP(const MotorType& type, const int& index){
 }
 
 
-void MotorDriver::gotoTargetPos_PPMode(const MotorType& type, const int& index, const int32_t& targetVel, const int32_t& targetPos)
+void MotorDriver::gotoTargetPos_PPMode(const MotorType& type, const int& index, const int32_t& targetVel, const int32_t& targetPos, const int& armNum = 0)
 {
     switch(type){
         case MotorType::MOONS:{
             LOG(WARNING) << "PP mode is not implemented for MOONS Motor.";
-            if(setOperationMode(type, index, OperationMode::PP) != T_NOERROR){
+            if(setOperationMode(type, index, OperationMode::PP, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set operation mode to PP for Moons!" ;
                 break;
             }
@@ -2723,48 +2723,48 @@ void MotorDriver::gotoTargetPos_PPMode(const MotorType& type, const int& index, 
         case MotorType::ZERO_ERR:{
             LOG(INFO) << "Starting go to target Position in PP mode for ZeroErr " << index + 1;
 
-            auto errCode = getErrorCode(type,index);
-            if(setOperationMode(type, index, OperationMode::PP) != T_NOERROR){
+            auto errCode = getErrorCode(type,index, armNum);
+            if(setOperationMode(type, index, OperationMode::PP, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set operation mode to PP for ZeroErr!" << index + 1 ;
                 break;
             }
             usleep(100 * 1000);
             LOG(INFO) << "1: the target operation mode is: " << static_cast<int>(OperationMode::PP) <<  " "
-                      << "operation mode display: 0x" << std::hex << getOperationMode(type, index)<<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+                      << "operation mode display: 0x" << std::hex << getOperationMode(type, index, armNum)<<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-            if(setProfileVel(type, index, targetVel) != T_NOERROR){
-                LOG(ERROR) << "Failed to set actual pos to target vel for ZeroErr!"<<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index); ;
+            if(setProfileVel(type, index, targetVel, armNum) != T_NOERROR){
+                LOG(ERROR) << "Failed to set actual pos to target vel for ZeroErr!"<<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum); ;
                 break;
             }
             LOG(INFO) << "2: set Profile velocity: " << std::dec << targetVel;
 
-            if(setTargetPos(type, index, targetPos) != T_NOERROR){
+            if(setTargetPos(type, index, targetPos, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set actual pos to target pos for ZeroErr!" ;
                 break;
             }
-            LOG(INFO) << "3: set target position: " << std::dec<< targetPos<<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);;
+            LOG(INFO) << "3: set target position: " << std::dec<< targetPos<<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);;
             usleep(100 * 1000);
 
-            if(setControlWord(type, index, ControlCommand::SHUT_DOWN) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::SHUT_DOWN, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to shut down ZeroErr motor!" ;
                 break;
             }
             usleep(1000 * 1000);
-            LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-            if(setControlWord(type, index, ControlCommand::SWITCH_ON) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::SWITCH_ON, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to switch on ZeroErr motor!";
                 break;
             }
             usleep(1000 * 1000);
-            LOG(INFO) << "5: the control word is: " << static_cast<int>(ControlCommand::SWITCH_ON) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "5: the control word is: " << static_cast<int>(ControlCommand::SWITCH_ON) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-            if(setControlWord(type, index, ControlCommand::ENABLE_PP) != T_NOERROR){
+            if(setControlWord(type, index, ControlCommand::ENABLE_PP, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to enable Zero-Error motor!";
                 break;
             }
             usleep(1000 * 1000);
-            LOG(INFO) << "6: the control word is: " << std::hex << static_cast<int>(ControlCommand::ENABLE_PP) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index);
+            LOG(INFO) << "6: the control word is: " << std::hex << static_cast<int>(ControlCommand::ENABLE_PP) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
             break;
         }
@@ -2780,28 +2780,28 @@ void MotorDriver::gotoTargetPos_PPMode(const MotorType& type, const int& index, 
     }
 }
 
-void MotorDriver::operationHOME(const MotorType& type, const int& index){
+void MotorDriver::operationHOME(const MotorType& type, const int& index, const int& armNum = 0){
 
     switch (type) {
         case MotorType::MAXON:{
             LOG(INFO) << "Starting set operation mode to HOME for MAXONS";
 
-            if(setOperationMode(type, index, OperationMode::HOME) != T_NOERROR){
+            if(setOperationMode(type, index, OperationMode::HOME, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set operation mode to HomeMode for MAXONS";
                 return;
             }
             usleep(50 * 1000);
-            LOG(INFO) << "OP Mode is: 0x" << std::hex << getOperationMode(type, index);
+            LOG(INFO) << "OP Mode is: 0x" << std::hex << getOperationMode(type, index, armNum);
 
             int homeMode = 23;
-            if (setHomeMethod(type, index, homeMode) != T_NOERROR){
+            if (setHomeMethod(type, index, homeMode, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set profile HomeMethod for MAXONS!";
                 return;
             }
             usleep(50 * 1000);
 
 //            if (setHomeVel(type, index, 100) != T_NOERROR){
-            if (setHomeVel(type, index, 300) != T_NOERROR){
+            if (setHomeVel(type, index, 300, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set profile SearchZeroVel for MAXONS!";
                 return;
             }
@@ -2817,20 +2817,20 @@ void MotorDriver::operationHOME(const MotorType& type, const int& index){
         case MotorType::MOONS:{
             LOG(INFO) << "Starting set operation mode to HOME for MOONS";
 
-            if(setOperationMode(type, index, OperationMode::HOME) != T_NOERROR){
+            if(setOperationMode(type, index, OperationMode::HOME, armNum) != T_NOERROR){
                 LOG(ERROR)<< "Failed to set operation mode to HomeMode for MOONS";
                 return;
             }
 
-            LOG(INFO) << "OP Mode is: 0x" << std::hex << getOperationMode(type, index);
+            LOG(INFO) << "OP Mode is: 0x" << std::hex << getOperationMode(type, index, armNum);
 
             int homeMode = 3;
-            if (setHomeMethod(type, index, homeMode)){
+            if (setHomeMethod(type, index, homeMode, armNum)){
                 LOG(ERROR) << "Failed to set profile HomeMethod for MOONS!";
                 return;
             }
 
-            if (setHomeVel(type, index, zeroVel)){
+            if (setHomeVel(type, index, zeroVel, armNum)){
                 LOG(ERROR) << "Failed to set profile SearchZeroVel for MOONS!";
                 return;
             }
@@ -2841,7 +2841,7 @@ void MotorDriver::operationHOME(const MotorType& type, const int& index){
             // }
 
             const int32_t velOffset = 0;
-            if (setHomeOffset(type, index, velOffset)){
+            if (setHomeOffset(type, index, velOffset, armNum)){
                 LOG(ERROR) << "Failed to set profile HomingOffset!";
                 return;
             }
@@ -2915,60 +2915,71 @@ int MotorDriver::checkECatStationState(){
 int MotorDriver::checkMotorState(){
     int lRet;
 
-    if((lRet = getErrorCode(MotorType::MOONS, 0)) != 0x0){
+    if((lRet = getErrorCode(MotorType::MOONS, 0, arm_0)) != 0x0){
         LOG(ERROR) << "Error: Moons motor x-direction, error code is: 0x" << std::hex << lRet;
          return T_ERROR;
     }
-    if((lRet = getErrorCode(MotorType::ZERO_ERR, 0)) != 0x0){
+    if((lRet = getErrorCode(MotorType::ZERO_ERR, 0, arm_0)) != 0x0){
 //        LOG(ERROR) << "Error: Zero Error motor joint 1, error code is: 0x" << std::hex << lRet;
          return T_ERROR;
     }
-    if((lRet = getErrorCode(MotorType::ZERO_ERR, 1)) != 0x0){
+    if((lRet = getErrorCode(MotorType::ZERO_ERR, 1, arm_0)) != 0x0){
         LOG(ERROR) << "Error: Zero Error motor joint 2, error code is: 0x" << std::hex << lRet;
          return T_ERROR;
     }
-    if((lRet = getErrorCode(MotorType::ZERO_ERR, 2)) != 0x0){
+    if((lRet = getErrorCode(MotorType::ZERO_ERR, 2, arm_0)) != 0x0){
         LOG(ERROR) << "Error: Zero Error motor joint 3, error code is 0x: " << std::hex << lRet;
          return T_ERROR;
     }
-    if((lRet = getErrorCode(MotorType::MAXON, 0)) != 0x0){
+    if((lRet = getErrorCode(MotorType::MAXON, 0, arm_0)) != 0x0){
         LOG(ERROR) << "Error: Maxon motor joint 1, error code is: 0x" << std::hex << lRet;
          return T_ERROR;
     }
-    if((lRet = getErrorCode(MotorType::MAXON, 1)) != 0x0){
+    if((lRet = getErrorCode(MotorType::MAXON, 1, arm_0)) != 0x0){
         LOG(ERROR) << "Error: Maxon motor joint 2, error code is 0x: " << std::hex << lRet;
          return T_ERROR;
     }
-    if((lRet = getErrorCode(MotorType::MAXON, 2)) != 0x0){
+    if((lRet = getErrorCode(MotorType::MAXON, 2, arm_0)) != 0x0){
         LOG(ERROR) << "Error: Maxon motor joint 3, error code is: 0x" << std::hex << lRet;
          return T_ERROR;
     }
-    if((lRet = getErrorCode(MotorType::MAXON, 3)) != 0x0){
+    if((lRet = getErrorCode(MotorType::MAXON, 3, arm_0)) != 0x0){
         LOG(ERROR) << "Error: Maxon motor joint 4, error code is 0x: " << std::hex << lRet;
          return T_ERROR;
     }
     return T_NOERROR;
-    if((lRet = getErrorCode(MotorType::MAXON, 4)) != 0x0){
+    if((lRet = getErrorCode(MotorType::MAXON, 4, arm_0)) != 0x0){
         LOG(ERROR) << "Error: Maxon motor joint 3, error code is: 0x" << std::hex << lRet;
          return T_ERROR;
     }
-    if((lRet = getErrorCode(MotorType::MAXON, 5)) != 0x0){
+    if((lRet = getErrorCode(MotorType::MAXON, 5, arm_0)) != 0x0){
         LOG(ERROR) << "Error: Maxon motor joint 4, error code is 0x: " << std::hex << lRet;
          return T_ERROR;
     }
 }
 
 void MotorDriver::displayMotorErrCode(){
-    LOG(INFO) << "Moons motor x-direction, error code is: 0x" << std::hex << getErrorCode(MotorType::MOONS, 0);
-    LOG(INFO) << "Zero Error motor joint 1, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 0);
-    LOG(INFO) << "Zero Error motor joint 2, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 1);
-    LOG(INFO) << "Zero Error motor joint 3, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 2);
-    LOG(INFO) << "Maxon motor joint 1, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 0);
-    LOG(INFO) << "Maxon motor joint 2, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 1);
-    LOG(INFO) << "Maxon motor joint 3, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 2);
-    LOG(INFO) << "Maxon motor joint 4, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 3);
-    LOG(INFO) << "Maxon motor joint 5, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 4);
-    LOG(INFO) << "Maxon motor joint 6, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 5);
+    LOG(INFO) << "Moons motor x-direction, error code is: 0x" << std::hex << getErrorCode(MotorType::MOONS, 0, arm_0);
+    LOG(INFO) << "Zero Error motor joint 1, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 0, arm_0);
+    LOG(INFO) << "Zero Error motor joint 2, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 1, arm_0);
+    LOG(INFO) << "Zero Error motor joint 3, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 2, arm_0);
+    LOG(INFO) << "Maxon motor joint 1, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 0, arm_0);
+    LOG(INFO) << "Maxon motor joint 2, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 1, arm_0);
+    LOG(INFO) << "Maxon motor joint 3, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 2, arm_0);
+    LOG(INFO) << "Maxon motor joint 4, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 3, arm_0);
+    LOG(INFO) << "Maxon motor joint 5, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 4, arm_0);
+    LOG(INFO) << "Maxon motor joint 6, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 5, arm_0);
+
+    LOG(INFO) << "Moons motor x-direction, error code is: 0x" << std::hex << getErrorCode(MotorType::MOONS, 0, arm_1);
+    LOG(INFO) << "Zero Error motor joint 1, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 0, arm_1);
+    LOG(INFO) << "Zero Error motor joint 2, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 1, arm_1);
+    LOG(INFO) << "Zero Error motor joint 3, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 2, arm_1);
+    LOG(INFO) << "Maxon motor joint 1, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 0, arm_1);
+    LOG(INFO) << "Maxon motor joint 2, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 1, arm_1);
+    LOG(INFO) << "Maxon motor joint 3, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 2, arm_1);
+    LOG(INFO) << "Maxon motor joint 4, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 3, arm_1);
+    LOG(INFO) << "Maxon motor joint 5, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 4, arm_1);
+    LOG(INFO) << "Maxon motor joint 6, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 5, arm_1);
 
 }
 

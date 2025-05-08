@@ -296,46 +296,46 @@ public:
     void dumpData(unsigned char* data, unsigned long dataLength);
 
     /* parse information from unsigned char array m_abRecvData, which belongs to TxPDO */
-    uint16_t getErrorCode(const MotorType& type, const int& index, const int& armNum = 0);
-    uint16_t getStatusWord(const MotorType& type, const int& index, const int& armNum = 0);
-    int16_t getOperationMode(const MotorType& type, const int& index, const int& armNum = 0);
-    int32_t getActualPos(const MotorType& motorType, const int& index, const int& armNum = 0);
-    int32_t getActualVel(const MotorType& type, const int& index, const int& armNum = 0);
-    int16_t getActualTrq(const MotorType& type, const int& index, const int& armNum = 0);
-    int16_t getActualCur(const MotorType& type, const int& index, const int& armNum = 0);
-    std::array<int, 8> getDigitalInputs(const MotorType& type, const int& index, const int& armNum = 0);
-    int32_t getFollowingPosErr(const MotorType& type, const int& index, const int& armNum = 0);
+    uint16_t getErrorCode(const MotorType& type, const int& index, const int& armNum);
+    uint16_t getStatusWord(const MotorType& type, const int& index, const int& armNum);
+    int16_t getOperationMode(const MotorType& type, const int& index, const int& armNum);
+    int32_t getActualPos(const MotorType& motorType, const int& index, const int& armNum);
+    int32_t getActualVel(const MotorType& type, const int& index, const int& armNum);
+    int16_t getActualTrq(const MotorType& type, const int& index, const int& armNum);
+    int16_t getActualCur(const MotorType& type, const int& index, const int& armNum);
+    std::array<int, 8> getDigitalInputs(const MotorType& type, const int& index, const int& armNum);
+    int32_t getFollowingPosErr(const MotorType& type, const int& index, const int& armNum);
 
     /* write data to m_abSendData, which belongs to RxPDO, return 1 if succeed, else return 0 */
-    int setControlWord(const MotorType& type, const int& index, const ControlCommand& cmd, const int& armNum = 0);
-    int setOperationMode(const MotorType& type, const int& index, const OperationMode& mode, const int& armNum = 0);
-    int setTargetPos(const MotorType& type, const int& index, const int32_t& targetPos, const int& armNum = 0);
-    int setTargetVel(const MotorType& type, const int& index, const int32_t& targetVel, const int& armNum = 0);
-    int setTargetTrq(const MotorType& type, const int& index, const int16_t& targetTrq, const int& armNum = 0);
-    int setVelOffset(const MotorType& type, const int& index, const int32_t& velOffset, const int& armNum = 0);
-    int setTrqOffset(const MotorType& type, const int& index, const int16_t& trqOffset, const int& armNum = 0);
-    int setDigitalOutputs(const MotorType& type, const int& index, const uint32_t& digitalOutputs, const int& armNum = 0);
-    int setProfileVel(const MotorType& type, const int& index, const uint32_t& profileVel, const int& armNum = 0);
-    int setProfileAcc(const MotorType& type, const int& index, const uint32_t& profileAcc, const int& armNum = 0);
-    int setProfileDec(const MotorType& type, const int& index, const uint32_t& profileDec, const int& armNum = 0);
-    int setMaxProfileVel(const MotorType& type, const int& index, const uint32_t& maxProfileVel, const int& armNum = 0);
-    int setTrqPosLimit(const MotorType& type, const int& index, const uint16_t& trqPosLimit, const int& armNum = 0);
-    int setTrqNegLimit(const MotorType& type, const int& index, const uint16_t& trqNegLimit, const int& armNum = 0);
+    int setControlWord(const MotorType& type, const int& index, const ControlCommand& cmd, const int& armNum);
+    int setOperationMode(const MotorType& type, const int& index, const OperationMode& mode, const int& armNum);
+    int setTargetPos(const MotorType& type, const int& index, const int32_t& targetPos, const int& armNum);
+    int setTargetVel(const MotorType& type, const int& index, const int32_t& targetVel, const int& armNum);
+    int setTargetTrq(const MotorType& type, const int& index, const int16_t& targetTrq, const int& armNum);
+    int setVelOffset(const MotorType& type, const int& index, const int32_t& velOffset, const int& armNum);
+    int setTrqOffset(const MotorType& type, const int& index, const int16_t& trqOffset, const int& armNum);
+    int setDigitalOutputs(const MotorType& type, const int& index, const uint32_t& digitalOutputs, const int& armNum);
+    int setProfileVel(const MotorType& type, const int& index, const uint32_t& profileVel, const int& armNum);
+    int setProfileAcc(const MotorType& type, const int& index, const uint32_t& profileAcc, const int& armNum);
+    int setProfileDec(const MotorType& type, const int& index, const uint32_t& profileDec, const int& armNum);
+    int setMaxProfileVel(const MotorType& type, const int& index, const uint32_t& maxProfileVel, const int& armNum);
+    int setTrqPosLimit(const MotorType& type, const int& index, const uint16_t& trqPosLimit, const int& armNum);
+    int setTrqNegLimit(const MotorType& type, const int& index, const uint16_t& trqNegLimit, const int& armNum);
 
-    int setHomeMethod(const MotorType& type, const int& index, const int& homeMethod, const int& armNum = 0);
-    int setHomeAcc(const MotorType& type, const int& index, const int32_t& homeAcc, const int& armNum = 0);
-    int setHomeOffset(const MotorType& type, const int& index, const int32_t& homeOffset, const int& armNum = 0);
-    int setHomeVel(const MotorType& type, const int& index, const int32_t& homeVel, const int& armNum = 0);
-    int setInterpolationTime(const MotorType& type, const int& index, const int& interpolationTime, const int& armNum = 0);
+    int setHomeMethod(const MotorType& type, const int& index, const int& homeMethod, const int& armNum);
+    int setHomeAcc(const MotorType& type, const int& index, const int32_t& homeAcc, const int& armNum);
+    int setHomeOffset(const MotorType& type, const int& index, const int32_t& homeOffset, const int& armNum);
+    int setHomeVel(const MotorType& type, const int& index, const int32_t& homeVel, const int& armNum);
+    int setInterpolationTime(const MotorType& type, const int& index, const int& interpolationTime, const int& armNum);
     int setBias(const int& controlWord, const int& armNum = 0);
 
     /* write SDO data, write specific value to a specific object index */
     /* Format of the packet for SDO writing, Packet head information, refer to the definition of CIFX_PACKET */
     int setBrake(const int& jointIndex, const SDO_COMMAND& sdoCmd);
-    int setMaxVelErr(const MotorType& type, const int& jointIndex, const SDO_COMMAND& sdoCmd);
-    int setMaxPosErr(const MotorType& type, const int& jointIndex, const SDO_COMMAND& sdoCmd);
-    int readMaxVelErr(const MotorType& type, const int& jointIndex);
-    int readMaxPosErr(const MotorType& type, const int& jointIndex);
+    int setMaxVelErr(const MotorType& type, const int& jointIndex, const SDO_COMMAND& sdoCmd, const int& armNum);
+    int setMaxPosErr(const MotorType& type, const int& jointIndex, const SDO_COMMAND& sdoCmd, const int& armNum);
+    int readMaxVelErr(const MotorType& type, const int& jointIndex, const int& armNum);
+    int readMaxPosErr(const MotorType& type, const int& jointIndex, const int& armNum);
     int setMotorLock(const MotorType& type,const MotorServoObjectIndex& index);
     void motorLockOpen(const MotorType& type, const int& index, const MotorServoObjectIndex& sdo_index);
     void motorLockClosed(const MotorType& type, const int& index, const MotorServoObjectIndex& sdo_index);
@@ -353,15 +353,15 @@ public:
     int cyclicDataTransfer();
 
     /* Different Modes, CSP/CSV/CST, change of modes are only possible in enabled still state. */
-    void enableMotor(const MotorType& type, const int& index);  // before starting motor/after release brake
-    void enableMotor_PP(const MotorType& type, const int& index);
-    void enableMotor_Homing(const MotorType &type, const int &index);
-    void operationCSP(const MotorType& type, const int& index);
-    void operationCSV(const MotorType& motorType, const int& index);
-    void operationCST(const MotorType& type, const int& index);
-    void operationPP(const MotorType& type, const int& index);
-    void gotoTargetPos_PPMode(const MotorType& type, const int& index, const int32_t& targetVel, const int32_t& targetPos);
-    void operationHOME(const MotorType& type, const int& index);
+    void enableMotor(const MotorType& type, const int& index, const int& armNum);  // before starting motor/after release brake
+    void enableMotor_PP(const MotorType& type, const int& index, const int& armNum);
+    void enableMotor_Homing(const MotorType &type, const int &index, const int& armNum);
+    void operationCSP(const MotorType& type, const int& index, const int& armNum);
+    void operationCSV(const MotorType& motorType, const int& index, const int& armNum);
+    void operationCST(const MotorType& type, const int& index, const int& armNum);
+    void operationPP(const MotorType& type, const int& index, const int& armNum);
+    void gotoTargetPos_PPMode(const MotorType& type, const int& index, const int32_t& targetVel, const int32_t& targetPos, const int& armNum);
+    void operationHOME(const MotorType& type, const int& index, const int& armNum);
     void motorDriverExit();
 
     static void motorDriverThread(std::promise<bool> &promiseCommunication);//(std::promise<bool> &promiseCommunication)
@@ -387,7 +387,7 @@ private:
     int           m_abRecvDataByteNum;
     unsigned char m_abSendData[870] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON */
     unsigned char m_abRecvData[628] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON */
-    std::string m_mappingPath = "/home/a/Desktop/MicroPlank_QTVersion/Config/PDO_mapping.toml";
+    std::string m_mappingPath = "/home/a/Desktop/codes/MikroPlanckV1/Config/PDO_mapping.toml";
     PDOConfig m_config[5] = {};
     struct CIFX_LINUX_INIT m_init;
     CIFXHANDLE m_hDriver = NULL;

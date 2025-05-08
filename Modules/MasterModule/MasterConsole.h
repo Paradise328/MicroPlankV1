@@ -1,3 +1,6 @@
+#ifndef MASTERCONSOLE_H
+#define MASTERCONSOLE_H
+
 #include <eigen3/Eigen/Dense>
 #include <atomic>
 #include "Modules/LoggerModule/easylogging++.h"
@@ -101,3 +104,5 @@ signals:
    void                     DealMsgSignal();
    void                     SendMsgSignal(const Message_Inner_T msg);
 };
+
+#endif

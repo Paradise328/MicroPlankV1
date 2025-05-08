@@ -3,13 +3,11 @@
 
 #include "../MasterModule/MasterConsole.h"
 #include "../MotorDriverModule/MotorDriver.h"
-// #include "../MasterModule/MasterConsole_Lib/viper_transmitter.h"
 #include "../SystemUtilsModule/SystemUtils.h"
-#include "../PeripheralDeviceModule/CRC16.h"
-#include <QtSerialPort/qserialportglobal.h>
 #include "BlasControl/actuators_controler.h"
 #include "BlasControl/BLA_API.h"
 #include "BlasControl/communication.h"
+
 #include <boost/statechart/event.hpp>
 #include <boost/statechart/state_machine.hpp>
 #include <boost/statechart/simple_state.hpp>
@@ -30,15 +28,13 @@
 constexpr int ControlValueNum = 8;
 constexpr int MotorNum = 11;
 
-constexpr int JointOrgEncoder1_R = 325136;
-constexpr int JointOrgEncoder2_R = 121246;
-constexpr int JointOrgEncoder3_R = 303586;
-constexpr int JointOrgEncoder4_R = 238000;//没用
 constexpr int JointEncoderPerRevolution = 524288;
-
-constexpr int JointEncoderRevolution1 = 324400*2;//初始值，theta为0时的编码器值
-constexpr int JointEncoderRevolution2 = 66000*2;
-constexpr int JointEncoderRevolution3 = 360500*2;
+constexpr int JointEncoderRevolution1_R = 324400;//初始值，角度为0时的编码器值
+constexpr int JointEncoderRevolution2_R = 66000;
+constexpr int JointEncoderRevolution3_R = 360500;
+constexpr int JointEncoderRevolution1_L = 372000;//初始值，角度为0时的编码器值
+constexpr int JointEncoderRevolution2_L = 281500;
+constexpr int JointEncoderRevolution3_L = 211500;
 
 //constexpr double MaxonEncoderPerRevolution = 15955.67867;
 
@@ -49,8 +45,12 @@ constexpr int Joint1_R = 1;
 constexpr int Joint2_R = 2;
 constexpr int Joint3_R = 3;
 constexpr int Joint4_R = 4;
+constexpr int Joint1_L = 1;
+constexpr int Joint2_L = 2;
+constexpr int Joint3_L = 3;
+constexpr int Joint4_L = 4;
 
-constexpr int DOF = 3;
+constexpr int DOF = 6;
 
 constexpr int Angle_30 = 30;
 constexpr int Angle_45 = 45;
@@ -71,30 +71,36 @@ public:
     mutable int            m_EnableTagCur_L ;
     mutable int            m_EnableTagCur_R ;
 
-//    std::array<double, 11>    m_ForcepSpeedLimits = {87381, 13107, 13107, 13107, 13107, 13107, 13107, 1, 87381, 87381, 87381};//单位 位每秒，电机最大速度限制60度每秒，电缸最大速度限制8mm每秒
-//    std::array<double, 11>    m_SpeedDirection_L = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-//    std::array<double, 11>    m_kForcepPosition_L = {1456.356, 1638.4, 1638.4, 1638.4, 1638.4, 1638.4, 1638.4, 1, 1456.356, 1456.356, 1456.356};//电机1456.356位每度 电缸1683.4位每毫米
+    //    std::array<double, 11>    m_ForcepSpeedLimits = {87381, 13107, 13107, 13107, 13107, 13107, 13107, 1, 87381, 87381, 87381};//单位 位每秒，电机最大速度限制60度每秒，电缸最大速度限制8mm每秒
+    //    std::array<double, 11>    m_SpeedDirection_L = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+    //    std::array<double, 11>    m_kForcepPosition_L = {1456.356, 1638.4, 1638.4, 1638.4, 1638.4, 1638.4, 1638.4, 1, 1456.356, 1456.356, 1456.356};//电机1456.356位每度 电缸1683.4位每毫米
 
     explicit RobotControl(MasterConsole& masterConsole, MotorDriver* motorDriver, MessageQueue&  messagePool):
-                m_masterConsole(masterConsole),
-                m_motorDriver(motorDriver),
-                m_messagePool(messagePool),
-                m_ruckigPlanner(0.002)
-                {
-                     //readMyInitData();
+        m_masterConsole(masterConsole),
+        m_motorDriver(motorDriver),
+        m_messagePool(messagePool),
+        m_ruckigPlanner(0.004),
+        m_ruckigPlanner_L(0.004)
 
-                     // m_viper_Transmitter=new Viper_Transmitter();
-                     initiAllData();
+    {
+        //readMyInitData();
 
-                     connect(this, &RobotControl::DealMsgSignal, this, &RobotControl::dealWithMsg);
-                     // set ruckig params for trajectory generation
-                     m_ruckigInputState.max_velocity = {2000000.0, 2000000.0, 2000000.0};//30000
-                     m_ruckigInputState.max_acceleration = {150000.0, 150000.0, 150000.0};//6000
-                     m_ruckigInputState.max_jerk = {200000.0, 200000.0, 200000.0};//3000
+        m_viper_Transmitter=new Viper_Transmitter();
+        initiAllData();
 
-                     // openTorqueSensor();
-                }
+        connect(this, &RobotControl::DealMsgSignal, this, &RobotControl::dealWithMsg);
+        // set ruckig params for trajectory generation
+        m_ruckigInputState.max_velocity = {2000000.0, 2000000.0, 2000000.0};//30000
+        m_ruckigInputState.max_acceleration = {150000.0, 150000.0, 150000.0};//6000
+        m_ruckigInputState.max_jerk = {200000.0, 200000.0, 200000.0};//3000
 
+        m_ruckigInputState_L.max_velocity = {2000000.0, 2000000.0, 2000000.0};//30000
+        m_ruckigInputState_L.max_acceleration = {150000.0, 150000.0, 150000.0};//6000
+        m_ruckigInputState_L.max_jerk = {200000.0, 200000.0, 200000.0};//3000
+
+        openTorqueSensor();
+
+    }
 
     // void        positionControl(const HandlePose& masterHandlePose, const std::array<int, MotorNum>& motorPosition_Cur,  const int& controlLoopCount);
     std::array<std::array<int,MotorNum>,3> positionControl(const HandlePose& masterHandlePose, const std::array<int, MotorNum>& motorPosition_Cur,  const int& controlLoopCount);
@@ -115,12 +121,13 @@ signals:
 private:
 
     Actuators_Controler             AC;
+
     // GenericThread                  *m_masteronsoleType;
     // GenericThread                  *m_teleoperationThread;
 
     MotorDriver*                    m_motorDriver;
 
-    // Viper_Transmitter*             m_viper_Transmitter;
+    Viper_Transmitter*             m_viper_Transmitter;
 
     MasterConsoleType               m_masterConsoleType;
 
@@ -178,7 +185,10 @@ private:
     std::atomic<RobotControlMode>   m_curRobotControlMode = RobotControlMode::InitMode;
 
 
-    /*Robot Control Mode Switch*/
+    //Robot Control Mode Switch
+
+
+
     void                            initMotor();
 
     void                            goToHold();
@@ -197,23 +207,6 @@ private:
 
     void                            sendMotorData();
 
-    void                            openTorqueSensor();
-
-    void                            closeTorqueSensor();
-
-    void                            onTorqueSensorDataIn();
-
-    float                           covertQbytearrayToFloat(QByteArray data,int startindex);
-
-
-    QSerialPort                     *m_Torque_Sensor_Serial_422 = nullptr;
-
-    QByteArray                      m_Data_Torque_Sensor_Serial_Receved;
-
-    std::atomic<TorqueSensorData>   m_torqueSensorData_Left;
-
-    std::atomic<TorqueSensorData>   m_torqueSensorData_Right;
-
     std::atomic<bool>               m_flagInTeleoperation = false;
 
     std::atomic<bool>               m_flagInHold = false;
@@ -221,8 +214,8 @@ private:
     std::atomic<bool>               m_flagInCollabration = false;
 
     std::array<int, MotorNum>       calculateTargetPosition(const std::array<double, ControlValueNum>& controlValue_Prev, const std::array<double, ControlValueNum>& controlValue_Cur,
-                                                            const std::array<int, MotorNum>& motorPosition_Init, const std::array<int, MotorNum>& motorPosition_Cur,
-                                                            const HandlePose& masterHandlePose_Cur)const;
+                                                      const std::array<int, MotorNum>& motorPosition_Init, const std::array<int, MotorNum>& motorPosition_Cur,
+                                                      const HandlePose& masterHandlePose_Cur)const;
 
     std::array<double, 4>          calculateEndeffectorAngle(const std::array<double, 4> masterJointAngle)const;
     std::array<double, DOF>                 calculateEndEffectorPosition(const HandlePose& handlePoseCur, const std::array<int,MotorNum>& motorPos_Cur, const char& side);
@@ -236,19 +229,22 @@ private:
 
     ruckig::Trajectory<DOF>         m_ruckigPlannedTrajectory;
 
-//    ruckig::Ruckig<4>             m_ruckigPlanner;
-//    ruckig::InputParameter<4>     m_ruckigInputState;
-//    ruckig::OutputParameter<4>    m_ruckigOutputState;
-//    ruckig::Trajectory<4>         m_ruckigPlannedTrajectory;
 
+    ruckig::Ruckig<DOF>             m_ruckigPlanner_L;
+
+    ruckig::InputParameter<DOF>     m_ruckigInputState_L;
+
+    ruckig::OutputParameter<DOF>    m_ruckigOutputState_L;
+
+    ruckig::Trajectory<DOF>         m_ruckigPlannedTrajectory_L;
 
 
     //Calibration
     void                            endJointGoHome(const char& side);
-    void                            MaxonGoHome(const char& side);//yu
+    void                            MaxonGoHome(const char& side);
 
-    std::string                     m_configFilePath  = "/home/a/Desktop/MicroPlank_QTVersion/Config/EndeffectorData.toml";
-    std::string                     m_robotConfigPath = "/home/a/Desktop/MicroPlank_QTVersion/Config/RobotData.toml";
+    std::string                     m_configFilePath  = "../MicroPlank_QTVersion/Config/EndeffectorData.toml";
+    std::string                     m_robotConfigPath = "../MicroPlank_QTVersion/Config/RobotData.toml";
     mutable std::string             m_endEffectorLeft   = "CZQ_4MM_1";
     mutable std::string             m_endEffectorRight  = "CZQ_4MM_1";
 
@@ -309,7 +305,8 @@ private:
     int m_status_R;
     int m_status_L;
 
-    std::array<double, 15> m_controlValues_Prev{};
+    std::array<double, 15> m_controlValues_Prev_R{};
+    std::array<double, 15> m_controlValues_Prev_L{};
     std::array<double, 15> m_controlValues_MotorPrev{};
     std::array<int, 11> m_motorPosition_Init{};
     std::array<int, 11> m_motorPosition_Cur{};
@@ -345,17 +342,26 @@ private:
     double m_y_out;
     double m_z_out;
 
-//    int m_waitTime = 50;//适用于测试
-    int m_waitTime = 500;//适用于运行状态
+    //    int m_waitTime = 50;//适用于测试
+    int m_waitTime = 200;//适用于运行状态
 
     std::atomic<std::array<int, MotorNum>>           m_MotorPrevEncoder;
-    std::atomic<std::array<int, MotorNum>>           m_MotorCurEncoder;
-    std::atomic<std::array<int, MotorNum>>           m_MotorTargetEncoder;
-    std::atomic<std::array<int, MotorNum>>           m_MotorTargetVel;
-    std::atomic<std::array<int, 8>>                  m_MotorHomingStatus;
 
-    std::atomic<std::array<int, MotorNum>>           m_MotorCurStatusWord;
-    std::atomic<std::array<int, MotorNum>>           m_MotorInitEncoder_R;
+    std::atomic<std::array<int, MotorNum>>           m_MotorCurEncoder_L;
+    std::atomic<std::array<int, MotorNum>>           m_MotorCurEncoder_R;
+
+    std::atomic<std::array<int, MotorNum>>           m_MotorTargetEncoder_L;
+    std::atomic<std::array<int, MotorNum>>           m_MotorTargetEncoder_R;
+
+    std::atomic<std::array<int, MotorNum>>           m_MotorTargetVel_L;
+    std::atomic<std::array<int, MotorNum>>           m_MotorTargetVel_R;
+
+    std::atomic<std::array<int, 8>>                  m_MotorHomingStatus_R;
+    std::atomic<std::array<int, 8>>                  m_MotorHomingStatus_L;
+
+    std::atomic<std::array<int, MotorNum>>           m_MotorCurStatusWord_R;
+    std::atomic<std::array<int, MotorNum>>           m_MotorCurStatusWord_L;
+    //    std::atomic<std::array<int, MotorNum>>           m_MotorInitEncoder_R;
 
     mutable std::array<int, MotorNum>                m_MotorPositionPrev_L = {0};
     mutable std::array<int, MotorNum>                m_MotorPositionPrev_R = {0};
@@ -365,27 +371,51 @@ private:
     mutable std::array<double, DOF>                  m_endEffectorInitPos_R = {0};
     mutable std::array<double, DOF>                  m_endEffectorInitPos_L = {0};
 
+    double m_jointAngle1_Cur_L;
+    double m_jointAngle2_Cur_L;
+    double m_jointAngle3_Cur_L;
+
+    double m_jointAngle1_Cur_R;
+    double m_jointAngle2_Cur_R;
+    double m_jointAngle3_Cur_R;
+
+    double m_x_Init_L;
+    double m_y_Init_L;
+    double m_z_Init_L;
+
+    double m_x_Init_R;
+    double m_y_Init_R;
+    double m_z_Init_R;
+
 
     std::array<double, 15> motionMappingR(const Eigen::Matrix3d& handlePoseInit,
-                                                  const Eigen::Matrix3d& handlePosePrev,
-                                                  const Eigen::Matrix3d& handlePoseCur);
+                                          const Eigen::Matrix3d& handlePosePrev,
+                                          const Eigen::Matrix3d& handlePoseCur);
 
     Eigen::Matrix3d rotationMatrixPrev = Eigen::Matrix3d::Identity();//1111111
 
-    std::array<std::array<int,11>, 3> motorControl;
+    std::array<std::array<int,11>, 3> m_motorControl_R;
+    std::array<std::array<int,11>, 3> m_motorControl_L;
 
-    std::array<std::array<int,11>, 3> m_motorControl_save;
-    std::array<double, 15> YUmotionMappingR(          const Eigen::Matrix3d& handlePoseCur,
-                                                      const std::array<double, 3> PositionCur,
-                                                      const std::array<double, 3> PositionInit,
-                                                      const std::array<int,MotorNum>& motorPos_Init);//11111111111111111
+    std::array<std::array<int,11>, 3> m_motorControl_save_R;
+    std::array<std::array<int,11>, 3> m_motorControl_save_L;
+
+    std::array<double, 15> motionMappingR(          const Eigen::Matrix3d& handlePoseCur,
+                                          const std::array<double, 3> PositionCur,
+                                          const std::array<double, 3> PositionInit,
+                                          const std::array<int,MotorNum>& motorPos_Init);//11111111111111111
+    std::array<double, 15> motionMappingL(          const Eigen::Matrix3d& handlePoseCur,
+                                          const std::array<double, 3> PositionCur,
+                                          const std::array<double, 3> PositionInit,
+                                          const std::array<int,MotorNum>& motorPos_Init);//11111111111111111
     double cableLengths_2(double alpha) const;//11111
     double cableLengths_3(double q_2, double q_3_pre, double openAngle) const;//111111
-    std::array<std::array<int,11>, 3> forwardKinematics(const std::array<double, 15>& controlValue_Prev, const std::array<double, 15>& controlValue_Cur,
-                                                  const std::array<int, 11>& motorPosition_Init, const std::array<int, 11>& motorPosition_Cur,
-                                                  const HandlePose& handlePoseCur); //1111111111111
-   // bool isPoseRight(const HandlePose& masterHandlePose_Cur, const char side);//11111111111
-    //Prev enable case(Case 1: enable action return 0;Case 2: disable action return 1; Case 3: keep enabling return 2; Case 4: keep unabling return 3
+    std::array<std::array<int,11>, 3> forwardKinematics_R(const std::array<double, 15>& controlValue_Prev, const std::array<double, 15>& controlValue_Cur,
+                                                           const std::array<int, 11>& motorPosition_Init, const std::array<int, 11>& motorPosition_Cur,
+                                                           const HandlePose& handlePoseCur); //1111111111111
+    std::array<std::array<int,11>, 3> forwardKinematics_L(const std::array<double, 15>& controlValue_Prev, const std::array<double, 15>& controlValue_Cur,
+                                                           const std::array<int, 11>& motorPosition_Init, const std::array<int, 11>& motorPosition_Cur,
+                                                           const HandlePose& handlePoseCur); //1111111111111
     int enableCase_keepPressButton(const HandlePose& masterHandlePose_Cur, const char side);//1111111111111111111
 
     double                  calculateOverlapValue(const std::array<int, MotorNum>& motorPosition_Cur, const HandlePose& masterHandlePose_Cur,const char& side) const;
@@ -394,37 +424,66 @@ private:
 
     int                     enableCase_KeepPressPedal(const HandlePose& masterHandlePose_Cur, const char side); //KeepPress Pedal
     void                    storeCurAsPrev(const HandlePose& handlePoseCur,
-                                    const std::array<double, ControlValueNum> controlValueCur_L, const std::array<double, ControlValueNum> controlValueCur_R,
-                                    const std::array<int, MotorNum>& motorPositionCur_L, const std::array<int, MotorNum>& motorPositionCur_R,
-                                    const int&  enableTagCur_L, const int&  enableTagCur_R ) const;
+                        const std::array<double, ControlValueNum> controlValueCur_L, const std::array<double, ControlValueNum> controlValueCur_R,
+                        const std::array<int, MotorNum>& motorPositionCur_L, const std::array<int, MotorNum>& motorPositionCur_R,
+                        const int&  enableTagCur_L, const int&  enableTagCur_R ) const;
 
     bool                   isPoseRight(const HandlePose& masterHandlePose_Cur, const char side) const;
     bool                   isPoseMatch(const HandlePose& masterHandlePose_Cur, const char side) const;
-    static Eigen::Matrix3d ToMasterRotationMatrix(double q_L0, double q_L1, double q_L2, double q_L3);
 
-    double                 m_rollAngle;
-    double                 m_pitchAngle;
-    double                 m_yawAngle;
+    static Eigen::Matrix3d ToQuaternionRotationMatrix(double q_L0, double q_L1, double q_L2, double q_L3);
+    static Eigen::Matrix3d ToEulerRotationMatrix(double Azimuth, double Elevation, double Roll);
 
-    //std::array<double, 2>   m_kForcepSpeed = {5000, 200};//200为电缸倍率（主手频率240Hz）
-    std::array<double, 11>    yum_ForcepSpeedLimit = {1, 87381, 87381, 87381, 87381, 33107, 33107, 33107, 33107, 33107, 33107};//单位 位每秒，电机最大速度限制60度每秒，电缸最大速度限制8mm每秒
-    std::array<double, 11>    yum_SpeedDirection_R = {1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1};
+    double                 m_rollAngle_R;
+    double                 m_pitchAngle_R;
+    double                 m_yawAngle_R;
 
-    std::array<double, 11>    yum_kForcepPosition_R = {4000, 1456.356, 1456.356, 1456.356, 110.8, 4063.76768, 4063.76768, 4063.76768, 4063.76768, 4063.76768, 846.473};
-    std::array<double, 11>    yum_kForcepPosition_small_R = {4000, 1456.356, 1456.356, 1456.356, 110.8 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 846.473};
+    double                 m_rollAngle_L;
+    double                 m_pitchAngle_L;
+    double                 m_yawAngle_L;
 
-//Maxon电机
+    std::array<double, 11>    m_SpeedDirection_R = {1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1};
+    std::array<double, 11>    m_SpeedDirection_L = {1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1};
+
+    std::array<double, 11>    m_kForcepPosition_R = {4000, 1456.356, 1456.356, 1456.356, 110.8, 4063.76768, 4063.76768, 4063.76768, 4063.76768, 4063.76768, 846.473};
+    std::array<double, 11>    m_kForcepPosition_small_R = {4000, 1456.356, 1456.356, 1456.356, 110.8 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 846.473};
+
+    std::array<double, 11>    m_kForcepPosition_L = {4000, 1456.356, 1456.356, 1456.356, 110.8, 4063.76768, 4063.76768, 4063.76768, 4063.76768, 4063.76768, 846.473};
+    std::array<double, 11>    m_kForcepPosition_small_L = {4000, 1456.356, 1456.356, 1456.356, 110.8 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 846.473};
+
+
+    //Maxon电机
     std::array<int,6> m_maxonInit;
     //以下用于步进测试
- double test_x;
- double test_y;
- double test_z;
- double x_cur;
- double y_cur;
- double z_cur;
- double index;
+    double test_x;
+    double test_y;
+    double test_z;
+    double x_cur;
+    double y_cur;
+    double z_cur;
+    double index;
 
- int savetime;
+    int savetime;
+
+
+    //以下为扭矩传感
+    void                            openTorqueSensor();
+
+    void                            closeTorqueSensor();
+
+    void                            onTorqueSensorDataIn();
+
+    float                           covertQbytearrayToFloat(QByteArray data,int startindex);
+
+
+    QSerialPort                     *m_Torque_Sensor_Serial_422 = nullptr;
+
+    QByteArray                      m_Data_Torque_Sensor_Serial_Receved;
+
+    std::atomic<TorqueSensorData>   m_torqueSensorData_Left;
+
+    std::atomic<TorqueSensorData>   m_torqueSensorData_Right;
+
 
 };
 
