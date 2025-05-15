@@ -24,7 +24,6 @@
 #include <ruckig/ruckig.hpp>
 #include <bitset>
 
-
 constexpr int ControlValueNum = 8;
 constexpr int MotorNum = 11;
 
@@ -81,11 +80,10 @@ public:
         m_messagePool(messagePool),
         m_ruckigPlanner(0.004),
         m_ruckigPlanner_L(0.004)
-
     {
         //readMyInitData();
 
-        m_viper_Transmitter=new Viper_Transmitter();
+        // m_viper_Transmitter=new Viper_Transmitter();
         initiAllData();
 
         connect(this, &RobotControl::DealMsgSignal, this, &RobotControl::dealWithMsg);
@@ -127,7 +125,7 @@ private:
 
     MotorDriver*                    m_motorDriver;
 
-    Viper_Transmitter*             m_viper_Transmitter;
+    Viper_Transmitter*              m_viper_Transmitter;
 
     MasterConsoleType               m_masterConsoleType;
 
@@ -214,11 +212,12 @@ private:
     std::atomic<bool>               m_flagInCollabration = false;
 
     std::array<int, MotorNum>       calculateTargetPosition(const std::array<double, ControlValueNum>& controlValue_Prev, const std::array<double, ControlValueNum>& controlValue_Cur,
-                                                      const std::array<int, MotorNum>& motorPosition_Init, const std::array<int, MotorNum>& motorPosition_Cur,
-                                                      const HandlePose& masterHandlePose_Cur)const;
+                                                        const std::array<int, MotorNum>& motorPosition_Init, const std::array<int, MotorNum>& motorPosition_Cur,
+                                                        const HandlePose& masterHandlePose_Cur) const;
 
-    std::array<double, 4>          calculateEndeffectorAngle(const std::array<double, 4> masterJointAngle)const;
-    std::array<double, DOF>                 calculateEndEffectorPosition(const HandlePose& handlePoseCur, const std::array<int,MotorNum>& motorPos_Cur, const char& side);
+    std::array<double, 4>          calculateEndeffectorAngle(const std::array<double, 4> masterJointAngle) const;
+
+    std::array<double, DOF>        calculateEndEffectorPosition(const HandlePose& handlePoseCur, const std::array<int,MotorNum>& motorPos_Cur, const char& side);
 
     //Motion Planner
     ruckig::Ruckig<DOF>             m_ruckigPlanner;

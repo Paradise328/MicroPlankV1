@@ -39,7 +39,7 @@ void MotorDriver::loadPDOMapping(){
         for (const auto& item : m_config[1].RxPDO.variables) {
             LOG(INFO) << item.first << ", " << item.second.type << ", " << item.second.offset;
         }
-        LOG(INFO) << "MAXON TxPDO are as follow: ";
+        LOG(INFO) << "ZeroErr TxPDO are as follow: ";
         for (const auto& item : m_config[1].TxPDO.variables) {
             LOG(INFO) << item.first << ", " << item.second.type << ", " << item.second.offset;
         }
@@ -149,12 +149,12 @@ uint16_t MotorDriver::getErrorCode(const MotorType& type, const int& index, cons
             case MotorType::MOONS:{
                 const auto errorCode = hex2Uint16(m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                            + variable.offset
-                                                           + armNum * m_abRecvDataPerArm
-                                                           + m_abRecvDataGuiding],
+                                                           + armNum * m_abRecvDataLengthPerArm
+                                                           + m_abRecvDataLengthGuiding],
                                                m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                            + variable.offset
-                                                           + armNum * m_abRecvDataPerArm
-                                                           + m_abRecvDataGuiding + 1]);
+                                                           + armNum * m_abRecvDataLengthPerArm
+                                                           + m_abRecvDataLengthGuiding + 1]);
                 return errorCode;
             }
             case MotorType::ZERO_ERR:{
@@ -163,31 +163,31 @@ uint16_t MotorDriver::getErrorCode(const MotorType& type, const int& index, cons
                                                   m_abRecvData[guidingJointMotor_sizeRecvData * index + variable.offset + 1]);
                     return errorCode;
                 }else{
-                    const auto errorCode = hex2Uint16(m_abRecvData[m_abRecvDataGuiding
+                    const auto errorCode = hex2Uint16(m_abRecvData[m_abRecvDataLengthGuiding
                                                                + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                                + endJointMotor_sizeRecvData * index
-                                                               + armNum * m_abRecvDataPerArm
+                                                               + armNum * m_abRecvDataLengthPerArm
                                                                + variable.offset],
-                                                  m_abRecvData[m_abRecvDataGuiding
+                                                  m_abRecvData[m_abRecvDataLengthGuiding
                                                                + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                                + endJointMotor_sizeRecvData * index
-                                                               + armNum * m_abRecvDataPerArm
+                                                               + armNum * m_abRecvDataLengthPerArm
                                                                + variable.offset + 1]);
                     return errorCode;
                 }
             }
             case MotorType::MAXON:{
-                const auto errorCode = hex2Uint16(m_abRecvData[m_abRecvDataGuiding
+                const auto errorCode = hex2Uint16(m_abRecvData[m_abRecvDataLengthGuiding
                                                            + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                            + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                            + endInstrumentMotor_sizeRecvData * index
-                                                           + armNum * m_abRecvDataPerArm
+                                                           + armNum * m_abRecvDataLengthPerArm
                                                            + variable.offset],
-                                              m_abRecvData[m_abRecvDataGuiding
+                                              m_abRecvData[m_abRecvDataLengthGuiding
                                                            + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                            + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                            + endInstrumentMotor_sizeRecvData * index
-                                                           + armNum * m_abRecvDataPerArm
+                                                           + armNum * m_abRecvDataLengthPerArm
                                                            + variable.offset + 1]);
                 return errorCode;
             }
@@ -211,12 +211,12 @@ uint16_t MotorDriver::getStatusWord(const MotorType& type, const int& index, con
             case MotorType::MOONS:{
                 const auto statusWord = hex2Uint16(m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                             + variable.offset
-                                                            + armNum * m_abRecvDataPerArm
-                                                            + m_abRecvDataGuiding],
+                                                            + armNum * m_abRecvDataLengthPerArm
+                                                            + m_abRecvDataLengthGuiding],
                                                     m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                             + variable.offset
-                                                            + armNum * m_abRecvDataPerArm
-                                                            + m_abRecvDataGuiding + 1]);return statusWord;
+                                                            + armNum * m_abRecvDataLengthPerArm
+                                                            + m_abRecvDataLengthGuiding + 1]);return statusWord;
             }
             case MotorType::ZERO_ERR:{
                 if(armNum == -1){
@@ -224,31 +224,53 @@ uint16_t MotorDriver::getStatusWord(const MotorType& type, const int& index, con
                                                        m_abRecvData[guidingJointMotor_sizeRecvData * index + variable.offset + 1]);
                     return statusWord;
                 }else{
-                    const auto statusWord = hex2Uint16(m_abRecvData[m_abRecvDataGuiding
+                    const auto statusWord = hex2Uint16(m_abRecvData[m_abRecvDataLengthGuiding
                                                                     + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                                     + endJointMotor_sizeRecvData * index
-                                                                    + armNum * m_abRecvDataPerArm
+                                                                    + armNum * m_abRecvDataLengthPerArm
                                                                     + variable.offset],
-                                                       m_abRecvData[m_abRecvDataGuiding
+                                                       m_abRecvData[m_abRecvDataLengthGuiding
                                                                     + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                                     + endJointMotor_sizeRecvData * index
-                                                                    + armNum * m_abRecvDataPerArm
+                                                                    + armNum * m_abRecvDataLengthPerArm
                                                                     + variable.offset + 1]);
                     return statusWord;
                 }
             }
             case MotorType::MAXON:{
-                const auto statusWord = hex2Uint16(m_abRecvData[m_abRecvDataGuiding
+                int index_test = m_abRecvDataLengthGuiding
+                                     + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
+                                     + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
+                                     + endInstrumentMotor_sizeRecvData * index
+                                     + armNum * m_abRecvDataLengthPerArm
+                                 + variable.offset;
+                // LOG(INFO) << "*************calculate index_test: " << std::dec << index_test;
+                // if(index_test > 500){
+
+                //     LOG(INFO) << "*************calculate index_test: " << std::dec << index_test;
+                //     LOG(INFO) << " m_abRecvDataLengthGuiding: " << std::dec << m_abRecvDataLengthGuiding;
+                //     LOG(INFO) << " endGimbalMotor_sizeRecvData: " << std::dec << endGimbalMotor_sizeRecvData;
+                //     LOG(INFO) << " m_endGimbalMotorNumPerArm: " << std::dec << m_endGimbalMotorNumPerArm;
+                //     LOG(INFO) << " endJointMotor_sizeRecvData: " << std::dec << endJointMotor_sizeRecvData;
+                //     LOG(INFO) << " m_endJointMotorNumPerArm: " << std::dec << m_endJointMotorNumPerArm;
+                //     LOG(INFO) << " endInstrumentMotor_sizeRecvData: " << std::dec << endInstrumentMotor_sizeRecvData;
+                //     LOG(INFO) << " index: " << std::dec << index;
+                //     LOG(INFO) << " armNum: " << std::dec << armNum;
+                //     LOG(INFO) << " m_abRecvDataLengthPerArm: " << std::dec << m_abRecvDataLengthPerArm;
+                //     LOG(INFO) << " variable.offset: " << std::dec << variable.offset;
+                // }
+                const auto statusWord = hex2Uint16(m_abRecvData[m_abRecvDataLengthGuiding
                                                                 + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                                 + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                                 + endInstrumentMotor_sizeRecvData * index
-                                                                + armNum * m_abRecvDataPerArm
+                                                                + armNum * m_abRecvDataLengthPerArm
                                                                 + variable.offset],
-                                                   m_abRecvData[m_abRecvDataGuiding
+
+                                                   m_abRecvData[m_abRecvDataLengthGuiding
                                                                 + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                                 + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                                 + endInstrumentMotor_sizeRecvData * index
-                                                                + armNum * m_abRecvDataPerArm
+                                                                + armNum * m_abRecvDataLengthPerArm
                                                                 + variable.offset + 1]);
                 return statusWord;
             }
@@ -277,7 +299,7 @@ int16_t MotorDriver::getOperationMode(const MotorType& type, const int& index,co
                                                                      + variable.offset]);
                     return operationMode;
                 }else{
-                    const auto operationMode = hex2Int8(m_abRecvData[m_abRecvDataGuiding + armNum * m_abRecvDataPerArm
+                    const auto operationMode = hex2Int8(m_abRecvData[m_abRecvDataLengthGuiding + armNum * m_abRecvDataLengthPerArm
                                                                      + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                                      + endJointMotor_sizeRecvData * index
                                                                      + variable.offset]);
@@ -286,14 +308,14 @@ int16_t MotorDriver::getOperationMode(const MotorType& type, const int& index,co
             }
             case MotorType::MOONS:
             {
-                const auto operationMode = hex2Int8(m_abRecvData[m_abRecvDataGuiding + armNum * m_abRecvDataPerArm
+                const auto operationMode = hex2Int8(m_abRecvData[m_abRecvDataLengthGuiding + armNum * m_abRecvDataLengthPerArm
                                                                  + endGimbalMotor_sizeRecvData * index
                                                                  + variable.offset]);
                 return operationMode;
             }
             case MotorType::MAXON:
             {
-                const auto operationMode = hex2Int8(m_abRecvData[m_abRecvDataGuiding + armNum * m_abRecvDataPerArm
+                const auto operationMode = hex2Int8(m_abRecvData[m_abRecvDataLengthGuiding + armNum * m_abRecvDataLengthPerArm
                                                                  + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                                  + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                                  + endInstrumentMotor_sizeRecvData * index
@@ -320,20 +342,20 @@ int32_t MotorDriver::getActualPos(const MotorType& type, const int& index, const
         case MotorType::MOONS:{
             const auto actualPos = hex2Int32(m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                           + variable.offset
-                                                          + armNum * m_abRecvDataPerArm
-                                                          + m_abRecvDataGuiding],
+                                                          + armNum * m_abRecvDataLengthPerArm
+                                                          + m_abRecvDataLengthGuiding],
                                              m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                           + variable.offset
-                                                          + armNum * m_abRecvDataPerArm
-                                                          + m_abRecvDataGuiding + 1],
+                                                          + armNum * m_abRecvDataLengthPerArm
+                                                          + m_abRecvDataLengthGuiding + 1],
                                              m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                           + variable.offset
-                                                          + armNum * m_abRecvDataPerArm
-                                                          + m_abRecvDataGuiding + 2],
+                                                          + armNum * m_abRecvDataLengthPerArm
+                                                          + m_abRecvDataLengthGuiding + 2],
                                              m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                           + variable.offset
-                                                          + armNum * m_abRecvDataPerArm
-                                                          + m_abRecvDataGuiding + 3]);
+                                                          + armNum * m_abRecvDataLengthPerArm
+                                                          + m_abRecvDataLengthGuiding + 3]);
             return actualPos;
 
         }
@@ -349,53 +371,53 @@ int32_t MotorDriver::getActualPos(const MotorType& type, const int& index, const
                                                               + variable.offset + 3]);
                 return actualPos;
             }else{
-                const auto actualPos = hex2Int32(m_abRecvData[m_abRecvDataGuiding
+                const auto actualPos = hex2Int32(m_abRecvData[m_abRecvDataLengthGuiding
                                                               + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                               + endJointMotor_sizeRecvData * index
-                                                              + armNum * m_abRecvDataPerArm
+                                                              + armNum * m_abRecvDataLengthPerArm
                                                               + variable.offset],
-                                                 m_abRecvData[m_abRecvDataGuiding
+                                                 m_abRecvData[m_abRecvDataLengthGuiding
                                                               + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                               + endJointMotor_sizeRecvData * index
-                                                              + armNum * m_abRecvDataPerArm
+                                                              + armNum * m_abRecvDataLengthPerArm
                                                               + variable.offset + 1],
-                                                 m_abRecvData[m_abRecvDataGuiding
+                                                 m_abRecvData[m_abRecvDataLengthGuiding
                                                               + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                               + endJointMotor_sizeRecvData * index
-                                                              + armNum * m_abRecvDataPerArm
+                                                              + armNum * m_abRecvDataLengthPerArm
                                                               + variable.offset + 2],
-                                                 m_abRecvData[m_abRecvDataGuiding
+                                                 m_abRecvData[m_abRecvDataLengthGuiding
                                                               + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                               + endJointMotor_sizeRecvData * index
-                                                              + armNum * m_abRecvDataPerArm
+                                                              + armNum * m_abRecvDataLengthPerArm
                                                               + variable.offset + 3]);
                 return actualPos;
             }
         }
         case MotorType::MAXON:{
-            const auto actualPos = hex2Int32(m_abRecvData[m_abRecvDataGuiding
+            const auto actualPos = hex2Int32(m_abRecvData[m_abRecvDataLengthGuiding
                                                           + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                           + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                           + endInstrumentMotor_sizeRecvData * index
-                                                          + armNum * m_abRecvDataPerArm
+                                                          + armNum * m_abRecvDataLengthPerArm
                                                           + variable.offset],
-                                             m_abRecvData[m_abRecvDataGuiding
+                                             m_abRecvData[m_abRecvDataLengthGuiding
                                                           + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                           + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                           + endInstrumentMotor_sizeRecvData * index
-                                                          + armNum * m_abRecvDataPerArm
+                                                          + armNum * m_abRecvDataLengthPerArm
                                                           + variable.offset + 1],
-                                             m_abRecvData[m_abRecvDataGuiding
+                                             m_abRecvData[m_abRecvDataLengthGuiding
                                                           + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                           + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                           + endInstrumentMotor_sizeRecvData * index
-                                                          + armNum * m_abRecvDataPerArm
+                                                          + armNum * m_abRecvDataLengthPerArm
                                                           + variable.offset + 2],
-                                             m_abRecvData[m_abRecvDataGuiding
+                                             m_abRecvData[m_abRecvDataLengthGuiding
                                                           + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                           + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                           + endInstrumentMotor_sizeRecvData * index
-                                                          + armNum * m_abRecvDataPerArm
+                                                          + armNum * m_abRecvDataLengthPerArm
                                                           + variable.offset + 3]);
 
             return actualPos;
@@ -420,20 +442,20 @@ int32_t MotorDriver::getActualVel(const MotorType& type, const int& index, const
         case MotorType::MOONS:{
             const auto actualVel = hex2Int32(m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                           + variable.offset
-                                                          + armNum * m_abRecvDataPerArm
-                                                          + m_abRecvDataGuiding],
+                                                          + armNum * m_abRecvDataLengthPerArm
+                                                          + m_abRecvDataLengthGuiding],
                                              m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                           + variable.offset
-                                                          + armNum * m_abRecvDataPerArm
-                                                          + m_abRecvDataGuiding + 1],
+                                                          + armNum * m_abRecvDataLengthPerArm
+                                                          + m_abRecvDataLengthGuiding + 1],
                                              m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                           + variable.offset
-                                                          + armNum * m_abRecvDataPerArm
-                                                          + m_abRecvDataGuiding + 2],
+                                                          + armNum * m_abRecvDataLengthPerArm
+                                                          + m_abRecvDataLengthGuiding + 2],
                                              m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                           + variable.offset
-                                                          + armNum * m_abRecvDataPerArm
-                                                          + m_abRecvDataGuiding + 3]);
+                                                          + armNum * m_abRecvDataLengthPerArm
+                                                          + m_abRecvDataLengthGuiding + 3]);
             return actualVel;
 
         }
@@ -449,53 +471,53 @@ int32_t MotorDriver::getActualVel(const MotorType& type, const int& index, const
                                                               + variable.offset + 3]);
                 return actualVel;
             }else{
-                const auto actualVel = hex2Int32(m_abRecvData[m_abRecvDataGuiding
+                const auto actualVel = hex2Int32(m_abRecvData[m_abRecvDataLengthGuiding
                                                               + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                               + endJointMotor_sizeRecvData * index
-                                                              + armNum * m_abRecvDataPerArm
+                                                              + armNum * m_abRecvDataLengthPerArm
                                                               + variable.offset],
-                                                 m_abRecvData[m_abRecvDataGuiding
+                                                 m_abRecvData[m_abRecvDataLengthGuiding
                                                               + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                               + endJointMotor_sizeRecvData * index
-                                                              + armNum * m_abRecvDataPerArm
+                                                              + armNum * m_abRecvDataLengthPerArm
                                                               + variable.offset + 1],
-                                                 m_abRecvData[m_abRecvDataGuiding
+                                                 m_abRecvData[m_abRecvDataLengthGuiding
                                                               + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                               + endJointMotor_sizeRecvData * index
-                                                              + armNum * m_abRecvDataPerArm
+                                                              + armNum * m_abRecvDataLengthPerArm
                                                               + variable.offset + 2],
-                                                 m_abRecvData[m_abRecvDataGuiding
+                                                 m_abRecvData[m_abRecvDataLengthGuiding
                                                               + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                               + endJointMotor_sizeRecvData * index
-                                                              + armNum * m_abRecvDataPerArm
+                                                              + armNum * m_abRecvDataLengthPerArm
                                                               + variable.offset + 3]);
                 return actualVel;
             }
         }
         case MotorType::MAXON:{
-            const auto actualVel = hex2Int32(m_abRecvData[m_abRecvDataGuiding
+            const auto actualVel = hex2Int32(m_abRecvData[m_abRecvDataLengthGuiding
                                                           + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                           + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                           + endInstrumentMotor_sizeRecvData * index
-                                                          + armNum * m_abRecvDataPerArm
+                                                          + armNum * m_abRecvDataLengthPerArm
                                                           + variable.offset],
-                                             m_abRecvData[m_abRecvDataGuiding
+                                             m_abRecvData[m_abRecvDataLengthGuiding
                                                           + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                           + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                           + endInstrumentMotor_sizeRecvData * index
-                                                          + armNum * m_abRecvDataPerArm
+                                                          + armNum * m_abRecvDataLengthPerArm
                                                           + variable.offset + 1],
-                                             m_abRecvData[m_abRecvDataGuiding
+                                             m_abRecvData[m_abRecvDataLengthGuiding
                                                           + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                           + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                           + endInstrumentMotor_sizeRecvData * index
-                                                          + armNum * m_abRecvDataPerArm
+                                                          + armNum * m_abRecvDataLengthPerArm
                                                           + variable.offset + 2],
-                                             m_abRecvData[m_abRecvDataGuiding
+                                             m_abRecvData[m_abRecvDataLengthGuiding
                                                           + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                           + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                           + endInstrumentMotor_sizeRecvData * index
-                                                          + armNum * m_abRecvDataPerArm
+                                                          + armNum * m_abRecvDataLengthPerArm
                                                           + variable.offset + 3]);
 
             return actualVel;
@@ -517,7 +539,7 @@ int32_t MotorDriver::getActualVel(const MotorType& type, const int& index, const
 //    if(m_config[static_cast<int>(type)].TxPDO.variables.count(ACTTRQ) > 0){
 //        const auto& variable = m_config[static_cast<int>(type)].TxPDO.variables[ACTTRQ];
 //        const auto actualTrq = hex2Int16(m_abRecvData[moons_sizeRecvData * m_endGimbalMotorNum + variable.offset + zeroErr_sizeRecvData * index],
-//                                         m_abRecvData[moons_sizeRecvData * m_endGimbalMotorNum + variable.offset + zeroErr_sizeRecvData * index + 1]);
+//                                         m_abRecvData[moons_sizeRecvData * m_endGimbalMotorNum + variable.offset + zeroErr_sizeRecvData * index]);
 //        return actualTrq;
 //    }
 //    else{
@@ -533,12 +555,12 @@ int16_t MotorDriver::getActualTrq(const MotorType& type, const int& index, const
         case MotorType::MOONS:{
             const auto actualTrq = hex2Int16(m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                           + variable.offset
-                                                          + armNum * m_abRecvDataPerArm
-                                                          + m_abRecvDataGuiding],
+                                                          + armNum * m_abRecvDataLengthPerArm
+                                                          + m_abRecvDataLengthGuiding],
                                              m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                           + variable.offset
-                                                          + armNum * m_abRecvDataPerArm
-                                                          + m_abRecvDataGuiding + 1]);
+                                                          + armNum * m_abRecvDataLengthPerArm
+                                                          + m_abRecvDataLengthGuiding + 1]);
             return actualTrq;
         }
 
@@ -550,32 +572,32 @@ int16_t MotorDriver::getActualTrq(const MotorType& type, const int& index, const
                                                               + variable.offset + 1]);
                 return actualTrq;
             }else{
-                const auto actualTrq = hex2Int16(m_abRecvData[m_abRecvDataGuiding
+                const auto actualTrq = hex2Int16(m_abRecvData[m_abRecvDataLengthGuiding
                                                               + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                               + endJointMotor_sizeRecvData * index
-                                                              + armNum * m_abRecvDataPerArm
+                                                              + armNum * m_abRecvDataLengthPerArm
                                                               + variable.offset],
-                                                 m_abRecvData[m_abRecvDataGuiding
+                                                 m_abRecvData[m_abRecvDataLengthGuiding
                                                               + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                               + endJointMotor_sizeRecvData * index
-                                                              + armNum * m_abRecvDataPerArm
+                                                              + armNum * m_abRecvDataLengthPerArm
                                                               + variable.offset + 1]);
                 return actualTrq;
             }
         }
 
         case MotorType::MAXON:{
-            const auto actualTrq = hex2Int16(m_abRecvData[m_abRecvDataGuiding
+            const auto actualTrq = hex2Int16(m_abRecvData[m_abRecvDataLengthGuiding
                                                           + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                           + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                           + endInstrumentMotor_sizeRecvData * index
-                                                          + armNum * m_abRecvDataPerArm
+                                                          + armNum * m_abRecvDataLengthPerArm
                                                           + variable.offset],
-                                             m_abRecvData[m_abRecvDataGuiding
+                                             m_abRecvData[m_abRecvDataLengthGuiding
                                                           + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                           + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                           + endInstrumentMotor_sizeRecvData * index
-                                                          + armNum * m_abRecvDataPerArm
+                                                          + armNum * m_abRecvDataLengthPerArm
                                                           + variable.offset + 1]);
             return actualTrq;
         }
@@ -614,26 +636,26 @@ int16_t MotorDriver::getActualCur(const MotorType& type, const int& index, const
         case MotorType::MOONS:{
             const auto actualCur = hex2Int16(m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                           + variable.offset
-                                                          + armNum * m_abRecvDataPerArm
-                                                          + m_abRecvDataGuiding],
+                                                          + armNum * m_abRecvDataLengthPerArm
+                                                          + m_abRecvDataLengthGuiding],
                                              m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                           + variable.offset
-                                                          + armNum * m_abRecvDataPerArm
-                                                          + m_abRecvDataGuiding + 1]);
+                                                          + armNum * m_abRecvDataLengthPerArm
+                                                          + m_abRecvDataLengthGuiding + 1]);
             return actualCur;
         }
         case MotorType::MAXON:{
-            const auto actualCur = hex2Int16(m_abRecvData[m_abRecvDataGuiding
+            const auto actualCur = hex2Int16(m_abRecvData[m_abRecvDataLengthGuiding
                                                           + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                           + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                           + endInstrumentMotor_sizeRecvData * index
-                                                          + armNum * m_abRecvDataPerArm
+                                                          + armNum * m_abRecvDataLengthPerArm
                                                           + variable.offset],
-                                             m_abRecvData[m_abRecvDataGuiding
+                                             m_abRecvData[m_abRecvDataLengthGuiding
                                                           + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                           + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                           + endInstrumentMotor_sizeRecvData * index
-                                                          + armNum * m_abRecvDataPerArm
+                                                          + armNum * m_abRecvDataLengthPerArm
                                                           + variable.offset + 1]);
             return actualCur;
         }
@@ -645,15 +667,15 @@ int16_t MotorDriver::getActualCur(const MotorType& type, const int& index, const
                                                               + variable.offset + 1]);
                 return actualCur;
             }else{
-                const auto actualCur = hex2Int16(m_abRecvData[m_abRecvDataGuiding
+                const auto actualCur = hex2Int16(m_abRecvData[m_abRecvDataLengthGuiding
                                                               + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                               + endJointMotor_sizeRecvData * index
-                                                              + armNum * m_abRecvDataPerArm
+                                                              + armNum * m_abRecvDataLengthPerArm
                                                               + variable.offset],
-                                                 m_abRecvData[m_abRecvDataGuiding
+                                                 m_abRecvData[m_abRecvDataLengthGuiding
                                                               + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                               + endJointMotor_sizeRecvData * index
-                                                              + armNum * m_abRecvDataPerArm
+                                                              + armNum * m_abRecvDataLengthPerArm
                                                               + variable.offset + 1]);
                 return actualCur;
             }
@@ -679,20 +701,20 @@ std::array<int, 8> MotorDriver::getDigitalInputs(const MotorType& type, const in
         case MotorType::MOONS:{
             const auto digitalInputs = hex2Uint32(m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                                + variable.offset
-                                                               + armNum * m_abRecvDataPerArm
-                                                               + m_abRecvDataGuiding],
+                                                               + armNum * m_abRecvDataLengthPerArm
+                                                               + m_abRecvDataLengthGuiding],
                                                   m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                                + variable.offset
-                                                               + armNum * m_abRecvDataPerArm
-                                                               + m_abRecvDataGuiding + 1],
+                                                               + armNum * m_abRecvDataLengthPerArm
+                                                               + m_abRecvDataLengthGuiding + 1],
                                                   m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                                + variable.offset
-                                                               + armNum * m_abRecvDataPerArm
-                                                               + m_abRecvDataGuiding + 2],
+                                                               + armNum * m_abRecvDataLengthPerArm
+                                                               + m_abRecvDataLengthGuiding + 2],
                                                   m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                                + variable.offset
-                                                               + armNum * m_abRecvDataPerArm
-                                                               + m_abRecvDataGuiding + 3]);
+                                                               + armNum * m_abRecvDataLengthPerArm
+                                                               + m_abRecvDataLengthGuiding + 3]);
 
             tmpVal[0] = (digitalInputs >> 16) & 0x1;
             tmpVal[1] = (digitalInputs >> 17) & 0x1;
@@ -723,29 +745,29 @@ std::array<int, 8> MotorDriver::getDigitalInputs(const MotorType& type, const in
             return tmpVal;
         }
         case MotorType::MAXON:{
-            const auto digitalInputs = hex2Uint32(m_abRecvData[m_abRecvDataGuiding
+            const auto digitalInputs = hex2Uint32(m_abRecvData[m_abRecvDataLengthGuiding
                                                                + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                                + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                                + endInstrumentMotor_sizeRecvData * index
-                                                               + armNum * m_abRecvDataPerArm
+                                                               + armNum * m_abRecvDataLengthPerArm
                                                                + variable.offset],
-                                                  m_abRecvData[m_abRecvDataGuiding
+                                                  m_abRecvData[m_abRecvDataLengthGuiding
                                                                + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                                + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                                + endInstrumentMotor_sizeRecvData * index
-                                                               + armNum * m_abRecvDataPerArm
+                                                               + armNum * m_abRecvDataLengthPerArm
                                                                + variable.offset + 1],
-                                                  m_abRecvData[m_abRecvDataGuiding
+                                                  m_abRecvData[m_abRecvDataLengthGuiding
                                                                + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                                + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                                + endInstrumentMotor_sizeRecvData * index
-                                                               + armNum * m_abRecvDataPerArm
+                                                               + armNum * m_abRecvDataLengthPerArm
                                                                + variable.offset + 2],
-                                                  m_abRecvData[m_abRecvDataGuiding
+                                                  m_abRecvData[m_abRecvDataLengthGuiding
                                                                + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                                + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                                + endInstrumentMotor_sizeRecvData * index
-                                                               + armNum * m_abRecvDataPerArm
+                                                               + armNum * m_abRecvDataLengthPerArm
                                                                + variable.offset + 3]);
 
             tmpVal[0] = (digitalInputs >> 0) & 0x1;
@@ -786,25 +808,25 @@ int32_t MotorDriver::getFollowingPosErr(const MotorType& type, const int& index,
                                                                     + variable.offset + 3]);
                 return followingPosErr;
             }else{
-                const auto followingPosErr = hex2Int32(m_abRecvData[m_abRecvDataGuiding
+                const auto followingPosErr = hex2Int32(m_abRecvData[m_abRecvDataLengthGuiding
                                                                     + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                                     + endJointMotor_sizeRecvData * index
-                                                                    + armNum * m_abRecvDataPerArm
+                                                                    + armNum * m_abRecvDataLengthPerArm
                                                                     + variable.offset],
-                                                       m_abRecvData[m_abRecvDataGuiding
+                                                       m_abRecvData[m_abRecvDataLengthGuiding
                                                                     + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                                     + endJointMotor_sizeRecvData * index
-                                                                    + armNum * m_abRecvDataPerArm
+                                                                    + armNum * m_abRecvDataLengthPerArm
                                                                     + variable.offset + 1],
-                                                       m_abRecvData[m_abRecvDataGuiding
+                                                       m_abRecvData[m_abRecvDataLengthGuiding
                                                                     + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                                     + endJointMotor_sizeRecvData * index
-                                                                    + armNum * m_abRecvDataPerArm
+                                                                    + armNum * m_abRecvDataLengthPerArm
                                                                     + variable.offset + 2],
-                                                       m_abRecvData[m_abRecvDataGuiding
+                                                       m_abRecvData[m_abRecvDataLengthGuiding
                                                                     + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                                     + endJointMotor_sizeRecvData * index
-                                                                    + armNum * m_abRecvDataPerArm
+                                                                    + armNum * m_abRecvDataLengthPerArm
                                                                     + variable.offset + 3]);
                 return followingPosErr;
             }
@@ -812,20 +834,20 @@ int32_t MotorDriver::getFollowingPosErr(const MotorType& type, const int& index,
         else if(type == MotorType::MOONS){
             const auto followingPosErr = hex2Int32(m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                                 + variable.offset
-                                                                + armNum * m_abRecvDataPerArm
-                                                                + m_abRecvDataGuiding],
+                                                                + armNum * m_abRecvDataLengthPerArm
+                                                                + m_abRecvDataLengthGuiding],
                                                    m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                                 + variable.offset
-                                                                + armNum * m_abRecvDataPerArm
-                                                                + m_abRecvDataGuiding + 1],
+                                                                + armNum * m_abRecvDataLengthPerArm
+                                                                + m_abRecvDataLengthGuiding + 1],
                                                    m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                                 + variable.offset
-                                                                + armNum * m_abRecvDataPerArm
-                                                                + m_abRecvDataGuiding + 2],
+                                                                + armNum * m_abRecvDataLengthPerArm
+                                                                + m_abRecvDataLengthGuiding + 2],
                                                    m_abRecvData[endGimbalMotor_sizeRecvData * index
                                                                 + variable.offset
-                                                                + armNum * m_abRecvDataPerArm
-                                                                + m_abRecvDataGuiding + 3]);
+                                                                + armNum * m_abRecvDataLengthPerArm
+                                                                + m_abRecvDataLengthGuiding + 3]);
             return followingPosErr;
         }
         else{
@@ -843,32 +865,36 @@ int MotorDriver::setControlWord(const MotorType& type, const int& index, const C
     if(m_config[static_cast<int>(type)].RxPDO.variables.count(CONTROLWORD) > 0){
         const auto& variable = m_config[static_cast<int>(type)].RxPDO.variables[CONTROLWORD];
         if(type == MotorType::ZERO_ERR){
+            // LOG(INFO) << "set control word for zero error on arm " << armNum << ", index " << index ;
             if(armNum == -1){
                 m_abSendData[guidingJointMotor_sizeSendData * index
                              + variable.offset] = static_cast<unsigned char>(cmd);
             }else{
-                m_abSendData[m_abSendDataGuiding
+                m_abSendData[m_abSendDataLengthGuiding
                              + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                              + endJointMotor_sizeSendData * index
-                             + armNum * m_abSendDataPerArm
+                             + armNum * m_abSendDataLengthPerArm
                              + variable.offset] = static_cast<unsigned char>(cmd);
             }
             return T_NOERROR;
         }
         else if(type == MotorType::MOONS){
-            m_abSendData[m_abSendDataGuiding
+            // LOG(INFO) << "set control word for moons on arm " << armNum << ", index " << index ;
+            m_abSendData[m_abSendDataLengthGuiding
                          + endGimbalMotor_sizeSendData * index
-                         + armNum * m_abSendDataPerArm
+                         + armNum * m_abSendDataLengthPerArm
                          + variable.offset] = static_cast<unsigned char>(cmd);
             return T_NOERROR;
         }
         else if(type == MotorType::MAXON){
-            m_abRecvData[m_abSendDataGuiding
+            // LOG(INFO) << "set control word for maxon on arm " << armNum << ", index " << index ;
+            m_abSendData[m_abSendDataLengthGuiding
                          + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                          + endJointMotor_sizeSendData * m_endJointMotorNumPerArm
                          + endInstrumentMotor_sizeSendData * index
-                         + armNum * m_abSendDataPerArm
+                         + armNum * m_abSendDataLengthPerArm
                          + variable.offset] = static_cast<unsigned char>(cmd);
+            // LOG(INFO) << "finish setting control word for maxon on arm " << armNum << ", index " << index ;
             return T_NOERROR;
         }
         else{
@@ -884,34 +910,33 @@ int MotorDriver::setControlWord(const MotorType& type, const int& index, const C
 
 int MotorDriver::setOperationMode(const MotorType& type, const int& index, const OperationMode& mode, const int& armNum){
     if(m_config[static_cast<int>(type)].RxPDO.variables.count(OPMODE) > 0){
-
         const auto& variable = m_config[static_cast<int>(type)].RxPDO.variables[OPMODE];
         if(type == MotorType::ZERO_ERR){
             if(armNum == -1){
                 m_abSendData[guidingJointMotor_sizeSendData * index
                              + variable.offset] = static_cast<unsigned char>(mode);
             }else{
-                m_abSendData[m_abSendDataGuiding
+                m_abSendData[m_abSendDataLengthGuiding
                              + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                              + endJointMotor_sizeSendData * index
-                             + armNum * m_abSendDataPerArm
+                             + armNum * m_abSendDataLengthPerArm
                              + variable.offset] = static_cast<unsigned char>(mode);
             }
             return T_NOERROR;
         }
         else if(type == MotorType::MOONS){
-            m_abSendData[m_abSendDataGuiding
+            m_abSendData[m_abSendDataLengthGuiding
                          + endGimbalMotor_sizeSendData * index
-                         + armNum * m_abSendDataPerArm
+                         + armNum * m_abSendDataLengthPerArm
                          + variable.offset] = static_cast<unsigned char>(mode);
             return T_NOERROR;
         }
         else if(type == MotorType::MAXON){
-            m_abRecvData[m_abSendDataGuiding
+            m_abSendData[m_abSendDataLengthGuiding
                          + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                          + endJointMotor_sizeSendData * m_endJointMotorNumPerArm
                          + endInstrumentMotor_sizeSendData * index
-                         + armNum * m_abSendDataPerArm
+                         + armNum * m_abSendDataLengthPerArm
                          + variable.offset] = static_cast<unsigned char>(mode);
             return T_NOERROR;
         }
@@ -940,10 +965,10 @@ int MotorDriver::setTargetPos(const MotorType& type, const int& index, const int
             }else{
                 int32ToBytes(targetPos,
                              m_abSendData
-                                 + m_abSendDataGuiding
+                                 + m_abSendDataLengthGuiding
                                  + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                                  + endJointMotor_sizeSendData * index
-                                 + armNum * m_abSendDataPerArm
+                                 + armNum * m_abSendDataLengthPerArm
                                  + variable.offset);
             }
             return T_NOERROR;
@@ -951,9 +976,9 @@ int MotorDriver::setTargetPos(const MotorType& type, const int& index, const int
         else if(type == MotorType::MOONS){
             int32ToBytes(targetPos,
                          m_abSendData
-                             + m_abSendDataGuiding
+                             + m_abSendDataLengthGuiding
                              + endGimbalMotor_sizeSendData * index
-                             + armNum * m_abSendDataPerArm
+                             + armNum * m_abSendDataLengthPerArm
                              + variable.offset);
             return T_NOERROR;
         }
@@ -961,11 +986,11 @@ int MotorDriver::setTargetPos(const MotorType& type, const int& index, const int
         {
             int32ToBytes(targetPos,
                          m_abSendData
-                             + m_abSendDataGuiding
+                             + m_abSendDataLengthGuiding
                              + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                              + endJointMotor_sizeSendData * m_endJointMotorNumPerArm
                              + endInstrumentMotor_sizeSendData * index
-                             + armNum * m_abSendDataPerArm
+                             + armNum * m_abSendDataLengthPerArm
                              + variable.offset);
             return T_NOERROR;
         }
@@ -992,10 +1017,10 @@ int MotorDriver::setTargetVel(const MotorType& type, const int& index, const int
             }else{
                 int32ToBytes(targetVel,
                              m_abSendData
-                                 + m_abSendDataGuiding
+                                 + m_abSendDataLengthGuiding
                                  + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                                  + endJointMotor_sizeSendData * index
-                                 + armNum * m_abSendDataPerArm
+                                 + armNum * m_abSendDataLengthPerArm
                                  + variable.offset);
             }
             return T_NOERROR;
@@ -1003,9 +1028,9 @@ int MotorDriver::setTargetVel(const MotorType& type, const int& index, const int
         else if(type == MotorType::MOONS){
             int32ToBytes(targetVel,
                          m_abSendData
-                             + m_abSendDataGuiding
+                             + m_abSendDataLengthGuiding
                              + endGimbalMotor_sizeSendData * index
-                             + armNum * m_abSendDataPerArm
+                             + armNum * m_abSendDataLengthPerArm
                              + variable.offset);
             return T_NOERROR;
         }
@@ -1013,11 +1038,11 @@ int MotorDriver::setTargetVel(const MotorType& type, const int& index, const int
         {
             int32ToBytes(targetVel,
                          m_abSendData
-                             + m_abSendDataGuiding
+                             + m_abSendDataLengthGuiding
                              + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                              + endJointMotor_sizeSendData * m_endJointMotorNumPerArm
                              + endInstrumentMotor_sizeSendData * index
-                             + armNum * m_abSendDataPerArm
+                             + armNum * m_abSendDataLengthPerArm
                              + variable.offset);
             return T_NOERROR;
         }
@@ -1045,10 +1070,10 @@ int MotorDriver::setTargetTrq(const MotorType& type, const int& index, const int
             }else{
                 int16ToBytes(targetTrq,
                              m_abSendData
-                                 + m_abSendDataGuiding
+                                 + m_abSendDataLengthGuiding
                                  + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                                  + endJointMotor_sizeSendData * index
-                                 + armNum * m_abSendDataPerArm
+                                 + armNum * m_abSendDataLengthPerArm
                                  + variable.offset);
             }
             return T_NOERROR;
@@ -1056,9 +1081,9 @@ int MotorDriver::setTargetTrq(const MotorType& type, const int& index, const int
         else if(type == MotorType::MOONS){
             int16ToBytes(targetTrq,
                          m_abSendData
-                             + m_abSendDataGuiding
+                             + m_abSendDataLengthGuiding
                              + endGimbalMotor_sizeSendData * index
-                             + armNum * m_abSendDataPerArm
+                             + armNum * m_abSendDataLengthPerArm
                              + variable.offset);
             return T_NOERROR;
         }
@@ -1066,11 +1091,11 @@ int MotorDriver::setTargetTrq(const MotorType& type, const int& index, const int
         {
             int16ToBytes(targetTrq,
                          m_abSendData
-                             + m_abSendDataGuiding
+                             + m_abSendDataLengthGuiding
                              + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                              + endJointMotor_sizeSendData * m_endJointMotorNumPerArm
                              + endInstrumentMotor_sizeSendData * index
-                             + armNum * m_abSendDataPerArm
+                             + armNum * m_abSendDataLengthPerArm
                              + variable.offset);
             return T_NOERROR;
         }
@@ -1117,9 +1142,9 @@ int MotorDriver::setDigitalOutputs(const MotorType& type, const int& index, cons
         case MotorType::MOONS:{
             uint32ToBytes(digitalOutputs,
                           m_abSendData
-                              + m_abSendDataGuiding
+                              + m_abSendDataLengthGuiding
                               + endGimbalMotor_sizeSendData * index
-                              + armNum * m_abSendDataPerArm
+                              + armNum * m_abSendDataLengthPerArm
                               + variable.offset);
             return T_NOERROR;
         }
@@ -1132,10 +1157,10 @@ int MotorDriver::setDigitalOutputs(const MotorType& type, const int& index, cons
             }else{
                 uint32ToBytes(digitalOutputs,
                               m_abSendData
-                                  + m_abSendDataGuiding
+                                  + m_abSendDataLengthGuiding
                                   + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                                   + endJointMotor_sizeSendData * index
-                                  + armNum * m_abSendDataPerArm
+                                  + armNum * m_abSendDataLengthPerArm
                                   + variable.offset);
             }
             return T_NOERROR;
@@ -1143,11 +1168,11 @@ int MotorDriver::setDigitalOutputs(const MotorType& type, const int& index, cons
         case MotorType::MAXON:{
             uint32ToBytes(digitalOutputs,
                           m_abSendData
-                              + m_abSendDataGuiding
+                              + m_abSendDataLengthGuiding
                               + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                               + endJointMotor_sizeSendData * m_endJointMotorNumPerArm
                               + endInstrumentMotor_sizeSendData * index
-                              + armNum * m_abSendDataPerArm
+                              + armNum * m_abSendDataLengthPerArm
                               + variable.offset);
             return T_NOERROR;
         }
@@ -1170,9 +1195,9 @@ int MotorDriver::setProfileVel(const MotorType& type, const int& index, const ui
         case MotorType::MOONS:{
             uint32ToBytes(profileVel,
                           m_abSendData
-                              + m_abSendDataGuiding
+                              + m_abSendDataLengthGuiding
                               + endGimbalMotor_sizeSendData * index
-                              + armNum * m_abSendDataPerArm
+                              + armNum * m_abSendDataLengthPerArm
                               + variable.offset);
             return T_NOERROR;
         }
@@ -1185,10 +1210,10 @@ int MotorDriver::setProfileVel(const MotorType& type, const int& index, const ui
             }else{
                 uint32ToBytes(profileVel,
                               m_abSendData
-                                  + m_abSendDataGuiding
+                                  + m_abSendDataLengthGuiding
                                   + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                                   + endJointMotor_sizeSendData * index
-                                  + armNum * m_abSendDataPerArm
+                                  + armNum * m_abSendDataLengthPerArm
                                   + variable.offset);
             }
             return T_NOERROR;
@@ -1217,9 +1242,9 @@ int MotorDriver::setProfileAcc(const MotorType& type, const int& index, const ui
         case MotorType::MOONS:{
             uint32ToBytes(profileAcc,
                           m_abSendData
-                              + m_abSendDataGuiding
+                              + m_abSendDataLengthGuiding
                               + endGimbalMotor_sizeSendData * index
-                              + armNum * m_abSendDataPerArm
+                              + armNum * m_abSendDataLengthPerArm
                               + variable.offset);
             return T_NOERROR;
         }
@@ -1232,10 +1257,10 @@ int MotorDriver::setProfileAcc(const MotorType& type, const int& index, const ui
             }else{
                 uint32ToBytes(profileAcc,
                               m_abSendData
-                                  + m_abSendDataGuiding
+                                  + m_abSendDataLengthGuiding
                                   + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                                   + endJointMotor_sizeSendData * index
-                                  + armNum * m_abSendDataPerArm
+                                  + armNum * m_abSendDataLengthPerArm
                                   + variable.offset);
             }
             return T_NOERROR;
@@ -1243,11 +1268,11 @@ int MotorDriver::setProfileAcc(const MotorType& type, const int& index, const ui
         case MotorType::MAXON:{
             uint32ToBytes(profileAcc,
                           m_abSendData
-                              + m_abSendDataGuiding
+                              + m_abSendDataLengthGuiding
                               + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                               + endJointMotor_sizeSendData * m_endJointMotorNumPerArm
                               + endInstrumentMotor_sizeSendData * index
-                              + armNum * m_abSendDataPerArm
+                              + armNum * m_abSendDataLengthPerArm
                               + variable.offset);
             return T_NOERROR;
         }
@@ -1269,9 +1294,9 @@ int MotorDriver::setProfileDec(const MotorType& type, const int& index, const ui
         switch(type){
         case MotorType::MOONS:{
             uint32ToBytes(profileDec, &m_abSendData[
-                                          m_abSendDataGuiding
+                                          m_abSendDataLengthGuiding
                                           + endGimbalMotor_sizeSendData * index
-                                          + armNum * m_abSendDataPerArm
+                                          + armNum * m_abSendDataLengthPerArm
                                           + variable.offset]);
             return T_NOERROR;
         }
@@ -1283,10 +1308,10 @@ int MotorDriver::setProfileDec(const MotorType& type, const int& index, const ui
             }else{
                 uint32ToBytes(profileDec,
                               m_abSendData
-                                  + m_abSendDataGuiding
+                                  + m_abSendDataLengthGuiding
                                   + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                                   + endJointMotor_sizeSendData * index
-                                  + armNum * m_abSendDataPerArm
+                                  + armNum * m_abSendDataLengthPerArm
                                   + variable.offset);
             }
             return T_NOERROR;
@@ -1294,11 +1319,11 @@ int MotorDriver::setProfileDec(const MotorType& type, const int& index, const ui
         case MotorType::MAXON:{
             uint32ToBytes(profileDec,
                           m_abSendData
-                              + m_abSendDataGuiding
+                              + m_abSendDataLengthGuiding
                               + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                               + endJointMotor_sizeSendData * m_endJointMotorNumPerArm
                               + endInstrumentMotor_sizeSendData * index
-                              + armNum * m_abSendDataPerArm
+                              + armNum * m_abSendDataLengthPerArm
                               + variable.offset);
             return T_NOERROR;
         }
@@ -1331,10 +1356,10 @@ int MotorDriver::setMaxProfileVel(const MotorType& type, const int& index, const
             }else{
                 uint32ToBytes(maxProfileVel,
                               m_abSendData
-                                  + m_abSendDataGuiding
+                                  + m_abSendDataLengthGuiding
                                   + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                                   + endJointMotor_sizeSendData * index
-                                  + armNum * m_abSendDataPerArm
+                                  + armNum * m_abSendDataLengthPerArm
                                   + variable.offset);
             }
             return T_NOERROR;
@@ -1372,10 +1397,10 @@ int MotorDriver::setTrqPosLimit(const MotorType& type, const int& index, const u
             }else{
                 uint16ToBytes(trqPosLimit,
                               m_abSendData
-                                  + m_abSendDataGuiding
+                                  + m_abSendDataLengthGuiding
                                   + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                                   + endJointMotor_sizeSendData * index
-                                  + armNum * m_abSendDataPerArm
+                                  + armNum * m_abSendDataLengthPerArm
                                   + variable.offset);
             }
             return T_NOERROR;
@@ -1413,10 +1438,10 @@ int MotorDriver::setTrqNegLimit(const MotorType& type, const int& index, const u
             }else{
                 uint16ToBytes(trqNegLimit,
                               m_abSendData
-                                  + m_abSendDataGuiding
+                                  + m_abSendDataLengthGuiding
                                   + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                                   + endJointMotor_sizeSendData * index
-                                  + armNum * m_abSendDataPerArm
+                                  + armNum * m_abSendDataLengthPerArm
                                   + variable.offset);
             }
             return T_NOERROR;
@@ -1442,19 +1467,19 @@ int MotorDriver::setHomeMethod(const MotorType& type, const int& index, const in
         const auto& variable = m_config[static_cast<int>(type)].RxPDO.variables[HOMEMETHOD];
         switch(type){
         case MotorType::MAXON:{
-            m_abRecvData[m_abSendDataGuiding
+            m_abRecvData[m_abSendDataLengthGuiding
                          + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                          + endJointMotor_sizeSendData * m_endJointMotorNumPerArm
                          + endInstrumentMotor_sizeSendData * index
-                         + armNum * m_abSendDataPerArm
+                         + armNum * m_abSendDataLengthPerArm
                          + variable.offset] = static_cast<unsigned char>(homeMethod);
             return T_NOERROR;
             LOG(INFO) << "successfully set HOMEMETHODE of Maxon " << index;
         }
         case MotorType::MOONS:{
-            m_abSendData[m_abSendDataGuiding
+            m_abSendData[m_abSendDataLengthGuiding
                          + endGimbalMotor_sizeSendData * index
-                         + armNum * m_abSendDataPerArm
+                         + armNum * m_abSendDataLengthPerArm
                          + variable.offset] = static_cast<unsigned char>(homeMethod);
             return T_NOERROR;
         }
@@ -1474,9 +1499,9 @@ int MotorDriver::setHomeMethod(const MotorType& type, const int& index, const in
 int MotorDriver::setHomeOffset(const MotorType& type, const int& index, const int32_t& homeOffset, const int& armNum){
     if(m_config[static_cast<int>(type)].RxPDO.variables.count(HOMEOFFSET) > 0){
         const auto& variable = m_config[static_cast<int>(type)].RxPDO.variables[HOMEOFFSET];
-        int32ToBytes(homeOffset, &m_abSendData[m_abSendDataGuiding
+        int32ToBytes(homeOffset, &m_abSendData[m_abSendDataLengthGuiding
                                                + endGimbalMotor_sizeSendData * index
-                                               + armNum * m_abSendDataPerArm
+                                               + armNum * m_abSendDataLengthPerArm
                                                + variable.offset]);
         return T_NOERROR;
     }
@@ -1491,18 +1516,18 @@ int MotorDriver::setHomeVel(const MotorType& type, const int& index, const int32
         const auto& variable = m_config[static_cast<int>(type)].RxPDO.variables[HOMEVEL];
         switch (type) {
         case MotorType::MAXON: {
-            int32ToBytes(homeVel, &m_abSendData[m_abSendDataGuiding
+            int32ToBytes(homeVel, &m_abSendData[m_abSendDataLengthGuiding
                                                 + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                                                 + endJointMotor_sizeSendData * m_endJointMotorNumPerArm
                                                 + endInstrumentMotor_sizeSendData * index
-                                                + armNum * m_abSendDataPerArm
+                                                + armNum * m_abSendDataLengthPerArm
                                                 + variable.offset]);
             return T_NOERROR;
         }
         case MotorType::MOONS: {
-            int32ToBytes(homeVel, &m_abSendData[m_abSendDataGuiding
+            int32ToBytes(homeVel, &m_abSendData[m_abSendDataLengthGuiding
                                                 + endGimbalMotor_sizeSendData * index
-                                                + armNum * m_abSendDataPerArm
+                                                + armNum * m_abSendDataLengthPerArm
                                                 + variable.offset]);
             return T_NOERROR;
         }
@@ -1544,11 +1569,11 @@ int MotorDriver::setInterpolationTime(const MotorType& type, const int& index, c
             return T_ERROR;
         }
         case MotorType::MAXON:{
-            m_abSendData[m_abSendDataGuiding
+            m_abSendData[m_abSendDataLengthGuiding
                          + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                          + endJointMotor_sizeSendData * m_endJointMotorNumPerArm
                          + endInstrumentMotor_sizeSendData * index
-                         + armNum * m_abSendDataPerArm
+                         + armNum * m_abSendDataLengthPerArm
                          + variable.offset] = static_cast<unsigned char>(interpolationTime);
             return T_NOERROR;
         }
@@ -2021,14 +2046,14 @@ int MotorDriver::mailboxPacketTransfer(){
     uint ulSendPktCount = 0;
     uint ulRecvPktCount = 0;
     xChannelGetMBXState(m_hChannel, (uint32_t*)&ulRecvPktCount, (uint32_t*)&ulSendPktCount);
-    LOG(INFO) << "Channel Mailbox State: MaxSend = " << ulSendPktCount << ", Pending Receive = " << ulRecvPktCount ;
+    // LOG(INFO) << "Channel Mailbox State: MaxSend = " << ulSendPktCount << ", Pending Receive = " << ulRecvPktCount ;
 
     if(CIFX_NO_ERROR != (lRet = xChannelPutPacket(m_hChannel, &m_tSendPkt, timeWaitMailBoxFree))){
         LOG(ERROR) << "Error sending packet to device! Error code: 0x" << std::hex << lRet ;
         return T_ERROR;
     }
     else{
-        LOG(INFO) << "Send Packet" ;
+        // LOG(INFO) << "Send Packet" ;
 //        dumpPacket(&m_tSendPkt);
 
         if(CIFX_NO_ERROR != (lRet = xChannelGetPacket(m_hChannel, sizeof(m_tRecvPkt), &m_tRecvPkt, timeWaitMessage))){
@@ -2036,7 +2061,7 @@ int MotorDriver::mailboxPacketTransfer(){
             return T_ERROR;
         }
         else{
-            LOG(INFO) << "Received Packet" ;
+            // LOG(INFO) << "Received Packet" ;
 //            dumpPacket(&m_tRecvPkt);
         }
     }
@@ -2045,7 +2070,6 @@ int MotorDriver::mailboxPacketTransfer(){
 
 
 // call this function before starting cyclic Data Transfer
-
 int MotorDriver::openBusConnection(){
     int lRet;
     unsigned long ulState;
@@ -2092,14 +2116,15 @@ void MotorDriver::enableMotor(const MotorType& type, const int& index, const int
         case MotorType::MOONS:{
             // TODO
             // if(m_jointEnabled[m_endGimbalMotorNum + index]){
-            //     LOG(INFO) << "Moons Motor " << index + 1 << " is already enabled." ;
+            //     LOG(INFO) << "Moons Motor " << index << " is already enabled." ;
             //     break;
             // }
-            LOG(INFO) << "Starting initialize Moons Motor:" << " motor " << index + 1;
+            LOG(INFO) << "Starting initialize Moons Motor:" << " motor " << index << " on arm " << armNum;
             if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to clear error for Moons motor!" ;
                 break;
             }
+            LOG(INFO) << "Finish initialize Moons Motor:" << " motor " << index << " on arm " << armNum;
             usleep(50*1000);
             LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index, armNum);
 
@@ -2121,74 +2146,76 @@ void MotorDriver::enableMotor(const MotorType& type, const int& index, const int
                 LOG(ERROR) << "Error: Failed to enable Moons motor!";
                 break;
             }
+
             usleep(50*1000);
             LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
             // m_jointEnabled[index] = true;
-            LOG(INFO) << "Successfully enable Moons motor " << index + 1 ;
+            LOG(INFO) << "Successfully enable Moons motor " << index ;
             break;
         }
         case MotorType::ZERO_ERR:{
 
             auto statusword = getStatusWord(type, index, armNum);
-            LOG(INFO) << "current ZeroErr " << index + 1 << " status word is: " << std::hex <<statusword;
+            LOG(INFO) << "current ZeroErr " << index << " status word is: " << std::hex <<statusword;
 
             auto errCode = getErrorCode(type, index, armNum);
-            LOG(INFO) << "current ZeroErr " << index + 1 << " error code is: " << std::hex <<errCode;
+            LOG(INFO) << "current ZeroErr " << index << " error code is: " << std::hex <<errCode;
 
             // //TODO
             // if (m_jointEnabled[m_endGimbalMotorNum + m_endGimbalMotorNum + index]){// && (statusword == 1237 || statusword == 1637 || statusword == 5687)
-            //     LOG(INFO) << "ZeroErr Motor " << index + 1 << " is already enabled." ;
+            //     LOG(INFO) << "ZeroErr Motor " << index << " is already enabled." ;
             //     break;
             // }
-            // LOG(INFO) << "Starting initialize ZeroErr Motor: " <<  " motor" << index + 1;
+            // LOG(INFO) << "Starting initialize ZeroErr Motor: " <<  " motor" << index;
 
             if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to clear error for ZeroErr motor!" ;
                 break;
             }
             usleep(50*1000);
-            LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index, armNum);
+            LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index, armNum) << " on arm " << armNum << ", index " << index ;
 
             if(setControlWord(type, index, ControlCommand::SHUT_DOWN, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to shut down ZeroErr motor!" ;
                 break;
             }
             usleep(50*1000);
-            LOG(INFO) << "2: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
+            LOG(INFO) << "2: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum) << " on arm " << armNum << ", index " << index ;
 
             if(setControlWord(type, index, ControlCommand::SWITCH_ON, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to switch on ZeroErr motor!";
                 break;
             }
             usleep(50*1000);
-            LOG(INFO) << "3: the control word is: " << static_cast<int>(ControlCommand::SWITCH_ON) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
+            LOG(INFO) << "3: the control word is: " << static_cast<int>(ControlCommand::SWITCH_ON) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum) << " on arm " << armNum << ", index " << index ;
 
             if(setControlWord(type, index, ControlCommand::ENABLE, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to enable ZeroErr motor!";
                 break;
             }
             usleep(50*1000);
-            LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
+            LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum) << " on arm " << armNum << ", index " << index ;
 
             //TODO
             m_jointEnabled[m_endGimbalMotorNum + m_endJointMotorNum + index] = true;
-            LOG(INFO) << "Successfully enable ZeroErr motor " << index + 1 ;
+            LOG(INFO) << "Successfully enable ZeroErr motor " << index  << " on arm " << armNum << ", index " << index ;;
             break;
         }
         case MotorType::MAXON:{
             //TODO
             // if(m_jointEnabled[m_endJointMotorNum + m_endGimbalMotorNum + m_endJointMotorNum + index]){
-            //     LOG(INFO) << "Maxon motor " << index + 1 << " is already enabled." ;
+            //     LOG(INFO) << "Maxon motor " << index << " is already enabled." ;
             //     break;
             // }
-            LOG(INFO) << "Starting initialize Maxon Motor:" << " motor " << index + 1;
+            LOG(INFO) << "Starting initialize Maxon Motor:" << " motor " << index << " on arm "<< armNum;
             usleep(50 * 1000);
 
             if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to clear error for Maxon motor!";
                 break;
             }
+            LOG(INFO) << "cleared error for Maxon motor on arm " << armNum << " index " << index ;
             usleep(50 * 1000);
             LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index, armNum);
 
@@ -2213,8 +2240,8 @@ void MotorDriver::enableMotor(const MotorType& type, const int& index, const int
             usleep(50*1000);
             LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
             //TODO
-            m_jointEnabled[m_endJointMotorNum + m_endGimbalMotorNum + m_endJointMotorNum + index] = true;
-            LOG(INFO) << "Successfully enable Maxon motor " << index + 1 ;
+            // m_jointEnabled[m_endJointMotorNum + m_endGimbalMotorNum + m_endJointMotorNum + index] = true;
+            LOG(INFO) << "Successfully enable Maxon motor " << index << " on arm " << armNum;
             break;
         }
         default:{
@@ -2229,7 +2256,7 @@ void MotorDriver::enableMotor_PP(const MotorType& type, const int& index, const 
     switch(type){
 
     case MotorType::MOONS:{
-               LOG(INFO) << "Starting initialize Moons Motor:" << " motor " << index + 1;
+               LOG(INFO) << "Starting initialize Moons Motor:" << " motor " << index<< " on arm "<< armNum;
                if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
                    LOG(ERROR) << "Error: Failed to clear error for Moons motor!" ;
                    break;
@@ -2268,12 +2295,13 @@ void MotorDriver::enableMotor_PP(const MotorType& type, const int& index, const 
 
 
                m_jointEnabled[index] = true;
-               LOG(INFO) << "Successfully enable Moons motor in PP Mode" << index + 1 ;
+               LOG(INFO) << "Successfully enable Moons motor in PP Mode" << index << " on arm "<< armNum;
+
                break;
            }
         case MotorType::ZERO_ERR:{
 
-            LOG(INFO) << "Starting initialize ZeroErr Motor in PP Mode: " <<  " motor" << index + 1;
+            LOG(INFO) << "Starting initialize ZeroErr Motor in PP Mode: " <<  " motor " << index << " on arm "<< armNum;
 
             if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to clear error for ZeroErr motor!" ;
@@ -2305,17 +2333,17 @@ void MotorDriver::enableMotor_PP(const MotorType& type, const int& index, const 
 
             //TODO
             m_jointEnabled[m_endGimbalMotorNum + m_endJointMotorNum + index] = true;
-            LOG(INFO) << "Successfully enable ZeroErr motor " << index + 1 ;
+            LOG(INFO) << "Successfully enable ZeroErr motor " << index ;
             break;
         }
         case MotorType::MAXON:{
             //TODO
             // if(m_jointEnabled[m_endJointMotorNum + m_endGimbalMotorNum + m_endJointMotorNum + index]){
-            //     LOG(INFO) << "Maxon Motor " << index + 1 << " is already enabled." ;
+            //     LOG(INFO) << "Maxon Motor " << index << " is already enabled." ;
             //     break;
             // }
-            LOG(INFO) << "Starting initialize Maxon Motor:" << " motor " << index + 1;
 
+            LOG(INFO) << "Starting initialize Maxon Motor " << index << " on arm " << armNum;
             if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to clear error for maxon motor!";
                 break;
@@ -2344,7 +2372,7 @@ void MotorDriver::enableMotor_PP(const MotorType& type, const int& index, const 
             LOG(INFO) << "3: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
             //TODO
             m_jointEnabled[m_endJointMotorNum + m_endGimbalMotorNum + m_endJointMotorNum + index] = true;
-            LOG(INFO) << "Successfully enable Maxon motor " << index + 1 ;
+            LOG(INFO) << "Successfully enable Maxon motor " << index ;
             break;
         }
         default:{
@@ -2358,6 +2386,7 @@ void MotorDriver::enableMotor_Homing(const MotorType &type, const int &index, co
 {
     switch (type) {
         case MotorType::MAXON: {
+            LOG(INFO) << "MAXON index " << index << " on arm "<< armNum;
             if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to clear error for MAXON motor!" ;
                 break;
@@ -2531,10 +2560,16 @@ void MotorDriver::operationCSV(const MotorType& type, const int& index, const in
     switch(type){
         case MotorType::MOONS:{
             LOG(INFO) << "Start setting operation mode to CSV for MOONS." ;
+            LOG(INFO) << "Current operation mode of MOONS: " << getOperationMode(type, index, armNum) ;
+
             if(setOperationMode(type, index, OperationMode::CSV, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set operation mode to CSV for MOONS!";
                 break;
             }
+
+            LOG(INFO) << "Succeeded to set operation mode to CSV for MOONS!";
+            LOG(INFO) << "Current operation mode of MOONS: " << getOperationMode(type, index, armNum) ;
+
             usleep(50 * 1000);
             if(setTargetVel(type, index, zeroVel, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set current vel to 0 for MOONS!";
@@ -2567,7 +2602,7 @@ void MotorDriver::operationCSV(const MotorType& type, const int& index, const in
                 break;
             }
             if (setMaxVelErr(type, index, SDO_COMMAND::MAX_VEL_ERR, armNum) != T_NOERROR){
-                LOG(ERROR) << " Failed to set SDO 0x3B60: Max Velocity Error for ZeroErr!" << std::endl;
+                LOG(ERROR) << "Failed to set SDO 0x3B60: Max Velocity Error for ZeroErr!" << std::endl;
                 break;
             }
             usleep(50*1000);
@@ -2585,6 +2620,7 @@ void MotorDriver::operationCSV(const MotorType& type, const int& index, const in
                 LOG(ERROR) << "Error: Failed to set interpolation time!";
                 break;
             }
+            LOG(INFO) << "Finish setting operation mode to CSV for Maxon." ;
             usleep(50 * 1000);
             enableMotor(type, index, armNum);
             break;
@@ -2692,8 +2728,6 @@ void MotorDriver::operationPP(const MotorType& type, const int& index, const int
                 LOG(ERROR) << "Failed to set profile deceleration for ZeroErr!";
                 break;
             }
-
-
             enableMotor_PP(type, index);
             break;
         }
@@ -2721,11 +2755,11 @@ void MotorDriver::gotoTargetPos_PPMode(const MotorType& type, const int& index, 
             break;
         }
         case MotorType::ZERO_ERR:{
-            LOG(INFO) << "Starting go to target Position in PP mode for ZeroErr " << index + 1;
+            LOG(INFO) << "Starting go to target Position in PP mode for ZeroErr " << index;
 
             auto errCode = getErrorCode(type,index, armNum);
             if(setOperationMode(type, index, OperationMode::PP, armNum) != T_NOERROR){
-                LOG(ERROR) << "Failed to set operation mode to PP for ZeroErr!" << index + 1 ;
+                LOG(ERROR) << "Failed to set operation mode to PP for ZeroErr!" << index ;
                 break;
             }
             usleep(100 * 1000);
@@ -2915,47 +2949,104 @@ int MotorDriver::checkECatStationState(){
 int MotorDriver::checkMotorState(){
     int lRet;
 
+    if((lRet = getErrorCode(MotorType::ZERO_ERR, 0, arm_guiding)) != 0x0){
+        // LOG(ERROR) << "Error: Zero Error motor on arm_guiding, joint 1, error code is: 0x" << std::hex << lRet;
+        return T_ERROR;
+    }
+    if((lRet = getErrorCode(MotorType::ZERO_ERR, 1, arm_guiding)) != 0x0){
+        // LOG(ERROR) << "Error: Zero Error motor on arm_guiding, joint 2, error code is: 0x" << std::hex << lRet;
+        return T_ERROR;
+    }
+    if((lRet = getErrorCode(MotorType::ZERO_ERR, 2, arm_guiding)) != 0x0){
+        // LOG(ERROR) << "Error: Zero Error motor on arm_guiding, joint 3, error code is 0x: " << std::hex << lRet;
+        return T_ERROR;
+    }
+
     if((lRet = getErrorCode(MotorType::MOONS, 0, arm_0)) != 0x0){
-        LOG(ERROR) << "Error: Moons motor x-direction, error code is: 0x" << std::hex << lRet;
-         return T_ERROR;
+        // LOG(ERROR) << "Error: Moons motor on arm0, x-direction, error code is: 0x" << std::hex << lRet;
+        return T_ERROR;
     }
     if((lRet = getErrorCode(MotorType::ZERO_ERR, 0, arm_0)) != 0x0){
-//        LOG(ERROR) << "Error: Zero Error motor joint 1, error code is: 0x" << std::hex << lRet;
-         return T_ERROR;
+        LOG(ERROR) << "Error: Zero Error motor on arm0, joint 1, error code is: 0x" << std::hex << lRet;
+        return T_ERROR;
     }
     if((lRet = getErrorCode(MotorType::ZERO_ERR, 1, arm_0)) != 0x0){
-        LOG(ERROR) << "Error: Zero Error motor joint 2, error code is: 0x" << std::hex << lRet;
-         return T_ERROR;
+        // LOG(ERROR) << "Error: Zero Error motor on arm0, joint 2, error code is: 0x" << std::hex << lRet;
+        return T_ERROR;
     }
     if((lRet = getErrorCode(MotorType::ZERO_ERR, 2, arm_0)) != 0x0){
-        LOG(ERROR) << "Error: Zero Error motor joint 3, error code is 0x: " << std::hex << lRet;
-         return T_ERROR;
+        // LOG(ERROR) << "Error: Zero Error motor on arm0, joint 3, error code is 0x: " << std::hex << lRet;
+        return T_ERROR;
     }
     if((lRet = getErrorCode(MotorType::MAXON, 0, arm_0)) != 0x0){
-        LOG(ERROR) << "Error: Maxon motor joint 1, error code is: 0x" << std::hex << lRet;
-         return T_ERROR;
+        // LOG(ERROR) << "Error: Maxon motor on arm0, joint 1, error code is: 0x" << std::hex << lRet;
+        return T_ERROR;
     }
     if((lRet = getErrorCode(MotorType::MAXON, 1, arm_0)) != 0x0){
-        LOG(ERROR) << "Error: Maxon motor joint 2, error code is 0x: " << std::hex << lRet;
-         return T_ERROR;
+        // LOG(ERROR) << "Error: Maxon motor on arm0, joint 2, error code is 0x: " << std::hex << lRet;
+        return T_ERROR;
     }
     if((lRet = getErrorCode(MotorType::MAXON, 2, arm_0)) != 0x0){
-        LOG(ERROR) << "Error: Maxon motor joint 3, error code is: 0x" << std::hex << lRet;
+        // LOG(ERROR) << "Error: Maxon motor on arm0, joint 3, error code is: 0x" << std::hex << lRet;
          return T_ERROR;
     }
     if((lRet = getErrorCode(MotorType::MAXON, 3, arm_0)) != 0x0){
-        LOG(ERROR) << "Error: Maxon motor joint 4, error code is 0x: " << std::hex << lRet;
+        // LOG(ERROR) << "Error: Maxon motor on arm0, joint 4, error code is 0x: " << std::hex << lRet;
          return T_ERROR;
     }
-    return T_NOERROR;
     if((lRet = getErrorCode(MotorType::MAXON, 4, arm_0)) != 0x0){
-        LOG(ERROR) << "Error: Maxon motor joint 3, error code is: 0x" << std::hex << lRet;
+        // LOG(ERROR) << "Error: Maxon motor on arm0, joint 5, error code is: 0x" << std::hex << lRet;
          return T_ERROR;
     }
     if((lRet = getErrorCode(MotorType::MAXON, 5, arm_0)) != 0x0){
-        LOG(ERROR) << "Error: Maxon motor joint 4, error code is 0x: " << std::hex << lRet;
-         return T_ERROR;
+        // LOG(ERROR) << "Error: Maxon motor on arm0, joint 6, error code is 0x: " << std::hex << lRet;
+        return T_ERROR;
     }
+
+    if((lRet = getErrorCode(MotorType::MOONS, 0, arm_1)) != 0x0){
+        // LOG(ERROR) << "Error: Moons motor on arm1, x-direction, error code is: 0x" << std::hex << lRet;
+        return T_ERROR;
+    }
+    if((lRet = getErrorCode(MotorType::ZERO_ERR, 0, arm_1)) != 0x0){
+        // LOG(ERROR) << "Error: Zero Error motor on arm1, joint 1, error code is: 0x" << std::hex << lRet;
+        return T_ERROR;
+    }
+    if((lRet = getErrorCode(MotorType::ZERO_ERR, 1, arm_1)) != 0x0){
+        // LOG(ERROR) << "Error: Zero Error motor on arm1, joint 2, error code is: 0x" << std::hex << lRet;
+        return T_ERROR;
+    }
+    if((lRet = getErrorCode(MotorType::ZERO_ERR, 2, arm_1)) != 0x0){
+        // LOG(ERROR) << "Error: Zero Error motor on arm1, joint 3, error code is 0x: " << std::hex << lRet;
+        return T_ERROR;
+    }
+    if((lRet = getErrorCode(MotorType::MAXON, 0, arm_1)) != 0x0){
+        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 1, error code is: 0x" << std::hex << lRet;
+        return T_ERROR;
+    }
+    if((lRet = getErrorCode(MotorType::MAXON, 1, arm_1)) != 0x0){
+        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 2, error code is 0x: " << std::hex << lRet;
+        return T_ERROR;
+    }
+    if((lRet = getErrorCode(MotorType::MAXON, 2, arm_1)) != 0x0){
+        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 3, error code is: 0x" << std::hex << lRet;
+        return T_ERROR;
+    }
+    if((lRet = getErrorCode(MotorType::MAXON, 3, arm_1)) != 0x0){
+        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 4, error code is 0x: " << std::hex << lRet;
+        return T_ERROR;
+    }
+    if((lRet = getErrorCode(MotorType::MAXON, 4, arm_1)) != 0x0){
+        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 5, error code is: 0x" << std::hex << lRet;
+        return T_ERROR;
+    }
+    if((lRet = getErrorCode(MotorType::MAXON, 5, arm_1)) != 0x0){
+        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 6, error code is 0x: " << std::hex << lRet;
+        return T_ERROR;
+    }
+    // LOG(INFO) << "In function checkMotorState, all motors are checked! ";
+
+    return T_NOERROR;
+
 }
 
 void MotorDriver::displayMotorErrCode(){
@@ -2980,7 +3071,6 @@ void MotorDriver::displayMotorErrCode(){
     LOG(INFO) << "Maxon motor joint 4, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 3, arm_1);
     LOG(INFO) << "Maxon motor joint 5, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 4, arm_1);
     LOG(INFO) << "Maxon motor joint 6, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 5, arm_1);
-
 }
 
 void MotorDriver::motorDriverThread(std::promise<bool> &promiseCommunication){

@@ -880,7 +880,7 @@ Rectangle {
               // 设置按钮文本
               contentItem: Text {
                   id: po_btnCaliGimbalR_Text
-                  text: qsTr("机械臂归零yu")
+                  text: qsTr("机械臂归零")
                   font.pixelSize: 28
                   opacity: 1.0
                   color: "#48FFFF"
@@ -912,7 +912,7 @@ Rectangle {
                      }
                      case 0x01:
                      {
-                         po_btnCaliGimbalR_Text.text = qsTr("右侧云台归零yu")
+                         po_btnCaliGimbalR_Text.text = qsTr("机械臂归零")
                          po_btnCaliGimbalR_Text.color="#48FFFF"
                          po_btnCaliGimbalR_Background.color="#003033"
                          po_btnCaliGimbalR_Background.border.color="#2CDFE8"
@@ -920,7 +920,7 @@ Rectangle {
                      }
                      case 0x02:
                      {
-                         po_btnCaliGimbalR_Text.text = qsTr("归零中yu")
+                         po_btnCaliGimbalR_Text.text = qsTr("机械臂归零中")
                          po_btnCaliGimbalR_Text.color="#FFFFFF"
                          po_btnCaliGimbalR_Background.color="#48FFFF"
                          po_btnCaliGimbalR_Background.border.color="#2CDFE8"
@@ -944,7 +944,7 @@ Rectangle {
               // 设置按钮文本
               contentItem: Text {
                   id: po_btnCaliInstrumentR_Text
-                  text: qsTr("器械归零yu")
+                  text: qsTr("器械归零")
                   font.pixelSize: 28
                   opacity: 1.0
                   color: "#48FFFF"
@@ -976,7 +976,7 @@ Rectangle {
                      }
                      case 0x01:
                      {
-                         po_btnCaliInstrumentR_Text.text = qsTr("右侧器械归零yu")
+                         po_btnCaliInstrumentR_Text.text = qsTr("右侧器械归零")
                          po_btnCaliInstrumentR_Text.color="#48FFFF"
                          po_btnCaliInstrumentR_Background.color="#003033"
                          po_btnCaliInstrumentR_Background.border.color="#2CDFE8"
@@ -984,7 +984,7 @@ Rectangle {
                      }
                      case 0x02:
                      {
-                         po_btnCaliInstrumentR_Text.text = qsTr("归零中yu")
+                         po_btnCaliInstrumentR_Text.text = qsTr("右侧器械归零中")
                          po_btnCaliInstrumentR_Text.color="#FFFFFF"
                          po_btnCaliInstrumentR_Background.color="#48FFFF"
                          po_btnCaliInstrumentR_Background.border.color="#2CDFE8"

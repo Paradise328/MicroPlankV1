@@ -18,7 +18,6 @@ INITIALIZE_EASYLOGGINGPP
   sudo chmod o+w /dev/bus/usb/001/003  (use the real port entry)
 */
 
-
 int main(int argc, char *argv[])
 {
    QGuiApplication app(argc, argv);
@@ -28,11 +27,11 @@ int main(int argc, char *argv[])
    motorDriverParameter.guidingJointMotorNum = 3;           /* number of motor to control the arm */
    motorDriverParameter.armNum = 2;
    motorDriverParameter.endGimbalMotorNum = 2;              /* total number of motor to control end-effector gimbal */
-   motorDriverParameter.endGimbalMotorNumPerArm = 2;        /* number of motor to control end-effector gimbal on each arm */
+   motorDriverParameter.endGimbalMotorNumPerArm = 1;        /* number of motor to control end-effector gimbal on each arm */
    motorDriverParameter.endJointMotorNum = 6;               /* total number of motor to control end-effector joint */
-   motorDriverParameter.endJointMotorNumPerArm = 6;         /* number of motor to control end-effector joint on each arm */
+   motorDriverParameter.endJointMotorNumPerArm = 3;         /* number of motor to control end-effector joint on each arm */
    motorDriverParameter.endInstrumentMotorNum = 12;         /* total number of motor to control end-effector instruments */
-   motorDriverParameter.endInstrumentMotorNumPerArm = 12;   /* number of motor to control end-effector instruments on each arm */
+   motorDriverParameter.endInstrumentMotorNumPerArm = 6;   /* number of motor to control end-effector instruments on each arm */
    motorDriverParameter.slaveNum = 23;                      /* total number of ethercat slaves*/
    motorDriverParameter.motorNum = 23;                      /* total number of ethercat slaves*/
    motorDriverParameter.forceSensorNumPerArm = 0;
@@ -40,7 +39,7 @@ int main(int argc, char *argv[])
    /* Log File Configuration */
    const auto timeStamp = getCurrentTimeAsString();
    const auto logFileName = "../logs/app_" + timeStamp + ".log";
-   el::Configurations conf("/home/a/Desktop/MicroPlank_QTVersion/Config/logConf.conf");  // path have to be adapted
+   el::Configurations conf("/home/a/Desktop/codes/MikroPlanckV1/Config/logConf.conf");  // path have to be adapted
    conf.setGlobally(el::ConfigurationType::Filename, logFileName);
    el::Loggers::reconfigureAllLoggers(conf);
    LOG(INFO)<< "Successfully init Logger Config Module ";

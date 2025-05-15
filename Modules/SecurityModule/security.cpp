@@ -6,6 +6,7 @@ Security::Security(MessageQueue& messagePool):m_messagePool(messagePool)
     selfCheckStep.store(SelfCheckStepEnum::No_Checking);
     checkShutDownSystem.store(shutDownSystemEnum::No_ShutDown);
     m_systemModuleStatus = {false, false, false, false, false};
+
     connect(this, &Security::DealMsgSignal, this, &Security::dealWithMsg);
 }
 

@@ -268,17 +268,25 @@ public:
                                    m_motorDriverparameter.endGimbalMotorNumPerArm * endGimbalMotor_sizeSendData +
                                    m_motorDriverparameter.endInstrumentMotorNumPerArm * endInstrumentMotor_sizeSendData
                                    ) * m_motorDriverparameter.armNum;
+
             m_abRecvDataByteNum = m_motorDriverparameter.guidingJointMotorNum * guidingJointMotor_sizeRecvData +
                                   (m_motorDriverparameter.endJointMotorNumPerArm * endJointMotor_sizeRecvData +
                                    m_motorDriverparameter.endGimbalMotorNumPerArm * endGimbalMotor_sizeRecvData +
                                    m_motorDriverparameter.endInstrumentMotorNumPerArm * endInstrumentMotor_sizeRecvData
                                    ) * m_motorDriverparameter.armNum;
 
-            LOG(INFO) << "m_abSendDataByteNum: " << m_abSendDataByteNum;
-            LOG(INFO) << "m_abRecvDataByteNum: " << m_abRecvDataByteNum;
+            m_abRecvDataLengthGuiding = m_motorDriverparameter.guidingJointMotorNum * guidingJointMotor_sizeRecvData;
 
-            m_abRecvDataGuiding = m_motorDriverparameter.guidingJointMotorNum * guidingJointMotor_sizeRecvData;
-            m_abSendDataGuiding = m_motorDriverparameter.guidingJointMotorNum * guidingJointMotor_sizeSendData;
+            m_abSendDataLengthGuiding = m_motorDriverparameter.guidingJointMotorNum * guidingJointMotor_sizeSendData;
+            LOG(INFO) << "m_abRecvDataLengthGuiding: " << m_abRecvDataLengthGuiding;
+            LOG(INFO) << "m_abSendDataLengthGuiding: " << m_abSendDataLengthGuiding;
+            m_abRecvDataLengthPerArm = m_motorDriverparameter.endJointMotorNumPerArm * endJointMotor_sizeRecvData +
+                                       m_motorDriverparameter.endGimbalMotorNumPerArm * endGimbalMotor_sizeRecvData +
+                                       m_motorDriverparameter.endInstrumentMotorNumPerArm * endInstrumentMotor_sizeRecvData;
+
+            m_abSendDataLengthPerArm = m_motorDriverparameter.endJointMotorNumPerArm * endJointMotor_sizeSendData +
+                                       m_motorDriverparameter.endGimbalMotorNumPerArm * endGimbalMotor_sizeSendData +
+                                       m_motorDriverparameter.endInstrumentMotorNumPerArm * endInstrumentMotor_sizeSendData;
 
             m_jointEnabled = new bool[t_motorDriverParameter.motorNum];
             for(int i = 0; i < t_motorDriverParameter.motorNum; i++){
@@ -329,7 +337,7 @@ public:
     int setInterpolationTime(const MotorType& type, const int& index, const int& interpolationTime, const int& armNum);
     int setBias(const int& controlWord, const int& armNum = 0);
 
-    /* write SDO data, write specific value to a specific object index */
+    /* Write SDO data, write specific value to a specific object index */
     /* Format of the packet for SDO writing, Packet head information, refer to the definition of CIFX_PACKET */
     int setBrake(const int& jointIndex, const SDO_COMMAND& sdoCmd);
     int setMaxVelErr(const MotorType& type, const int& jointIndex, const SDO_COMMAND& sdoCmd, const int& armNum);
@@ -363,7 +371,8 @@ public:
     void gotoTargetPos_PPMode(const MotorType& type, const int& index, const int32_t& targetVel, const int32_t& targetPos, const int& armNum);
     void operationHOME(const MotorType& type, const int& index, const int& armNum);
     void motorDriverExit();
-
+    int getAbSendDataByteNum(){return m_abSendDataByteNum;}
+    int getAbRecvDataByteNum(){return m_abRecvDataByteNum;}
     static void motorDriverThread(std::promise<bool> &promiseCommunication);//(std::promise<bool> &promiseCommunication)
     static MotorDriver* getInstance(const MotorDriverParameter motorDriverParameter, MessageQueue&  messagePool);
 
@@ -385,8 +394,8 @@ private:
     CIFX_PACKET m_tRecvPkt = {{0}};
     int           m_abSendDataByteNum;
     int           m_abRecvDataByteNum;
-    unsigned char m_abSendData[870] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON */
-    unsigned char m_abRecvData[628] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON */
+    unsigned char m_abSendData[870] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON : 9 * 44 + 2 * 27 + 35 * 12*/
+    unsigned char m_abRecvData[628] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON : 9 * 26 + 2 * 23 + 29 * 12*/
     std::string m_mappingPath = "/home/a/Desktop/codes/MikroPlanckV1/Config/PDO_mapping.toml";
     PDOConfig m_config[5] = {};
     struct CIFX_LINUX_INIT m_init;
@@ -406,10 +415,10 @@ private:
     int m_forceSensorNumPerArm;
     int m_motorNum;
     int m_slaveNum;
-    int m_abRecvDataPerArm;
-    int m_abSendDataPerArm;
-    int m_abRecvDataGuiding;
-    int m_abSendDataGuiding;
+    int m_abRecvDataLengthPerArm;
+    int m_abSendDataLengthPerArm;
+    int m_abRecvDataLengthGuiding;
+    int m_abSendDataLengthGuiding;
 
     static MotorDriver *m_selfPointer;
     bool m_flagSDO;

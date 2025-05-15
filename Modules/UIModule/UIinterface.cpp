@@ -352,21 +352,21 @@ void UIinterface::onButton_CaliGimbalR_Clicked()//点击右云台归零
 
 void UIinterface::onButton_CaliInstrumentL_Clicked()//点击器械归零
 {
-    printf("instrument CaliInstrumentL\n");
+    printf("instrument CaliInstrument L\n");
     if((m_GimbalCalibrationFlag_L + m_GimbalCalibrationFlag_R + m_InstrumentCalibrationFlag_L + m_InstrumentCalibrationFlag_R) == 0)//如果其他按钮都没有被按下
     {
         SetButtonSta(this->m_PO_Button_CaliGimbal_L,UI_Button_Gray);
         SetButtonSta(this->m_PO_Button_CaliGimbal_R,UI_Button_Gray);
         SetButtonSta(this->m_PO_Button_CaliInstrument_L,UI_Button_Highlight);
         SetButtonSta(this->m_PO_Button_CaliInstrument_R,UI_Button_Gray);
-//        SendInnerMsg(Module_Inner_E::Slave,static_cast<int>(SlaveAction_E::INSTRUMENT_Calibration_Start),"l");
+        SendInnerMsg(Module_Inner_E::RobotControl,static_cast<int>(RobotControlAction_E::StartEndEffectorMotorHoming),"l");
         m_InstrumentCalibrationFlag_L = 1;
     }
 }
 
 void UIinterface::onButton_CaliInstrumentR_Clicked()
 {
-    printf("instrument CaliInstrumentR\n");
+    printf("instrument CaliInstrument R\n");
     if((m_GimbalCalibrationFlag_L + m_GimbalCalibrationFlag_R + m_InstrumentCalibrationFlag_L + m_InstrumentCalibrationFlag_R) == 0)
     {
         SetButtonSta(this->m_PO_Button_CaliGimbal_L,UI_Button_Gray);

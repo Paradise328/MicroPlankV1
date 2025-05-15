@@ -11,20 +11,44 @@ void MicroPlank::startSystem()
 {
     LOG(INFO) << "start system ";
 
-    startMasterConsole(); /*开启主手线程，并进行对m_isMasterConsoleOk的赋值*/
+    /* 开启主手线程，并进行对m_isMasterConsoleOk的赋值 */
+    // startMasterConsole();
 
-    initMotorDriver(); /*开启MotorDriver线程*/
+    /* 开启MotorDriver线程 */
+    initMotorDriver();
 
     std::this_thread::sleep_for(std::chrono::seconds(10));
 
     startMsgThread();
 
-    startRobotControl(); /*开启robotControl线程*/
+    /* 开启robotControl线程 */
+    startRobotControl();
 
     // m_security.performSystemCheck();
     m_security.systemBootSelfCheck();
 
-    startSecurityModule(); /*开启security监控线程*/
+    /* 开启security监控线程 */
+    // startSecurityModule();
+
+    // while(true){
+
+    //     system("clear");
+
+    //     LOG(INFO) << "m_abSendDataByteNum: " << m_motorDriver->getAbSendDataByteNum() ;
+    //     LOG(INFO) << "m_abRecvDataByteNum: " << m_motorDriver->getAbRecvDataByteNum() ;
+    //     LOG(INFO) << "statusword arm -1 joint 0: " << m_motorDriver->getStatusWord(MotorType::ZERO_ERR,0,-1);
+    //     LOG(INFO) << "statusword arm -1 joint 1: " << m_motorDriver->getStatusWord(MotorType::ZERO_ERR,1,-1);
+    //     LOG(INFO) << "statusword arm -1 joint 2: " << m_motorDriver->getStatusWord(MotorType::ZERO_ERR,2,-1);
+
+    //     LOG(INFO) << "statusword arm 0 joint 0: " << m_motorDriver->getStatusWord(MotorType::ZERO_ERR,0,0);
+    //     LOG(INFO) << "statusword arm 0 joint 1: " << m_motorDriver->getStatusWord(MotorType::ZERO_ERR,1,0);
+    //     LOG(INFO) << "statusword arm 0 joint 2: " << m_motorDriver->getStatusWord(MotorType::ZERO_ERR,2,0);
+
+    //     LOG(INFO) << "statusword arm 1 joint 0: " << m_motorDriver->getStatusWord(MotorType::ZERO_ERR,0,1);
+    //     LOG(INFO) << "statusword arm 1 joint 1: " << m_motorDriver->getStatusWord(MotorType::ZERO_ERR,1,1);
+    //     LOG(INFO) << "statusword arm 1 joint 2: " << m_motorDriver->getStatusWord(MotorType::ZERO_ERR,2,1);
+    //     std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    // }
 }
 
 void MicroPlank::startMasterConsole()

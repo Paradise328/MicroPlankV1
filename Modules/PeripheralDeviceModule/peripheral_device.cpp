@@ -222,7 +222,7 @@ Send2:
         else{
             qDebug()<<"Send 3 All Connection Lost";
             this->ReconnTimer->start(1500);
-            return SEND_ERROR;/*或者加异常处理代码*/
+            return SEND_ERROR;/* 或者加异常处理代码 */
         }
         std::cout << "send error,mlen=" << mlen << std::endl;
     }
