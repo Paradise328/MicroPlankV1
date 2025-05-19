@@ -245,8 +245,6 @@ void RobotControl::startMyThreads()
 {
     startUpdataMasterConsoleDataThread();
 
-    flagUpdateMasterConsoleData.store(true);
-
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     startConmunicateWithMotorDriverThread();
@@ -254,11 +252,12 @@ void RobotControl::startMyThreads()
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-    goToHold();
+    // goToHold();
 
     std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 
     startControlThread();
+    m_flagControlThread.store(true);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
@@ -275,10 +274,8 @@ void RobotControl::startControlThread()
 void RobotControl::control()
 {
 
-    while(true)
+    while(m_flagControlThread && !m_isSystemTerminated)
     {
-        auto handlePoseCur = m_HandlePose_Cur.load();
-
         if(m_flagInTeleoperation.load())
         {
             teleoperation();
@@ -297,11 +294,10 @@ void RobotControl::teleoperation()
     HandlePose      masterHandlePose_Init_R;
     HandlePose      masterHandlePose_Prev_R;
 
-    std::array<std::array<int,11>, 3> motorControl_save_R;//保存当前motor位置，作为pre值
-    motorControl_save_R = m_motorControl_save_R;
+    auto handlePoseCur = m_HandlePose_Cur.load();
 
-    std::array<std::array<int,11>, 3> motorControl_save_L;//保存当前motor位置，作为pre值
-    motorControl_save_L = m_motorControl_save_L;
+    auto motorControl_save_R = m_motorControl_save_R;
+    auto motorControl_save_L = m_motorControl_save_L;
 
     std::array<int,MotorNum>   targetEncoder_R;
     std::array<int,MotorNum>   targetEncoder_L;
@@ -309,45 +305,20 @@ void RobotControl::teleoperation()
     std::array<int,MotorNum>   targetVelocity_R;
     std::array<int,MotorNum>   targetVelocity_L;
 
+
     auto MotorPositionInit_R = m_MotorPositionInit_R;
     auto MotorPositionInit_L = m_MotorPositionInit_L;
 
-    //    //save previous sensor and forcep posture data and the opening angle and button  as previous data
+    /*save previous sensor and forcep posture data and the ope ning angle and button  as previous data*/
     masterHandlePose_Init_R = m_HandlePoseInit_R;
     masterHandlePose_Prev_R = m_HandlePosePrev_R;
 
     masterHandlePose_Init_L = m_HandlePoseInit_L;
 
-
-    std::array<int, MotorNum>   motorPositionInit_R;//teleoperation() record 500th as Init
-    std::array<int, MotorNum>   motorPositionInit_L;//teleoperation() record 500th as Init
-    motorPositionInit_L = m_MotorPositionInit_L;
-    motorPositionInit_R = m_MotorPositionInit_R;
-
-    //    int enableTagCur_L = keepDisabling;
-    //    int enableTagCur_R = keepDisabling;
-
     auto controlLoopNum = m_controlLoopNum;
 
-    //    //Extract the updated Encoder Value from Galilm_MotorCurEncoder
-    std::array<int, MotorNum>  motorPositionCur_R = {};
-    motorPositionCur_R = m_MotorCurEncoder_R.load();
-
-    std::array<int, MotorNum>   motorPositionCur_L = {};
-    motorPositionCur_L = m_MotorCurEncoder_L.load();
-    //    LOG(INFO)<<"motor cur: "<<motorPositionCur_L;
-
-    auto handlePoseCur = m_HandlePose_Cur.load();
-
-    handlePoseCur.enableButton_R = 3;//默认使能踏板踩下
-    handlePoseCur.enableButton_L = 3;//默认使能踏板踩下
-
-    m_OpenAngle_R = handlePoseCur.handlePoseR_OpenAngle;
-    //    LOG(INFO)<<"handlePoseCur_OPENANGLE: "<< m_OpenAngle_R;
-    m_OpenAngle_L = handlePoseCur.handlePoseL_OpenAngle;
-
-    m_graspIndex_R = handlePoseCur.graspIndex_R;
-    //    LOG(INFO)<<"grasp index: "<< m_graspIndex_R;
+    auto motorPositionCur_R = m_MotorCurEncoder_R.load();
+    auto motorPositionCur_L = m_MotorCurEncoder_L.load();
 
     Eigen::Matrix3d PoseCur_R = handlePoseCur.getRotationDataR();//取回的是3d矩阵
     Eigen::Matrix3d PoseCur_L = handlePoseCur.getRotationDataL();//取回的是3d矩阵
@@ -387,29 +358,14 @@ void RobotControl::teleoperation()
     std::array<double, 15> controlValues_Cur_R = controlValues_R;
     std::array<double, 15> controlValues_Cur_L = controlValues_L;
 
-    handlePoseCur.handlePoseR_Arzimuth = controlValues_R[14];//存入从手关节角度
-    handlePoseCur.handlePoseR_Elevation = controlValues_R[13];
-    handlePoseCur.handlePoseR_Roll = controlValues_R[12];
-
-    handlePoseCur.handlePoseL_Arzimuth = controlValues_L[14];//存入从手关节角度
-    handlePoseCur.handlePoseL_Elevation = controlValues_L[13];
-    handlePoseCur.handlePoseL_Roll = controlValues_L[12];
-
-    m_rollAngle_R = controlValues_R[12];
-    m_yawAngle_R = controlValues_R[14];
-    m_pitchAngle_R = controlValues_R[13];//保存当前值，判断角度
-    m_rollAngle_L = controlValues_L[12];
-    m_yawAngle_L = controlValues_L[14];
-    m_pitchAngle_L = controlValues_L[13];//保存当前值，判断角度
-
     auto controlValues_Prev_R = m_controlValues_Prev_R;
     auto controlValues_Prev_L = m_controlValues_Prev_L;
 
-    m_motorControl_R = RobotControl::forwardKinematics_R(controlValues_Prev_R, controlValues_Cur_R,
+    m_motorControl_R = forwardKinematics_R(controlValues_Prev_R, controlValues_Cur_R,
                                                          MotorPositionInit_R, motorControl_save_R[1], handlePoseCur);//motorPositionCur_R为直接读取的编码器数值
 
-    m_motorControl_L = RobotControl::forwardKinematics_L(controlValues_Prev_L, controlValues_Cur_L,
-                                                         MotorPositionInit_L, motorControl_save_L[1], handlePoseCur);//motorPositionCur_R为直接读取的编码器数值
+    m_motorControl_L = forwardKinematics_L(controlValues_Prev_L, controlValues_Cur_L, MotorPositionInit_L,
+                                           motorControl_save_L[1], handlePoseCur);//motorPositionCur_R为直接读取的编码器数值
 
     m_motorControl_save_R = m_motorControl_R;//用作保存pre控制数值
     m_motorControl_save_L = m_motorControl_L;//用作保存pre控制数值
@@ -420,27 +376,17 @@ void RobotControl::teleoperation()
     {
         if(controlLoopNum == m_waitTime)
         {
-            motorPositionInit_R[0] = motorPositionCur_R[0];
-            motorPositionInit_R[1] = motorPositionCur_R[1];
-            motorPositionInit_R[2] = motorPositionCur_R[2];
-            motorPositionInit_R[3] = motorPositionCur_R[3];
-            motorPositionInit_R[4] = motorPositionCur_R[4];
-            motorPositionInit_R[5] = motorPositionCur_R[5];
-            motorPositionInit_R[7] = motorPositionCur_R[6];
-            motorPositionInit_R[8] = motorPositionCur_R[7];
-            motorPositionInit_R[9] = motorPositionCur_R[8];
-            motorPositionInit_R[10] = motorPositionCur_R[9];
 
-            targetEncoder_R[0] = motorPositionInit_R[0];
-            targetEncoder_R[1] = motorPositionInit_R[1];
-            targetEncoder_R[2] = motorPositionInit_R[2];
-            targetEncoder_R[3] = motorPositionInit_R[3];
-            targetEncoder_R[4] = motorPositionInit_R[4];
-            targetEncoder_R[5] = motorPositionInit_R[5];
-            targetEncoder_R[7] = motorPositionInit_R[7];
-            targetEncoder_R[8] = motorPositionInit_R[8];
-            targetEncoder_R[9] = motorPositionInit_R[9];
-            targetEncoder_R[10] = motorPositionInit_R[10];
+            targetEncoder_R[0] = motorPositionCur_R[0];
+            targetEncoder_R[1] = motorPositionCur_R[1];
+            targetEncoder_R[2] = motorPositionCur_R[2];
+            targetEncoder_R[3] = motorPositionCur_R[3];
+            targetEncoder_R[4] = motorPositionCur_R[4];
+            targetEncoder_R[5] = motorPositionCur_R[5];
+            targetEncoder_R[7] = motorPositionCur_R[7];
+            targetEncoder_R[8] = motorPositionCur_R[8];
+            targetEncoder_R[9] = motorPositionCur_R[9];
+            targetEncoder_R[10] = motorPositionCur_R[10];
 
             targetVelocity_R[0] = 0;
             targetVelocity_R[1] = 0;
@@ -455,7 +401,7 @@ void RobotControl::teleoperation()
             targetVelocity_R[10] = 0;
 
             m_HandlePoseInit_R = handlePoseCur;
-            setControlInitHandleMotorPositionAndPose(motorPositionInit_R, handlePoseCur, 'r');
+            setControlInitHandleMotorPositionAndPose(motorPositionCur_R, handlePoseCur, 'r');
             m_AlignmentNumber_R = 0;
         }
 
@@ -478,6 +424,19 @@ void RobotControl::teleoperation()
                 targetVelocity_R[1] = m_motorControl_R[0][1];
                 targetVelocity_R[2] = m_motorControl_R[0][2];
                 targetVelocity_R[3] = m_motorControl_R[0][3];
+
+                //在csv模式下，x轴限位。-40000，40000
+                if((targetEncoder_R[0] > 40000) || (targetEncoder_R[0] < -40000)){
+                    targetVelocity_R[0] = 0;
+
+                    if(targetEncoder_R[0] > 40000){
+                        targetEncoder_R[0] = 40000;
+                    }
+                    if(targetEncoder_R[0] < -40000){
+                        targetEncoder_R[0] = -40000;
+                    }
+                }
+
             }
 
             //以下两个if只与csv模式相关
@@ -529,27 +488,17 @@ void RobotControl::teleoperation()
     {
         if(controlLoopNum == m_waitTime)
         {
-            motorPositionInit_L[0] = motorPositionCur_L[0];
-            motorPositionInit_L[1] = motorPositionCur_L[1];
-            motorPositionInit_L[2] = motorPositionCur_L[2];
-            motorPositionInit_L[3] = motorPositionCur_L[3];
-            motorPositionInit_L[4] = motorPositionCur_L[4];
-            motorPositionInit_L[5] = motorPositionCur_L[5];
-            motorPositionInit_L[7] = motorPositionCur_L[6];
-            motorPositionInit_L[8] = motorPositionCur_L[7];
-            motorPositionInit_L[9] = motorPositionCur_L[8];
-            motorPositionInit_L[10] = motorPositionCur_L[9];
 
-            targetEncoder_L[0] = motorPositionInit_L[0];
-            targetEncoder_L[1] = motorPositionInit_L[1];
-            targetEncoder_L[2] = motorPositionInit_L[2];
-            targetEncoder_L[3] = motorPositionInit_L[3];
-            targetEncoder_L[4] = motorPositionInit_L[4];
-            targetEncoder_L[5] = motorPositionInit_L[5];
-            targetEncoder_L[7] = motorPositionInit_L[7];
-            targetEncoder_L[8] = motorPositionInit_L[8];
-            targetEncoder_L[9] = motorPositionInit_L[9];
-            targetEncoder_L[10] = motorPositionInit_L[10];
+            targetEncoder_L[0] = motorPositionCur_L[0];
+            targetEncoder_L[1] = motorPositionCur_L[1];
+            targetEncoder_L[2] = motorPositionCur_L[2];
+            targetEncoder_L[3] = motorPositionCur_L[3];
+            targetEncoder_L[4] = motorPositionCur_L[4];
+            targetEncoder_L[5] = motorPositionCur_L[5];
+            targetEncoder_L[7] = motorPositionCur_L[7];
+            targetEncoder_L[8] = motorPositionCur_L[8];
+            targetEncoder_L[9] = motorPositionCur_L[9];
+            targetEncoder_L[10] = motorPositionCur_L[10];
 
             targetVelocity_L[0] = 0;
             targetVelocity_L[1] = 0;
@@ -564,7 +513,7 @@ void RobotControl::teleoperation()
             targetVelocity_L[10] = 0;
 
             m_HandlePoseInit_L = handlePoseCur;
-            setControlInitHandleMotorPositionAndPose(motorPositionInit_L, handlePoseCur, 'l');
+            setControlInitHandleMotorPositionAndPose(motorPositionCur_L, handlePoseCur, 'l');
             m_AlignmentNumber_L = 0;
         }
 
@@ -587,6 +536,18 @@ void RobotControl::teleoperation()
                 targetVelocity_L[1] = m_motorControl_L[0][1];
                 targetVelocity_L[2] = m_motorControl_L[0][2];
                 targetVelocity_L[3] = m_motorControl_L[0][3];
+
+                //在csv模式下，x轴限位。-40000，40000
+                if((targetEncoder_L[0] > 40000) || (targetEncoder_L[0] < -40000)){
+                    targetVelocity_L[0] = 0;
+
+                    if(targetEncoder_L[0] > 40000){
+                        targetEncoder_L[0] = 40000;
+                    }
+                    if(targetEncoder_L[0] < -40000){
+                        targetEncoder_L[0] = -40000;
+                    }
+                }
             }
 
             //以下两个if只与csv模式相关
@@ -631,10 +592,9 @@ void RobotControl::teleoperation()
 
 
     m_controlValues_Prev_R = controlValues_Cur_R;
-    //        m_HandlePosePrev_R = handlePoseCur;
+
     m_controlValues_Prev_L = controlValues_Cur_L;
 
-    //        m_motorPosition_Cur = m_motorControl_R[1];//更新现在Motor的位置
     m_controlLoopNum ++;
 
     // LOG(INFO) << " targetEncoder_L[0] = " << std::dec << targetEncoder_L[0] << " cur: " << motorPositionCur_L[0];
@@ -679,9 +639,7 @@ void RobotControl::teleoperation()
     m_MotorTargetVel_L.store(targetVelocity_L);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(4));//控制
-    /*              std::this_thread::sleep_for(std::chrono::milliseconds(30));//画圆
-             std::this_thread::sleep_for(std::chrono::milliseconds(1000));//步进测试getRotationDataR
-*/
+
 }
 
 
@@ -822,22 +780,7 @@ std::array<double, 15> RobotControl::motionMappingR(
     double openAngle_R = 0.5 * m_OpenAngle_R;
     //    openAngle_R = 0;
 
-    /*
-    double  overlapValue_Tmp = 0;
-    double  openAngle_Cur = 0;
 
-        if(m_graspIndex_R == 0)
-        {
-            overlapValue_Tmp = 0;
-        }
-        if(m_graspIndex_R == 1)
-        {
-//            overlapValue_Tmp = -(openAngle_Cur - 0) *  2 * m_EncoderPerDegree_L[3];
-            overlapValue_Tmp = 0.5 * 2 * openAngle_Cur * openAngle_Cur;//一次函数会出现一开始升高太快，调用二次函数会先慢后快
-        }
-
-        openAngle_R = 0.5 * m_OpenAngle_R + overlapValue_Tmp;
-*/
     // 计算 beta(yaw)
     double beta_Org_R = atan2(-rotMatrix_Org_R(0, 1), rotMatrix_Org_R(0, 0));
     double beta_Init_R = atan2(-rotMatrix_Init_R(0, 1), rotMatrix_Init_R(0, 0));
@@ -871,39 +814,6 @@ std::array<double, 15> RobotControl::motionMappingR(
     double gamma_Last_R = atan2(-rotMatrix_Last_R(1, 2)/cos(beta_Last_R), rotMatrix_Last_R(2, 2)/cos(beta_Last_R));
     double gamma_Cur_R = atan2(-rotMatrix_Cur_R(1, 2)/cos(beta_Cur_R), rotMatrix_Cur_R(2, 2)/cos(beta_Cur_R));
 
-    //    if ((m_HandlePosePrev_R.handlePoseR_Roll -140) > gamma_Cur_R * 180 / M_PI){
-    //        handflag = -1;
-    //    }
-    //    if ((m_HandlePosePrev_R.handlePoseR_Roll + 140) < gamma_Cur_R * 180 / M_PI){
-    //        handflag = 1;
-    //    }
-
-    //    if ((beta_Cur_R * 180 / M_PI > 90) || (beta_Cur_R * 180 / M_PI < -90)){//yaw角
-    //        if (handflag == -1){
-    //            gamma_Cur_R = gamma_Cur_R + M_PI;
-    ////            gamma_Init_R = gamma_Init_R + M_PI;//GAMMA INIT的问题因为加了180导致
-
-    //        }
-    //        if (handflag == 1){
-    //            gamma_Cur_R = gamma_Cur_R - M_PI;
-    ////            gamma_Init_R = gamma_Init_R - M_PI;
-    //        }
-    //    }
-
-    //    if(m_controlLoopNum >= m_waitTime - 2){//当controlLoop等于1时 cur值为无穷大值
-    //        if(m_controlLoopNum == m_waitTime - 2){
-    ////            m_gamma_Init_R = gamma_Cur_R;
-    ////            m_gamma_Last_R = 0;
-    //        }
-    //    if(m_status_R == 1 || m_controlLoopNum == m_waitTime){
-    //        m_gamma_Init_R = gamma_Cur_R;
-    //    }
-    //    if(m_status_R == 3){
-    //        m_gamma_Last_R = gamma_Cur_R;
-    //    }
-    //    }
-    //    LOG(INFO) << "Status: " << m_status_R;
-
     //    std::cout<<"handflag: "<<handflag<<std::endl;
     //    LOG(INFO)<<"gamma_Init_R: "<<gamma_Init_R * 180 / M_PI;
     //    LOG(INFO)<<"gamma_Cur_R: "<<gamma_Cur_R * 180 / M_PI;
@@ -920,30 +830,7 @@ std::array<double, 15> RobotControl::motionMappingR(
     //    LOG(INFO) << "delt_gammaOrg_R: " << delt_gammaOrg_R;
     //    LOG(INFO) << "delt_gamma_R: " << delt_gamma_R;
 
-    /*
-       if(alpha_Cur_R * 180 / M_PI > 70){
-           alpha_Cur_R = 70 * M_PI / 180;
-       }
-       else if(alpha_Cur_R * 180 / M_PI < -70){
-           alpha_Cur_R = -70 * M_PI / 180;
-       }
-
-       if(beta_Cur_R * 180 / M_PI > 90){
-           beta_Cur_R = 90 * M_PI / 180;
-       }
-       else if(beta_Cur_R * 180 / M_PI < -90){
-           beta_Cur_R = - 90 * M_PI / 180;
-       }
-*/
-
-    //输出解算后的角度值
-    //    LOG(INFO)<< "roll: " << gamma_Cur_R * 180 / M_PI;
-
-    //    LOG(INFO)<< "pitch: " << alpha_Cur_R * 180 / M_PI;
-
-    //    LOG(INFO) << "yaw: " << beta_Cur_R * 180 / M_PI;
-
-    // 设置控制值
+    /* 设置控制值 */
     controlValueR[4] = delt_gamma_R; //roll
     controlValueR[5] = deltLength_alpha_R_1; //pitch
     controlValueR[6] = deltLength_alpha_R_2; //pitch
@@ -958,21 +845,7 @@ std::array<double, 15> RobotControl::motionMappingR(
     controlValueR[13] = alpha_Cur_R * 180 / M_PI; //pitch
     controlValueR[14] = beta_Cur_R * 180 / M_PI; //yaw
 
-    /*
-    // Grasp控制
-    if (handlePosePrev.graspIndex_R == 0 && handlePoseCur.graspIndex_R == 1) {//开始夹合
-        controlValueR[6] = 1;
-        if (m_HandlePoseLastLoop_R.graspIndex_R == 1) {//离开时为夹合状态
-            controlValueR[6] = 2;
-        }
-    } else if (handlePosePrev.graspIndex_R == 1 && handlePoseCur.graspIndex_R == 0) {开始松手
-        controlValueR[6] = 2;
-    } else if (handlePosePrev.graspIndex_R == 1 && handlePoseCur.graspIndex_R == 1) {保持夹和
-        controlValueR[6] = 3;
-    } else {
-        controlValueR[6] = 0;
-    }
-*/
+
     // 更新 m_HandlePoseLastLoop_R
     //m_HandlePoseLastLoop_R = handlePoseCur;
 
@@ -1326,7 +1199,6 @@ else if(index<1000)
 */
 
     //以下19行为路径规划
-
     m_ruckigInputState.target_position = {(x_Init_R + x_Delt_R), (y_Init_R + y_Delt_R), (z_Init_R + z_Delt_R)};
     m_ruckigInputState.target_velocity = {0.0, 0.0, 0.0};
     m_ruckigInputState.target_acceleration = {0.0, 0.0, 0.0};
@@ -1388,9 +1260,9 @@ else if(index<1000)
 
 
 std::array<double, 15> RobotControl::motionMappingL(
-    const Eigen::Matrix3d& handlePoseCur,
-    const std::array<double, 3> PositionCur,//Viper读取的值
-    const std::array<double, 3> PositionInit,
+    const Eigen::Matrix3d& handleRotationMatrixCur,       //
+    const std::array<double, 3> PositionCur,    /*Viper读取的值*/
+    const std::array<double, 3> PositionInit,   /* */
     const std::array<int,MotorNum>& motorPos_Init)
 {
     std::array<double, 15> controlValueL = {0};
@@ -1416,7 +1288,7 @@ std::array<double, 15> RobotControl::motionMappingL(
     LastLoop_Rotation = m_HandlePoseLastLoop_L.getRotationDataL();
     HandlePoseOrg_L = m_HandlePoseOrg_L.getRotationDataL();
 
-    Eigen::Matrix3d rotMaster_R = mappingMatrix * handlePoseCur * mappingMatrix.inverse();
+    Eigen::Matrix3d rotMaster_R = mappingMatrix * handleRotationMatrixCur * mappingMatrix.inverse();
 
     // 计算 rotSlaveMatrix_R
     double theta = -120; //根据实际情况赋值-60，绕x旋转了
@@ -1463,7 +1335,6 @@ std::array<double, 15> RobotControl::motionMappingL(
     // alpha(pitch)
     double alpha_Org_L = std::asin(rotMatrix_Org_L(0, 2));
     double alpha_Init_L = std::asin(rotMatrix_Init_L(0, 2));
-    //    double alpha_Prev_R = std::asin(rotMatrix_Prev_R(0, 2));
     double alpha_Last_L = std::asin(rotMatrix_Last_L(0, 2));
     double alpha_Cur_L = std::asin(rotMatrix_Cur_L(0, 2));
 
@@ -1487,23 +1358,6 @@ std::array<double, 15> RobotControl::motionMappingL(
     // OpenAngle
     double openAngle_L = 0.5 * m_OpenAngle_L;
     //    openAngle_R = 0;
-
-    /*
-    double  overlapValue_Tmp = 0;
-    double  openAngle_Cur = 0;
-
-        if(m_graspIndex_R == 0)
-        {
-            overlapValue_Tmp = 0;
-        }
-        if(m_graspIndex_R == 1)
-        {
-//            overlapValue_Tmp = -(openAngle_Cur - 0) *  2 * m_EncoderPerDegree_L[3];
-            overlapValue_Tmp = 0.5 * 2 * openAngle_Cur * openAngle_Cur;//一次函数会出现一开始升高太快，调用二次函数会先慢后快
-        }
-
-        openAngle_R = 0.5 * m_OpenAngle_R + overlapValue_Tmp;
-*/
 
     // 计算 beta(yaw)
     double beta_Org_L = atan2(-rotMatrix_Org_L(0, 1), rotMatrix_Org_L(0, 0));
@@ -1586,24 +1440,6 @@ std::array<double, 15> RobotControl::motionMappingL(
     controlValueL[12] = gamma_Cur_L * 180 / M_PI; //row
     controlValueL[13] = alpha_Cur_L * 180 / M_PI; //pitch
     controlValueL[14] = beta_Cur_L * 180 / M_PI; //yaw
-
-    /*
-    // Grasp控制
-    if (handlePosePrev.graspIndex_R == 0 && handlePoseCur.graspIndex_R == 1) {//开始夹合
-        controlValueR[6] = 1;
-        if (m_HandlePoseLastLoop_R.graspIndex_R == 1) {//离开时为夹合状态
-            controlValueR[6] = 2;
-        }
-    } else if (handlePosePrev.graspIndex_R == 1 && handlePoseCur.graspIndex_R == 0) {开始松手
-        controlValueR[6] = 2;
-    } else if (handlePosePrev.graspIndex_R == 1 && handlePoseCur.graspIndex_R == 1) {保持夹和
-        controlValueR[6] = 3;
-    } else {
-        controlValueR[6] = 0;
-    }
-*/
-    // 更新 m_HandlePoseLastLoop_R
-    //m_HandlePoseLastLoop_R = handlePoseCur;
 
     //以下为Position解算
 
@@ -1959,7 +1795,6 @@ else if(index<1000)
 */
 
     //以下19行为路径规划
-
     m_ruckigInputState_L.target_position = {(x_Init_L + x_Delt_L), (y_Init_L + y_Delt_L), (z_Init_L + z_Delt_L)};
     m_ruckigInputState_L.target_velocity = {0.0, 0.0, 0.0};
     m_ruckigInputState_L.target_acceleration = {0.0, 0.0, 0.0};
@@ -2422,23 +2257,10 @@ void RobotControl::startUpdataMasterConsoleDataThread()//yu
 
 void RobotControl::updateMasterConsoleData()//yu
 {
-    while(flagUpdateMasterConsoleData.load())
+    while(!m_isSystemTerminated)
     {
         auto Pose = m_masterConsole.returnHandlePose();//3个位置夹3个姿态，参数Pose为HandlePose类
-
-        std::array<std::array<double, viperDataNumPerSensor>, 2> Matrix_Q = Pose.returnQuaternionData();
         std::array<std::array<double, 7>, 2> Matrix_E = Pose.returnPNOData();
-
-        //存储四元数
-        double q_l_0 = Matrix_Q[0][3];//0读取的是左手Viper的值
-        double q_l_1 = Matrix_Q[0][4];
-        double q_l_2 = Matrix_Q[0][5];
-        double q_l_3 = Matrix_Q[0][6];
-
-        double q_r_0 = Matrix_Q[1][3];//0读取的是右手Viper的值
-        double q_r_1 = Matrix_Q[1][4];
-        double q_r_2 = Matrix_Q[1][5];
-        double q_r_3 = Matrix_Q[1][6];
 
         //存欧拉角
         double e_l_1 = Matrix_E[0][3];
@@ -2449,20 +2271,8 @@ void RobotControl::updateMasterConsoleData()//yu
         double e_r_2 = Matrix_E[1][4];
         double e_r_3 = Matrix_E[1][5];
 
-        //        LOG(INFO)<<"YAW: "<<e_r_1;
-        //        LOG(INFO)<<"PITCH: "<<e_r_2;其
-        //        LOG(INFO)<<"ROLL: "<<e_r_3;
-
-        Eigen::Matrix3d rotationR_Q = RobotControl::ToQuaternionRotationMatrix(q_r_0, q_r_1, q_r_2, q_r_3);
         Eigen::Matrix3d rotationR_E = RobotControl::ToEulerRotationMatrix(e_r_1, e_r_2, e_r_3);
-
-        Eigen::Matrix3d rotationL_Q = RobotControl::ToQuaternionRotationMatrix(q_l_0, q_l_1, q_l_2, q_l_3);
         Eigen::Matrix3d rotationL_E = RobotControl::ToEulerRotationMatrix(e_l_1, e_l_2, e_l_3);
-
-        //        LOG(INFO)<<"Rotation: "<< rotationR_E;
-
-        //        Pose.setRotationDataR(rotationR_Q);
-        //        Pose.setRotationDataL(rotationL_Q);
 
         Pose.setRotationDataR(rotationR_E);
         Pose.setRotationDataL(rotationL_E);
@@ -3690,10 +3500,10 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
         else if((masterHandlePose_Cur.handlePoseL_Z < -60) || (masterHandlePose_Cur.handlePoseL_Z > 10)){
             return false;
         }
-        else if (m_pitchAngle_L > 70 || m_pitchAngle_L < -70){
+        else if (m_pitchAngle_L > 67 || m_pitchAngle_L < -67){
             return false;
         }
-        else if (m_yawAngle_L > 88 || m_yawAngle_L < -88){
+        else if (m_yawAngle_L > 87 || m_yawAngle_L < -87){
             return false;
         }
         else{
@@ -3702,19 +3512,6 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
     }
 
     if(side =='r'){
-        // std::cout << masterHandlePose_Cur.handlePoseR_Elevation <<std::endl;
-
-        //        if (masterHandlePose_Cur.handlePoseR_Elevation > 70 || masterHandlePose_Cur.handlePoseR_Elevation < -70){
-        ////        if (masterHandlePose_Cur.handlePoseR_Elevation > 180 || masterHandlePose_Cur.handlePoseR_Elevation < -180){
-        //           return false;
-        //        }
-        ////        else if (masterHandlePose_Cur.handlePoseR_Arzimuth > 180 || masterHandlePose_Cur.handlePoseR_Arzimuth < -180){
-        //        else if (masterHandlePose_Cur.handlePoseR_Arzimuth > 120 || masterHandlePose_Cur.handlePoseR_Arzimuth < -120){
-        //            return false;
-        //        }
-        //        else{
-        //            return true;
-        //        }
 
         if((masterHandlePose_Cur.handlePoseR_X < -60) || (masterHandlePose_Cur.handlePoseR_X > 60)){
             return false;
@@ -3725,10 +3522,10 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
         else if((masterHandlePose_Cur.handlePoseR_Z < -60) || (masterHandlePose_Cur.handlePoseR_Z > 10)){
             return false;
         }
-        else if (m_yawAngle_R > 88 || m_yawAngle_R < -88){
+        else if (m_yawAngle_R > 87 || m_yawAngle_R < -87){
             return false;
         }
-        else if (m_pitchAngle_R > 70 || m_pitchAngle_R < -70){
+        else if (m_pitchAngle_R > 67 || m_pitchAngle_R < -67){
             return false;
         }
         else{
@@ -3841,6 +3638,7 @@ void RobotControl::endJointGoHome(const char& side)//yu
                 //                    if(statusWordInBinary_jointE[10] == 1 && statusWordInBinary_jointF[10] == 1 && statusWordInBinary_jointG[10] == 1)
                 //                    {
                 if(statusWordInBinary_moons_1[10] == 1 && statusWordInBinary_zero_1[10] == 1 && statusWordInBinary_zero_2[10] == 1 && statusWordInBinary_zero_3[10] == 1){//如果状态字第10项为0,就完成了init
+                    m_moonsCaliFinish_R = 1;
                     SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(UIAction_E::FinishCalibration),"r");//目的为与uiinterface通信，reset button
                     LOG(INFO) << "FinishCalibration";
                     break;
@@ -3957,6 +3755,7 @@ void RobotControl::endJointGoHome(const char& side)//yu
                 //                    if(statusWordInBinary_jointE[10] == 1 && statusWordInBinary_jointF[10] == 1 && statusWordInBinary_jointG[10] == 1)
                 //                    {
                 if(statusWordInBinary_moons_1[10] == 1 && statusWordInBinary_zero_1[10] == 1 && statusWordInBinary_zero_2[10] == 1 && statusWordInBinary_zero_3[10] == 1){//如果状态字第10项为0,就完成了init
+                    m_moonsCaliFinish_L = 1;
                     SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(UIAction_E::FinishCalibration),"l");//目的为与uiinterface通信，reset button
                     LOG(INFO) << "FinishCalibration";
                     break;
@@ -3979,46 +3778,40 @@ void RobotControl::MaxonGoHome(const char& side)//yu
         Eigen::Matrix3d MasterRotationMatrix_y;
         Eigen::Matrix3d MasterRotationMatrix_z;
         Eigen::Matrix3d MasterRotationMatrix_total;
-        //绕x转-30度
+
+        double rotation_angle_Y = -60;
+        double rotation_angle_X = -30;
+        double rotation_angle_Z = -30;
+
+        MasterRotationMatrix_y(0,0) = cos(rotation_angle_Y * 3.1415926 / 180.0);
+        MasterRotationMatrix_y(0,1) = 0;
+        MasterRotationMatrix_y(0,2) = sin(rotation_angle_Y * 3.1415926 / 180.0);
+        MasterRotationMatrix_y(1,0) = 0;
+        MasterRotationMatrix_y(1,1) = 1;
+        MasterRotationMatrix_y(1,2) = 0;
+        MasterRotationMatrix_y(2,0) = -sin(rotation_angle_Y * 3.1415926 / 180.0);
+        MasterRotationMatrix_y(2,1) = 0;
+        MasterRotationMatrix_y(2,2) = cos(rotation_angle_Y * 3.1415926 / 180.0);
+
         MasterRotationMatrix_x(0,0) = 1;
         MasterRotationMatrix_x(0,1) = 0;
         MasterRotationMatrix_x(0,2) = 0;
         MasterRotationMatrix_x(1,0) = 0;
-        MasterRotationMatrix_x(1,1) = 0.886025;
-        MasterRotationMatrix_x(1,2) = 0.5;
+        MasterRotationMatrix_x(1,1) = cos(rotation_angle_X * 3.1415926 / 180.0);
+        MasterRotationMatrix_x(1,2) = sin(rotation_angle_X * 3.1415926 / 180.0);
         MasterRotationMatrix_x(2,0) = 0;
-        MasterRotationMatrix_x(2,1) = -0.5;
-        MasterRotationMatrix_x(2,2) = 0.886025;
-        //handle初始状态为绕y轴转动-60度
-        MasterRotationMatrix_y(0,0) = 0.5;
-        MasterRotationMatrix_y(0,1) = 0;
-        MasterRotationMatrix_y(0,2) = -0.886025;
-        MasterRotationMatrix_y(1,0) = 0;
-        MasterRotationMatrix_y(1,1) = 1;
-        MasterRotationMatrix_y(1,2) = 0;
-        MasterRotationMatrix_y(2,0) = 0.886025;
-        MasterRotationMatrix_y(2,1) = 0;
-        MasterRotationMatrix_y(2,2) = 0.5;
-        //绕z转-45
-        //    MasterRotationMatrix_z(0,0) = 0.707106;
-        //    MasterRotationMatrix_z(0,1) = 0.707106;
-        //    MasterRotationMatrix_z(0,2) = 0;
-        //    MasterRotationMatrix_z(1,0) = -0.707106;
-        //    MasterRotationMatrix_z(1,1) = 0.707106;
-        //    MasterRotationMatrix_z(1,2) = 0;
-        //    MasterRotationMatrix_z(2,0) = 0;
-        //    MasterRotationMatrix_z(2,1) = 0;
-        //    MasterRotationMatrix_z(2,2) = 1;
-        //    //绕z转-30
-        MasterRotationMatrix_z(0,0) = 0.866025;//cos
-        MasterRotationMatrix_z(0,1) = 0.5;//-sin
-        MasterRotationMatrix_z(0,2) = 0;//0
-        MasterRotationMatrix_z(1,0) = -0.5;//sin
-        MasterRotationMatrix_z(1,1) = 0.866025;//cos
-        MasterRotationMatrix_z(1,2) = 0;//0
-        MasterRotationMatrix_z(2,0) = 0;//0
-        MasterRotationMatrix_z(2,1) = 0;//0
-        MasterRotationMatrix_z(2,2) = 1;//1
+        MasterRotationMatrix_x(2,1) = sin(rotation_angle_X * 3.1415926 / 180.0);
+        MasterRotationMatrix_x(2,2) = cos(rotation_angle_X * 3.1415926 / 180.0);
+
+        MasterRotationMatrix_z(0,0) = cos(rotation_angle_Z * 3.1415926 / 180.0);
+        MasterRotationMatrix_z(0,1) = -sin(rotation_angle_Z * 3.1415926 / 180.0);
+        MasterRotationMatrix_z(0,2) = 0;
+        MasterRotationMatrix_z(1,0) = sin(rotation_angle_Z * 3.1415926 / 180.0);
+        MasterRotationMatrix_z(1,1) = cos(rotation_angle_Z * 3.1415926 / 180.0);
+        MasterRotationMatrix_z(1,2) = 0;
+        MasterRotationMatrix_z(2,0) = 0;
+        MasterRotationMatrix_z(2,1) = 0;
+        MasterRotationMatrix_z(2,2) = 1;
 
         MasterRotationMatrix_total = MasterRotationMatrix_y * MasterRotationMatrix_z * MasterRotationMatrix_x;
         //   MasterRotationMatrix_total =MasterRotationMatrix_y;
@@ -4045,6 +3838,7 @@ void RobotControl::MaxonGoHome(const char& side)//yu
                     homeStatusTmp[5] == false &&
                     homeStatusTmp[6] == false)
                 {
+                    m_maxonCaliFinish_R = 1;
                     LOG(INFO) << "Finish homing of endeffector motor!";
                     SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(UIAction_E::FinishCalibration),"r");
                     break;
@@ -4151,47 +3945,40 @@ void RobotControl::MaxonGoHome(const char& side)//yu
         Eigen::Matrix3d MasterRotationMatrix_y;
         Eigen::Matrix3d MasterRotationMatrix_z;
         Eigen::Matrix3d MasterRotationMatrix_total;
-        //绕x转30度
+
+        double rotation_angle_Y = -60;
+        double rotation_angle_X = 30;
+        double rotation_angle_Z = 30;
+
+        MasterRotationMatrix_y(0,0) = cos(rotation_angle_Y * 3.1415926 / 180.0);
+        MasterRotationMatrix_y(0,1) = 0;
+        MasterRotationMatrix_y(0,2) = sin(rotation_angle_Y * 3.1415926 / 180.0);
+        MasterRotationMatrix_y(1,0) = 0;
+        MasterRotationMatrix_y(1,1) = 1;
+        MasterRotationMatrix_y(1,2) = 0;
+        MasterRotationMatrix_y(2,0) = -sin(rotation_angle_Y * 3.1415926 / 180.0);
+        MasterRotationMatrix_y(2,1) = 0;
+        MasterRotationMatrix_y(2,2) = cos(rotation_angle_Y * 3.1415926 / 180.0);
+
         MasterRotationMatrix_x(0,0) = 1;
         MasterRotationMatrix_x(0,1) = 0;
         MasterRotationMatrix_x(0,2) = 0;
         MasterRotationMatrix_x(1,0) = 0;
-        MasterRotationMatrix_x(1,1) = 0.886025;
-        MasterRotationMatrix_x(1,2) = -0.5;
+        MasterRotationMatrix_x(1,1) = cos(rotation_angle_X * 3.1415926 / 180.0);
+        MasterRotationMatrix_x(1,2) = sin(rotation_angle_X * 3.1415926 / 180.0);
         MasterRotationMatrix_x(2,0) = 0;
-        MasterRotationMatrix_x(2,1) = 0.5;
-        MasterRotationMatrix_x(2,2) = 0.886025;
-        //handle初始状态为绕y轴转动-60度
-        MasterRotationMatrix_y(0,0) = 0.5;
-        MasterRotationMatrix_y(0,1) = 0;
-        MasterRotationMatrix_y(0,2) = -0.886025;
-        MasterRotationMatrix_y(1,0) = 0;
-        MasterRotationMatrix_y(1,1) = 1;
-        MasterRotationMatrix_y(1,2) = 0;
-        MasterRotationMatrix_y(2,0) = 0.886025;
-        MasterRotationMatrix_y(2,1) = 0;
-        MasterRotationMatrix_y(2,2) = 0.5;
-        //绕z转-45
-        //    MasterRotationMatrix_z(0,0) = 0.707106;
-        //    MasterRotationMatrix_z(0,1) = 0.707106;
-        //    MasterRotationMatrix_z(0,2) = 0;
-        //    MasterRotationMatrix_z(1,0) = -0.707106;
-        //    MasterRotationMatrix_z(1,1) = 0.707106;
-        //    MasterRotationMatrix_z(1,2) = 0;
-        //    MasterRotationMatrix_z(2,0) = 0;
-        //    MasterRotationMatrix_z(2,1) = 0;
-        //    MasterRotationMatrix_z(2,2) = 1;
+        MasterRotationMatrix_x(2,1) = sin(rotation_angle_X * 3.1415926 / 180.0);
+        MasterRotationMatrix_x(2,2) = cos(rotation_angle_X * 3.1415926 / 180.0);
 
-        //    //绕z转30
-        MasterRotationMatrix_z(0,0) = 0.866025;//cos
-        MasterRotationMatrix_z(0,1) = -0.5;//-sin
-        MasterRotationMatrix_z(0,2) = 0;//0
-        MasterRotationMatrix_z(1,0) = 0.5;//sin
-        MasterRotationMatrix_z(1,1) = 0.866025;//cos
-        MasterRotationMatrix_z(1,2) = 0;//0
-        MasterRotationMatrix_z(2,0) = 0;//0
-        MasterRotationMatrix_z(2,1) = 0;//0
-        MasterRotationMatrix_z(2,2) = 1;//1
+        MasterRotationMatrix_z(0,0) = cos(rotation_angle_Z * 3.1415926 / 180.0);
+        MasterRotationMatrix_z(0,1) = -sin(rotation_angle_Z * 3.1415926 / 180.0);
+        MasterRotationMatrix_z(0,2) = 0;
+        MasterRotationMatrix_z(1,0) = sin(rotation_angle_Z * 3.1415926 / 180.0);
+        MasterRotationMatrix_z(1,1) = cos(rotation_angle_Z * 3.1415926 / 180.0);
+        MasterRotationMatrix_z(1,2) = 0;
+        MasterRotationMatrix_z(2,0) = 0;
+        MasterRotationMatrix_z(2,1) = 0;
+        MasterRotationMatrix_z(2,2) = 1;
 
         MasterRotationMatrix_total = MasterRotationMatrix_y * MasterRotationMatrix_z * MasterRotationMatrix_x;
         //   MasterRotationMatrix_total =MasterRotationMatrix_y;
@@ -4218,6 +4005,7 @@ void RobotControl::MaxonGoHome(const char& side)//yu
                     homeStatusTmp[5] == false &&
                     homeStatusTmp[6] == false)
                 {
+                    m_maxonCaliFinish_L = 1;
                     LOG(INFO) << "Finish homing of endeffector motor!";
                     SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(UIAction_E::FinishCalibration),"l");
                     break;
@@ -4398,14 +4186,18 @@ void RobotControl::dealWithMsg()
             case static_cast<int>(RobotControlAction_E::GoToHoldOnMode):
             {
                 LOG(INFO)<<"Get INFO Execuate Control Set in RobotControl: Motor Hold On" ;
-                setRobotControlMode(RobotControlMode::Hold);
+                // setRobotControlMode(RobotControlMode::Hold);
                 break;
             }
             case static_cast<int>(RobotControlAction_E::GoToTeleOperationMode):
             {
                 LOG(INFO)<<"Get INFO Execuate Control Set in RobotControl: Go To TeleOperation";
-                //                    setRobotControlMode(RobotControlMode::TeleOperation);
-                setRobotControlMode(RobotControlMode::TestOperation);
+
+                m_flagInTeleoperation.store(true);
+                if((m_maxonCaliFinish_R==1)&&(m_maxonCaliFinish_L==1)&&(m_moonsCaliFinish_L==1)&&(m_moonsCaliFinish_R==1)){
+                // setRobotControlMode(RobotControlMode::TestOperation);
+                // setRobotControlMode(RobotControlMode::TeleOperation);
+                }
                 test_x=0.0;
                 test_y=0.0;
                 test_z=0.0;
@@ -4420,7 +4212,7 @@ void RobotControl::dealWithMsg()
             case static_cast<int>(RobotControlAction_E::GoToCollabrationMode):
             {
                 LOG(INFO)<<"Get INFO Execuate Control Set in RobotControl: Go To Collabration";
-                setRobotControlMode(RobotControlMode::Collabration);
+                // setRobotControlMode(RobotControlMode::Collabration);
                 break;
             }
             case static_cast<int>(RobotControlAction_E::StartEndJointMotorHoming)://

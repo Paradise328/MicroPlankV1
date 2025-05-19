@@ -41,6 +41,7 @@ SOURCES += \
         Modules/MotorDriverModule/MotorDriver.cpp \
         Modules/MsgModule/messagequeue.cpp \
         Modules/RobotControlModule/RobotControl.cpp \
+        Modules/RobotControlModule/RobotControlTest.cpp \
         Modules/SecurityModule/security.cpp \
         Modules/UIModule/UIinterface.cpp \
         Modules/PeripheralDeviceModule/CRC16.cpp \

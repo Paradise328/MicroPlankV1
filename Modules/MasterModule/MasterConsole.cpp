@@ -5,6 +5,7 @@ void MasterConsole::updateConsoleDataThread()
     while(!m_isSystemTerminated && !m_isSystemReset)
     {
         masterConsoleStatusCheck();
+
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
 }
@@ -213,6 +214,7 @@ void MasterConsole::masterConsoleStatusCheck()
         case static_cast<int>(MasterConsoleType::DessightMaster):
         {
             bool is422Ok = m_transmitter.return422Status();
+            assembleDataFromUSBAndEthernet();
             m_isMasterConsoleOk.store(is422Ok);
             break;
         }

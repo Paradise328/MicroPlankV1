@@ -5,7 +5,7 @@ Security::Security(MessageQueue& messagePool):m_messagePool(messagePool)
     m_systemOperationMode.store(SystemMode::BootSelfCheck);
     selfCheckStep.store(SelfCheckStepEnum::No_Checking);
     checkShutDownSystem.store(shutDownSystemEnum::No_ShutDown);
-    m_systemModuleStatus = {false, false, false, false, false};
+    m_systemModuleStatus = {false, false, false};
 
     connect(this, &Security::DealMsgSignal, this, &Security::dealWithMsg);
 }
@@ -29,49 +29,89 @@ void Security::systemMonitor(MasterConsole& masterConsole, MotorDriver* motorDri
 {
     while(!m_flagIsSystemTerminated)
     {
+        auto systemOperationMode = m_systemOperationMode.load();
+
         auto systemModuleStatus_Prev = m_systemModuleStatus.load();
+
         auto masterConsoleStatus_Cur = masterConsole.returnMasterConsoleStatus();
         auto etherCATCommunicationStatus_Cur = motorDriver->returnMotorDriverStatus();
 
+
         auto masterConsoleStatus_Prev = systemModuleStatus_Prev[0];
         auto etherCATCommunicationStatus_Prev = systemModuleStatus_Prev[1];
+        auto liftingArmStatus_Prev = systemModuleStatus_Prev[2];
         LOG(INFO) << "masterConsoleStatus_Cur: " << masterConsoleStatus_Cur << "  systemModuleStatus_Prev: " << systemModuleStatus_Prev[0];
 
-        if(m_systemOperationMode.load() == SystemMode::BootSelfCheck)
+        switch(systemOperationMode)
         {
-            if(masterConsoleStatus_Prev == false && masterConsoleStatus_Cur == true)
-            {
-                LOG(INFO) << "Master Console Successfully Connected! ";
-                SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvBootSelfCheckStatus),"Master:Ok");
-                SendInnerMsg(Module_Inner_E::Uiinterface,static_cast<int>(UIAction_E::RecvSystemBootSta),"Ok");
-
-            }
-            if(etherCATCommunicationStatus_Prev == false && etherCATCommunicationStatus_Cur == true)
-            {
-                LOG(INFO) << "Master Console Successfully Connected! ";
-                SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvBootSelfCheckStatus),"EtherCAT:Ok");
-            }
-            if(masterConsoleStatus_Cur == true && etherCATCommunicationStatus_Cur == true)
-            {
-                LOG(INFO) << "All Modules Successfully Connected! ";
-                SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvBootSelfCheckStatus),"All:Ok");
-            }
+            case SystemMode::BootSelfCheck:
+                /*开机自检过程*/
+                {
+                    if(masterConsoleStatus_Prev == false && masterConsoleStatus_Cur == true)
+                    {
+                        LOG(INFO) << "Master Console Successfully Connected! ";
+                        SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvBootSelfCheckStatus),"Master:Ok");
+                    }
+                    if(etherCATCommunicationStatus_Prev == false && etherCATCommunicationStatus_Cur == true)
+                    {
+                        LOG(INFO) << "Master Console Successfully Connected! ";
+                        SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvBootSelfCheckStatus),"EtherCAT:Ok");
+                    }
+                    break;
+                }
+            case SystemMode::PreOperation:
+                /*术前*/
+                {
+                    /*主手重连*/
+                    if(masterConsoleStatus_Prev == false && masterConsoleStatus_Cur == true)
+                    {
+                        LOG(INFO) << "Master Console Successfully Reconnected! ";
+                        SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvModulesStatus),"Master:Ok");
+                    }
+                    /*主手断连*/
+                    else if(masterConsoleStatus_Prev == true && masterConsoleStatus_Cur == false)
+                    {
+                        LOG(INFO) << "Master Console Connection Lost! ";
+                        SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvModulesStatus),"Master:Err");
+                    }
+                    break;
+                }
+            case SystemMode::InOperation_TeleOperation:
+                /*术中: 主从控制*/
+                {
+                    /*主手重连*/
+                    if(masterConsoleStatus_Prev == false && masterConsoleStatus_Cur == true)
+                    {
+                        LOG(INFO) << "Master Console Successfully Reconnected! ";
+                        SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvModulesStatus),"Master:Ok");
+                    }
+                    /*主手断连*/
+                    else if(masterConsoleStatus_Prev == true && masterConsoleStatus_Cur == false)
+                    {
+                        LOG(INFO) << "Master Console Connection Lost! ";
+                        SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvModulesStatus),"Master:Err");
+                    }
+                    break;
+                }
+            case SystemMode::InOperation_Collaboration:
+                /*术中:协作*/
+                {
+                    break;
+                }
+            case SystemMode::ShutDownProcess:
+                /*关机*/
+                {
+                    break;
+                }
+            case SystemMode::RestartProcess:
+                /*重启*/
+                {
+                    break;
+                }
+            default:break;
         }
-        else
-        {
-            if(masterConsoleStatus_Prev == false && masterConsoleStatus_Cur == true)
-            {
-                LOG(INFO) << "Master Console Successfully Reconnected! ";
-                SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvModulesStatus),"Master:Ok");
-            }
-            else if(masterConsoleStatus_Prev == true && masterConsoleStatus_Cur == false)
-            {
-                LOG(INFO) << "Master Console Connection Lost! ";
-                SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvModulesStatus),"Master:Err");
-            }
-        }
-        std::this_thread::sleep_for(std::chrono::seconds(5));
         setModuleStatus(masterConsoleStatus_Cur, true, true);
+        std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 }
 
@@ -79,9 +119,23 @@ void Security::setModuleStatus(const bool& masterConsoleStatus,
                                const bool& robotControlStatus,
                                const bool& liftingArmStatus)
 {
-    std::array<bool, SystemModuleNum> systemModuleStatus_tmp;
-    systemModuleStatus_tmp = {masterConsoleStatus, robotControlStatus, liftingArmStatus};
-    m_systemModuleStatus.store(systemModuleStatus_tmp);
+    std::array<bool, SystemModuleNum> systemModuleStatusPrev_Tmp, systemModuleStatusCur_Tmp;
+    systemModuleStatusPrev_Tmp = m_systemModuleStatus.load();
+    systemModuleStatusCur_Tmp = {masterConsoleStatus, robotControlStatus, liftingArmStatus};
+
+    bool isAllModuleAllOkPrev = std::all_of(systemModuleStatusPrev_Tmp.begin(), systemModuleStatusPrev_Tmp.end(), [](bool isAllTruePrev) {return isAllTruePrev;});
+    bool isAllModuleAllOkCur = std::all_of(systemModuleStatusCur_Tmp.begin(), systemModuleStatusCur_Tmp.end(), [](bool isAllTrueCur) {return isAllTrueCur;});
+
+    if(m_systemOperationMode.load() == SystemMode::BootSelfCheck)
+    {
+        /*自检过程中，全部模块变为true的时刻，UI中自检中字样切换为继续字样，并可点击进入术前准备模式*/
+        if(!isAllModuleAllOkPrev && isAllModuleAllOkCur)
+        {
+            SendInnerMsg(Module_Inner_E::Uiinterface,static_cast<int>(UIAction_E::RecvSystemBootSta),"Ok");
+            m_systemOperationMode.store(SystemMode::PreOperation);
+        }
+    }
+    m_systemModuleStatus.store(systemModuleStatusCur_Tmp);
 }
 
 

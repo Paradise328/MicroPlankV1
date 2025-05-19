@@ -12,10 +12,10 @@ void MicroPlank::startSystem()
     LOG(INFO) << "start system ";
 
     /* 开启主手线程，并进行对m_isMasterConsoleOk的赋值 */
-    // startMasterConsole();
+    startMasterConsole();
 
     /* 开启MotorDriver线程 */
-    initMotorDriver();
+    // initMotorDriver();
 
     std::this_thread::sleep_for(std::chrono::seconds(10));
 
@@ -25,10 +25,10 @@ void MicroPlank::startSystem()
     startRobotControl();
 
     // m_security.performSystemCheck();
-    m_security.systemBootSelfCheck();
+    // m_security.systemBootSelfCheck();
 
     /* 开启security监控线程 */
-    // startSecurityModule();
+    startSecurityModule();
 
     // while(true){
 

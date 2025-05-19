@@ -62,18 +62,13 @@ public:
     void        GetAmMsg(Message_Inner_T msg);
     void        setSelfCheckStep(SelfCheckStepEnum selfcheckstep);
 
-    template<typename T>
-    void addModule(T& module) {
-        module.emplace_back(module.name(), [&module]() {
-            return module.selfCheck();
-        });
-    }
-
     /*外部开启开机自检模块*/
     void        performSystemCheck(MasterConsole& masterConsole, RobotControl& robotControl);
 
     /*外部开启系统监控线程*/
     void        startSystemMonitor(MasterConsole& masterConsole,  MotorDriver* motorDriver);
+
+
 
 private:
     std::atomic<SelfCheckStepEnum> selfCheckStep;
@@ -84,13 +79,14 @@ private:
     SystemWarningStatus m_systemWarningStatus = SystemWarningStatus::Normal;
 
     /*系统当前运行模式*/
+    void        setSystemOperationMode();    /*UI进行设置系统当前运行模式*/
     std::atomic<SystemMode>   m_systemOperationMode;
 
     /*监控所有模块运行状态*/
     bool            m_flagIsSystemTerminated = false;
     std::thread     m_systemMonitorThread;
-    void            systemMonitor(MasterConsole& masterConsole, MotorDriver* motorDriver);
-    std::atomic<std::array<bool, SystemModuleNum>> m_systemModuleStatus; /*[MasterConsole, MotorDriver]*/
+    void            systemMonitor(MasterConsole& masterConsole, MotorDriver* motorDriver); /*[MasterConsole, MotorDriver, .......]*/
+    std::atomic<std::array<bool, SystemModuleNum>> m_systemModuleStatus; /*[MasterConsole, MotorDriver, .......]*/
     void            setModuleStatus(const bool& masterConsoleStatus, const bool& robotControlStatus, const bool& liftingArmStatus);
 
     /*设置系统当前状态*/

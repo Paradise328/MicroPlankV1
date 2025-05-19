@@ -152,6 +152,9 @@ struct HandlePose
     double          reserveArray2[3];
     double          reserveArray3[3];
     
+    double          dataL[9]; // 3x3 矩阵，手动存储为数组
+    double          dataR[9]; // 3x3 矩阵，手动存储为数组
+
     void init()
     {
         handlePoseL_X = 0;
@@ -260,51 +263,45 @@ struct HandlePose
         
     }
 
-
-    double dataL[9]; // 3x3 矩阵，手动存储为数组
-
-        void setRotationDataL(const Eigen::Matrix3d& InputRotationMatrix) {
-            for (int i = 0; i < 3; ++i) {
-                for (int j = 0; j < 3; ++j) {
-                    dataL[i * 3 + j] = InputRotationMatrix(i, j);
-                }
+    void setRotationDataL(const Eigen::Matrix3d& InputRotationMatrix) {
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) {
+                dataL[i * 3 + j] = InputRotationMatrix(i, j);
             }
         }
+    }
 
-        Eigen::Matrix3d getRotationDataL() const {
-            Eigen::Matrix3d matrix;
-            for (int i = 0; i < 3; ++i) {
-                for (int j = 0; j < 3; ++j) {
-                    matrix(i, j) = dataL[i * 3 + j];
-                }
-            }
-            return matrix;
-        }
-
-    double dataR[9]; // 3x3 矩阵，手动存储为数组
-
-        void setRotationDataR(const Eigen::Matrix3d& InputRotationMatrix) {
-            for (int i = 0; i < 3; ++i) {
-                for (int j = 0; j < 3; ++j) {
-                    dataR[i * 3 + j] = InputRotationMatrix(i, j);
-                }
+    Eigen::Matrix3d getRotationDataL() const {
+        Eigen::Matrix3d matrix;
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) {
+                matrix(i, j) = dataL[i * 3 + j];
             }
         }
+        return matrix;
+    }
 
-        Eigen::Matrix3d getRotationDataR() const {
-            Eigen::Matrix3d matrix;
-            for (int i = 0; i < 3; ++i) {
-                for (int j = 0; j < 3; ++j) {
-                    matrix(i, j) = dataR[i * 3 + j];
-                }
+    void setRotationDataR(const Eigen::Matrix3d& InputRotationMatrix) {
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) {
+                dataR[i * 3 + j] = InputRotationMatrix(i, j);
             }
-            return matrix;
         }
+    }
 
-        void setGraspIndex_R(const int grasp_index_R){
-            graspIndex_R = grasp_index_R;
+    Eigen::Matrix3d getRotationDataR() const {
+        Eigen::Matrix3d matrix;
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) {
+                matrix(i, j) = dataR[i * 3 + j];
+            }
         }
+        return matrix;
+    }
 
+    void setGraspIndex_R(const int grasp_index_R){
+        graspIndex_R = grasp_index_R;
+    }
 
     void setQuaternionData(const std::array<std::array<double,viperDataNumPerSensor>,2>& poseData_Cur)//顺序是三个位置，四个四元数，一个openangle，三个加速度，一个磁场
     {
@@ -315,8 +312,6 @@ struct HandlePose
         quaternionL_1 = poseData_Cur[0][4];
         quaternionL_2 = poseData_Cur[0][5];
         quaternionL_3 = poseData_Cur[0][6];
-
-
 
         // handlePoseL_OpenAngle = ;
         handlePoseR_X = poseData_Cur[1][0];
@@ -439,6 +434,8 @@ enum class SystemMode
     PreOperation,
     InOperation_TeleOperation,
     InOperation_Collaboration,
+    ShutDownProcess,
+    RestartProcess,
 };
 
 constexpr int adcValueOpen_L = 2845;
@@ -491,7 +488,7 @@ constexpr int InstrumentType    = 0;
 constexpr int InstrumentSize    = 1;
 constexpr int InstrumentID      = 2;
 
-constexpr int SystemModuleNum   = 5;
+constexpr int SystemModuleNum   = 3;
 
 constexpr double TimePerControlLoop = 0.01; //s
 

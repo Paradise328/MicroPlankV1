@@ -79,7 +79,9 @@ public:
         m_motorDriver(motorDriver),
         m_messagePool(messagePool),
         m_ruckigPlanner(0.004),
-        m_ruckigPlanner_L(0.004)
+        m_ruckigPlanner_L(0.004),
+        m_flagControlThread(false),
+        m_isSystemTerminated(false)
     {
         //readMyInitData();
 
@@ -168,7 +170,7 @@ private:
 
     void                            updateMasterConsoleData();
 
-    std::atomic<bool>               flagUpdateMasterConsoleData = true;
+    std::atomic<bool>               m_flagUpdateMasterConsoleData = true;
 
     std::thread                     m_communicateWithMotorDriverThread;
 
@@ -184,8 +186,6 @@ private:
 
 
     //Robot Control Mode Switch
-
-
 
     void                            initMotor();
 
@@ -210,6 +210,10 @@ private:
     std::atomic<bool>               m_flagInHold = false;
 
     std::atomic<bool>               m_flagInCollabration = false;
+
+    std::atomic<bool>               m_flagControlThread;
+
+    std::atomic<bool>               m_isSystemTerminated;
 
     std::array<int, MotorNum>       calculateTargetPosition(const std::array<double, ControlValueNum>& controlValue_Prev, const std::array<double, ControlValueNum>& controlValue_Cur,
                                                         const std::array<int, MotorNum>& motorPosition_Init, const std::array<int, MotorNum>& motorPosition_Cur,
@@ -241,6 +245,13 @@ private:
     //Calibration
     void                            endJointGoHome(const char& side);
     void                            MaxonGoHome(const char& side);
+
+    bool m_maxonCaliFinish_R = 0;
+    bool m_maxonCaliFinish_L = 0;
+    bool m_jointCaliFinish_R = 0;
+    bool m_jointCaliFinish_L = 0;
+    bool m_moonsCaliFinish_R = 0;
+    bool m_moonsCaliFinish_L = 0;
 
     std::string                     m_configFilePath  = "../MicroPlank_QTVersion/Config/EndeffectorData.toml";
     std::string                     m_robotConfigPath = "../MicroPlank_QTVersion/Config/RobotData.toml";
@@ -386,6 +397,10 @@ private:
     double m_y_Init_R;
     double m_z_Init_R;
 
+    double m_yawAngle_L;
+    double m_pitchAngle_L;
+    double m_yawAngle_R;
+    double m_pitchAngle_R;
 
     std::array<double, 15> motionMappingR(const Eigen::Matrix3d& handlePoseInit,
                                           const Eigen::Matrix3d& handlePosePrev,
@@ -433,13 +448,6 @@ private:
     static Eigen::Matrix3d ToQuaternionRotationMatrix(double q_L0, double q_L1, double q_L2, double q_L3);
     static Eigen::Matrix3d ToEulerRotationMatrix(double Azimuth, double Elevation, double Roll);
 
-    double                 m_rollAngle_R;
-    double                 m_pitchAngle_R;
-    double                 m_yawAngle_R;
-
-    double                 m_rollAngle_L;
-    double                 m_pitchAngle_L;
-    double                 m_yawAngle_L;
 
     std::array<double, 11>    m_SpeedDirection_R = {1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1};
     std::array<double, 11>    m_SpeedDirection_L = {1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1};
