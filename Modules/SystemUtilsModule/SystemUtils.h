@@ -422,6 +422,14 @@ enum class RobotControlMode
     TestOperation,
 };
 
+enum class _TeleOperationMode
+{
+    CSP_Mode = 0x00,
+    CSV_Mode = 0x01,
+    PP_Mode  = 0x02
+};
+using TeleOperationMode = _TeleOperationMode;
+
 enum class SystemModule
 {
     MasterConsole = 0xA0,
@@ -474,7 +482,6 @@ constexpr int pedalMidPress     = 10;
 
 constexpr int actualEnable      = 1;
 constexpr int actualDisable     = 0;
-
 
 constexpr int SinglePressButton = 0;
 constexpr int KeepPressButton   = 1;
