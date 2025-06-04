@@ -13,11 +13,15 @@ enum class _RobotControlAction_E
     BootSelfCheck = 0x00,
     StartControlThread = 0x01,
     GoToTeleOperationMode,
-    GoToCollabrationMode,
+    GoToCollaborationMode,
+    GoToGuidingArmCollaboration,
+    DisableGuidingArmCollaboration,
+    GoToInstrumentArmCollaboration,
     GoToTestOperation,
     GoToHoldOnMode,
     StartEndJointMotorHoming,
     StartEndEffectorMotorHoming,
+    MotorOff,
 };
 using RobotControlAction_E = enum _RobotControlAction_E;
 

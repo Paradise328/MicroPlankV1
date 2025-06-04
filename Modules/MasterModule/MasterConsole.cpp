@@ -179,7 +179,7 @@ void MasterConsole::masterConsoleBootSelfCheck()
         int retryCount = 3;
         while(retryCount > 0)
         {
-            std::cout << "retryCount: " << retryCount << std::endl;
+            printf("retryCount: %d\n", retryCount);
             if(m_MasterConsoleType == MasterConsoleType::Omega)
             {
                 if(m_omega.returnOmegaStatus() == true)

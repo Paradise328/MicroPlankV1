@@ -11,6 +11,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <cmath>
+#include <vector>
 #include <array>
 #include <iostream>
 #include <bits/stdint-uintn.h>
@@ -347,5 +348,34 @@ inline std::vector<std::string> split(std::string str,std::string separator){
     return result;
 }
 
+template <typename T>
+class MedianFilter{
+public:
+    MedianFilter(int windowSize) :windowSize_(windowSize) {}
+
+    T getMedian(){
+        std::deque<T> process_buffer = buffer_;
+        std::sort(process_buffer.begin(),process_buffer.end());
+        if(process_buffer.size()<windowSize_){
+            return process_buffer[process_buffer.size() / 2];
+        }
+        return process_buffer[windowSize_ / 2];
+    }
+    void add(T newValue){
+        if(buffer_.size()< windowSize_){
+            buffer_.push_back(newValue);
+        }else{
+            buffer_.pop_front();
+            buffer_.push_back(newValue);
+        }
+
+    }
+    int size(){
+        return windowSize_;
+    }
+private:
+    std::deque<T> buffer_;
+    int windowSize_;
+};
 
 #endif 

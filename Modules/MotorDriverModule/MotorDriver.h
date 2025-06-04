@@ -197,19 +197,22 @@ enum class OperationMode {
 
 // this is for 0x6040, set control word
 enum class ControlCommand{
-    DISABLE         = 0x00,
-    DISABLE1        = 0x02,
-    SHUT_DOWN       = 0x06,
-    SWITCH_ON       = 0x07,
-    ENABLE          = 0x0F,
+    DISABLE               = 0x00,
+    DISABLE1              = 0x02,
+    SHUT_DOWN             = 0x06,
+    SWITCH_ON             = 0x07,
+    ENABLE                = 0x0F,
     MOTION_START_HOMING   = 0x1F,
-    ENABLE_PP       = 0x2F,//使能进入pp模式，准备接受位置命令
-    MOTION_START_PP = 0x3F,//targetpose发送绝对位置
-    CLEAR_ERROR     = 0x80,
-    NEW_SET_POINT_MOONS = 0x5F,//targetpose发送相对位置
-    QUICKSTOP       = 0x0B,
-    HALTHOMING      = 0x11F,
-
+    ZEROERR_ENABLE_TRI_PP = 0x1F,
+    ZEROERR_ENABLE_IM_PP  = 0x2F,
+    ZEROERR_ENABLE_IM_TRI_PP = 0x3F,
+    ZERRERR_START_PP      = 0x1F,
+    ZERRERR_START_PT      = 0x1F,
+    MAXON_ENABLE_IM_PP    = 0x3F,
+    NEW_SET_POINT_MOONS   = 0x5F,
+    CLEAR_ERROR           = 0x80,
+    QUICKSTOP             = 0x0B,
+    HALTHOMING            = 0x11F,
 };
 
 struct PDOConfig {
@@ -259,7 +262,7 @@ public:
             m_init.base_dir = NULL;
             m_init.poll_interval = 0;
             m_init.poll_StackSize = 0;
-            m_init.trace_level = 255;
+            m_init.trace_level = 0;
             m_init.user_card_cnt = 0;
             m_init.user_cards = NULL;
 
@@ -278,8 +281,7 @@ public:
             m_abRecvDataLengthGuiding = m_motorDriverparameter.guidingJointMotorNum * guidingJointMotor_sizeRecvData;
 
             m_abSendDataLengthGuiding = m_motorDriverparameter.guidingJointMotorNum * guidingJointMotor_sizeSendData;
-            LOG(INFO) << "m_abRecvDataLengthGuiding: " << m_abRecvDataLengthGuiding;
-            LOG(INFO) << "m_abSendDataLengthGuiding: " << m_abSendDataLengthGuiding;
+
             m_abRecvDataLengthPerArm = m_motorDriverparameter.endJointMotorNumPerArm * endJointMotor_sizeRecvData +
                                        m_motorDriverparameter.endGimbalMotorNumPerArm * endGimbalMotor_sizeRecvData +
                                        m_motorDriverparameter.endInstrumentMotorNumPerArm * endInstrumentMotor_sizeRecvData;
@@ -326,6 +328,7 @@ public:
     int setProfileVel(const MotorType& type, const int& index, const uint32_t& profileVel, const int& armNum);
     int setProfileAcc(const MotorType& type, const int& index, const uint32_t& profileAcc, const int& armNum);
     int setProfileDec(const MotorType& type, const int& index, const uint32_t& profileDec, const int& armNum);
+    int setProfileTrq(const MotorType& type, const int& index, const uint32_t& profileDec, const int& armNum);
     int setMaxProfileVel(const MotorType& type, const int& index, const uint32_t& maxProfileVel, const int& armNum);
     int setTrqPosLimit(const MotorType& type, const int& index, const uint16_t& trqPosLimit, const int& armNum);
     int setTrqNegLimit(const MotorType& type, const int& index, const uint16_t& trqNegLimit, const int& armNum);
@@ -363,14 +366,22 @@ public:
     /* Different Modes, CSP/CSV/CST, change of modes are only possible in enabled still state. */
     void enableMotor(const MotorType& type, const int& index, const int& armNum);  // before starting motor/after release brake
     void enableMotor_PP(const MotorType& type, const int& index, const int& armNum);
+    void enableMotor_PT(const MotorType& type, const int& index, const int& armNum);
+    void enableMotor_PV(const MotorType& type, const int& index, const int& armNum);
     void enableMotor_Homing(const MotorType &type, const int &index, const int& armNum);
     void operationCSP(const MotorType& type, const int& index, const int& armNum);
     void operationCSV(const MotorType& motorType, const int& index, const int& armNum);
     void operationCST(const MotorType& type, const int& index, const int& armNum);
+    void switchPV2PT(const MotorType& type, const int& index, const int& armNum);
+    void switchPT2PV(const MotorType& type, const int& index, const int& armNum);
     void operationPP(const MotorType& type, const int& index, const int& armNum);
+    void operationPT(const MotorType& type, const int& index, const int& armNum);
+    void operationPV(const MotorType& type, const int& index, const int& armNum);
     void gotoTargetPos_PPMode(const MotorType& type, const int& index, const int32_t& targetVel, const int32_t& targetPos, const int& armNum);
     void operationHOME(const MotorType& type, const int& index, const int& armNum);
     void motorDriverExit();
+    void disableAllMotors();
+
     int getAbSendDataByteNum(){return m_abSendDataByteNum;}
     int getAbRecvDataByteNum(){return m_abRecvDataByteNum;}
     static void motorDriverThread(std::promise<bool> &promiseCommunication);//(std::promise<bool> &promiseCommunication)
@@ -394,8 +405,8 @@ private:
     CIFX_PACKET m_tRecvPkt = {{0}};
     int           m_abSendDataByteNum;
     int           m_abRecvDataByteNum;
-    unsigned char m_abSendData[870] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON : 9 * 44 + 2 * 27 + 35 * 12*/
-    unsigned char m_abRecvData[628] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON : 9 * 26 + 2 * 23 + 29 * 12*/
+    unsigned char m_abSendData[9 * 44 + 2 * 27 + 35 * 12] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON : 9 * 44 + 2 * 27 + 35 * 12*/
+    unsigned char m_abRecvData[9 * 26 + 2 * 23 + 29 * 12] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON : 9 * 26 + 2 * 23 + 29 * 12*/
     std::string m_mappingPath = "/home/a/Desktop/codes/MikroPlanckV1/Config/PDO_mapping.toml";
     PDOConfig m_config[5] = {};
     struct CIFX_LINUX_INIT m_init;

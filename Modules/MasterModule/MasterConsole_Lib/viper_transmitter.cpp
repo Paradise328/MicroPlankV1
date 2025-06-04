@@ -2,6 +2,7 @@
 
 void Viper_Transmitter::initDevice()
 {
+
     if(openSerialPort(576000) == true)
     {
         LOG(INFO)<<"422 open successful";
@@ -61,7 +62,11 @@ void Viper_Transmitter::On422DataIn(void)
                 return;
             }
             while(len >= 86){
-                m_communicateStemp.fetch_add(1);
+                m_communicateTemp.fetch_add(1);
+                if(m_communicateTemp >= 65536 * 65536 -1)
+                {
+                    m_communicateTemp = 0;
+                }
                 if((this->Data422Recvin.at(84)==0x0D)&&((this->Data422Recvin.at(85)==0x0a)))
                 {
                     QByteArray datatemp=Data422Recvin.left(86);
@@ -375,13 +380,13 @@ void Viper_Transmitter::statusMonitor()
     while(!m_isMonitorTerminated)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        if(m_communicateStemp == m_communicateReserve)
+        if(m_communicateTemp == m_communicateReserve)
         {
             m_is422Ok = false;
         }
         else{
             m_is422Ok = true;
-            m_communicateReserve = m_communicateStemp;
+            m_communicateReserve = m_communicateTemp;
         }
     }
 }

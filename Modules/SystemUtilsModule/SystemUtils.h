@@ -417,7 +417,8 @@ enum class RobotControlMode
 {
     InitMode = 0x01,
     TeleOperation,
-    Collabration,
+    Collaboration_GuidingArm,
+    Collaboration_EndJoint,
     Hold,
     TestOperation,
 };

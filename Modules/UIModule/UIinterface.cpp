@@ -178,7 +178,7 @@ void UIinterface::onRobotArmEnable_Clicked()
         SetButtonSta(this->m_PO_Button_Slowdown,UI_Button_Default);
 
         SendInnerMsg(Module_Inner_E::AssistDevice_Lifting,static_cast<int>(AssistDevice_LiftingAction_E::LiftingDriverSwitch),"on");
-        SendInnerMsg(Module_Inner_E::AssistDevice_Arm,static_cast<int>(AssistDevice_ArmAction_E::ArmDriverSwitch),"on");
+        SendInnerMsg(Module_Inner_E::RobotControl,static_cast<int>(RobotControlAction_E::GoToGuidingArmCollaboration),"on");
     }
     else
     {
@@ -191,7 +191,7 @@ void UIinterface::onRobotArmEnable_Clicked()
         SetButtonSta(this->m_PO_Button_Slowdown,UI_Button_Gray);
 
         SendInnerMsg(Module_Inner_E::AssistDevice_Lifting,static_cast<int>(AssistDevice_LiftingAction_E::LiftingDriverSwitch),"off");
-        SendInnerMsg(Module_Inner_E::AssistDevice_Arm,static_cast<int>(AssistDevice_ArmAction_E::ArmDriverSwitch),"off");
+        SendInnerMsg(Module_Inner_E::RobotControl,static_cast<int>(RobotControlAction_E::DisableGuidingArmCollaboration),"off");
 
     }
 }
@@ -208,7 +208,7 @@ void UIinterface::setRobotControlMode(int action)
     case 1:
         SendInnerMsg(Module_Inner_E::RobotControl, static_cast<int>(RobotControlAction_E::GoToHoldOnMode), "");   break;
     case 2:
-        SendInnerMsg(Module_Inner_E::RobotControl, static_cast<int>(RobotControlAction_E::GoToCollabrationMode), "");   break;
+        SendInnerMsg(Module_Inner_E::RobotControl, static_cast<int>(RobotControlAction_E::GoToCollaborationMode), "");   break;
     case 3:
         SendInnerMsg(Module_Inner_E::RobotControl, static_cast<int>(RobotControlAction_E::GoToTeleOperationMode), "");   break;
     default:break;

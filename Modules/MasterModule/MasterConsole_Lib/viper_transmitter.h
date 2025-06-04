@@ -18,7 +18,7 @@ class Viper_Transmitter : public Peripheral_Device
 public:
 
     explicit Viper_Transmitter():
-        m_communicateStemp(0),
+        m_communicateTemp(0),
         m_isMonitorTerminated(false)
         {
             this->type=DEV_VIPER_TRANSMITTER;
@@ -54,7 +54,7 @@ private:
     void                    VCMD(QString cmd,int arg1=-1,int arg2=-1,int arg3=-1);
 
     /*主控台状态监测线程*/
-    std::atomic<uint32_t>   m_communicateStemp;
+    std::atomic<uint32_t>   m_communicateTemp;
     uint32_t                m_communicateReserve;
     std::thread             m_statusMonitor;
     void                    statusMonitor();

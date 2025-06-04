@@ -4,6 +4,7 @@
 #include "../MasterModule/MasterConsole.h"
 #include "../MotorDriverModule/MotorDriver.h"
 #include "../SystemUtilsModule/SystemUtils.h"
+#include "../MathModule/lowpass_filter.h"
 #include "BlasControl/actuators_controler.h"
 #include "BlasControl/BLA_API.h"
 #include "BlasControl/communication.h"
@@ -26,6 +27,7 @@
 
 constexpr int ControlValueNum = 15;
 constexpr int MotorNumPerSide = 11;
+constexpr int GuidingMotorNum = 3;
 
 constexpr int JointEncoderPerRevolution = 524288;
 constexpr int JointEncoderInit_1_R = 324400;//初始值，角度为0时的编码器值
@@ -59,7 +61,42 @@ constexpr int m_angle = 30;
 namespace msm = boost::msm;
 namespace mpl = boost::mpl;//Meta Programming Library
 
+enum class GuidingArmState{
+    INIT = 0x00,
+    HOLD = 0x01,
+    DRAG = 0x02,
+    DAMPING = 0x03,
+};
 
+enum class GuidingArmFrictionState{
+    IDLE = 0x00,
+    MOVING = 0x01
+};
+
+class GuidingArm{
+public:
+    GuidingArmState                 m_guidingArmCurrentState = GuidingArmState::INIT;
+    GuidingArmFrictionState         m_guidingArmCurrentFrictionStateJoint0 = GuidingArmFrictionState::IDLE;
+    GuidingArmFrictionState         m_guidingArmCurrentFrictionStateJoint1 = GuidingArmFrictionState::IDLE;
+    GuidingArmFrictionState         m_guidingArmCurrentFrictionStateJoint2 = GuidingArmFrictionState::IDLE;
+    bool                            m_isGuidingArmStable;
+    bool                            m_guidingArmEnableBtnPressed;
+    int16_t                         m_actualCurrent0;
+    int16_t                         m_actualCurrent1;
+    int16_t                         m_actualCurrent2;
+    int16_t                         m_actualTorque0;
+    int16_t                         m_actualTorque1;
+    int16_t                         m_actualTorque2;
+    double                          m_actualVelocity0;
+    double                          m_actualVelocity1;
+    double                          m_actualVelocity2;
+    std::array<double,3>            m_velocity;
+    std::array<double,3>            m_velocity_1stOrder;
+    std::array<double,3>            m_velocity_2ndOrder;
+
+private:
+
+};
 
 class RobotControl:public QObject
 {
@@ -80,7 +117,11 @@ public:
         m_ruckigPlanner(0.004),
         m_ruckigPlanner_L(0.004),
         m_flagControlThread(false),
-        m_isSystemTerminated(false)
+        m_isSystemTerminated(false),
+        m_guidingArm1stOrder({0}),
+        m_guidingArm2ndOrder({0}),
+        m_filter_1storder_guiding(m_guidingArm1stOrder, 250.0, 60.0),
+        m_filter_2ndorder_guiding(m_guidingArm2ndOrder, 250.0, 60.0)
     {
         //readMyInitData();
 
@@ -126,6 +167,8 @@ private:
 
     MasterConsole&                  m_masterConsole;
 
+    std::atomic<bool>               m_isSystemTerminated;
+
     /*消息队列相关函数*/
     MessageQueue                    &m_messagePool;
 
@@ -148,6 +191,15 @@ private:
 
     double                          m_initMoonsEncode;//光电门为0时moons编码器数值
 
+    /*主手数据更新*/
+    std::thread                     m_updateMasterConsoleThread;
+
+    std::atomic<bool>               m_flagUpdateMasterConsoleData = true;
+
+    void                            startUpdataMasterConsoleDataThread();
+
+    void                            updateMasterConsoleData();
+
     /*控制函数*/
     std::thread                     m_calculateControlDataThread;
 
@@ -155,26 +207,48 @@ private:
 
     void                            control();
 
-    std::thread                     m_updateMasterConsoleThread;
+    std::atomic<bool>               m_flagControlThread;
+    /* guiding arm control function and variables */
+    GuidingArm                      m_guidingArm;
+    std::thread                     m_guidingArmControlThread;
+    std::array<double,3>           m_guidingArm1stOrder;
+    std::array<double,3>           m_guidingArm2ndOrder;
+    LowpassFilter1stOrder<std::array<double,3>>    m_filter_1storder_guiding;
+    LowpassFilter2ndOrder<std::array<double,3>>    m_filter_2ndorder_guiding;
+    void                            updateGuidingArmMotion();
+    void                            updateGuidingArmState();
+    bool                            judgeGuidingArmStable();
+    void                            startGuidingArmControlThread();
+    void                            guidingArmControl();
+    void                            initGuidingArm();
+    void                            disableGuidingArm();
+    void                            guidingArmPrinting();
+    void                            guidingArmLogging();
+    double                          signDouble(double target);
+    double                          computeGuidingArmFrictionTorque(double velocity, double tau_c, double B, double k);
+    bool                            isGuidingArmDamping();
+    void                            guidingArmHold2Drag();
+    void                            guidingArmDrag2Damp();
+    void                            guidingArmDamp2Drag();
+    void                            guidingArmDamp2Hold();
+    void                            applyGuidingArmForceControl();
+    void                            applyGuidingArmDampingControl();
+    void                            applyGuidingArmVelocityControl();
 
-    void                            startUpdataMasterConsoleDataThread();
-
-    void                            updateMasterConsoleData();
-
-    std::atomic<bool>               m_flagUpdateMasterConsoleData = true;
-
+    /* 控制模式 */
     void                            setRobotControlMode(const RobotControlMode& tartgetRobotControlMode);
 
     std::atomic<RobotControlMode>   m_curRobotControlMode = RobotControlMode::InitMode;
 
-
-    /*控制模式切换*/
-
-    TeleOperationMode               m_teleOperationdMode;
-
+    /* 上电状态 */
     void                            initMotor();
 
     void                            goToHold();
+
+    std::atomic<bool>               m_flagInHold = false;
+
+    /* teleoperation */
+    TeleOperationMode               m_teleOperationdMode;
 
     void                            goToTeleOperation();
 
@@ -182,38 +256,38 @@ private:
 
     void                            teleoperation1();
 
-    void                            goToTestOperation();
-
-    void                            goToCollabration();
-
-    void                            collabration();
-
     std::atomic<bool>               m_flagInTeleoperation = false;
 
-    std::atomic<bool>               m_flagInHold = false;
+    void                            goToTestOperation();
 
-    std::atomic<bool>               m_flagInCollabration = false;
+    void                            sendMotorData_Teleop(const std::array<int, MotorNumPerSide>& targetEncoderCur_R, const std::array<int, MotorNumPerSide>& targetVelCur_R,
+                                                         const int& enableTag_R,
+                                                         const std::array<int, MotorNumPerSide>& targetEncoderCur_L, const std::array<int, MotorNumPerSide>& targetVelCur_L,
+                                                         const int& enableTag_L);
 
-    std::atomic<bool>               m_flagInCollabration_GuidingArm = false;
+    /*吊杆拖拽*/
+    void                            goToCollaboration_EndJoint();
+    void                            goToCollaboration_GuidingArm();
 
-    std::atomic<bool>               m_flagControlThread;
+    void                            collaboration_EndJoint();
+    void                            collaboration_GuidingArm();
 
-    std::atomic<bool>               m_isSystemTerminated;
-
-    std::array<double, 4>          calculateEndeffectorAngle(const std::array<double, 4> masterJointAngle) const;
+    std::atomic<bool>               m_flagInCollaboration_EndJoint = false;
+    std::atomic<bool>               m_flagInCollaboration_GuidingArm = false;
 
     /*与MotorDriver通信*/
     void                            receiveMotorData();
-
     void                            sendMotorData();
 
     /*EtherCAT各从站信息*/
-    mutable std::array<int, MotorNumPerSide>                m_motorEncoderInit_L;
-    mutable std::array<int, MotorNumPerSide>                m_motorEncoderInit_R;
-    std::atomic<std::array<int, MotorNumPerSide>>           m_motorEncoderCur_L;
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorEncoderCur_R;
-    std::array<int, MotorNumPerSide>                        m_motorTargetEncoderPrev_L;
-    std::array<int, MotorNumPerSide>                        m_motorTargetEncoderPrev_R;
+    std::atomic<std::array<int, MotorNumPerSide>>           m_motorEncoderCur_L;
+
+    std::atomic<std::array<int, MotorNumPerSide>>           m_motorStatusWordCur_R;
+    std::atomic<std::array<int, MotorNumPerSide>>           m_motorStatusWordCur_L;
+    std::atomic<std::array<int, 6>>                         m_digitalInputGuiding;
+    std::atomic<std::array<int, MotorNumPerSide>>           m_MotorTargetVel_L;
+    std::atomic<std::array<int, MotorNumPerSide>>           m_MotorTargetVel_R;
 
     /*进入使能时计算初始位置*/
     void                           calculateEndEffectorPosition(const HandlePose& handlePoseCur, const std::array<int,MotorNumPerSide>& motorPos_Cur, const char& side);
@@ -227,7 +301,6 @@ private:
 
     ruckig::Trajectory<DOF>         m_ruckigPlannedTrajectory;
 
-
     ruckig::Ruckig<DOF>             m_ruckigPlanner_L;
 
     ruckig::InputParameter<DOF>     m_ruckigInputState_L;
@@ -236,10 +309,12 @@ private:
 
     ruckig::Trajectory<DOF>         m_ruckigPlannedTrajectory_L;
 
-
     /*复位功能*/
     void                            endJointGoHome(const char& side);
     void                            MaxonGoHome(const char& side);
+
+    std::atomic<std::array<int, MotorNumPerSide>>                  m_motorHomingStatus_R;
+    std::atomic<std::array<int, MotorNumPerSide>>                  m_motorHomingStatus_L;
 
     bool m_maxonCaliFinish_R = 0;
     bool m_maxonCaliFinish_L = 0;
@@ -322,6 +397,14 @@ private:
     mutable HandlePose              m_handlePoseOrg_L;
     mutable HandlePose              m_handlePoseOrg_R;
 
+    mutable std::array<int, MotorNumPerSide>                m_motorEncoderInit_R;
+    mutable std::array<int, MotorNumPerSide>                m_motorEncoderInit_L;
+
+    mutable std::array<int, MotorNumPerSide>                m_motorTargetEncoderPrev_L;
+    mutable std::array<int, MotorNumPerSide>                m_motorTargetEncoderPrev_R;
+
+    std::array<double, 4>          calculateEndeffectorAngle(const std::array<double, 4> masterJointAngle) const;
+
     /*保存当前状态*/
     void                        storeCurAsPrev(const HandlePose& handlePoseCur,
                                                const std::array<double, ControlValueNum> controlValueCur_L, const std::array<double, ControlValueNum> controlValueCur_R,
@@ -393,19 +476,6 @@ private:
     //    int m_waitTime = 50;//适用于测试
     int m_waitTime = 200;//适用于运行状态
 
-    std::atomic<std::array<int, MotorNumPerSide>>           m_MotorPrevEncoder;
-
-
-    std::atomic<std::array<int, MotorNumPerSide>>           m_MotorTargetVel_L;
-    std::atomic<std::array<int, MotorNumPerSide>>           m_MotorTargetVel_R;
-
-    std::atomic<std::array<int, 8>>                  m_MotorHomingStatus_R;
-    std::atomic<std::array<int, 8>>                  m_MotorHomingStatus_L;
-
-    std::atomic<std::array<int, MotorNumPerSide>>           m_MotorCurStatusWord_R;
-    std::atomic<std::array<int, MotorNumPerSide>>           m_MotorCurStatusWord_L;
-    //    std::atomic<std::array<int, MotorNum>>           m_MotorInitEncoder_R;
-
     mutable std::array<int, MotorNumPerSide>                m_motorPositionPrev_L = {0};
     mutable std::array<int, MotorNumPerSide>                m_motorPositionPrev_R = {0};
     mutable std::array<int, MotorNumPerSide>                m_motorPositionInit_L = {0};
@@ -442,9 +512,6 @@ private:
     double                  calculateOverlapValue(const std::array<int, MotorNumPerSide>& motorPosition_Cur, const HandlePose& masterHandlePose_Cur,const char& side) const;
     void                    setControlInitHandleMotorPositionAndPose(const std::array<int, MotorNumPerSide>& motorPositionCur, const HandlePose& handlePoseCur, const char& side);
 
-
-
-
     static Eigen::Matrix3d ToQuaternionRotationMatrix(double q_L0, double q_L1, double q_L2, double q_L3);
     static Eigen::Matrix3d ToEulerRotationMatrix(double Azimuth, double Elevation, double Roll);
 
@@ -458,7 +525,6 @@ private:
     double y_cur;
     double z_cur;
     double index;
-
     int savetime;
 
     //以下为扭矩传感

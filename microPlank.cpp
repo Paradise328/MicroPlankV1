@@ -12,12 +12,12 @@ void MicroPlank::startSystem()
     LOG(INFO) << "start system ";
 
     /* 开启主手线程，并进行对m_isMasterConsoleOk的赋值 */
-    startMasterConsole();
+    // startMasterConsole();
 
     /* 开启MotorDriver线程 */
-    // initMotorDriver();
+    initMotorDriver();
 
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    std::this_thread::sleep_for(std::chrono::seconds(20));
 
     startMsgThread();
 
@@ -59,7 +59,7 @@ void MicroPlank::startMasterConsole()
 void MicroPlank::startSecurityModule()
 {
     m_security.startSystemMonitor(m_masterConsole, m_motorDriver);
-    LOG(INFO)<<"Successfully start Master Console Thread ";
+    LOG(INFO)<<"Successfully start Security Thread ";
 }
 
 void MicroPlank::initMotorDriver() //std::promise<bool> &promiseInitMotorDriver

@@ -27,6 +27,8 @@ void Security::performSystemCheck(MasterConsole& masterConsole, RobotControl& ro
 
 void Security::systemMonitor(MasterConsole& masterConsole, MotorDriver* motorDriver)
 {
+    SendInnerMsg(Module_Inner_E::Uiinterface,static_cast<int>(UIAction_E::RecvSystemBootSta),"Ok");
+
     while(!m_flagIsSystemTerminated)
     {
         auto systemOperationMode = m_systemOperationMode.load();
@@ -40,7 +42,7 @@ void Security::systemMonitor(MasterConsole& masterConsole, MotorDriver* motorDri
         auto masterConsoleStatus_Prev = systemModuleStatus_Prev[0];
         auto etherCATCommunicationStatus_Prev = systemModuleStatus_Prev[1];
         auto liftingArmStatus_Prev = systemModuleStatus_Prev[2];
-        LOG(INFO) << "masterConsoleStatus_Cur: " << masterConsoleStatus_Cur << "  systemModuleStatus_Prev: " << systemModuleStatus_Prev[0];
+        // LOG(INFO) << "masterConsoleStatus_Cur: " << masterConsoleStatus_Cur << "  systemModuleStatus_Prev: " << systemModuleStatus_Prev[0];
 
         switch(systemOperationMode)
         {
@@ -190,7 +192,7 @@ void Security::shutDownSystem()
                 case shutDownSystemEnum::EtherCATOff:
                 {
                     std::cout << "EtherCATOff in security!!" << std::endl;
-                    SendInnerMsg(Module_Inner_E::MotorDriver, static_cast<int>(MotorDriverAction_E::EtherCAT_Off), "");
+                    SendInnerMsg(Module_Inner_E::RobotControl, static_cast<int>(RobotControlAction_E::MotorOff), "");
                     checkShutDownSystem.store(shutDownSystemEnum::Respons_Waiting);
                     break;
                 }
@@ -200,6 +202,8 @@ void Security::shutDownSystem()
                 }
                 case shutDownSystemEnum::ShutDownFinish:
                 {
+                    el::Loggers::flushAll();
+                    sleep(3);
                     KillProcess();
                     break;
                 }
@@ -335,6 +339,7 @@ void Security::dealWithMsg()
                         if(i.value() == "Ok")
                         {
                             setSelfCheckStep(SelfCheckStepEnum::AllOK);
+
                         }else{
                             setSelfCheckStep(SelfCheckStepEnum::Err);
                             SendInnerMsg(Module_Inner_E::MultipleModules, static_cast<int>(MultipleDevAction_E::RecvSystemBootSta),"Err");
