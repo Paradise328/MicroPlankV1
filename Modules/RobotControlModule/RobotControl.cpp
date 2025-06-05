@@ -1,4 +1,4 @@
-﻿#include "RobotControl.h"
+#include "RobotControl.h"
 
 std::chrono::high_resolution_clock::time_point startTime;
 std::chrono::high_resolution_clock::time_point endTime;
@@ -732,7 +732,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
 
     double theta = -90 - m_theta; //根据实际情况赋值-60
     double rotation_yaw = 30;//实际上是绕yaw轴转-30度
-    double rotation_roll = -30;//根据实际情况赋值-30
+    double rotation_pitch = -30;//根据实际情况赋值-30，可以理解为pitch角
 
     double theta_angle = theta * M_PI / 180;
 
@@ -746,7 +746,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
 
     rotationMatrix_yaw = Eigen::AngleAxisd(rotation_yaw *  M_PI / 180, Eigen::Vector3d::UnitX());
 
-    rotationMatrix_roll = Eigen::AngleAxisd(rotation_roll * M_PI / 180, Eigen::Vector3d::UnitY());
+    rotationMatrix_roll = Eigen::AngleAxisd(rotation_pitch * M_PI / 180, Eigen::Vector3d::UnitY());
 
     Eigen::Matrix3d rotSlaveMatrix_L = rotationMatrix_2 * rotationMatrix_3 * rotation_theta * rotationMatrix_roll * rotationMatrix_yaw;
 
@@ -900,7 +900,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     // 计算 rotSlaveMatrix_R
     double theta = -90 + m_theta;//根据实际情况赋值m_theta = -60，绕x旋转
     double rotation_yaw = -30;//实际上是绕z轴转-30度
-    double rotation_roll = -30;//根据实际情况赋值-30
+    double rotation_pitch = -30;//根据实际情况赋值-30
     double theta_angle = theta * M_PI / 180;
 
     Eigen::Matrix3d rotationMatrix_2, rotationMatrix_3, rotation_theta, rotationMatrix_yaw, rotationMatrix_roll;
@@ -913,7 +913,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
 
     rotationMatrix_yaw = Eigen::AngleAxisd(rotation_yaw *  M_PI / 180, Eigen::Vector3d::UnitX());
 
-    rotationMatrix_roll = Eigen::AngleAxisd(rotation_roll * M_PI / 180, Eigen::Vector3d::UnitY());
+    rotationMatrix_roll = Eigen::AngleAxisd(rotation_pitch * M_PI / 180, Eigen::Vector3d::UnitY());
 
     Eigen::Matrix3d rotSlaveMatrix_R = rotationMatrix_2 * rotationMatrix_3 * rotation_theta * rotationMatrix_roll * rotationMatrix_yaw;
 
