@@ -726,7 +726,11 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
     Eigen::Matrix3d mappingMatrix;
     mappingMatrix << 1, 0, 0,
                      0, -1, 0,
-                     0, 0, -1;
+                     0, 0, -1;//viper平放
+
+    mappingMatrix << sqrt(2)/2,  0, -sqrt(2)/2,
+                     0,         -1,          0,
+                     -sqrt(2)/2, 0, -sqrt(2)/2;//Viper 斜45度放置
 
     Eigen::Matrix3d rotMaster_L = mappingMatrix * handlePoseCur.getRotationDataL() * mappingMatrix.inverse();
 
@@ -892,6 +896,10 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     mappingMatrix << 1, 0, 0,
                      0, -1, 0,
                      0, 0, -1;
+
+    mappingMatrix << sqrt(2)/2,  0, -sqrt(2)/2,
+                     0,         -1,          0,
+                     -sqrt(2)/2, 0, -sqrt(2)/2;//Viper 斜45度放置
 
     Eigen::Matrix3d rotMaster_R = mappingMatrix * handlePoseCur.getRotationDataR() * mappingMatrix.inverse();
 
