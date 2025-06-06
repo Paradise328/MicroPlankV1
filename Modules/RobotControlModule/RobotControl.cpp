@@ -734,15 +734,13 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
     double rotation_yaw = 30;//实际上是绕yaw轴转-30度
     double rotation_pitch = -30;//根据实际情况赋值-30，可以理解为pitch角
 
-    double theta_angle = theta * M_PI / 180;
-
     Eigen::Matrix3d rotationMatrix_2, rotationMatrix_3, rotation_theta, rotationMatrix_yaw, rotationMatrix_roll;
 
     rotationMatrix_2 = Eigen::AngleAxisd(90 *  M_PI / 180, Eigen::Vector3d::UnitX());
 
     rotationMatrix_3 = Eigen::AngleAxisd(90 *  M_PI / 180, Eigen::Vector3d::UnitY());
 
-    rotation_theta = Eigen::AngleAxisd(theta_angle *  M_PI / 180, Eigen::Vector3d::UnitZ());
+    rotation_theta = Eigen::AngleAxisd(theta *  M_PI / 180, Eigen::Vector3d::UnitZ());
 
     rotationMatrix_yaw = Eigen::AngleAxisd(rotation_yaw *  M_PI / 180, Eigen::Vector3d::UnitX());
 
@@ -901,7 +899,6 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     double theta = -90 + m_theta;//根据实际情况赋值m_theta = -60，绕x旋转
     double rotation_yaw = -30;//实际上是绕z轴转-30度
     double rotation_pitch = -30;//根据实际情况赋值-30
-    double theta_angle = theta * M_PI / 180;
 
     Eigen::Matrix3d rotationMatrix_2, rotationMatrix_3, rotation_theta, rotationMatrix_yaw, rotationMatrix_roll;
 
@@ -909,7 +906,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
 
     rotationMatrix_3 = Eigen::AngleAxisd(90 *  M_PI / 180, Eigen::Vector3d::UnitY());
 
-    rotation_theta = Eigen::AngleAxisd(theta_angle *  M_PI / 180, Eigen::Vector3d::UnitZ());
+    rotation_theta = Eigen::AngleAxisd(theta *  M_PI / 180, Eigen::Vector3d::UnitZ());
 
     rotationMatrix_yaw = Eigen::AngleAxisd(rotation_yaw *  M_PI / 180, Eigen::Vector3d::UnitX());
 
