@@ -2124,6 +2124,9 @@ int MotorDriver::closeBusConnection(){
 // This method should be called after openBusConnection()
 int MotorDriver::cyclicDataTransfer(){
     int lRet;
+
+    lRet = xChannelWatchdog(m_hChannel, CIFX_WATCHDOG_START, &m_ulWatchdogValue);
+
     if(CIFX_NO_ERROR != (lRet = xChannelIORead(m_hChannel, 0, 0, sizeof(m_abRecvData), m_abRecvData, timeOutCyclicIO))){
         LOG(ERROR) << "Error reading IO Data area! Error Code: 0x" << std::hex << lRet ;
         return T_ERROR;
@@ -2191,7 +2194,7 @@ void MotorDriver::enableMotor(const MotorType& type, const int& index, const int
             LOG(INFO) << "current ZeroErr " << index << " error code is: " << std::hex <<errCode;
 
             // //TODO
-            // if (m_jointEnabled[m_endGimbalMotorNum + m_endGimbalMotorNum + index]){// && (statusword == 1237 || statusword == 1637 || statusword == 5687)
+            // if (m_jointEnabled[m_endGimbalMotorNum + m_endGimbalMotorNum + index]){
             //     LOG(INFO) << "ZeroErr Motor " << index << " is already enabled." ;
             //     break;
             // }
@@ -2208,7 +2211,7 @@ void MotorDriver::enableMotor(const MotorType& type, const int& index, const int
                 LOG(ERROR) << "Error: Failed to shut down ZeroErr motor!" ;
                 break;
             }
-            usleep(50*1000);
+            usleep(500 * 1000);
             LOG(INFO) << "2: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum) << " on arm " << armNum << ", index " << index ;
 
             if(setControlWord(type, index, ControlCommand::SWITCH_ON, armNum) != T_NOERROR){
@@ -3130,11 +3133,20 @@ void MotorDriver::operationHOME(const MotorType& type, const int& index, const i
             }
             usleep(50 * 1000);
 
-//            if (setHomeVel(type, index, 100) != T_NOERROR){
-            if (setHomeVel(type, index, 300, armNum) != T_NOERROR){
+        if(armNum==0){
+            if (setHomeVel(type, index, 100, armNum) != T_NOERROR){
+                LOG(ERROR) << "Failed to set profile SearchZeroVel for MAXONS!";
+                return;
+                }
+        }
+
+        if(armNum==1){
+            if (setHomeVel(type, index, 50*1000, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set profile SearchZeroVel for MAXONS!";
                 return;
             }
+        }
+
             usleep(50 * 1000);
 
             enableMotor_Homing(type, index, armNum);
@@ -3455,8 +3467,9 @@ void MotorDriver::disableAllMotors()
     setControlWord(MotorType::MAXON, 4, ControlCommand::SHUT_DOWN, arm_1);
     setControlWord(MotorType::MAXON, 5, ControlCommand::SHUT_DOWN, arm_1);
 
-    usleep(50 * 1000);
+    usleep(1000 * 1000);
 
+    m_selfPointer->m_threadTerminated = true;
 }
 
 void MotorDriver::SendInnerMsg(Module_Inner_E recever,int Action, QString arg)

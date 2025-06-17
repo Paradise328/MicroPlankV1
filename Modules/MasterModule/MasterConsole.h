@@ -35,10 +35,8 @@ public:
                             m_isSystemReset(false),
                             m_FilterCase(static_cast<int>(FilterCase::IIRFilterOn))
                             {
-                                LOG(INFO) << "构造主手函数";
                                 connect(this, &MasterConsole::DealMsgSignal, this, &MasterConsole::dealWithMsg);//当第一个函数被触发后，就执行第二个函数
                             }
-
     void                        updateConsoleDataThread();
 
     /*外部调用*/

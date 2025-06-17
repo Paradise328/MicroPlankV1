@@ -31,6 +31,7 @@ LIBS += -lruckig                    # 链接 Ruckig 库
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+        Modules/ForceSensorModule/ForceSensor.cpp \
         Modules/LoggerModule/easylogging++.cc \
         Modules/MasterModule/MasterConsole.cpp \
         Modules/MasterModule/MasterConsole_Lib/viper_transmitter.cpp \
@@ -59,6 +60,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
+    Modules/ForceSensorModule/ForceSensor.h \
     Modules/LoggerModule/easylogging++.h \
     Modules/MasterModule/MasterConsole.h \
     Modules/MasterModule/MasterConsole_Lib/viper_transmitter.h \
@@ -94,6 +96,7 @@ DISTFILES += \
     Config/EndeffectorData.toml \
     Config/PDO_mapping.toml \
     Config/RobotData.toml \
+    Config/commands \
     Config/logConf.conf \
 
 RESOURCES += \

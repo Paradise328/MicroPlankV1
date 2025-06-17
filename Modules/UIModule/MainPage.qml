@@ -264,7 +264,6 @@ Item {
                  border.width: 2
              }
              onClicked: {
-                 console.log("关机 in qml！！！！！")
                  UIinterface.onButton_PowerOff();
                  sureClose.close()
              }

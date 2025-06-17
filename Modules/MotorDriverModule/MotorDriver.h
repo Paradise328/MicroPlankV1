@@ -430,6 +430,7 @@ private:
     int m_abSendDataLengthPerArm;
     int m_abRecvDataLengthGuiding;
     int m_abSendDataLengthGuiding;
+    uint32_t m_ulWatchdogValue = 0;
 
     static MotorDriver *m_selfPointer;
     bool m_flagSDO;

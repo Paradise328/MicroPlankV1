@@ -90,6 +90,9 @@ void MasterConsole::assembleDataFromUSBAndEthernet()
 {
     auto handlePoseTmp = m_transmitter.returnHandlePose();
 
+    if(handlePoseTmp.stepPedal == pedalMidPress){handlePoseTmp.enablePedal = 1;}
+    else{handlePoseTmp.enablePedal = 0;}
+
     auto handlePose_Tmp = handlePoseTmp;
     auto handlePoseIR_Tmp = handlePoseTmp;
     auto handlePoseIIR_Tmp = handlePoseTmp;
@@ -104,9 +107,9 @@ void MasterConsole::assembleDataFromUSBAndEthernet()
     handlePose_Tmp.setMyConsoleData(handlePNO_Tmp);
     handlePoseIR_Tmp.setMyConsoleData(handlePNOAFIR_Tmp);
     handlePoseIIR_Tmp.setMyConsoleData(handlePNOAFIIR_Tmp);
-    handlePose_Tmp.setQuaternionData(handlePNO_Tmp);
-    handlePoseIR_Tmp.setQuaternionData(handlePNOAFIR_Tmp);
-    handlePoseIIR_Tmp.setQuaternionData(handlePNOAFIIR_Tmp);
+    handlePose_Tmp.setEulerRotationMatrix(handlePNO_Tmp);
+    handlePoseIR_Tmp.setEulerRotationMatrix(handlePNOAFIR_Tmp);
+    handlePoseIIR_Tmp.setEulerRotationMatrix(handlePNOAFIIR_Tmp);
 
     if(m_FilterCase == static_cast<int>(FilterCase::FilterOFF))
     {

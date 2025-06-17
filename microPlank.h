@@ -30,6 +30,7 @@
 #include "Modules/MsgModule/messagequeue.h"
 #include "Modules/SecurityModule/security.h"
 #include "Modules/UIModule/UIinterface.h"
+#include "Modules/ForceSensorModule/ForceSensor.h"
 //#include "Modules/MotorDriverModule/MotorDriver.h"
 #include "Modules/RobotControlModule/RobotControl.h"
 
@@ -46,7 +47,9 @@ public:
                         m_motorDriverParameter(motorDriverParameter),
                         m_isSystemTerminated(false)
                         {
-                            connect(&m_uiInterface, &UIinterface::startWholeSystemSignal,this, &MicroPlank::startStarSystemThread);
+                           m_forceSensor = new ForceSensor(this);
+                           // m_forceSensor->initDevice();
+                           connect(&m_uiInterface, &UIinterface::startWholeSystemSignal,this, &MicroPlank::startStarSystemThread);
                         }
 
     void        startStarSystemThread();
@@ -92,9 +95,12 @@ private:
 
     /*开启机器人控制模块线程*/
     void                startRobotControl();
+    void                startForceSensor();
 
     /*各模块定义及初始化*/
     MasterConsole       m_masterConsole = MasterConsole(m_masterConsoleType, m_MsgPool);
+
+    ForceSensor         *m_forceSensor;
 
     Security            m_security = Security(m_MsgPool);
 

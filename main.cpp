@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include "Modules/LoggerModule/easylogging++.h"
 #include "microPlank.h"
-
+#include "Modules/ForceSensorModule/ForceSensor.h"
 INITIALIZE_EASYLOGGINGPP
 #define ELPP_THREAD_SAFE
 #define ELPP_QT_LOGGING
@@ -20,9 +20,11 @@ INITIALIZE_EASYLOGGINGPP
 
 int main(int argc, char *argv[])
 {
-   QGuiApplication app(argc, argv);
+
+    QGuiApplication app(argc, argv);
 
    MotorDriverParameter motorDriverParameter;
+
 
    motorDriverParameter.guidingJointMotorNum = 3;           /* number of motor to control the arm */
    motorDriverParameter.armNum = 2;

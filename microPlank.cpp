@@ -14,6 +14,8 @@ void MicroPlank::startSystem()
     /* 开启主手线程，并进行对m_isMasterConsoleOk的赋值 */
     // startMasterConsole();
 
+    startForceSensor();
+
     /* 开启MotorDriver线程 */
     initMotorDriver();
 
@@ -24,8 +26,8 @@ void MicroPlank::startSystem()
     /* 开启robotControl线程 */
     startRobotControl();
 
-    // m_security.performSystemCheck();
-    // m_security.systemBootSelfCheck();
+    //// m_security.performSystemCheck();
+    //// m_security.systemBootSelfCheck();
 
     /* 开启security监控线程 */
     startSecurityModule();
@@ -89,7 +91,13 @@ void MicroPlank::initMotorDriverThread()//std::promise<bool> &promiseInitMotorDr
 
 void MicroPlank::startRobotControl()
 {
-     m_robotControl.startMyThreads();
+    m_robotControl.startMyThreads();
+}
+
+void MicroPlank::startForceSensor()
+{
+    LOG(INFO)<<"+++ in start force sensor function";
+    m_forceSensor->initDevice();
 }
 
 void MicroPlank::startMsgThread()

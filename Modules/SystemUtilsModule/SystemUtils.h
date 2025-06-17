@@ -152,8 +152,10 @@ struct HandlePose
     double          reserveArray2[3];
     double          reserveArray3[3];
     
-    double          dataL[9]; // 3x3 矩阵，手动存储为数组
-    double          dataR[9]; // 3x3 矩阵，手动存储为数组
+    double          dataL[9];
+    double          dataR[9];
+
+    // Eigen::Matrix3d EulerRotationMatrix_R;
 
     void init()
     {
@@ -254,9 +256,10 @@ struct HandlePose
         handlePoseL_Elevation = poseData_Cur[0][4];
         handlePoseL_Roll = poseData_Cur[0][5];
         // handlePoseL_OpenAngle = ;
-        handlePoseR_X = poseData_Cur[1][0];
+
+        handlePoseR_X = poseData_Cur[1][0] * cos(-45 * M_PI / 180) + poseData_Cur[1][2] * sin(-45 * M_PI / 180);
         handlePoseR_Y = poseData_Cur[1][1];
-        handlePoseR_Z = poseData_Cur[1][2];
+        handlePoseR_Z = poseData_Cur[1][2] * cos(-45 * M_PI / 180) - poseData_Cur[1][0] * sin(-45 * M_PI / 180);
         handlePoseR_Arzimuth = poseData_Cur[1][3];
         handlePoseR_Elevation = poseData_Cur[1][4];
         handlePoseR_Roll = poseData_Cur[1][5];
@@ -314,9 +317,10 @@ struct HandlePose
         quaternionL_3 = poseData_Cur[0][6];
 
         // handlePoseL_OpenAngle = ;
-        handlePoseR_X = poseData_Cur[1][0];
+
+        handlePoseR_X = poseData_Cur[1][0] * cos(-45 * M_PI / 180) + poseData_Cur[1][2] * sin(-45 * M_PI / 180);
         handlePoseR_Y = poseData_Cur[1][1];
-        handlePoseR_Z = poseData_Cur[1][2];
+        handlePoseR_Z = poseData_Cur[1][2] * cos(-45 * M_PI / 180) - poseData_Cur[1][0] * sin(-45 * M_PI / 180);
         quaternionR_0 = poseData_Cur[1][3];
         quaternionR_1 = poseData_Cur[1][4];
         quaternionR_2 = poseData_Cur[1][5];
@@ -351,6 +355,7 @@ struct HandlePose
         handlePoseR_OpenAngle=openAngle_Cur[1];
 
     }
+
     void setMyConsoleData(const std::array<std::array<double,viperDataNumPerSensor>,2>& poseData_Cur)
     {
         handlePoseL_X = poseData_Cur[0][0];
@@ -359,13 +364,34 @@ struct HandlePose
         handlePoseL_Arzimuth = poseData_Cur[0][3];
         handlePoseL_Elevation = poseData_Cur[0][4];
         handlePoseL_Roll = poseData_Cur[0][5];
-        // handlePoseL_OpenAngle = ;
-        handlePoseR_X = poseData_Cur[1][0];
+        handlePoseR_X = poseData_Cur[1][0] * cos(-45 * M_PI / 180) + poseData_Cur[1][2] * sin(-45 * M_PI / 180);
         handlePoseR_Y = poseData_Cur[1][1];
-        handlePoseR_Z = poseData_Cur[1][2];
+        handlePoseR_Z = poseData_Cur[1][2] * cos(-45 * M_PI / 180) - poseData_Cur[1][0] * sin(-45 * M_PI / 180);
+
         handlePoseR_Arzimuth = poseData_Cur[1][3];
         handlePoseR_Elevation = poseData_Cur[1][4];
         handlePoseR_Roll = poseData_Cur[1][5];
+    }
+
+    void setEulerRotationMatrix(const std::array<std::array<double,viperDataNumPerSensor>,2>& poseData_Cur)
+    {
+        Eigen::Matrix3d EulerRotationMatrix_R;
+
+        double Azimuth = handlePoseR_Arzimuth * M_PI / 180;
+        double Elevation = handlePoseR_Elevation * M_PI / 180;
+        double Roll = handlePoseR_Roll * M_PI / 180;
+
+        EulerRotationMatrix_R(0,0) = cos(Azimuth) * cos(Elevation);
+        EulerRotationMatrix_R(0,1) = cos(Azimuth) * sin(Elevation) * sin(Roll) - cos(Roll) * sin(Azimuth);
+        EulerRotationMatrix_R(0,2) = sin(Azimuth) * sin(Roll) + cos(Azimuth) * cos(Roll) * sin(Elevation);
+        EulerRotationMatrix_R(1,0) = cos(Elevation) * sin(Azimuth);
+        EulerRotationMatrix_R(1,1) = cos(Azimuth) * cos(Roll) + sin(Azimuth) * sin(Elevation) * sin(Roll);
+        EulerRotationMatrix_R(1,2) = cos(Roll) * sin(Azimuth) * sin(Elevation) - cos(Azimuth) * sin(Roll);
+        EulerRotationMatrix_R(2,0) = -sin(Elevation);
+        EulerRotationMatrix_R(2,1) = cos(Elevation) * sin(Roll);
+        EulerRotationMatrix_R(2,2) = cos(Elevation) * cos(Roll);
+
+        setRotationDataR(EulerRotationMatrix_R);
     }
 
     std::array<std::array<double, 7>, 2> returnPNOData()
@@ -450,8 +476,8 @@ enum class SystemMode
 constexpr int adcValueOpen_L = 2845;
 constexpr int adcValueClose_L = 3030;
 
-constexpr int adcValueOpen_R = 2865;
-constexpr int adcValueClose_R = 3030;
+constexpr int adcValueOpen_R = 913;
+constexpr int adcValueClose_R = 750;
 
 constexpr double graspThreshold = 0;
 

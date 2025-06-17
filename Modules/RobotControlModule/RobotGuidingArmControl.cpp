@@ -28,7 +28,7 @@ void RobotControl::guidingArmControl(){
         }
 
         /* print guiding Arm Motion Values to Screen */
-        // guidingArmPrinting();
+        guidingArmPrinting();
 
         /* Log Arm info to a file */
         // guidingArmLogging();
@@ -103,8 +103,8 @@ void RobotControl::applyGuidingArmForceControl(){
     /* apply PT update in this function */
     /* set target torque in order to compensate the friction */
     LOG(INFO)<<"[MODE:DRAG]";
-    double target_trq_0 = signDouble(m_guidingArm.m_velocity_1stOrder[0]) * 50.0;
-    double target_trq_1 = signDouble(m_guidingArm.m_velocity_1stOrder[1]) * 45.0;
+    double target_trq_0 = signDouble(m_guidingArm.m_velocity_1stOrder[0]) * 20.0;
+    double target_trq_1 = signDouble(m_guidingArm.m_velocity_1stOrder[1]) * 15.0;
     double target_trq_2 = signDouble(m_guidingArm.m_velocity_1stOrder[2]) * 110.0;
     tmp1 = signDouble(m_guidingArm.m_velocity_1stOrder[0]);
     tmp2 = signDouble(m_guidingArm.m_velocity_1stOrder[1]);
@@ -200,25 +200,25 @@ void RobotControl::updateGuidingArmMotion(){
 }
 
 void RobotControl::guidingArmPrinting(){
-    system("clear");
+    // system("clear");
 
-    LOG(INFO) << "m_flag_guidingArmEnableBtn: " << m_guidingArm.m_guidingArmEnableBtnPressed ;
-    LOG(INFO) << "m_guidingArmCurrentState: " << static_cast<int>(m_guidingArm.m_guidingArmCurrentState) ;
-    LOG(INFO) << "guiding arm joint 0 operation mode: " << m_motorDriver -> getOperationMode(MotorType::ZERO_ERR, 0, arm_guiding);
-    LOG(INFO) << "guiding arm joint 0 actual current: " << std::dec<< m_guidingArm.m_actualCurrent0;
-    LOG(INFO) << "guiding arm joint 0 actual torque: " << std::dec << m_guidingArm.m_actualTorque0;
-    LOG(INFO) << "guiding arm joint 0 actual velocity: " << std::dec << m_guidingArm.m_actualVelocity0;
-    LOG(INFO) << "guiding arm joint 1 operation mode: " << m_motorDriver -> getOperationMode(MotorType::ZERO_ERR, 1, arm_guiding);
-    LOG(INFO) << "guiding arm joint 1 actual current: " << std::dec << m_guidingArm.m_actualCurrent1;
-    LOG(INFO) << "guiding arm joint 1 actual torque: " << std::dec << m_guidingArm.m_actualTorque1;
-    LOG(INFO) << "guiding arm joint 1 actual velocity: " << std::dec << m_guidingArm.m_actualVelocity1;
-    LOG(INFO) << "guiding arm joint 2 operation mode: " << m_motorDriver -> getOperationMode(MotorType::ZERO_ERR, 2, arm_guiding);
-    LOG(INFO) << "guiding arm joint 2 actual current: " << std::dec << m_guidingArm.m_actualCurrent2;
-    LOG(INFO) << "guiding arm joint 2 actual torque: " << std::dec << m_guidingArm.m_actualTorque2;
-    LOG(INFO) << "guiding arm joint 2 actual velocity: " << std::dec << m_guidingArm.m_actualVelocity2;
-    LOG(INFO) << "guiding arm joint 2 1st-filtered velocity: " << std::dec << m_guidingArm.m_velocity_1stOrder[2];
-    LOG(INFO) << "tmp values: " << std::dec << tmp1 << " " << tmp2 << " " << tmp3;
-    LOG(INFO) << "tmp values: " << std::dec << tmp4 << " " << tmp5 << " " << tmp6;
+    // LOG(INFO) << "m_flag_guidingArmEnableBtn: " << m_guidingArm.m_guidingArmEnableBtnPressed ;
+    // LOG(INFO) << "m_guidingArmCurrentState: " << static_cast<int>(m_guidingArm.m_guidingArmCurrentState) ;
+    // LOG(INFO) << "guiding arm joint 0 operation mode: " << m_motorDriver -> getOperationMode(MotorType::ZERO_ERR, 0, arm_guiding);
+    // LOG(INFO) << "guiding arm joint 0 actual current: " << std::dec<< m_guidingArm.m_actualCurrent0;
+    // LOG(INFO) << "guiding arm joint 0 actual torque: " << std::dec << m_guidingArm.m_actualTorque0;
+    // LOG(INFO) << "guiding arm joint 0 actual velocity: " << std::dec << m_guidingArm.m_actualVelocity0;
+    // LOG(INFO) << "guiding arm joint 1 operation mode: " << m_motorDriver -> getOperationMode(MotorType::ZERO_ERR, 1, arm_guiding);
+    // LOG(INFO) << "guiding arm joint 1 actual current: " << std::dec << m_guidingArm.m_actualCurrent1;
+    // LOG(INFO) << "guiding arm joint 1 actual torque: " << std::dec << m_guidingArm.m_actualTorque1;
+    // LOG(INFO) << "guiding arm joint 1 actual velocity: " << std::dec << m_guidingArm.m_actualVelocity1;
+    // LOG(INFO) << "guiding arm joint 2 operation mode: " << m_motorDriver -> getOperationMode(MotorType::ZERO_ERR, 2, arm_guiding);
+    // LOG(INFO) << "guiding arm joint 2 actual current: " << std::dec << m_guidingArm.m_actualCurrent2;
+    // LOG(INFO) << "guiding arm joint 2 actual torque: " << std::dec << m_guidingArm.m_actualTorque2;
+    // LOG(INFO) << "guiding arm joint 2 actual velocity: " << std::dec << m_guidingArm.m_actualVelocity2;
+    // LOG(INFO) << "guiding arm joint 2 1st-filtered velocity: " << std::dec << m_guidingArm.m_velocity_1stOrder[2];
+    // LOG(INFO) << "tmp values: " << std::dec << tmp1 << " " << tmp2 << " " << tmp3;
+    // LOG(INFO) << "tmp values: " << std::dec << tmp4 << " " << tmp5 << " " << tmp6;
 }
 
 void RobotControl::guidingArmLogging(){

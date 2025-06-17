@@ -181,6 +181,8 @@ void Security::setSystemStatus(SystemWarningStatus sta)
 
 void Security::shutDownSystem()
 {
+    LOG(INFO)<<"Security: PowerOff" ;
+
     checkShutDownSystem.store(shutDownSystemEnum::EtherCATOff);
     std::thread shutDownSystemThread([this]
     {
@@ -191,7 +193,6 @@ void Security::shutDownSystem()
             {
                 case shutDownSystemEnum::EtherCATOff:
                 {
-                    std::cout << "EtherCATOff in security!!" << std::endl;
                     SendInnerMsg(Module_Inner_E::RobotControl, static_cast<int>(RobotControlAction_E::MotorOff), "");
                     checkShutDownSystem.store(shutDownSystemEnum::Respons_Waiting);
                     break;
@@ -361,7 +362,6 @@ void Security::dealWithMsg()
                 case static_cast<int>(SecurityAction_E::PowerOff):
                 {
                     shutDownSystem();
-                    LOG(INFO)<<"Security: PowerOff" ;
                     break;
                 }
                 default:break;

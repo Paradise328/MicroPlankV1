@@ -170,7 +170,7 @@ void Viper_Transmitter::VCMD(QString cmd,int arg1,int arg2,int arg3)
     if(arg3!=-1){cf.payload.args[j]=(uint8_t)arg3;j++;}
 
     // Send_Frame(cf);
-     Send_Frame_By_422(cf);
+    Send_Frame_By_422(cf);
 }
 
 void Viper_Transmitter::Reset_Viper()
@@ -230,9 +230,9 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
             Handle_Key_RIGHT+=cftemp.payload.args[7];
 
             auto openAngle = calculateOpenAngle(Handle_Angle_LEFT, Handle_Angle_RIGHT);
-
             handlePoseTmp.handlePoseL_OpenAngle = openAngle[0];
             handlePoseTmp.handlePoseR_OpenAngle = openAngle[1];
+
         }
         else if(cftemp.payload.args[0]== Dev_Sta_LEFTHANDLE_ERROR)
         {
@@ -327,7 +327,7 @@ void Viper_Transmitter::readHandleData_Quaternion(QByteArray qba)
     }
 }
 
-std::array<double, 2> Viper_Transmitter::calculateOpenAngle(const uint16_t& adcValueL, const uint16_t& adcValueR)const
+std::array<double, 2> Viper_Transmitter::calculateOpenAngle(const uint16_t& adcValueL, const uint16_t& adcValueR) const
 {
     double delt_adcValueL = 0;
     double delt_adcValueR = 0;
@@ -342,7 +342,7 @@ std::array<double, 2> Viper_Transmitter::calculateOpenAngle(const uint16_t& adcV
         delt_adcValueL = abs(adcValueOpen_L - adcValueClose_L);
     }
 
-    delt_adcValueR = -(adcValueR - adcValueClose_R);//3029-2859
+    delt_adcValueR = (adcValueR - adcValueClose_R);//3029-2859
     if(delt_adcValueR < 0)
     {
         delt_adcValueR = 0;
@@ -351,9 +351,9 @@ std::array<double, 2> Viper_Transmitter::calculateOpenAngle(const uint16_t& adcV
     {
         delt_adcValueR = abs(adcValueOpen_R - adcValueClose_R);
     }
-
     openAngle[0] = (delt_adcValueL/abs(adcValueOpen_L - adcValueClose_L) * 32 - 7) * 0.6;
     openAngle[1] = (delt_adcValueR/abs(adcValueOpen_R - adcValueClose_R) * 32 - 7) * 0.6;
+    return openAngle;
 }
 
 void Viper_Transmitter::DataIn(QByteArray data)
