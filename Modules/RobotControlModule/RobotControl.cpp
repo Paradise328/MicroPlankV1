@@ -1,4 +1,4 @@
-﻿#include "RobotControl.h"
+#include "RobotControl.h"
 
 std::chrono::high_resolution_clock::time_point startTime;
 std::chrono::high_resolution_clock::time_point endTime;
@@ -745,17 +745,17 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
     Eigen::Matrix3d mappingMatrix;
     mappingMatrix << 1, 0, 0,
                      0, -1, 0,
-                     0, 0, -1;//viper水平放置
+                     0, 0, -1;//viper平放
 
-    mappingMatrix << sqrt(2)/2,   0,   -sqrt(2)/2,
-                     0,          -1,            0,
-                    -sqrt(2)/2,   0,    -sqrt(2)/2;//Viper倾斜放置
+    mappingMatrix << sqrt(2)/2,  0, -sqrt(2)/2,
+                     0,         -1,          0,
+                     -sqrt(2)/2, 0, -sqrt(2)/2;//Viper 斜45度放置
 
     Eigen::Matrix3d rotMaster_L = mappingMatrix * handlePoseCur.getRotationDataL() * mappingMatrix.inverse();
 
     double theta = -90 - m_theta; //根据实际情况赋值-60
     double rotation_yaw = 30;//实际上是绕yaw轴转-30度
-    double rotation_roll = -30;//根据实际情况赋值-30
+    double rotation_pitch = -30;//根据实际情况赋值-30，可以理解为pitch角
 
     Eigen::Matrix3d rotationMatrix_2, rotationMatrix_3, rotation_theta, rotationMatrix_yaw, rotationMatrix_roll;
 
@@ -767,7 +767,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
 
     rotationMatrix_yaw = Eigen::AngleAxisd(rotation_yaw *  M_PI / 180, Eigen::Vector3d::UnitX());
 
-    rotationMatrix_roll = Eigen::AngleAxisd(rotation_roll * M_PI / 180, Eigen::Vector3d::UnitY());
+    rotationMatrix_roll = Eigen::AngleAxisd(rotation_pitch * M_PI / 180, Eigen::Vector3d::UnitY());
 
     Eigen::Matrix3d rotSlaveMatrix_L = rotationMatrix_2 * rotationMatrix_3 * rotation_theta * rotationMatrix_roll * rotationMatrix_yaw;
 
@@ -914,22 +914,16 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
                      0, -1, 0,
                      0, 0, -1;
 
-    // mappingMatrix << sqrt(2)/2,   0,   -sqrt(2)/2,
-    //                  0,          -1,            0,
-    //                 -sqrt(2)/2,   0,    -sqrt(2)/2;//Viper倾斜放置
+    mappingMatrix << sqrt(2)/2,  0, -sqrt(2)/2,
+                     0,         -1,          0,
+                     -sqrt(2)/2, 0, -sqrt(2)/2;//Viper 斜45度放置
 
-    Eigen::Matrix3d rot_y_45;
+    Eigen::Matrix3d rotMaster_R = mappingMatrix * handlePoseCur.getRotationDataR() * mappingMatrix.inverse();
 
-    rot_y_45 = Eigen::AngleAxisd(-45 *  M_PI / 180, Eigen::Vector3d::UnitY());
-
-    Eigen::Matrix3d handlePoseRotation_new = rot_y_45 * handlePoseCur.getRotationDataR();
-
-    Eigen::Matrix3d rotMaster_R = mappingMatrix * handlePoseRotation_new * mappingMatrix.inverse();
-    // LOG(INFO)<<"handlePoseCur.EulerRotationMatrix_R:"<<handlePoseCur.EulerRotationMatrix_R;
     // 计算 rotSlaveMatrix_R
     double theta = -90 + m_theta;//根据实际情况赋值m_theta = -60，绕x旋转
     double rotation_yaw = -30;//实际上是绕z轴转-30度
-    double rotation_roll = -30;//根据实际情况赋值-30
+    double rotation_pitch = -30;//根据实际情况赋值-30
 
     Eigen::Matrix3d rotationMatrix_2, rotationMatrix_3, rotation_theta, rotationMatrix_yaw, rotationMatrix_roll;
 
@@ -941,7 +935,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
 
     rotationMatrix_yaw = Eigen::AngleAxisd(rotation_yaw *  M_PI / 180, Eigen::Vector3d::UnitX());
 
-    rotationMatrix_roll = Eigen::AngleAxisd(rotation_roll * M_PI / 180, Eigen::Vector3d::UnitY());
+    rotationMatrix_roll = Eigen::AngleAxisd(rotation_pitch * M_PI / 180, Eigen::Vector3d::UnitY());
 
     Eigen::Matrix3d rotSlaveMatrix_R = rotationMatrix_2 * rotationMatrix_3 * rotation_theta * rotationMatrix_roll * rotationMatrix_yaw;
 
