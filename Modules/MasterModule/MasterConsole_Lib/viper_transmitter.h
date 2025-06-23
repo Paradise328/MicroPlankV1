@@ -52,6 +52,7 @@ private:
     void                    On422DataIn(void);
     eSendReturn             Send_Frame_By_422(COMMU_FRAME cftemp);
     void                    VCMD(QString cmd,int arg1=-1,int arg2=-1,int arg3=-1);
+    int                     findFrameHead(QByteArray &data);
 
     /*主控台状态监测线程*/
     std::atomic<uint32_t>   m_communicateTemp;

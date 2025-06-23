@@ -20,6 +20,9 @@ void Viper_Transmitter::initDevice()
 
 bool Viper_Transmitter::openSerialPort(qint32 baud)
 {
+
+    system("sudo rm -f /var/lock/LCK..tty*");
+
     m_serial_422 = new QSerialPort();
     QString name = "/dev/ttyXR0";
     m_serial_422->setPortName(name);
@@ -45,39 +48,118 @@ void Viper_Transmitter::closeSerialPort()
     m_serial_422->close();
 }
 
+int Viper_Transmitter::findFrameHead(QByteArray &data)
+{
+    uint8_t fh0=0;
+    uint8_t fh1=0;
+    uint8_t fh2=0;
+    uint8_t fh3=0;
+    int len=data.length();
+    if(len<4){
+         qDebug()<<"frame head err  3";
+        return -1;
+    }
+    for(int i=0;i<len-4;i++)
+    {
+
+        fh0=data.at(i);
+        fh1=data.at(i+1);
+        fh2=data.at(i+2);
+        fh3=data.at(i+3);
+        if(fh0==75 && fh1==87&&fh2==87&&fh3==88){//is frame head  ok?
+            return i;
+        }
+    }
+     qDebug()<<"frame head err            4";
+    qDebug()<<"len=                "<<len;
+     if(len>400)
+    {
+        for(int i=0;i<400;i++){
+             uint8_t u8temp=data.at(i);
+            qDebug()<<"u8temp="<<u8temp;
+        }
+     }
+    return -1;
+}
+
 void Viper_Transmitter::On422DataIn(void)
 {
     if(m_serial_422->canReadLine())
     {
-        Data422Recvin += m_serial_422->readAll();
-        int len = this->Data422Recvin.length();
-        if(len >= 4)
+
+        Data422Recvin+=m_serial_422->readAll();
+        int len=this->Data422Recvin.length();
+        int headindex=findFrameHead(Data422Recvin);
+        if(headindex<0)
         {
-            uint8_t fh0 = Data422Recvin.at(0);
-            uint8_t fh1 = Data422Recvin.at(1);
-            uint8_t fh2 = Data422Recvin.at(2);
-            uint8_t fh3 = Data422Recvin.at(3);
-            if(fh0!=75||fh1!=87||fh2!=87||fh3!=88){//is frame head  ok?
-                Data422Recvin.clear();
-                return;
+            qDebug()<<"frame head err  1";
+            return;
+        }
+        else if(headindex>0)
+        {
+            Data422Recvin.remove(0,headindex);
+              qDebug()<<"frame head err  2";
+            return;
+        }
+
+
+        while(len>=86){
+            if((this->Data422Recvin.at(84)==0x0D)&&((this->Data422Recvin.at(85)==0x0a)))
+            {
+                QByteArray datatemp=Data422Recvin.left(86);
+                readHandleData(datatemp);
             }
-            while(len >= 86){
-                m_communicateTemp.fetch_add(1);
-                if(m_communicateTemp >= 65536 * 65536 -1)
-                {
-                    m_communicateTemp = 0;
-                }
-                if((this->Data422Recvin.at(84)==0x0D)&&((this->Data422Recvin.at(85)==0x0a)))
-                {
-                    QByteArray datatemp=Data422Recvin.left(86);
-                    readHandleData(datatemp);
-                }
-                Data422Recvin.remove(0,86);
-                len=this->Data422Recvin.length();
-            }
+            Data422Recvin.remove(0,86);
+            len=this->Data422Recvin.length();
         }
     }
 }
+
+// void Viper_Transmitter::On422DataIn(void)
+// {
+//     if(m_serial_422->canReadLine())
+//     {
+//         Data422Recvin += m_serial_422->readAll();
+//         int len = this->Data422Recvin.length();
+//         if(len >= 4)
+//         {
+//             uint8_t fh0 = Data422Recvin.at(0);
+//             uint8_t fh1 = Data422Recvin.at(1);
+//             uint8_t fh2 = Data422Recvin.at(2);
+//             uint8_t fh3 = Data422Recvin.at(3);
+//             if(fh0!=75||fh1!=87||fh2!=87||fh3!=88){//is frame head  ok?
+//                 Data422Recvin.clear();
+//                 qDebug()<<"frame head err";
+//                 return;
+//             }
+//             while(len >= 86){
+//                 m_communicateTemp.fetch_add(1);
+//                 if(m_communicateTemp >= 65536 * 65536 -1)
+//                 {
+//                     m_communicateTemp = 0;
+//                 }
+//                 if((this->Data422Recvin.at(84)==0x0D)&&((this->Data422Recvin.at(85)==0x0a)))
+//                 {
+//                     QByteArray datatemp=Data422Recvin.left(86);
+//                     readHandleData(datatemp);
+//                 }
+//                 else
+//                 {
+//                     qDebug()<<"frame end err";
+//                 }
+//                 Data422Recvin.remove(0,86);
+//                 len=this->Data422Recvin.length();
+//             }
+//         }
+//         else
+//         {
+//             qDebug()<<"len < 4````";
+//         }
+//     }
+//     else{
+//         qDebug()<<"no LF";
+//     }
+// }
 
 eSendReturn Viper_Transmitter::Send_Frame_By_422(COMMU_FRAME cftemp)
 {
@@ -213,7 +295,7 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
         handlePoseTmp.handlePoseR_Roll = Uint8ArrToFloat(cftemp.payload.args,58);
 
         handlePoseTmp.stepPedal = cftemp.payload.args[9];
-
+        qDebug()<<"cftemp.payload.args[0]: " <<cftemp.payload.args[0] ;
         if(cftemp.payload.args[0] == Dev_Sta_OK)
         {
             Handle_Angle_LEFT = cftemp.payload.args[2];
@@ -229,6 +311,7 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
             Handle_Key_RIGHT<<=8;
             Handle_Key_RIGHT+=cftemp.payload.args[7];
 
+            qDebug()<< "Handle_Angle_LEFT: " <<Handle_Angle_LEFT << " Handle_Angle_R: " << Handle_Angle_RIGHT;
             auto openAngle = calculateOpenAngle(Handle_Angle_LEFT, Handle_Angle_RIGHT);
             handlePoseTmp.handlePoseL_OpenAngle = openAngle[0];
             handlePoseTmp.handlePoseR_OpenAngle = openAngle[1];
@@ -300,6 +383,7 @@ void Viper_Transmitter::readHandleData_Quaternion(QByteArray qba)
             Handle_Key_RIGHT=cftemp.payload.args[8];
             Handle_Key_RIGHT<<=8;
             Handle_Key_RIGHT+=cftemp.payload.args[7];
+            qDebug()<< "Handle_Key_LEFT: " << Handle_Key_LEFT << " Handle_Key_Right" << Handle_Key_RIGHT;
 
             auto openAngle = calculateOpenAngle(Handle_Angle_LEFT, Handle_Angle_RIGHT);
 

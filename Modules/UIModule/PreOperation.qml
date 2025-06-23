@@ -1421,4 +1421,98 @@ Rectangle {
                 preOpreationPage.visible = false
             }
          }
+        Text {
+                id: po_txtInitialInstrumentAngle
+                //@disable-check M16
+                objectName: "po_txtInitialInstrumentAngle"
+                x: 650
+                y: 950
+                color: "#18fefe"
+                text: "器械夹角"
+                font.pixelSize: 28
+                font.family: "Microsoft YaHei UI"
+                font.bold: true
+        }
+
+        Button {
+          //@disable-check M16
+          objectName: "po_btnInitialInstrumentAngle30"
+          id: po_btnInitialInstrumentAngle30
+          x: 1250
+          y: 950
+          width: 200
+          height: 72
+          font.pixelSize: 36
+          contentItem: Text {
+              id:io_txt_btnGetDataFromExternalDevice
+              width: 100
+              text: qsTr("30°")
+              font.pixelSize: 36
+              opacity: 1.0
+              color: isDataFromInternal ? "#48FFFF" : "#FFFFFF"
+              horizontalAlignment: Text.AlignHCenter
+              verticalAlignment: Text.AlignVCenter
+              elide: Text.ElideRight
+          }
+          // 设置按钮背景
+          background: Rectangle {
+              id:po_btnInitialInstrumentAngle30_background
+              implicitWidth: 200
+              implicitHeight: 56
+              opacity: 0.25
+              color: isDataFromInternal ? "#003033" : "#48FFFF"
+              border.color: "#2CDFE8"
+              border.width: 2
+              radius: 10
+          }
+          MouseArea {
+              anchors.fill: parent
+              onClicked: {
+                  // isDataFromInternal = !isDataFromInternal
+                  // UIinterface.setDataSource(isDataFromInternal);
+              }
+          }
+       }
+
+        Button {
+          //@disable-check M16
+          objectName: "po_btnInitialInstrumentAngle60"
+          id: po_btnInitialInstrumentAngle60
+          x: 950
+          y: 950
+          width: 200
+          height: 72
+          font.pixelSize: 36
+          contentItem: Text {
+              id:po_txtInitialInstrumentAngle60
+              width: 100
+              text: qsTr("60°")
+              font.pixelSize: 36
+              opacity: 1.0
+              color: isDataFromInternal ? "#FFFFFF" : "#48FFFF"
+              horizontalAlignment: Text.AlignHCenter
+              verticalAlignment: Text.AlignVCenter
+              elide: Text.ElideRight
+          }
+          // 设置按钮背景
+          background: Rectangle {
+              id:po_btnInitialInstrumentAngle60_background
+              implicitWidth: 200
+              implicitHeight: 56
+              opacity: 0.25
+              color: isDataFromInternal ? "#48FFFF": "#003033"
+              border.color: "#2CDFE8"
+              border.width: 2
+              radius: 10
+          }
+          MouseArea {
+              anchors.fill: parent
+              onClicked: {
+                  // isDataFromInternal = !isDataFromInternal
+                  // UIinterface.setDataSource(isDataFromInternal);
+              }
+            }
+        }
+
+
 }
