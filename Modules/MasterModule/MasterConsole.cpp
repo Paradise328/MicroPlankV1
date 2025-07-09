@@ -1,4 +1,4 @@
-#include "MasterConsole.h"
+ #include "MasterConsole.h"
 
 void MasterConsole::updateConsoleDataThread()
 {
@@ -93,9 +93,11 @@ void MasterConsole::assembleDataFromUSBAndEthernet()
     if(handlePoseTmp.stepPedal == pedalMidPress){handlePoseTmp.enablePedal = 1;}
     else{handlePoseTmp.enablePedal = 0;}
 
+    auto armAnglePerSide = m_armAnglePerSide;
     auto handlePose_Tmp = handlePoseTmp;
     auto handlePoseIR_Tmp = handlePoseTmp;
     auto handlePoseIIR_Tmp = handlePoseTmp;
+
 
     /*将viper数组中的数据取出进行滤波*/
     auto posDataFromViperTmp = handlePoseTmp.returnPNOData();
@@ -110,6 +112,16 @@ void MasterConsole::assembleDataFromUSBAndEthernet()
     handlePose_Tmp.setEulerRotationMatrix(handlePNO_Tmp);
     handlePoseIR_Tmp.setEulerRotationMatrix(handlePNOAFIR_Tmp);
     handlePoseIIR_Tmp.setEulerRotationMatrix(handlePNOAFIIR_Tmp);
+
+    handlePose_Tmp.setHandlePoseInSlaveFrameR(armAnglePerSide);
+    handlePose_Tmp.setHandlePoseInSlaveFrameL(armAnglePerSide);
+
+    handlePoseIR_Tmp.setHandlePoseInSlaveFrameR(armAnglePerSide);
+    handlePoseIR_Tmp.setHandlePoseInSlaveFrameL(armAnglePerSide);
+
+    handlePoseIIR_Tmp.setHandlePoseInSlaveFrameR(armAnglePerSide);
+    handlePoseIIR_Tmp.setHandlePoseInSlaveFrameL(armAnglePerSide);
+
 
     if(m_FilterCase == static_cast<int>(FilterCase::FilterOFF))
     {
@@ -303,6 +315,21 @@ void MasterConsole::dealWithMsg()
                     SendInnerMsg(Module_Inner_E::Security, static_cast<int>(SecurityAction_E::RecvMotorDriverShutDown), "Ok");
                     break;
                 }
+                case static_cast<int>(MasterConsoleAction_E::SwitchInstrumentAngle):
+                {
+
+                    if(i.value() == "30")
+                    {
+                        LOG(INFO) << "Instrument Angle : 30";
+                        m_armAnglePerSide = 15;
+                    }else if(i.value() ==  "60")
+                    {
+                        LOG(INFO) << "Instrument Angle : 60";
+                        m_armAnglePerSide = 30;
+                    }
+                    break;
+                }
+
                 default:break;
             }
             i++;

@@ -41,6 +41,7 @@ SOURCES += \
         Modules/MasterModule/Viper_Lib/viper_usb.cpp \
         Modules/MotorDriverModule/MotorDriver.cpp \
         Modules/MsgModule/messagequeue.cpp \
+        Modules/RobotControlModule/DomainControler.cpp \
         Modules/RobotControlModule/RobotControl.cpp \
         Modules/RobotControlModule/RobotGuidingArmControl.cpp \
         Modules/SecurityModule/security.cpp \
@@ -79,6 +80,7 @@ HEADERS += \
     Modules/MotorDriverModule/cifXEndianess.h \
     Modules/MsgModule/messagequeue.h \
     Modules/MsgModule/threadsafequeue.h \
+    Modules/RobotControlModule/DomainControler.h \
     Modules/RobotControlModule/RobotControl.h \
     Modules/SecurityModule/security.h \
     Modules/SystemUtilsModule/SystemUtils.h \

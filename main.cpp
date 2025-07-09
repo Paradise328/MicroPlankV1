@@ -32,10 +32,10 @@ int main(int argc, char *argv[])
    motorDriverParameter.endGimbalMotorNumPerArm = 1;        /* number of motor to control end-effector gimbal on each arm */
    motorDriverParameter.endJointMotorNum = 6;               /* total number of motor to control end-effector joint */
    motorDriverParameter.endJointMotorNumPerArm = 3;         /* number of motor to control end-effector joint on each arm */
-   motorDriverParameter.endInstrumentMotorNum = 12;         /* total number of motor to control end-effector instruments */
-   motorDriverParameter.endInstrumentMotorNumPerArm = 6;    /* number of motor to control end-effector instruments on each arm */
-   motorDriverParameter.slaveNum = 23;                      /* total number of ethercat slaves*/
-   motorDriverParameter.motorNum = 23;                      /* total number of ethercat slaves*/
+   motorDriverParameter.endInstrumentMotorNum = 8;         /* total number of motor to control end-effector instruments */
+   motorDriverParameter.endInstrumentMotorNumPerArm = 4;    /* number of motor to control end-effector instruments on each arm */
+   motorDriverParameter.slaveNum = 19;                      /* total number of ethercat slaves*/
+   motorDriverParameter.motorNum = 19;                      /* total number of ethercat slaves*/
    motorDriverParameter.forceSensorNumPerArm = 0;
 
    /* Log File Configuration */

@@ -264,8 +264,7 @@ Item {
                  border.width: 2
              }
              onClicked: {
-                 UIinterface.onButton_PowerOff();
-                 sureClose.close()
+                sureClose.close()
              }
          }
          //取消关机按钮

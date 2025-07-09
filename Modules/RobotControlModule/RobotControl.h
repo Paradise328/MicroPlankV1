@@ -30,15 +30,51 @@ constexpr int MotorNumPerSide = 11;
 constexpr int GuidingMotorNum = 3;
 
 constexpr int JointEncoderPerRevolution = 524288;
-constexpr int JointEncoderInit_1_R = 324400;//初始值，角度为0时的编码器值
-constexpr int JointEncoderInit_2_R = 66000;
-constexpr int JointEncoderInit_3_R = 360500;
-constexpr int JointEncoderInit_1_L = 372000;//初始值，角度为0时的编码器值
-constexpr int JointEncoderInit_2_L = 281500;
-constexpr int JointEncoderInit_3_L = 211500;
+// constexpr int JointEncoderInit_1_R = 324400;//初始值，角度为0时的编码器值
+// constexpr int JointEncoderInit_2_R = 66000;
+// constexpr int JointEncoderInit_3_R = 360500;
+// constexpr int JointEncoderInit_1_L = 372000;
+// constexpr int JointEncoderInit_2_L = 281500;
+// constexpr int JointEncoderInit_3_L = 215996;
+
+constexpr int JointEncoderInit_1_R = 524288/2;//初始值，角度为0时的编码器值
+constexpr int JointEncoderInit_2_R = 524288/2;
+constexpr int JointEncoderInit_3_R = 524288/2;
+constexpr int JointEncoderInit_1_L = 524288/2;
+constexpr int JointEncoderInit_2_L = 524288/2;
+constexpr int JointEncoderInit_3_L = 524288/2;
+
+/*当l1=150mm，l2=180mm*/
+constexpr double JointAngleMax60_1_R = -29.050564;
+constexpr double JointAngleMin60_1_R = -61.936432;
+constexpr double JointAngleMax60_2_R = 111.677606;
+constexpr double JointAngleMin60_2_R = 79.025375;
+constexpr double JointAngleMax60_3_R = -8.286049;
+constexpr double JointAngleMin60_3_R = -35.656273;
+
+constexpr double JointAngleMax60_1_L = 61.936432;
+constexpr double JointAngleMin60_1_L = 29.050564;
+constexpr double JointAngleMax60_2_L = -79.025375;
+constexpr double JointAngleMin60_2_L = -111.677606;
+constexpr double JointAngleMax60_3_L = 35.656273;
+constexpr double JointAngleMin60_3_L = 8.286049;
+
+constexpr double JointAngleMax30_1_R = -7.332655;
+constexpr double JointAngleMin30_1_R = -35.917514;
+constexpr double JointAngleMax30_2_R = 116.17924;
+constexpr double JointAngleMin30_2_R = 111.677606;
+constexpr double JointAngleMax30_3_R = -35.656273;
+constexpr double JointAngleMin30_3_R = -48.54409;
+
+constexpr double JointAngleMax30_1_L = 35.917514;
+constexpr double JointAngleMin30_1_L = 7.332655;
+constexpr double JointAngleMax30_2_L = -111.677606;
+constexpr double JointAngleMin30_2_L = -116.17924;
+constexpr double JointAngleMax30_3_L = 48.54409;
+constexpr double JointAngleMin30_3_L = 35.656273;
 
 //constexpr double MaxonEncoderPerRevolution = 15955.67867;
-
+constexpr double EncoderPerGrade = 1456.356;
 
 constexpr int Gimbal1_R = 7;
 
@@ -55,7 +91,7 @@ constexpr int DOF = 6;
 constexpr int Position_DOF = 3;
 constexpr int Joint_DOF = 3;
 
-constexpr int m_angle = 30;
+// constexpr int m_angle = 30;
 
 
 namespace msm = boost::msm;
@@ -244,6 +280,8 @@ private:
 
     void                            teleoperation();
 
+    void                            teleoperation_4Maxons();
+
     void                            teleoperation1();
 
     std::atomic<bool>               m_flagInTeleoperation = false;
@@ -270,10 +308,17 @@ private:
     void                            sendMotorData();
     void                            sendMotorData(const std::array<int, MotorNumPerSide>& targetEncoder_R, const std::array<int, MotorNumPerSide>& targetVel_R,
                                                   const std::array<int, MotorNumPerSide>& targetEncoder_L, const std::array<int, MotorNumPerSide>& targetVel_L);
+    void                            sendMotorData_4Maxons(const std::array<int, MotorNumPerSide>& targetEncoder_R, const std::array<int, MotorNumPerSide>& targetVel_R,
+                                                    const std::array<int, MotorNumPerSide>& targetEncoder_L, const std::array<int, MotorNumPerSide>& targetVel_L);
+    /*与MotorDriver通信_4Maxon*/
+    void                            receiveMotorData_4Maxons();
+
 
     /*EtherCAT各从站信息*/
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorEncoderCur_R;
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorEncoderCur_L;
+    std::atomic<std::array<int, 3>>           m_endEffectorTarget_L;
+    std::atomic<std::array<int, 3>>           m_endEffectorTarget_R;
 
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorStatusWordCur_R;
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorStatusWordCur_L;
@@ -306,7 +351,9 @@ private:
     void                            zeroErrGoHome(const char& side);
 
     void                            MaxonGoHome(const char& side);
+    void                            MaxonGoHome_4Maxons(const char& side);
 
+    mutable int                     m_armAnglePerSide = 30;
     std::atomic<std::array<int, MotorNumPerSide>>                  m_motorHomingStatus_R;
     std::atomic<std::array<int, MotorNumPerSide>>                  m_motorHomingStatus_L;
 
@@ -325,14 +372,14 @@ private:
 
     double                          m_initRotAroundY_L, m_initRotAroundX_L;  //Read From Toml
     double                          m_initRotAroundY_R, m_initRotAroundX_R;  //Read From Toml
-    double                          m_sourceRotAroundY;  //Read From Toml
-    double                          m_theta = 30 ;
+    double                          m_sourceRotAroundY = -90 * M_PI / 180;  //Read From Toml
+    // double                          m_theta = 30 ;
 
     std::array<int,    4>           m_motionScaling;//Read From Toml
     std::array<double, 2>           m_EncoderPerDegreeScalingFactor = {1, 1.2};
 
-    std::array<double, 4>           m_encoderPerDegree_L = {0};//Read From Toml
-    std::array<double, 4>           m_encoderPerDegree_R = {0};//Read From Toml
+    std::array<double, 4>           m_encoderPerDegree_L;//Read From Toml
+    std::array<double, 4>           m_encoderPerDegree_R;//Read From Toml
     std::array<int, 3>              m_encoderPerMM_L = {0};//Read From Toml
     std::array<int, 3>              m_encoderPerMM_R = {0};//Read From Toml
 
@@ -359,8 +406,8 @@ private:
     std::array<double, MotorNumPerSide>    m_kForcepPosition_L = {4000, 1456.356, 1456.356, 1456.356, 110.8, 4063.76768, 4063.76768, 4063.76768, 4063.76768, 4063.76768, 846.473};
     std::array<double, MotorNumPerSide>    m_kForcepPosition_small_L = {4000, 1456.356, 1456.356, 1456.356, 110.8 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 846.473};
 
-    double                          m_compRatio_L;//Read From Toml
-    double                          m_compRatio_R;//Read From Toml
+    double                          m_compRatio_L = 0.765;//Read From Toml
+    double                          m_compRatio_R = 0.765;//Read From Toml
 
     /*速度档位*/
     void                            setNewSpeed(const HandlePose& handlePosePrev,
@@ -397,6 +444,9 @@ private:
     mutable std::array<int, MotorNumPerSide>                m_motorTargetEncoderPrev_L;
     mutable std::array<int, MotorNumPerSide>                m_motorTargetEncoderPrev_R;
 
+    mutable std::array<int, MotorNumPerSide>                m_motorTargetEncoderLast_L = {0};
+    mutable std::array<int, MotorNumPerSide>                m_motorTargetEncoderLast_R = {0};
+
     std::array<double, 4>          calculateEndeffectorAngle(const std::array<double, 4> masterJointAngle) const;
 
     /*保存当前状态*/
@@ -409,6 +459,9 @@ private:
     std::array<double, ControlValueNum>          motionMapping_L(const HandlePose& handlePoseCur);
     std::array<double, ControlValueNum>          motionMapping_R(const HandlePose& handlePoseCur);
 
+    std::array<double, ControlValueNum>          motionMapping_L_4Maxons(const HandlePose& handlePoseCur);
+    std::array<double, ControlValueNum>          motionMapping_R_4Maxons(const HandlePose& handlePoseCur);
+
     mutable std::array<double, ControlValueNum>      m_controlValuePrev_L = {0};
     mutable std::array<double, ControlValueNum>      m_controlValuePrev_R = {0};
 
@@ -420,6 +473,10 @@ private:
                                                                         const std::array<int, MotorNumPerSide>& targetEncoderPrev,
                                                                         const char& side)const;
 
+    std::array<int, MotorNumPerSide>            calculateTargetEncoder_4Maxon(const std::array<double, ControlValueNum>& controlValue_Cur,
+                                                            const std::array<int, MotorNumPerSide>& motorPosition_Init,
+                                                            const char& side)const;
+
     /*控制循环结束后*/
     void                    storeCurAsPrev(const HandlePose& handlePoseCur, const std::array<double, ControlValueNum> controlValueCur_L,
                                             const std::array<int, MotorNumPerSide>& motorPositionCur_L,
@@ -428,10 +485,10 @@ private:
                                             const std::array<int, MotorNumPerSide>& motorPositionCur_R,
                                             const std::array<int, MotorNumPerSide>& motorTargetEncoder_R, const int&  enableTagCur_R);
 
-    int handflag = 0;
+    // int handflag = 0;
 
-    double m_gamma_Init_R;
-    double m_gamma_Last_R = 0;
+    // double m_gamma_Init_R;
+    // double m_gamma_Last_R = 0;
 
     double m_last_roll;
     double m_cur_roll;
@@ -447,18 +504,18 @@ private:
     Eigen::Matrix3d m_rotationMatrixLast = Eigen::Matrix3d::Identity();
 
 
-    double                          m_endArm_1 = 120;
-    double                          m_endArm_2 = 120;
+    double                          m_endArm_1 = 150;
+    double                          m_endArm_2 = 180;
     double                          m_endArm_3 = 464.74;//单位mm
-    double                          m_endTargetJoint = 30;
 
-    //以下为画圆测试修改部分
+    /*以下为画圆测试修改部分*/
     double delta_x;
     double delta_y;
     double delta_z = 0;
     double r_test = 10;//画圆半径为100mm
     double test_angle = 0;
-    //以下为重复定位测试修改的部分
+
+    /*以下为重复定位测试修改的部分*/
     int test_index;
     int test_time;
     int test_circle;
@@ -466,22 +523,21 @@ private:
     double m_y_out;
     double m_z_out;
 
-    //    int m_waitTime = 50;//适用于测试
     int m_waitTime = 200;//适用于运行状态
 
     mutable std::array<int, MotorNumPerSide>                m_motorPositionPrev_L = {0};
     mutable std::array<int, MotorNumPerSide>                m_motorPositionPrev_R = {0};
 
-    mutable std::array<double, Position_DOF>                m_endEffectorInitPosition_R = {0};
-    mutable std::array<double, Position_DOF>                m_endEffectorInitPosition_L = {0};
+    mutable std::array<double, Position_DOF>                m_endEffectorInitPosition_R = {0};//{0,119.09,-187.9};//{0};
+    mutable std::array<double, Position_DOF>                m_endEffectorInitPosition_L = {0};//{0,-119.09,-187.9};
 
     mutable std::array<double, Position_DOF>                m_endEffectorInitJointAngle_R = {0};
     mutable std::array<double, Position_DOF>                m_endEffectorInitJointAngle_L = {0};
 
-    double m_yawAngle_L = 0;
-    double m_pitchAngle_L = 0;
-    double m_yawAngle_R = 0;
-    double m_pitchAngle_R = 0;
+    // double m_yawAngle_L = 0;
+    // double m_pitchAngle_L = 0;
+    // double m_yawAngle_R = 0;
+    // double m_pitchAngle_R = 0;
 
     Eigen::Matrix3d rotationMatrixPrev = Eigen::Matrix3d::Identity();
 
@@ -506,9 +562,9 @@ private:
     static Eigen::Matrix3d ToQuaternionRotationMatrix(double q_L0, double q_L1, double q_L2, double q_L3);
     static Eigen::Matrix3d ToEulerRotationMatrix(double Azimuth, double Elevation, double Roll);
 
-    //Maxon电机
+    /*Maxon电机*/
     std::array<int,6> m_maxonInit;
-    //以下用于步进测试
+    /*用于步进测试*/
     double test_x;
     double test_y;
     double test_z;
@@ -518,7 +574,7 @@ private:
     double index;
     int savetime;
 
-    //以下为扭矩传感
+    /*扭矩传感*/
     void                            openTorqueSensor();
 
     void                            closeTorqueSensor();

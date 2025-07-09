@@ -76,7 +76,7 @@ int Viper_Transmitter::findFrameHead(QByteArray &data)
     {
         for(int i=0;i<400;i++){
              uint8_t u8temp=data.at(i);
-            qDebug()<<"u8temp="<<u8temp;
+            // qDebug()<<"u8temp="<<u8temp;
         }
      }
     return -1;
@@ -295,7 +295,7 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
         handlePoseTmp.handlePoseR_Roll = Uint8ArrToFloat(cftemp.payload.args,58);
 
         handlePoseTmp.stepPedal = cftemp.payload.args[9];
-        qDebug()<<"cftemp.payload.args[0]: " <<cftemp.payload.args[0] ;
+        // qDebug()<<"cftemp.payload.args[0]: " <<cftemp.payload.args[0] ;
         if(cftemp.payload.args[0] == Dev_Sta_OK)
         {
             Handle_Angle_LEFT = cftemp.payload.args[2];
@@ -311,7 +311,6 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
             Handle_Key_RIGHT<<=8;
             Handle_Key_RIGHT+=cftemp.payload.args[7];
 
-            qDebug()<< "Handle_Angle_LEFT: " <<Handle_Angle_LEFT << " Handle_Angle_R: " << Handle_Angle_RIGHT;
             auto openAngle = calculateOpenAngle(Handle_Angle_LEFT, Handle_Angle_RIGHT);
             handlePoseTmp.handlePoseL_OpenAngle = openAngle[0];
             handlePoseTmp.handlePoseR_OpenAngle = openAngle[1];
@@ -416,7 +415,7 @@ std::array<double, 2> Viper_Transmitter::calculateOpenAngle(const uint16_t& adcV
     double delt_adcValueL = 0;
     double delt_adcValueR = 0;
     std::array<double, 2> openAngle = {0,0};
-    delt_adcValueL = - (adcValueL - adcValueClose_L);//3062-2894
+    delt_adcValueL = (adcValueL - adcValueClose_L);
     if(delt_adcValueL < 0)
     {
         delt_adcValueL = 0;
@@ -426,17 +425,30 @@ std::array<double, 2> Viper_Transmitter::calculateOpenAngle(const uint16_t& adcV
         delt_adcValueL = abs(adcValueOpen_L - adcValueClose_L);
     }
 
-    delt_adcValueR = (adcValueR - adcValueClose_R);//3029-2859
+    delt_adcValueR = (adcValueR - adcValueClose_R);
     if(delt_adcValueR < 0)
     {
         delt_adcValueR = 0;
     }
-    if(delt_adcValueR > abs(adcValueOpen_R - adcValueClose_R))
+    if(delt_adcValueR >= abs(adcValueOpen_R - adcValueClose_R))
     {
         delt_adcValueR = abs(adcValueOpen_R - adcValueClose_R);
     }
-    openAngle[0] = (delt_adcValueL/abs(adcValueOpen_L - adcValueClose_L) * 32 - 7) * 0.6;
-    openAngle[1] = (delt_adcValueR/abs(adcValueOpen_R - adcValueClose_R) * 32 - 7) * 0.6;
+    auto angle_0 = (delt_adcValueL/abs(adcValueOpen_L - adcValueClose_L)) * 30 - 10;
+    auto angle_1 = (delt_adcValueR/abs(adcValueOpen_R - adcValueClose_R)) * 30 - 10;
+    openAngle[0] = (angle_0 < 0) ? 0.008 * pow(angle_0, 3) : pow(angle_0, 3)/400;
+    openAngle[1] = (angle_1 < 0) ? 0.008 * pow(angle_1, 3) : pow(angle_1, 3)/400;
+
+    // std::cout << "openAngle[0]: " << openAngle[0] << " openAngle[1]: " <<openAngle[1] << std::endl;
+
+
+
+    // LOG(INFO)<<"openAngle[L]: "<<openAngle[0];
+    // LOG(INFO)<<"openAngle[R]: "<<openAngle[1];
+
+    // LOG(INFO)<<"adcValueL: "<<std::dec<<adcValueL;
+    // LOG(INFO)<<"adcValueR: "<<std::dec<<adcValueR;
+
     return openAngle;
 }
 

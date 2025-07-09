@@ -391,6 +391,27 @@ void UIinterface::resetButton_Calibration()
     SetButtonSta(this->m_PO_Button_CaliInstrument_R,UI_Button_Default);
 }
 
+void UIinterface::setInstrumentAngle(int initInstrumentAngle)
+{
+    if(initInstrumentAngle == 30)
+    {
+        // QList<QString> arglist;
+        // arglist.append(QString::number(30));
+        SendInnerMsg(Module_Inner_E::RobotControl, static_cast<int>(RobotControlAction_E::SwitchInstrumentAngle), "30");
+        SendInnerMsg(Module_Inner_E::MasterConsole, static_cast<int>(MasterConsoleAction_E::SwitchInstrumentAngle), "30");
+
+    }
+
+    if(initInstrumentAngle == 60)
+    {
+        // QList<QString> arglist;
+        // arglist.append(QString::number(30));
+        SendInnerMsg(Module_Inner_E::RobotControl, static_cast<int>(RobotControlAction_E::SwitchInstrumentAngle), "60");
+        SendInnerMsg(Module_Inner_E::MasterConsole, static_cast<int>(MasterConsoleAction_E::SwitchInstrumentAngle), "60");
+
+    }
+}
+
 void UIinterface::PO_GoToOperation_Clicked()
 {
     qDebug()<<"Change Page from 0 to 1";
@@ -407,6 +428,7 @@ void UIinterface::IO_BackToPrepare_Clicked()
 //    SendInnerMsg(Module_Inner_E::Slave,static_cast<int>(SlaveAction_E::ExecuateControlSet),"false");
     qDebug()<<"Change Page from 1 to 0 finish";
 }
+
 
 
 void UIinterface::onLightBoardStickChange(uint8_t sta)
@@ -1027,7 +1049,6 @@ void UIinterface::dealWithMsg()//与robotcontrol部分通信
 
                     case static_cast<int>(UIAction_E::FinishCalibration):
                     {
-                        QStringList cmdlist = i.value().split(";");
                         LOG(INFO) << "Get finish calibration signal from Robot Control: reset button";
                         resetButton_Calibration();
                         break;

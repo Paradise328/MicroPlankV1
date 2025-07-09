@@ -14,6 +14,7 @@ Rectangle {
     property real currentMaxSpeed: 100
     property int currentSpeedVal: 0
     property string timeText: "00:01:35"
+    property bool isInstrumentAngle30: true
 
     function setSpeed(axis,level){
         currentMinSpeed = json[axis][level].speedMin;
@@ -1429,7 +1430,7 @@ Rectangle {
                 y: 950
                 color: "#18fefe"
                 text: "器械夹角"
-                font.pixelSize: 28
+                font.pixelSize: 36
                 font.family: "Microsoft YaHei UI"
                 font.bold: true
         }
@@ -1444,12 +1445,12 @@ Rectangle {
           height: 72
           font.pixelSize: 36
           contentItem: Text {
-              id:io_txt_btnGetDataFromExternalDevice
+              id:po_txtInitialInstrumentAngle30
               width: 100
               text: qsTr("30°")
               font.pixelSize: 36
               opacity: 1.0
-              color: isDataFromInternal ? "#48FFFF" : "#FFFFFF"
+              color: isInstrumentAngle30 ? "#48FFFF" : "#FFFFFF"
               horizontalAlignment: Text.AlignHCenter
               verticalAlignment: Text.AlignVCenter
               elide: Text.ElideRight
@@ -1460,7 +1461,7 @@ Rectangle {
               implicitWidth: 200
               implicitHeight: 56
               opacity: 0.25
-              color: isDataFromInternal ? "#003033" : "#48FFFF"
+              color: isInstrumentAngle30 ? "#003033" : "#48FFFF"
               border.color: "#2CDFE8"
               border.width: 2
               radius: 10
@@ -1468,8 +1469,8 @@ Rectangle {
           MouseArea {
               anchors.fill: parent
               onClicked: {
-                  // isDataFromInternal = !isDataFromInternal
-                  // UIinterface.setDataSource(isDataFromInternal);
+                  isInstrumentAngle30 = !isInstrumentAngle30
+                  UIinterface.setInstrumentAngle(30);
               }
           }
        }
@@ -1489,7 +1490,7 @@ Rectangle {
               text: qsTr("60°")
               font.pixelSize: 36
               opacity: 1.0
-              color: isDataFromInternal ? "#FFFFFF" : "#48FFFF"
+              color: isInstrumentAngle30 ? "#FFFFFF" : "#48FFFF"
               horizontalAlignment: Text.AlignHCenter
               verticalAlignment: Text.AlignVCenter
               elide: Text.ElideRight
@@ -1500,7 +1501,7 @@ Rectangle {
               implicitWidth: 200
               implicitHeight: 56
               opacity: 0.25
-              color: isDataFromInternal ? "#48FFFF": "#003033"
+              color: isInstrumentAngle30 ? "#48FFFF": "#003033"
               border.color: "#2CDFE8"
               border.width: 2
               radius: 10
@@ -1508,8 +1509,8 @@ Rectangle {
           MouseArea {
               anchors.fill: parent
               onClicked: {
-                  // isDataFromInternal = !isDataFromInternal
-                  // UIinterface.setDataSource(isDataFromInternal);
+                  isInstrumentAngle30 = !isInstrumentAngle30
+                  UIinterface.setInstrumentAngle(60);
               }
             }
         }

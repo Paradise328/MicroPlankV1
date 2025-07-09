@@ -141,6 +141,14 @@ void MotorDriver::dumpData(unsigned char* data, unsigned long dataLength){
   printf("\r\n");
 }
 
+void MotorDriver::dumpData2(unsigned char* data, const int& motorNum, const int& arm)
+{
+
+    if(arm == 0){std::cout << std::dec << 315 + motorNum * 35 <<" " << static_cast<int>(data[315 + motorNum * 35]) <<"||" << static_cast<int>(data[0]) << std::endl;}
+    if(arm == 1){std::cout << std::dec << 614 + motorNum * 35 <<" " << static_cast<int>(data[614 + motorNum * 35]) <<"||" << static_cast<int>(data[0])<<  std::endl;}
+}
+
+
 uint16_t MotorDriver::getErrorCode(const MotorType& type, const int& index, const int& armNum){
 
     if(m_config[static_cast<int>(type)].TxPDO.variables.count(ERRCODE) > 0){
@@ -1500,7 +1508,7 @@ int MotorDriver::setHomeMethod(const MotorType& type, const int& index, const in
         const auto& variable = m_config[static_cast<int>(type)].RxPDO.variables[HOMEMETHOD];
         switch(type){
         case MotorType::MAXON:{
-            m_abRecvData[m_abSendDataLengthGuiding
+            m_abSendData[m_abSendDataLengthGuiding
                          + endGimbalMotor_sizeSendData * m_endGimbalMotorNumPerArm
                          + endJointMotor_sizeSendData * m_endJointMotorNumPerArm
                          + endInstrumentMotor_sizeSendData * index
@@ -2145,7 +2153,7 @@ void MotorDriver::enableMotor(const MotorType& type, const int& index, const int
 
     switch(type){
         case MotorType::MOONS:{
-            // TODO
+            // // TODO
             // if(m_jointEnabled[m_endGimbalMotorNum + index]){
             //     LOG(INFO) << "Moons Motor " << index << " is already enabled." ;
             //     break;
@@ -2194,12 +2202,15 @@ void MotorDriver::enableMotor(const MotorType& type, const int& index, const int
             LOG(INFO) << "current ZeroErr " << index << " error code is: " << std::hex <<errCode;
 
             // //TODO
-            // if (m_jointEnabled[m_endGimbalMotorNum + m_endGimbalMotorNum + index]){
-            //     LOG(INFO) << "ZeroErr Motor " << index << " is already enabled." ;
-            //     break;
+            // if(armNum != arm_guiding && errCode == 0)
+            // {
+            //     if (m_jointEnabled[m_guidingJointMotorNum + armNum * 8 + index + 1]){
+            //         LOG(INFO) << "ZeroErr Motor " << index << " is already enabled." ;
+            //         break;
+            //     }
             // }
-            // LOG(INFO) << "Starting initialize ZeroErr Motor: " <<  " motor" << index;
 
+            LOG(INFO) << "Starting initialize ZeroErr Motor: " <<  " motor" << index;
             if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to clear error for ZeroErr motor!" ;
                 break;
@@ -2228,8 +2239,11 @@ void MotorDriver::enableMotor(const MotorType& type, const int& index, const int
             usleep(50*1000);
             LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum) << " on arm " << armNum << ", index " << index ;
 
-            //TODO
-            m_jointEnabled[m_endGimbalMotorNum + m_endJointMotorNum + index] = true;
+            // //TODO
+            // if(armNum != arm_guiding)
+            // {
+            //     m_jointEnabled[m_guidingJointMotorNum + armNum * 8 + index + 1] = true;
+            // }
             LOG(INFO) << "Successfully enable ZeroErr motor " << index  << " on arm " << armNum << ", index " << index ;;
             break;
         }
@@ -2288,6 +2302,7 @@ void MotorDriver::enableMotor_PP(const MotorType& type, const int& index, const 
 
     case MotorType::MOONS:{
         LOG(INFO) << "Starting initialize Moons Motor:" << " motor " << index<< " on arm "<< armNum;
+
         if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
             LOG(ERROR) << "Error: Failed to clear error for Moons motor!" ;
             break;
@@ -2325,15 +2340,22 @@ void MotorDriver::enableMotor_PP(const MotorType& type, const int& index, const 
         LOG(INFO) << "5: the control word is: " << static_cast<int>(ControlCommand::NEW_SET_POINT_MOONS) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
 
-        m_jointEnabled[index] = true;
+        // m_jointEnabled[index] = true;
         LOG(INFO) << "Successfully enable Moons motor in PP Mode" << index << " on arm "<< armNum;
 
         break;
     }
     case MotorType::ZERO_ERR:{
-
+        auto errCode = getErrorCode(type, index, armNum);
         LOG(INFO) << "Starting initialize ZeroErr Motor in PP Mode: " <<  " motor " << index << " on arm "<< armNum;
-
+        // if(armNum != arm_guiding && errCode == 0)
+        // {
+        //     if (m_jointEnabled[m_guidingJointMotorNum + armNum * 8 + index + 1]){
+        //         LOG(INFO) << "ZeroErr Motor " << index << " is already enabled." ;
+        //         break;
+        //     }
+        //     LOG(INFO) << "Starting initialize ZeroErr Motor: " <<  " motor" << index;
+        // }
         if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
             LOG(ERROR) << "Error: Failed to clear error for ZeroErr motor!" ;
             break;
@@ -2370,7 +2392,7 @@ void MotorDriver::enableMotor_PP(const MotorType& type, const int& index, const 
         LOG(INFO) << "5: the control word is: " << static_cast<int>(ControlCommand::ZERRERR_START_PP) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
         //TODO
-        m_jointEnabled[m_endGimbalMotorNum + m_endJointMotorNum + index] = true;
+        // m_jointEnabled[m_guidingJointMotorNum + armNum * 8 + index + 1] = true;
         LOG(INFO) << "Successfully enable ZeroErr motor " << index ;
         break;
     }
@@ -2461,7 +2483,7 @@ void MotorDriver::enableMotor_PT(const MotorType& type, const int& index, const 
         usleep(50*1000);
         LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-        m_jointEnabled[index] = true;
+        // m_jointEnabled[index] = true;
         LOG(INFO) << "Successfully enable ZeroErr motor in PT mode " << index ;
         break;
     }
@@ -2515,7 +2537,7 @@ void MotorDriver::enableMotor_PV(const MotorType& type, const int& index, const 
         usleep(50*1000);
         LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-        m_jointEnabled[index] = true;
+        // m_jointEnabled[index] = true;
         LOG(INFO) << "Successfully enable ZeroErr motor in PV mode " << index ;
         break;
     }
@@ -3118,6 +3140,12 @@ void MotorDriver::operationHOME(const MotorType& type, const int& index, const i
     switch (type) {
         case MotorType::MAXON:{
             LOG(INFO) << "Starting set operation mode to HOME for MAXONS";
+            int homeMode = 23;
+            if (setHomeMethod(type, index, homeMode, armNum) != T_NOERROR){
+                LOG(ERROR) << "Failed to set profile HomeMethod for MAXONS!";
+                return;
+            }
+            usleep(150 * 1000);
 
             if(setOperationMode(type, index, OperationMode::HOME, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set operation mode to HomeMode for MAXONS";
@@ -3126,26 +3154,24 @@ void MotorDriver::operationHOME(const MotorType& type, const int& index, const i
             usleep(50 * 1000);
             LOG(INFO) << "OP Mode is: 0x" << std::hex << getOperationMode(type, index, armNum);
 
-            int homeMode = 23;
-            if (setHomeMethod(type, index, homeMode, armNum) != T_NOERROR){
-                LOG(ERROR) << "Failed to set profile HomeMethod for MAXONS!";
-                return;
-            }
-            usleep(50 * 1000);
+        // if(armNum == 0){
+        //     if (setHomeVel(type, index, 100, armNum) != T_NOERROR){
+        //         LOG(ERROR) << "Failed to set profile SearchZeroVel for MAXONS!";
+        //         return;
+        //         }
+        // }
 
-        if(armNum==0){
-            if (setHomeVel(type, index, 100, armNum) != T_NOERROR){
+        // if(armNum == 1){
+        //     if (setHomeVel(type, index, 50*1000, armNum) != T_NOERROR){
+        //         LOG(ERROR) << "Failed to set profile SearchZeroVel for MAXONS!";
+        //         return;
+        //     }
+        // }
+
+            if (setHomeVel(type, index, 200, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set profile SearchZeroVel for MAXONS!";
                 return;
-                }
-        }
-
-        if(armNum==1){
-            if (setHomeVel(type, index, 50*1000, armNum) != T_NOERROR){
-                LOG(ERROR) << "Failed to set profile SearchZeroVel for MAXONS!";
-                return;
             }
-        }
 
             usleep(50 * 1000);
 
@@ -3302,14 +3328,14 @@ int MotorDriver::checkMotorState(){
         // LOG(ERROR) << "Error: Maxon motor on arm0, joint 4, error code is 0x: " << std::hex << lRet;
          return T_ERROR;
     }
-    if((lRet = getErrorCode(MotorType::MAXON, 4, arm_0)) != 0x0){
-        // LOG(ERROR) << "Error: Maxon motor on arm0, joint 5, error code is: 0x" << std::hex << lRet;
-         return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::MAXON, 5, arm_0)) != 0x0){
-        // LOG(ERROR) << "Error: Maxon motor on arm0, joint 6, error code is 0x: " << std::hex << lRet;
-        return T_ERROR;
-    }
+    // if((lRet = getErrorCode(MotorType::MAXON, 4, arm_0)) != 0x0){
+    //     // LOG(ERROR) << "Error: Maxon motor on arm0, joint 5, error code is: 0x" << std::hex << lRet;
+    //      return T_ERROR;
+    // }
+    // if((lRet = getErrorCode(MotorType::MAXON, 5, arm_0)) != 0x0){
+    //     // LOG(ERROR) << "Error: Maxon motor on arm0, joint 6, error code is 0x: " << std::hex << lRet;
+    //     return T_ERROR;
+    // }
 
     if((lRet = getErrorCode(MotorType::MOONS, 0, arm_1)) != 0x0){
         // LOG(ERROR) << "Error: Moons motor on arm1, x-direction, error code is: 0x" << std::hex << lRet;
@@ -3343,14 +3369,14 @@ int MotorDriver::checkMotorState(){
         // LOG(ERROR) << "Error: Maxon motor on arm1, joint 4, error code is 0x: " << std::hex << lRet;
         return T_ERROR;
     }
-    if((lRet = getErrorCode(MotorType::MAXON, 4, arm_1)) != 0x0){
-        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 5, error code is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::MAXON, 5, arm_1)) != 0x0){
-        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 6, error code is 0x: " << std::hex << lRet;
-        return T_ERROR;
-    }
+    // if((lRet = getErrorCode(MotorType::MAXON, 4, arm_1)) != 0x0){
+    //     // LOG(ERROR) << "Error: Maxon motor on arm1, joint 5, error code is: 0x" << std::hex << lRet;
+    //     return T_ERROR;
+    // }
+    // if((lRet = getErrorCode(MotorType::MAXON, 5, arm_1)) != 0x0){
+    //     // LOG(ERROR) << "Error: Maxon motor on arm1, joint 6, error code is 0x: " << std::hex << lRet;
+    //     return T_ERROR;
+    // }
     // LOG(INFO) << "In function checkMotorState, all motors are checked! ";
 
     return T_NOERROR;
@@ -3366,8 +3392,8 @@ void MotorDriver::displayMotorErrCode(){
     LOG(INFO) << "Maxon motor joint 2, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 1, arm_0);
     LOG(INFO) << "Maxon motor joint 3, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 2, arm_0);
     LOG(INFO) << "Maxon motor joint 4, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 3, arm_0);
-    LOG(INFO) << "Maxon motor joint 5, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 4, arm_0);
-    LOG(INFO) << "Maxon motor joint 6, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 5, arm_0);
+    // LOG(INFO) << "Maxon motor joint 5, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 4, arm_0);
+    // LOG(INFO) << "Maxon motor joint 6, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 5, arm_0);
 
     LOG(INFO) << "Moons motor x-direction, error code is: 0x" << std::hex << getErrorCode(MotorType::MOONS, 0, arm_1);
     LOG(INFO) << "Zero Error motor joint 1, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 0, arm_1);
@@ -3377,8 +3403,8 @@ void MotorDriver::displayMotorErrCode(){
     LOG(INFO) << "Maxon motor joint 2, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 1, arm_1);
     LOG(INFO) << "Maxon motor joint 3, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 2, arm_1);
     LOG(INFO) << "Maxon motor joint 4, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 3, arm_1);
-    LOG(INFO) << "Maxon motor joint 5, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 4, arm_1);
-    LOG(INFO) << "Maxon motor joint 6, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 5, arm_1);
+    // LOG(INFO) << "Maxon motor joint 5, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 4, arm_1);
+    // LOG(INFO) << "Maxon motor joint 6, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 5, arm_1);
 }
 
 void MotorDriver::motorDriverThread(std::promise<bool> &promiseCommunication){
@@ -3453,8 +3479,8 @@ void MotorDriver::disableAllMotors()
     setControlWord(MotorType::MAXON, 1, ControlCommand::SHUT_DOWN, arm_0);
     setControlWord(MotorType::MAXON, 2, ControlCommand::SHUT_DOWN, arm_0);
     setControlWord(MotorType::MAXON, 3, ControlCommand::SHUT_DOWN, arm_0);
-    setControlWord(MotorType::MAXON, 4, ControlCommand::SHUT_DOWN, arm_0);
-    setControlWord(MotorType::MAXON, 5, ControlCommand::SHUT_DOWN, arm_0);
+    // setControlWord(MotorType::MAXON, 4, ControlCommand::SHUT_DOWN, arm_0);
+    // setControlWord(MotorType::MAXON, 5, ControlCommand::SHUT_DOWN, arm_0);
 
     setControlWord(MotorType::MOONS, 0, ControlCommand::SHUT_DOWN, arm_1);
     setControlWord(MotorType::ZERO_ERR, 0, ControlCommand::SHUT_DOWN, arm_1);
@@ -3464,8 +3490,8 @@ void MotorDriver::disableAllMotors()
     setControlWord(MotorType::MAXON, 1, ControlCommand::SHUT_DOWN, arm_1);
     setControlWord(MotorType::MAXON, 2, ControlCommand::SHUT_DOWN, arm_1);
     setControlWord(MotorType::MAXON, 3, ControlCommand::SHUT_DOWN, arm_1);
-    setControlWord(MotorType::MAXON, 4, ControlCommand::SHUT_DOWN, arm_1);
-    setControlWord(MotorType::MAXON, 5, ControlCommand::SHUT_DOWN, arm_1);
+    // setControlWord(MotorType::MAXON, 4, ControlCommand::SHUT_DOWN, arm_1);
+    // setControlWord(MotorType::MAXON, 5, ControlCommand::SHUT_DOWN, arm_1);
 
     usleep(1000 * 1000);
 

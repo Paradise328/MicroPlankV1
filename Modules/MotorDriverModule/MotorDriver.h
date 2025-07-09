@@ -289,6 +289,7 @@ public:
             m_abSendDataLengthPerArm = m_motorDriverparameter.endJointMotorNumPerArm * endJointMotor_sizeSendData +
                                        m_motorDriverparameter.endGimbalMotorNumPerArm * endGimbalMotor_sizeSendData +
                                        m_motorDriverparameter.endInstrumentMotorNumPerArm * endInstrumentMotor_sizeSendData;
+            // LOG()
 
             m_jointEnabled = new bool[t_motorDriverParameter.motorNum];
             for(int i = 0; i < t_motorDriverParameter.motorNum; i++){
@@ -304,6 +305,7 @@ public:
     void initMyData();
     void dumpPacket(CIFX_PACKET* ptPacket);  
     void dumpData(unsigned char* data, unsigned long dataLength);
+    void dumpData2(unsigned char* data, const int& motorNum, const int& arm);
 
     /* parse information from unsigned char array m_abRecvData, which belongs to TxPDO */
     uint16_t getErrorCode(const MotorType& type, const int& index, const int& armNum);
@@ -405,8 +407,8 @@ private:
     CIFX_PACKET m_tRecvPkt = {{0}};
     int           m_abSendDataByteNum;
     int           m_abRecvDataByteNum;
-    unsigned char m_abSendData[9 * 44 + 2 * 27 + 35 * 12] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON : 9 * 44 + 2 * 27 + 35 * 12*/
-    unsigned char m_abRecvData[9 * 26 + 2 * 23 + 29 * 12] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON : 9 * 26 + 2 * 23 + 29 * 12*/
+    unsigned char m_abSendData[1024] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON : 9 * 44 + 2 * 27 + 35 * 4*/
+    unsigned char m_abRecvData[1024] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON : 9 * 26 + 2 * 23 + 29 * 4*/
     std::string m_mappingPath = "/home/a/Desktop/codes/MikroPlanckV1/Config/PDO_mapping.toml";
     PDOConfig m_config[5] = {};
     struct CIFX_LINUX_INIT m_init;

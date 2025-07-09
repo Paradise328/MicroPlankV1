@@ -21,6 +21,7 @@ enum class _RobotControlAction_E
     GoToHoldOnMode,
     StartEndJointMotorHoming,
     StartEndEffectorMotorHoming,
+    SwitchInstrumentAngle,
     MotorOff,
 };
 using RobotControlAction_E = enum _RobotControlAction_E;
@@ -75,6 +76,7 @@ enum class _MasterConsoleAction_E
 {
     BootSelfCheck=0x40,
     MasterShutDown,
+    SwitchInstrumentAngle,
 };
 using MasterConsoleAction_E = enum _MasterConsoleAction_E;
 

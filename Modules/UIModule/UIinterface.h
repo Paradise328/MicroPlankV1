@@ -100,6 +100,7 @@ public:
 
     Q_INVOKABLE void setRobotControlMode(int action);
 
+    Q_INVOKABLE void setInstrumentAngle(int initInstrumentAngle);
 
     void setConnections();
 

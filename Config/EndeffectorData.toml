@@ -2,8 +2,8 @@
 [Instrument.CZQ]
 [Instrument.CZQ.4MM]
 [Instrument.CZQ.4MM.1]
-EncoderPerDegree = {Type = "DOUBLE", Value = [106.7,91.02,101.94,101.94]}
-# CompensationRatio = {Type = "DOUBLE",Value = 1.89}
+EncoderPerDegree = {Type = "DOUBLE", Value = [101.94,101.94,91.02,106.7]}
+CompensationRatio = {Type = "DOUBLE",Value = 0.765}
 # EncoderPerDegree = {Type = "DOUBLE", Value = [16.67,14.22,16.00,16.00]}
 [Instrument.CZQ.4MM.2]
 EncoderPerDegree = {Type = "DOUBLE", Value = [106.7,91.02,101.94,101.94]}
@@ -12,5 +12,3 @@ CompensationRatio = {Type = "DOUBLE",Value = 1.89}
 [Instrument.CZQ.8MM.1]
 EncoderPerDegree = {Type = "DOUBLE", Value = [113.75,182.04,162.00,162.00]}
 CompensationRatio = {Type = "DOUBLE",Value = 1.18}
-
-

@@ -33,6 +33,7 @@
 #include "Modules/ForceSensorModule/ForceSensor.h"
 //#include "Modules/MotorDriverModule/MotorDriver.h"
 #include "Modules/RobotControlModule/RobotControl.h"
+#include "Modules/RobotControlModule/DomainControler.h"
 
 class MicroPlank:public QObject
 {
@@ -97,6 +98,8 @@ private:
     void                startRobotControl();
     void                startForceSensor();
 
+    void                startDomainControlerThread();
+
     /*各模块定义及初始化*/
     MasterConsole       m_masterConsole = MasterConsole(m_masterConsoleType, m_MsgPool);
 
@@ -109,6 +112,9 @@ private:
     MotorDriver*        m_motorDriver = new MotorDriver(m_motorDriverParameter, m_MsgPool);//为一个指针
 
     RobotControl        m_robotControl = RobotControl(m_masterConsole, m_motorDriver, m_MsgPool);
+
+
+    DomainControler*    m_domainControler_Right;
 };
 
 #endif // MICROPLANK_H

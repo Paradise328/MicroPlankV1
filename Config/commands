@@ -3,3 +3,5 @@ sudo modprobe uio_netx
 
 sudo rm -f /var/lock/LCK..tty*
 
+
+

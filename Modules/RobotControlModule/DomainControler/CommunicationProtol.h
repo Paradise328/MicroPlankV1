@@ -75,14 +75,15 @@ typedef enum eViper_Transmitter_Actions
     VIPER_TRANSMITTER_RESET_VIPER=0x8C,
     VIPER_TRANSMITTER_START_CONTINUS=0X9C,
     VIPER_TRANSMITTER_RESET_HANDLE=0xAC,
+    VIPER_TRANSMITTER_KEEP_SENDING=0xBC,
 }eViper_Transmitter_Actions;
+
 
 typedef enum eDomainControler_Actions
 {
     DOMAINCONTROLER_READ_WRITE_DATA=0xCC,
     DOMAINCONTROLER_RESET=0xDC,
 }eDomainControler_Actions;
-
 
 typedef enum eLightColor
 {
