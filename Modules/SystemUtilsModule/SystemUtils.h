@@ -508,6 +508,10 @@ struct HandlePose
         /*计算 gamma（roll）*/
         double gamma_Cur_L = atan2(-rotMatrix_Cur_L(1, 2)/cos(beta_Cur_L), rotMatrix_Cur_L(2, 2)/cos(beta_Cur_L));
 
+        beta_Cur_L = beta_Cur_L * 1.1;
+        alpha_Cur_L = alpha_Cur_L * 1.1;
+        gamma_Cur_L = gamma_Cur_L * 1.1;
+
         handlePoseInSlaveFrameL_Arzimuth = beta_Cur_L;
         handlePoseInSlaveFrameL_Elevation = alpha_Cur_L;
         handlePoseInSlaveFrameL_Roll = gamma_Cur_L;
@@ -563,6 +567,10 @@ struct HandlePose
 
         /*计算 gamma（roll）*/
         double gamma_Cur_R = atan2(-rotMatrix_Cur_R(1, 2)/cos(beta_Cur_R), rotMatrix_Cur_R(2, 2)/cos(beta_Cur_R));
+
+        beta_Cur_R = beta_Cur_R * 1.1 ;
+        alpha_Cur_R = alpha_Cur_R * 1.1;
+        gamma_Cur_R = gamma_Cur_R * 1.1;
 
         handlePoseInSlaveFrameR_Arzimuth = beta_Cur_R;
         handlePoseInSlaveFrameR_Elevation = alpha_Cur_R;

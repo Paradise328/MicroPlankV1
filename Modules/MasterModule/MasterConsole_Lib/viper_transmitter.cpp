@@ -434,21 +434,12 @@ std::array<double, 2> Viper_Transmitter::calculateOpenAngle(const uint16_t& adcV
     {
         delt_adcValueR = abs(adcValueOpen_R - adcValueClose_R);
     }
-    auto angle_0 = (delt_adcValueL/abs(adcValueOpen_L - adcValueClose_L)) * 30 - 10;
-    auto angle_1 = (delt_adcValueR/abs(adcValueOpen_R - adcValueClose_R)) * 30 - 10;
-    openAngle[0] = (angle_0 < 0) ? 0.008 * pow(angle_0, 3) : pow(angle_0, 3)/400;
-    openAngle[1] = (angle_1 < 0) ? 0.008 * pow(angle_1, 3) : pow(angle_1, 3)/400;
-
-    // std::cout << "openAngle[0]: " << openAngle[0] << " openAngle[1]: " <<openAngle[1] << std::endl;
-
-
-
-    // LOG(INFO)<<"openAngle[L]: "<<openAngle[0];
-    // LOG(INFO)<<"openAngle[R]: "<<openAngle[1];
-
-    // LOG(INFO)<<"adcValueL: "<<std::dec<<adcValueL;
-    // LOG(INFO)<<"adcValueR: "<<std::dec<<adcValueR;
-
+    // auto angle_0 = (delt_adcValueL/abs(adcValueOpen_L - adcValueClose_L)) * 30 - 10;
+    // auto angle_1 = (delt_adcValueR/abs(adcValueOpen_R - adcValueClose_R)) * 30 - 10;
+    // openAngle[0] = (angle_0 < 0) ? 0.008 * pow(angle_0, 3) : pow(angle_0, 3)/400;
+    // openAngle[1] = (angle_1 < 0) ? 0.008 * pow(angle_1, 3) : pow(angle_1, 3)/400;
+    openAngle[0] = (delt_adcValueL/abs(adcValueOpen_L - adcValueClose_L)) * 30 - 10;
+    openAngle[1] = (delt_adcValueR/abs(adcValueOpen_R - adcValueClose_R)) * 30 - 10;
     return openAngle;
 }
 

@@ -855,7 +855,7 @@ Rectangle {
                      }
                      case 0x02:
                      {
-                         po_btnCaliInstrumentL_Text.text = qsTr("归零中yu")
+                         po_btnCaliInstrumentL_Text.text = qsTr("归零中")
                          po_btnCaliInstrumentL_Text.color="#FFFFFF"
                          po_btnCaliInstrumentL_Background.color="#48FFFF"
                          po_btnCaliInstrumentL_Background.border.color="#2CDFE8"

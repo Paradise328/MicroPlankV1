@@ -234,6 +234,9 @@ private:
     void                            control();
 
     std::atomic<bool>               m_flagControlThread;
+
+    /* hold = 0, teleopration = 1, collopration = 2*/
+    int                             m_oprationMode = 2;
     /* guiding arm control function and variables */
     GuidingArm                      m_guidingArm;
     std::thread                     m_guidingArmControlThread;
@@ -284,6 +287,8 @@ private:
 
     void                            teleoperation1();
 
+    void                            collaboration();
+
     std::atomic<bool>               m_flagInTeleoperation = false;
 
     void                            goToTestOperation();
@@ -310,6 +315,9 @@ private:
                                                   const std::array<int, MotorNumPerSide>& targetEncoder_L, const std::array<int, MotorNumPerSide>& targetVel_L);
     void                            sendMotorData_4Maxons(const std::array<int, MotorNumPerSide>& targetEncoder_R, const std::array<int, MotorNumPerSide>& targetVel_R,
                                                     const std::array<int, MotorNumPerSide>& targetEncoder_L, const std::array<int, MotorNumPerSide>& targetVel_L);
+
+    void                            sendMotorData_4Maxons_ForceControl(const std::array<int, MotorNumPerSide>& targetEncoder_R, const std::array<int, MotorNumPerSide>& targetVel_R,
+                               const std::array<int, MotorNumPerSide>& targetEncoder_L, const std::array<int, MotorNumPerSide>& targetVel_L);
     /*与MotorDriver通信_4Maxon*/
     void                            receiveMotorData_4Maxons();
 
@@ -461,6 +469,9 @@ private:
 
     std::array<double, ControlValueNum>          motionMapping_L_4Maxons(const HandlePose& handlePoseCur);
     std::array<double, ControlValueNum>          motionMapping_R_4Maxons(const HandlePose& handlePoseCur);
+
+    std::array<double, ControlValueNum>          motionMapping_L_ForceControl(const HandlePose& handlePoseCur);
+    std::array<double, ControlValueNum>          motionMapping_R_ForceControl(const HandlePose& handlePoseCur);
 
     mutable std::array<double, ControlValueNum>      m_controlValuePrev_L = {0};
     mutable std::array<double, ControlValueNum>      m_controlValuePrev_R = {0};
