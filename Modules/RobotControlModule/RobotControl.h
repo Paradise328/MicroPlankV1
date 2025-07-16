@@ -156,6 +156,7 @@ public:
         m_isSystemTerminated(false),
         m_guidingArm1stOrder({0}),
         m_guidingArm2ndOrder({0}),
+        m_endeffectorConfiguration(EndeffectorConfiguration::fourMaxons),
         m_filter_1storder_guiding(m_guidingArm1stOrder, 250.0, 60.0),
         m_filter_2ndorder_guiding(m_guidingArm2ndOrder, 250.0, 60.0)
     {
@@ -217,15 +218,6 @@ private:
 
     double                          m_initMoonsEncode;//光电门为0时moons编码器数值
 
-    /*主手数据更新*/
-    std::thread                     m_updateMasterConsoleThread;
-
-    std::atomic<bool>               m_flagUpdateMasterConsoleData = true;
-
-    void                            startUpdataMasterConsoleDataThread();
-
-    void                            updateMasterConsoleData();
-
     /*控制函数*/
     std::thread                     m_calculateControlDataThread;
 
@@ -236,7 +228,7 @@ private:
     std::atomic<bool>               m_flagControlThread;
 
     /* hold = 0, teleopration = 1, collopration = 2*/
-    int                             m_oprationMode = 2;
+    int                             m_oprationMode = 1;
     /* guiding arm control function and variables */
     GuidingArm                      m_guidingArm;
     std::thread                     m_guidingArmControlThread;
@@ -265,6 +257,9 @@ private:
     void                            applyGuidingArmVelocityControl();
 
     /* 控制模式 */
+
+    EndeffectorConfiguration        m_endeffectorConfiguration = EndeffectorConfiguration::fourMaxons;
+
     void                            setRobotControlMode(const RobotControlMode& tartgetRobotControlMode);
 
     std::atomic<RobotControlMode>   m_curRobotControlMode = RobotControlMode::InitMode;
@@ -283,15 +278,9 @@ private:
 
     void                            teleoperation();
 
-    void                            teleoperation_4Maxons();
-
-    void                            teleoperation1();
-
     void                            collaboration();
 
     std::atomic<bool>               m_flagInTeleoperation = false;
-
-    void                            goToTestOperation();
 
     void                            sendMotorData_Teleop(const std::array<int, MotorNumPerSide>& targetEncoderCur_R, const std::array<int, MotorNumPerSide>& targetVelCur_R,
                                                          const int& enableTag_R,
@@ -310,17 +299,11 @@ private:
 
     /*与MotorDriver通信*/
     void                            receiveMotorData();
-    void                            sendMotorData();
     void                            sendMotorData(const std::array<int, MotorNumPerSide>& targetEncoder_R, const std::array<int, MotorNumPerSide>& targetVel_R,
                                                   const std::array<int, MotorNumPerSide>& targetEncoder_L, const std::array<int, MotorNumPerSide>& targetVel_L);
-    void                            sendMotorData_4Maxons(const std::array<int, MotorNumPerSide>& targetEncoder_R, const std::array<int, MotorNumPerSide>& targetVel_R,
-                                                    const std::array<int, MotorNumPerSide>& targetEncoder_L, const std::array<int, MotorNumPerSide>& targetVel_L);
 
     void                            sendMotorData_4Maxons_ForceControl(const std::array<int, MotorNumPerSide>& targetEncoder_R, const std::array<int, MotorNumPerSide>& targetVel_R,
                                const std::array<int, MotorNumPerSide>& targetEncoder_L, const std::array<int, MotorNumPerSide>& targetVel_L);
-    /*与MotorDriver通信_4Maxon*/
-    void                            receiveMotorData_4Maxons();
-
 
     /*EtherCAT各从站信息*/
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorEncoderCur_R;
@@ -455,8 +438,6 @@ private:
     mutable std::array<int, MotorNumPerSide>                m_motorTargetEncoderLast_L = {0};
     mutable std::array<int, MotorNumPerSide>                m_motorTargetEncoderLast_R = {0};
 
-    std::array<double, 4>          calculateEndeffectorAngle(const std::array<double, 4> masterJointAngle) const;
-
     /*保存当前状态*/
     void                        storeCurAsPrev(const HandlePose& handlePoseCur,
                                                const std::array<double, ControlValueNum> controlValueCur_L, const std::array<double, ControlValueNum> controlValueCur_R,
@@ -466,9 +447,6 @@ private:
     /*通过主手目标位置解算各轴转动角度*/
     std::array<double, ControlValueNum>          motionMapping_L(const HandlePose& handlePoseCur);
     std::array<double, ControlValueNum>          motionMapping_R(const HandlePose& handlePoseCur);
-
-    std::array<double, ControlValueNum>          motionMapping_L_4Maxons(const HandlePose& handlePoseCur);
-    std::array<double, ControlValueNum>          motionMapping_R_4Maxons(const HandlePose& handlePoseCur);
 
     std::array<double, ControlValueNum>          motionMapping_L_ForceControl(const HandlePose& handlePoseCur);
     std::array<double, ControlValueNum>          motionMapping_R_ForceControl(const HandlePose& handlePoseCur);
@@ -483,10 +461,6 @@ private:
     std::array<int, MotorNumPerSide>            calculateTargetVelocity(const std::array<int, MotorNumPerSide>& targetEncoderCur,
                                                                         const std::array<int, MotorNumPerSide>& targetEncoderPrev,
                                                                         const char& side)const;
-
-    std::array<int, MotorNumPerSide>            calculateTargetEncoder_4Maxon(const std::array<double, ControlValueNum>& controlValue_Cur,
-                                                            const std::array<int, MotorNumPerSide>& motorPosition_Init,
-                                                            const char& side)const;
 
     /*控制循环结束后*/
     void                    storeCurAsPrev(const HandlePose& handlePoseCur, const std::array<double, ControlValueNum> controlValueCur_L,

@@ -293,8 +293,11 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
         handlePoseTmp.handlePoseR_Arzimuth = Uint8ArrToFloat(cftemp.payload.args,50);
         handlePoseTmp.handlePoseR_Elevation = Uint8ArrToFloat(cftemp.payload.args,54);
         handlePoseTmp.handlePoseR_Roll = Uint8ArrToFloat(cftemp.payload.args,58);
-
         handlePoseTmp.stepPedal = cftemp.payload.args[9];
+        // LOG(INFO)<<"R:Arzimuth: "<<handlePoseTmp.handlePoseR_Arzimuth <<" Elevation: "<< handlePoseTmp.handlePoseR_Elevation <<" ROLL: "<<handlePoseTmp.handlePoseR_Roll ;
+        // LOG(INFO)<<"L:Arzimuth: "<<handlePoseTmp.handlePoseL_Arzimuth <<" Elevation: "<< handlePoseTmp.handlePoseL_Elevation <<" ROLL: "<<handlePoseTmp.handlePoseL_Roll ;
+
+        // LOG(INFO)<<"handlePoseTmp.handlePoseR_Elevation: "<<handlePoseTmp.handlePoseR_Elevation;
         // qDebug()<<"cftemp.payload.args[0]: " <<cftemp.payload.args[0] ;
         if(cftemp.payload.args[0] == Dev_Sta_OK)
         {
@@ -336,6 +339,144 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
         LOG(INFO)<<"Viper_Transmitter Depack_Frame Fail";
     }
 }
+
+// PosDataFromViper Viper_Transmitter::motionMapping(const PosDataFromViper& posDataFromViperTmp)
+// {
+
+//     double arzimuth_Cur_R   = posDataFromViperTmp.viperDataR.viperData_Arzimuth *  M_PI / 180;
+//     double Elevation_Cur_R  = posDataFromViperTmp.viperDataR.viperData_Elevation *  M_PI / 180;
+//     double Roll_Cur_R       = posDataFromViperTmp.viperDataR.viperData_Roll *  M_PI / 180;
+
+//     double arzimuth_Cur_L   = posDataFromViperTmp.viperDataL.viperData_Arzimuth *  M_PI / 180;
+//     double Elevation_Cur_L  = posDataFromViperTmp.viperDataL.viperData_Elevation *  M_PI / 180;
+//     double Roll_Cur_L       = posDataFromViperTmp.viperDataL.viperData_Roll *  M_PI / 180;
+
+//     //Define the Euler rotation Matrix
+//     Eigen::Matrix3d rotAroundZ_R, rotAroundY_R, rotAroundX_R;
+//     Eigen::Matrix3d rotAroundZ_L, rotAroundY_L, rotAroundX_L;
+//     Eigen::Matrix3d rotAroundX_Init_R, rotAroundY_Init_R;
+//     Eigen::Matrix3d rotAroundX_Init_L, rotAroundY_Init_L;
+//     Eigen::Matrix3d mappingMatrix;
+//     mappingMatrix << 0, 0, 1,
+//         0, 1, 0,
+//         -1, 0, 0;
+
+//     rotAroundZ_R = Eigen::AngleAxisd(arzimuth_Cur_R, Eigen::Vector3d::UnitZ());
+//     rotAroundY_R = Eigen::AngleAxisd(Elevation_Cur_R, Eigen::Vector3d::UnitY());
+//     rotAroundX_R = Eigen::AngleAxisd(Roll_Cur_R, Eigen::Vector3d::UnitX());
+
+//     rotAroundZ_L = Eigen::AngleAxisd(arzimuth_Cur_L, Eigen::Vector3d::UnitZ());
+//     rotAroundY_L = Eigen::AngleAxisd(Elevation_Cur_L, Eigen::Vector3d::UnitY());
+//     rotAroundX_L = Eigen::AngleAxisd(Roll_Cur_L, Eigen::Vector3d::UnitX());
+
+//     //Initial two rotations
+//     rotAroundX_Init_R = Eigen::AngleAxisd(-M_PI / 6, Eigen::Vector3d::UnitX());// M_PI / 6
+//     rotAroundY_Init_R = Eigen::AngleAxisd(-M_PI / 3, Eigen::Vector3d::UnitY());//-5 * M_PI/12
+
+//     rotAroundX_Init_L = Eigen::AngleAxisd( M_PI / 6, Eigen::Vector3d::UnitX());// M_PI / 6
+//     rotAroundY_Init_L = Eigen::AngleAxisd(-M_PI / 3, Eigen::Vector3d::UnitY());//-5 * M_PI/12
+
+
+//     Eigen::Matrix3d rotMatrix_R = rotAroundX_Init_R * rotAroundY_Init_R * rotAroundZ_R * rotAroundY_R * rotAroundX_R * mappingMatrix;
+//     Eigen::Matrix3d rotMatrix_L = rotAroundX_Init_L * rotAroundY_Init_L * rotAroundZ_L * rotAroundY_L * rotAroundX_L * mappingMatrix;
+
+//     double alpha_R = atan2(rotMatrix_R(1, 0), rotMatrix_R(0, 0));
+//     double beta_R = atan2(-rotMatrix_R(2,0), sqrt(rotMatrix_R(2,1) * rotMatrix_R(2,1) + rotMatrix_R(2,2) * rotMatrix_R(2,2)));
+//     double gamma_R = atan2(rotMatrix_R(2,1), rotMatrix_R(2,2));
+
+//     double alpha_L = atan2(rotMatrix_L(1, 0), rotMatrix_L(0, 0));
+//     double beta_L = atan2(-rotMatrix_L(2,0), sqrt(rotMatrix_L(2,1) * rotMatrix_L(2,1) + rotMatrix_L(2,2) * rotMatrix_L(2,2)));
+//     double gamma_L = atan2(rotMatrix_L(2,1), rotMatrix_L(2,2));
+
+//     PosDataFromViper poseDataCurInSlaveFrame;
+
+//     poseDataCurInSlaveFrame.viperDataR.viperData_Roll = alpha_R * 180 / M_PI;
+//     poseDataCurInSlaveFrame.viperDataR.viperData_Elevation = beta_R * 180 / M_PI;
+//     poseDataCurInSlaveFrame.viperDataR.viperData_Arzimuth = gamma_R * 180 / M_PI;
+
+//     poseDataCurInSlaveFrame.viperDataL.viperData_Roll = alpha_L * 180 / M_PI;
+//     poseDataCurInSlaveFrame.viperDataL.viperData_Elevation = beta_L * 180 / M_PI;
+//     poseDataCurInSlaveFrame.viperDataL.viperData_Arzimuth = gamma_L * 180 / M_PI;
+
+//     if(poseDataCurInSlaveFrame.viperDataL.viperData_Roll > 160)
+//     {
+//         poseDataCurInSlaveFrame.viperDataL.viperData_Roll = 160;
+//     }else if(poseDataCurInSlaveFrame.viperDataL.viperData_Roll < -160)
+//     {
+//         poseDataCurInSlaveFrame.viperDataL.viperData_Roll = -160;
+//     }
+
+//     if(poseDataCurInSlaveFrame.viperDataL.viperData_Elevation > 80)
+//     {
+//         poseDataCurInSlaveFrame.viperDataL.viperData_Elevation = 80;
+//     }else if(poseDataCurInSlaveFrame.viperDataL.viperData_Elevation < -80)
+//     {
+//         poseDataCurInSlaveFrame.viperDataL.viperData_Elevation = -80;
+//     }
+
+//     if(poseDataCurInSlaveFrame.viperDataL.viperData_Arzimuth > 160)
+//     {
+//         poseDataCurInSlaveFrame.viperDataL.viperData_Arzimuth = 160;
+//     }else if(poseDataCurInSlaveFrame.viperDataL.viperData_Arzimuth < -160)
+//     {
+//         poseDataCurInSlaveFrame.viperDataL.viperData_Arzimuth = -160;
+//     }
+
+//     if(poseDataCurInSlaveFrame.viperDataR.viperData_Roll > 160)
+//     {
+//         poseDataCurInSlaveFrame.viperDataR.viperData_Roll = 160;
+//     }else if(poseDataCurInSlaveFrame.viperDataR.viperData_Roll < -160)
+//     {
+//         poseDataCurInSlaveFrame.viperDataR.viperData_Roll = -160;
+//     }
+
+//     if(poseDataCurInSlaveFrame.viperDataR.viperData_Elevation > 80)
+//     {
+//         poseDataCurInSlaveFrame.viperDataR.viperData_Elevation = 80;
+//     }else if(poseDataCurInSlaveFrame.viperDataR.viperData_Elevation < -80)
+//     {
+//         poseDataCurInSlaveFrame.viperDataR.viperData_Elevation = -80;
+//     }
+
+//     if(poseDataCurInSlaveFrame.viperDataR.viperData_Arzimuth > 160)
+//     {
+//         poseDataCurInSlaveFrame.viperDataR.viperData_Arzimuth = 160;
+//     }else if(poseDataCurInSlaveFrame.viperDataR.viperData_Arzimuth < -160)
+//     {
+//         poseDataCurInSlaveFrame.viperDataR.viperData_Arzimuth = -160;
+//     }
+
+//     Eigen::Vector3d  masterPositionViaSensor;
+//     masterPositionViaSensor << -2.0,
+//         0,
+//         -7.5;
+
+//     Eigen::Vector3d  sensorPosition_L, sensorPosition_R;
+//     sensorPosition_L << poseDataCurInSlaveFrame.viperDataL.viperData_X * 2.54,
+//         poseDataCurInSlaveFrame.viperDataL.viperData_Y * 2.54,
+//         poseDataCurInSlaveFrame.viperDataL.viperData_Z * 2.54;
+
+//     sensorPosition_R << poseDataCurInSlaveFrame.viperDataR.viperData_X * 2.54,
+//         poseDataCurInSlaveFrame.viperDataR.viperData_Y * 2.54,
+//         poseDataCurInSlaveFrame.viperDataR.viperData_Z * 2.54;
+
+//     Eigen::Matrix3d rotAroundWorldY;
+//     rotAroundWorldY = Eigen::AngleAxisd(-M_PI / 3, Eigen::Vector3d::UnitY());
+
+//     Eigen::Vector3d  endPosition_L, endPosition_R;
+//     endPosition_L = rotAroundWorldY * (sensorPosition_L + rotAroundZ_L * rotAroundY_L * rotAroundX_L * masterPositionViaSensor);
+//     endPosition_R = rotAroundWorldY * (sensorPosition_R + rotAroundZ_R * rotAroundY_R * rotAroundX_R * masterPositionViaSensor);
+
+//     poseDataCurInSlaveFrame.viperDataL.viperData_X = endPosition_L[0];
+//     poseDataCurInSlaveFrame.viperDataL.viperData_Y = endPosition_L[1];
+//     poseDataCurInSlaveFrame.viperDataL.viperData_Z = endPosition_L[2];
+
+//     poseDataCurInSlaveFrame.viperDataR.viperData_X = endPosition_R[0];
+//     poseDataCurInSlaveFrame.viperDataR.viperData_Y = endPosition_R[1];
+//     poseDataCurInSlaveFrame.viperDataR.viperData_Z = endPosition_R[2];
+
+//     return poseDataCurInSlaveFrame;
+// }
 
 void Viper_Transmitter::readHandleData_Quaternion(QByteArray qba)
 {

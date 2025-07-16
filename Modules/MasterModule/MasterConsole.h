@@ -58,7 +58,7 @@ private:
     FdOmega                     m_omega;
     Viper_Transmitter           m_transmitter;
 
-    int                         m_armAnglePerSide = 15;
+    int                         m_armAnglePerSide = 30;
 
     std::thread                 m_updateConsoleDataThread;
     void                        turnOffMasterConsole();
