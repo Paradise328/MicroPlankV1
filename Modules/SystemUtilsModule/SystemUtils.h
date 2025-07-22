@@ -508,7 +508,8 @@ struct HandlePose
         Eigen::Matrix3d rotMatrix_Cur_L = rotSlaveMatrix_L.inverse() * rotMaster_L;
 
         /* alpha(Elevation) */
-        double InSlaveFrame_Elevation_L = asin(rotMatrix_Cur_L(0, 2));
+        // double InSlaveFrame_Elevation_L = asin(rotMatrix_Cur_L(0, 2));
+        double InSlaveFrame_Elevation_L = atan2(rotMatrix_Cur_L(0, 2),sqrt(rotMatrix_Cur_L(0, 0) * rotMatrix_Cur_L(0, 0) + rotMatrix_Cur_L(0, 1) * rotMatrix_Cur_L(0, 1)));
 
         /*计算 beta(Arzimuth) */
         double InSlaveFrame_Arzimuth_L = atan2(-rotMatrix_Cur_L(0, 1), rotMatrix_Cur_L(0, 0));
@@ -588,7 +589,8 @@ struct HandlePose
         Eigen::Matrix3d rotMatrix_Cur_R = rotSlaveMatrix_R.inverse() * rotMaster_R;
 
         /* alpha(pitch) */
-        double InSlaveFrame_Elevation_R = asin(rotMatrix_Cur_R(0, 2));
+        // double InSlaveFrame_Elevation_R = asin(rotMatrix_Cur_R(0, 2));
+        double InSlaveFrame_Elevation_R = atan2(rotMatrix_Cur_R(0, 2),sqrt(rotMatrix_Cur_R(0, 0) * rotMatrix_Cur_R(0, 0) + rotMatrix_Cur_R(0, 1) * rotMatrix_Cur_R(0, 1)));
 
         /*计算 beta(yaw) */
         double InSlaveFrame_Arzimuth_R = atan2(-rotMatrix_Cur_R(0, 1), rotMatrix_Cur_R(0, 0));
@@ -596,35 +598,35 @@ struct HandlePose
         /*计算 gamma（roll）*/
         double InSlaveFrame_Roll_R = atan2(-rotMatrix_Cur_R(1, 2), rotMatrix_Cur_R(2, 2));
 
-        // if(handlePoseR_Roll > 160)
-        // {
-        //     handlePoseR_Roll = 160;
-        // }else if(handlePoseR_Roll < -160)
-        // {
-        //     handlePoseR_Roll = -160;
-        // }
+        if(handlePoseR_Roll > 160)
+        {
+            handlePoseR_Roll = 160;
+        }else if(handlePoseR_Roll < -160)
+        {
+            handlePoseR_Roll = -160;
+        }
 
-        // if(handlePoseR_Elevation > 80)
-        // {
-        //     handlePoseR_Elevation = 80;
-        // }else if(handlePoseR_Elevation < -80)
-        // {
-        //     handlePoseR_Elevation = -80;
-        // }
+        if(handlePoseR_Elevation > 80)
+        {
+            handlePoseR_Elevation = 80;
+        }else if(handlePoseR_Elevation < -80)
+        {
+            handlePoseR_Elevation = -80;
+        }
 
-        // if(handlePoseR_Arzimuth > 160)
-        // {
-        //     handlePoseR_Arzimuth = 160;
-        // }else if(handlePoseR_Arzimuth < -160)
-        // {
-        //     handlePoseR_Arzimuth = -160;
-        // }
+        if(handlePoseR_Arzimuth > 160)
+        {
+            handlePoseR_Arzimuth = 160;
+        }else if(handlePoseR_Arzimuth < -160)
+        {
+            handlePoseR_Arzimuth = -160;
+        }
 
         handlePoseInSlaveFrameR_Arzimuth = InSlaveFrame_Arzimuth_R;
         handlePoseInSlaveFrameR_Elevation = InSlaveFrame_Elevation_R;
         handlePoseInSlaveFrameR_Roll = InSlaveFrame_Roll_R;
         // LOG(INFO)<<" ";
-        // LOG(INFO)<<"YAW: "<<handlePoseInSlaveFrameR_Arzimuth * 180 / M_PI<<" PITCH: "<<handlePoseInSlaveFrameR_Elevation * 180 / M_PI<<" Roll: "<<handlePoseInSlaveFrameR_Roll * 180 / M_PI;
+        LOG(INFO)<<"YAW: "<<handlePoseInSlaveFrameR_Arzimuth * 180 / M_PI<<" PITCH: "<<handlePoseInSlaveFrameR_Elevation * 180 / M_PI<<" Roll: "<<handlePoseInSlaveFrameR_Roll * 180 / M_PI;
         // LOG(INFO)<<"Arzimuth: "<<handlePoseR_Arzimuth <<" Elevation: "<< handlePoseR_Elevation <<" ROLL: "<<handlePoseR_Roll ;
 
     }
@@ -768,8 +770,8 @@ constexpr double TimePerControlLoop = 0.01; //s
 constexpr double GimbalMotionThreshold = 0.01;
 constexpr double InstrumentMotionThreshold = 0.01;
 
-constexpr int arm_0 = 0;
-constexpr int arm_1 = 1;
+constexpr int arm_0 = 0;//右手
+constexpr int arm_1 = 1;//左手
 constexpr int arm_guiding = -1;
 
 enum class GraspCase

@@ -294,10 +294,7 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
         handlePoseTmp.handlePoseR_Elevation = Uint8ArrToFloat(cftemp.payload.args,54);
         handlePoseTmp.handlePoseR_Roll = Uint8ArrToFloat(cftemp.payload.args,58);
         handlePoseTmp.stepPedal = cftemp.payload.args[9];
-        // LOG(INFO)<<"R:Arzimuth: "<<handlePoseTmp.handlePoseR_Arzimuth <<" Elevation: "<< handlePoseTmp.handlePoseR_Elevation <<" ROLL: "<<handlePoseTmp.handlePoseR_Roll ;
-        // LOG(INFO)<<"L:Arzimuth: "<<handlePoseTmp.handlePoseL_Arzimuth <<" Elevation: "<< handlePoseTmp.handlePoseL_Elevation <<" ROLL: "<<handlePoseTmp.handlePoseL_Roll ;
 
-        // LOG(INFO)<<"handlePoseTmp.handlePoseR_Elevation: "<<handlePoseTmp.handlePoseR_Elevation;
         // qDebug()<<"cftemp.payload.args[0]: " <<cftemp.payload.args[0] ;
         if(cftemp.payload.args[0] == Dev_Sta_OK)
         {

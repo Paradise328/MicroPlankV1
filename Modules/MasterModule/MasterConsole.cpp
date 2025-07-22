@@ -5,7 +5,6 @@ void MasterConsole::updateConsoleDataThread()
     while(!m_isSystemTerminated && !m_isSystemReset)
     {
         masterConsoleStatusCheck();
-
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
 }

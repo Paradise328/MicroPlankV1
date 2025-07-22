@@ -311,6 +311,13 @@ private:
     std::atomic<std::array<int, 3>>           m_endEffectorTarget_L;
     std::atomic<std::array<int, 3>>           m_endEffectorTarget_R;
 
+    std::atomic<std::array<int, MotorNumPerSide>>           m_motorOperationMode_L;
+    std::atomic<std::array<int, MotorNumPerSide>>           m_motorErrorCode_L;
+    std::atomic<std::array<int, MotorNumPerSide>>           m_motorStatusWord_L;
+    std::atomic<std::array<int, MotorNumPerSide>>           m_motorTrq_L;
+    std::atomic<std::array<int, MotorNumPerSide>>           m_motorCur_L;
+    std::atomic<std::array<int, MotorNumPerSide>>           m_motorFollowingPosErr_L;
+
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorStatusWordCur_R;
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorStatusWordCur_L;
     std::atomic<std::array<int, 6>>                         m_digitalInputGuiding;
@@ -343,6 +350,9 @@ private:
 
     void                            MaxonGoHome(const char& side);
     void                            MaxonGoHome_4Maxons(const char& side);
+
+    void                            changeAngle_L();
+    void                            changeAngle_R();
 
     mutable int                     m_armAnglePerSide = 30;
     std::atomic<std::array<int, MotorNumPerSide>>                  m_motorHomingStatus_R;
@@ -491,7 +501,7 @@ private:
 
     double                          m_endArm_1 = 150;
     double                          m_endArm_2 = 180;
-    double                          m_endArm_3 = 464.74;//单位mm
+    double                          m_endArm_3 = 349.66;//单位mm
 
     /*以下为画圆测试修改部分*/
     double delta_x;
