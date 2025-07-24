@@ -6,6 +6,7 @@
 #include "../Viper_Lib/viper_ui.h"
 #include <eigen3/Eigen/Dense>
 #include <atomic>
+#include <array>
 #include <QSerialPort>
 #include <iostream>
 #include <stdio.h>
@@ -32,6 +33,7 @@ public:
     HandlePose              returnHandlePose(){return m_handlePoseData.load();}
 
     bool                    return422Status(){return m_is422Ok;}
+    double   m_armAnglePerSide = 30.0;
 
 private:
 
@@ -64,6 +66,7 @@ private:
     /*主控台数据*/
     std::atomic<HandlePose> m_handlePoseData;
     std::array<double, 2>   calculateOpenAngle(const uint16_t& adcValueL, const uint16_t& adcValueR)const;
+    HandlePose              motionMapping(const std::array<std::array<double,viperDataNumPerSensor>,2>& viperData, const std::array<double,2>& openAngle, const int& stepPedal);
     void                    readHandleData(QByteArray qba);
     void                    readHandleData_Quaternion(QByteArray qba);
 

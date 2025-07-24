@@ -367,43 +367,6 @@ void RobotControl::teleoperation()
         if(enableTagCur_L == enableAction){
             targetVelocity_L = {0};
         }
-
-        outfile1 << motorErrorCode_L[1] << " " << motorErrorCode_L[2] << " " << motorErrorCode_L[3] <<" "
-                << motorTrq_L[1] << " " << motorTrq_L[2] << " " << motorTrq_L[3] << " "
-                << motorCur_L[1] << " " << motorCur_L[2] << " " << motorCur_L[3] << " "
-                 << motorEncoderCur_L[1] << " " << motorEncoderCur_L[2] << " " << motorEncoderCur_L[3] << " "
-                 << handlePoseCur.handlePoseL_X << " " << handlePoseCur.handlePoseL_Y << " " << handlePoseCur.handlePoseL_Z << " "
-                << targetVelocity_L[1] << " " << targetVelocity_L[2] << " " << targetVelocity_L[3] << "\n";
-
-
-
-        // LOG(INFO)<<std::dec<<" 1: motorOperationMode_L: "<< motorOperationMode_L[1]
-        //           <<" motorErrorCode_L: "<< motorErrorCode_L[1]
-        //           <<" motorStatusWord_L: "<< motorStatusWord_L[1]
-        //           <<" motorEncoderData_L: "<< motorEncoderCur_L[1]
-        //           <<" motorTrq_L: "<< motorTrq_L[1]
-        //           <<" motorCur_L: "<< motorCur_L[1]
-        //           <<" motorFollowingPosErr_L: "<< motorFollowingPosErr_L[1]
-        //           <<"targetVelocity_L: " <<targetVelocity_L[1];
-
-
-        // LOG(INFO)<<std::dec<<" 2: motorOperationMode_L: "<< motorOperationMode_L[2]
-        //           <<" motorErrorCode_L: "<< motorErrorCode_L[2]
-        //           <<" motorStatusWord_L: "<< motorStatusWord_L[2]
-        //           <<" motorEncoderData_L: "<< motorEncoderCur_L[2]
-        //           <<" motorTrq_L: "<< motorTrq_L[2]
-        //           <<" motorCur_L: "<< motorCur_L[2]
-        //           <<" motorFollowingPosErr_L: "<< motorFollowingPosErr_L[2]
-        //           <<"targetVelocity_L: " <<targetVelocity_L[2];
-
-        // LOG(INFO)<<std::dec<<" 3: motorOperationMode_L: "<< motorOperationMode_L[3]
-        //           <<" motorErrorCode_L: "<< motorErrorCode_L[3]
-        //           <<" motorStatusWord_L: "<< motorStatusWord_L[3]
-        //           <<" motorEncoderData_L: "<< motorEncoderCur_L[3]
-        //           <<" motorTrq_L: "<< motorTrq_L[3]
-        //           <<" motorCur_L: "<< motorCur_L[3]
-        //           <<" motorFollowingPosErr_L: "<< motorFollowingPosErr_L[3]
-        //           <<"targetVelocity_L: " <<targetVelocity_L[3];
     }
     else
     {
@@ -563,10 +526,10 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
     if (m_alignmentNumber_L < 100) { m_alignmentNumber_L++; }
 
     /* alpha(pitch) */
-    double alpha_Org_L = m_handlePoseOrg_L.handlePoseInSlaveFrameL_Elevation;
-    double alpha_Init_L = m_handlePoseInit_L.handlePoseInSlaveFrameL_Elevation;
-    double alpha_Last_L = m_handlePoseLastLoop_L.handlePoseInSlaveFrameL_Elevation;
-    double alpha_Cur_L = handlePoseCur.handlePoseInSlaveFrameL_Elevation;
+    double alpha_Org_L = m_handlePoseOrg_L.handlePoseL_Elevation;
+    double alpha_Init_L = m_handlePoseInit_L.handlePoseL_Elevation;
+    double alpha_Last_L = m_handlePoseLastLoop_L.handlePoseL_Elevation;
+    double alpha_Cur_L = handlePoseCur.handlePoseL_Elevation;
 
     double delt_alphaCur_L = (alpha_Cur_L - alpha_Init_L) * 180 / M_PI;
     double delt_alphaInit_L = (alpha_Init_L - alpha_Last_L) * 180 / M_PI;
@@ -582,10 +545,10 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
     auto openAngle_L_new = (openAngle_L < 0) ? 0.008 * pow(openAngle_L, 3) : pow(openAngle_L, 3)/400;
 
     /*计算 beta(yaw) */
-    double beta_Org_L = m_handlePoseOrg_L.handlePoseInSlaveFrameL_Arzimuth;
-    double beta_Init_L = m_handlePoseInit_L.handlePoseInSlaveFrameL_Arzimuth;
-    double beta_Last_L = m_handlePoseLastLoop_L.handlePoseInSlaveFrameL_Arzimuth;
-    double beta_Cur_L = handlePoseCur.handlePoseInSlaveFrameL_Arzimuth;
+    double beta_Org_L = m_handlePoseOrg_L.handlePoseL_Arzimuth;
+    double beta_Init_L = m_handlePoseInit_L.handlePoseL_Arzimuth;
+    double beta_Last_L = m_handlePoseLastLoop_L.handlePoseL_Arzimuth;
+    double beta_Cur_L = handlePoseCur.handlePoseL_Arzimuth;
 
     double delt_betaCur_L = (beta_Cur_L - beta_Init_L) * 180 / M_PI;
     double delt_betaInit_L = (beta_Init_L - beta_Last_L) * 180 / M_PI;
@@ -599,10 +562,10 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
     double deltLength_beta_L_right_2 = cableLengths_3(delt_alpha_L, - delt_beta_L, -openAngle_L_new);
 
     /*计算 gamma（roll）*/
-    double gamma_Org_L = m_handlePoseOrg_L.handlePoseInSlaveFrameL_Roll;
-    double gamma_Init_L = m_handlePoseInit_L.handlePoseInSlaveFrameL_Roll;
-    double gamma_Last_L = m_handlePoseLastLoop_L.handlePoseInSlaveFrameL_Roll;
-    double gamma_Cur_L = handlePoseCur.handlePoseInSlaveFrameL_Roll;
+    double gamma_Org_L = m_handlePoseOrg_L.handlePoseL_Roll;
+    double gamma_Init_L = m_handlePoseInit_L.handlePoseL_Roll;
+    double gamma_Last_L = m_handlePoseLastLoop_L.handlePoseL_Roll;
+    double gamma_Cur_L = handlePoseCur.handlePoseL_Roll;
 
     double delt_gammaCur_L = (gamma_Cur_L - gamma_Init_L) * 180 / M_PI;
     double delt_gammaInit_L = (gamma_Init_L - gamma_Last_L) * 180 / M_PI;
@@ -703,10 +666,10 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     // LOG(INFO)<<"m_alignmentNumber_R: "<<m_alignmentNumber_R;
 
     /* alpha(pitch)*/
-    double alpha_Org_R = m_handlePoseOrg_R.handlePoseInSlaveFrameR_Elevation;
-    double alpha_Init_R = m_handlePoseInit_R.handlePoseInSlaveFrameR_Elevation;
-    double alpha_Last_R = m_handlePoseLastLoop_R.handlePoseInSlaveFrameR_Elevation;
-    double alpha_Cur_R = handlePoseCur.handlePoseInSlaveFrameR_Elevation;
+    double alpha_Org_R = m_handlePoseOrg_R.handlePoseR_Elevation;
+    double alpha_Init_R = m_handlePoseInit_R.handlePoseR_Elevation;
+    double alpha_Last_R = m_handlePoseLastLoop_R.handlePoseR_Elevation;
+    double alpha_Cur_R = handlePoseCur.handlePoseR_Elevation;
 
     double delt_alphaCur_R = (alpha_Cur_R - alpha_Init_R) * 180 / M_PI;
     double delt_alphaInit_R = (alpha_Init_R - alpha_Last_R) * 180 / M_PI;
@@ -722,10 +685,10 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     auto openAngle_R_new = (openAngle_R < 0) ? 0.008 * pow(openAngle_R, 3) : pow(openAngle_R, 3)/400;
 
     /*计算 beta(yaw)*/
-    double beta_Org_R = m_handlePoseOrg_R.handlePoseInSlaveFrameR_Arzimuth;
-    double beta_Init_R = m_handlePoseInit_R.handlePoseInSlaveFrameR_Arzimuth;
-    double beta_Last_R = m_handlePoseLastLoop_R.handlePoseInSlaveFrameR_Arzimuth;
-    double beta_Cur_R = handlePoseCur.handlePoseInSlaveFrameR_Arzimuth;
+    double beta_Org_R = m_handlePoseOrg_R.handlePoseR_Arzimuth;
+    double beta_Init_R = m_handlePoseInit_R.handlePoseR_Arzimuth;
+    double beta_Last_R = m_handlePoseLastLoop_R.handlePoseR_Arzimuth;
+    double beta_Cur_R = handlePoseCur.handlePoseR_Arzimuth;
 
     double delt_betaCur_R = (beta_Cur_R - beta_Init_R) * 180 / M_PI;
     double delt_betaInit_R = (beta_Init_R - beta_Last_R) * 180 / M_PI;
@@ -740,17 +703,17 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
 
     /*计算 gamma（roll）*/
 
-    double gamma_Org_R = m_handlePoseOrg_R.handlePoseInSlaveFrameR_Roll;
-    double gamma_Init_R = m_handlePoseInit_R.handlePoseInSlaveFrameR_Roll ;
-    double gamma_Last_R = m_handlePoseLastLoop_R.handlePoseInSlaveFrameR_Roll;
-    double gamma_Cur_R = handlePoseCur.handlePoseInSlaveFrameR_Roll;
+    double gamma_Org_R = m_handlePoseOrg_R.handlePoseR_Roll;
+    double gamma_Init_R = m_handlePoseInit_R.handlePoseR_Roll ;
+    double gamma_Last_R = m_handlePoseLastLoop_R.handlePoseR_Roll;
+    double gamma_Cur_R = handlePoseCur.handlePoseR_Roll;
 
     double delt_gammaCur_R = (gamma_Cur_R - gamma_Init_R) * 180 / M_PI;
     double delt_gammaInit_R = (gamma_Init_R - gamma_Last_R) * 180 / M_PI;
     double delt_gammaOrg_R = (gamma_Last_R - gamma_Org_R) * 180 / M_PI;
     double delt_gamma_R = delt_gammaCur_R + delt_gammaInit_R * m_alignmentNumber_R / 100 + delt_gammaOrg_R;
 
-    // LOG(INFO)<<"Roll: "<<handlePoseCur.handlePoseInSlaveFrameR_Roll * 180 / M_PI<<"YAW: "<<handlePoseCur.handlePoseInSlaveFrameR_Arzimuth * 180 / M_PI<<"PITCH: "<<handlePoseCur.handlePoseInSlaveFrameR_Elevation * 180 / M_PI;
+    LOG(INFO)<<"Roll: "<<handlePoseCur.handlePoseR_Roll * 180 / M_PI<<"YAW: "<<handlePoseCur.handlePoseR_Arzimuth * 180 / M_PI<<"PITCH: "<<handlePoseCur.handlePoseR_Elevation * 180 / M_PI;
 
     double endEffectorInit_X_R = m_endEffectorInitPosition_R[0];
     double endEffectorInit_Y_R = m_endEffectorInitPosition_R[1];// +m_endArm_3 * sin(jointAngle1_Init_R + jointAngle2_Init_R + jointAngle3_Init_R)
@@ -1432,8 +1395,6 @@ void RobotControl::receiveMotorData()//yu接受传回来的数据
     //     motorFollowingPosErr_L[6] =  m_motorDriver->getFollowingPosErr(MotorType::MAXON, 4, arm_1);
     //     motorFollowingPosErr_L[7] =  m_motorDriver->getFollowingPosErr(MotorType::MAXON, 5, arm_1);
 
-
-
     m_motorEncoderCur_R.store(motorEncoderData_R);
     m_motorEncoderCur_L.store(motorEncoderData_L);
 
@@ -1451,7 +1412,6 @@ void RobotControl::receiveMotorData()//yu接受传回来的数据
     m_motorTrq_L.store(motorTrq_L);
     m_motorCur_L.store(motorCur_L);
     m_motorFollowingPosErr_L.store(motorFollowingPosErr_L);
-
 
 }
 
@@ -2308,11 +2268,9 @@ int RobotControl::enableCase_KeepPressPedal(const HandlePose& masterHandlePose_C
 // Check if the master device is in appropriate work space;
 bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const char& side) const//yu 且要满足flag_openangle等于true时（false为status=3时openangle太小）
 {
-    return true;
     auto handlePoseCur = m_masterConsole.returnHandlePose();
     // auto handlePoseCurshuru = masterHandlePose_Cur;
-
-    // LOG(INFO)<<" PITCH1: "<<handlePoseCurshuru.handlePoseInSlaveFrameR_Elevation * 180 / M_PI<<"  YAW1: "<<handlePoseCurshuru.handlePoseInSlaveFrameR_Arzimuth * 180 / M_PI<<"    Roll: "<<handlePoseCurshuru.handlePoseInSlaveFrameR_Roll * 180 / M_PI;
+    // LOG(INFO)<<" PITCH1: "<<handlePoseCurshuru.handlePoseR_Elevation * 180 / M_PI<<"  YAW1: "<<handlePoseCurshuru.handlePoseR_Arzimuth * 180 / M_PI<<"    Roll: "<<handlePoseCurshuru.handlePoseR_Roll * 180 / M_PI;
 
     /*右手*/
     double endEffectorInit_X_R = m_endEffectorInitPosition_R[0];
@@ -2344,9 +2302,9 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
 
      if(side =='l'){
 
-        if (handlePoseCur.handlePoseInSlaveFrameL_Elevation * 180 / M_PI < 72 && handlePoseCur.handlePoseInSlaveFrameL_Elevation * 180 / M_PI > -72){//67
+        if (handlePoseCur.handlePoseL_Elevation * 180 / M_PI < 75 && handlePoseCur.handlePoseL_Elevation * 180 / M_PI > -75){//67
 
-             if (handlePoseCur.handlePoseInSlaveFrameL_Arzimuth * 180 / M_PI < 120 && handlePoseCur.handlePoseInSlaveFrameL_Arzimuth * 180 / M_PI > -120){//87
+             if (handlePoseCur.handlePoseL_Arzimuth * 180 / M_PI < 120 && handlePoseCur.handlePoseL_Arzimuth * 180 / M_PI > -120){//87
 
                  if((masterHandlePose_Cur.handlePoseL_X > -60) && (masterHandlePose_Cur.handlePoseL_X < 60)){
 
@@ -2383,9 +2341,9 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
 
      if(side =='r'){
 
-        if (handlePoseCur.handlePoseInSlaveFrameR_Elevation * 180 / M_PI < 72  && handlePoseCur.handlePoseInSlaveFrameR_Elevation * 180 / M_PI > -72){
+        if (handlePoseCur.handlePoseR_Elevation * 180 / M_PI < 75  && handlePoseCur.handlePoseR_Elevation * 180 / M_PI > -75){
 
-             if (handlePoseCur.handlePoseInSlaveFrameR_Arzimuth * 180 / M_PI <120 && handlePoseCur.handlePoseInSlaveFrameR_Arzimuth * 180 / M_PI > -120){
+             if (handlePoseCur.handlePoseR_Arzimuth * 180 / M_PI < 120 && handlePoseCur.handlePoseR_Arzimuth * 180 / M_PI > -120){
 
                  if((masterHandlePose_Cur.handlePoseR_X > -60) && (masterHandlePose_Cur.handlePoseR_X < 60)){
 
@@ -2453,6 +2411,7 @@ bool RobotControl::isPoseMatch(const HandlePose& masterHandlePose_Cur, const cha
   {
        return true;
   }
+  // return true;
 
 }
 
@@ -3055,7 +3014,7 @@ void RobotControl::changeAngle_L(){
 
              // LOG(INFO)<<std::dec<<"motorEncoderData_L[1]: "<<motorEncoderData_L[1]<<" motorEncoderData_L[2]: "<<motorEncoderData_L[2]<<" motorEncoderData_L[3]: "<<motorEncoderData_L[3];
 
-            LOG(INFO)<<"index: "<<i<<std::dec<<"targetVel_1: "<<targetVel_1<<" targetVel_2: "<<targetVel_2<<" targetVel_3: "<<targetVel_3;
+            // LOG(INFO)<<"index: "<<i<<std::dec<<"targetVel_1: "<<targetVel_1<<" targetVel_2: "<<targetVel_2<<" targetVel_3: "<<targetVel_3;
 
             std::this_thread::sleep_for(std::chrono::milliseconds(4));
         }
@@ -3093,7 +3052,7 @@ void RobotControl::changeAngle_R(){
                         static_cast<double>(JointEncoderPerRevolution) * 360.0 /180.0 * M_PI;
 
 
-    LOG(INFO)<<"jointAngle1_Cur_R: "<<jointAngle1_Cur_R *180/M_PI<<" jointAngle2_Cur_R: "<<jointAngle2_Cur_R *180/M_PI<<" jointAngle3_Cur_R: "<<jointAngle3_Cur_R *180/M_PI;
+    // LOG(INFO)<<"jointAngle1_Cur_R: "<<jointAngle1_Cur_R *180/M_PI<<" jointAngle2_Cur_R: "<<jointAngle2_Cur_R *180/M_PI<<" jointAngle3_Cur_R: "<<jointAngle3_Cur_R *180/M_PI;
 
     double y_Cur_R = m_endArm_1 * sin(jointAngle1_Cur_R) + m_endArm_2 * sin(jointAngle1_Cur_R + jointAngle2_Cur_R) + m_endArm_3 * sin(jointAngle1_Cur_R + jointAngle2_Cur_R + jointAngle3_Cur_R);
     double z_Cur_R = - m_endArm_1 * cos(jointAngle1_Cur_R) - m_endArm_2 * cos(jointAngle1_Cur_R + jointAngle2_Cur_R) - m_endArm_3 * cos(jointAngle1_Cur_R + jointAngle2_Cur_R + jointAngle3_Cur_R);
@@ -3103,7 +3062,7 @@ void RobotControl::changeAngle_R(){
     m_motorDriver->operationCSV(MotorType::ZERO_ERR, 1, arm_0);
     m_motorDriver->operationCSV(MotorType::ZERO_ERR, 2, arm_0);
 
-    LOG(INFO)<<"y_Cur_R: "<<y_Cur_R<<" Z_Cur_R: "<<z_Cur_R;
+    // LOG(INFO)<<"y_Cur_R: "<<y_Cur_R<<" Z_Cur_R: "<<z_Cur_R;
 
     for(int i = 0; i <= 2000; i++){
 
@@ -3126,7 +3085,7 @@ void RobotControl::changeAngle_R(){
 
         q3 = alpha_R - q1 - q2;
 
-        LOG(INFO)<<"q1: "<< q1 / M_PI * 180 << " q2: " << q2 / M_PI * 180 <<" q3: "<< q3 / M_PI * 180;
+        // LOG(INFO)<<"q1: "<< q1 / M_PI * 180 << " q2: " << q2 / M_PI * 180 <<" q3: "<< q3 / M_PI * 180;
         auto targetEncoder_1 = static_cast<int>(m_motorEncoderInit_R[1] + m_SpeedDirection_R[1] * (q1 - m_endEffectorInitJointAngle_R[0]) * 180 / M_PI / 360 * JointEncoderPerRevolution);
         auto targetEncoder_2 = static_cast<int>(m_motorEncoderInit_R[2] + m_SpeedDirection_R[2] * (q2 - m_endEffectorInitJointAngle_R[1]) * 180 / M_PI / 360 * JointEncoderPerRevolution);
         auto targetEncoder_3 = static_cast<int>(m_motorEncoderInit_R[3] + m_SpeedDirection_R[3] * (q3 - m_endEffectorInitJointAngle_R[2]) * 180 / M_PI / 360 * JointEncoderPerRevolution);

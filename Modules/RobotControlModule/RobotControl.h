@@ -354,7 +354,7 @@ private:
     void                            changeAngle_L();
     void                            changeAngle_R();
 
-    mutable int                     m_armAnglePerSide = 30;
+    mutable double                     m_armAnglePerSide = 30.0;
     std::atomic<std::array<int, MotorNumPerSide>>                  m_motorHomingStatus_R;
     std::atomic<std::array<int, MotorNumPerSide>>                  m_motorHomingStatus_L;
 

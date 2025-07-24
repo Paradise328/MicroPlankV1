@@ -93,46 +93,27 @@ void MasterConsole::assembleDataFromUSBAndEthernet()
     else{handlePoseTmp.enablePedal = 0;}
 
     auto armAnglePerSide = m_armAnglePerSide;
-    auto handlePose_Tmp = handlePoseTmp;
+    m_transmitter.m_armAnglePerSide = armAnglePerSide;
+
     auto handlePoseIR_Tmp = handlePoseTmp;
     auto handlePoseIIR_Tmp = handlePoseTmp;
 
-
     /*将viper数组中的数据取出进行滤波*/
     auto posDataFromViperTmp = handlePoseTmp.returnPNOData();
-    auto handlePNO_Tmp = posDataFromViperTmp;
-    auto handlePNOAFIR_Tmp = returnIRFilteredData(posDataFromViperTmp);
-    auto handlePNOAFIIR_Tmp = returnIIRFilteredData(posDataFromViperTmp);
 
     /*保存滤波后的数据*/
-    handlePose_Tmp.setMyConsoleData(handlePNO_Tmp);
-    handlePoseIR_Tmp.setMyConsoleData(handlePNOAFIR_Tmp);
-    handlePoseIIR_Tmp.setMyConsoleData(handlePNOAFIIR_Tmp);
-    handlePose_Tmp.setEulerRotationMatrix(handlePNO_Tmp);
-    handlePoseIR_Tmp.setEulerRotationMatrix(handlePNOAFIR_Tmp);
-    handlePoseIIR_Tmp.setEulerRotationMatrix(handlePNOAFIIR_Tmp);
 
-    handlePose_Tmp.setHandlePoseInSlaveFrameR(armAnglePerSide);
-    handlePose_Tmp.setHandlePoseInSlaveFrameL(armAnglePerSide);
-
-    handlePoseIR_Tmp.setHandlePoseInSlaveFrameR(armAnglePerSide);
-    handlePoseIR_Tmp.setHandlePoseInSlaveFrameL(armAnglePerSide);
-
-    handlePoseIIR_Tmp.setHandlePoseInSlaveFrameR(armAnglePerSide);
-    handlePoseIIR_Tmp.setHandlePoseInSlaveFrameL(armAnglePerSide);
-
-
-    if(m_FilterCase == static_cast<int>(FilterCase::FilterOFF))
+    if(m_FilterCase == static_cast<int>(FilterCase::FilterOFF) || m_FilterCase == static_cast<int>(FilterCase::IRFilterOn))
     {
-      m_handlePose_Cur.store(handlePose_Tmp);
-    }
-    else if(m_FilterCase == static_cast<int>(FilterCase::IRFilterOn))
-    {
-      m_handlePose_Cur.store(handlePoseIR_Tmp);
+        auto PNODataAFIR_Tmp = returnIRFilteredData(posDataFromViperTmp);
+        handlePoseIR_Tmp.setMyConsoleData(PNODataAFIR_Tmp);
+        m_handlePose_Cur.store(handlePoseIR_Tmp);
     }
     else if (m_FilterCase == static_cast<int>(FilterCase::IIRFilterOn))
     {
-      m_handlePose_Cur.store(handlePoseIIR_Tmp);
+        auto PNODataAFIIR_Tmp = returnIIRFilteredData(posDataFromViperTmp);
+        handlePoseIIR_Tmp.setMyConsoleData(PNODataAFIIR_Tmp);
+        m_handlePose_Cur.store(handlePoseIIR_Tmp);
     }
 }
 

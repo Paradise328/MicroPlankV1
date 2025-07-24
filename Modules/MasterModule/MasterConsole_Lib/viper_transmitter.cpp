@@ -274,28 +274,21 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
     uint16_t Handle_Key_LEFT = 0;
     uint16_t Handle_Key_RIGHT = 0;
 
-    HandlePose handlePoseTmp;
+    HandlePose handlePoseTmp, handlePoseCur;
 
     eDepackReturn edr = this->Depack_Frame(qba,cftemp);
 
     if(edr == Depack_SUCCESS)
     {
-        handlePoseTmp.handlePoseL_X = Uint8ArrToFloat(cftemp.payload.args,10);
-        handlePoseTmp.handlePoseL_Y = Uint8ArrToFloat(cftemp.payload.args,14);
-        handlePoseTmp.handlePoseL_Z = Uint8ArrToFloat(cftemp.payload.args,18);
-        handlePoseTmp.handlePoseL_Arzimuth = Uint8ArrToFloat(cftemp.payload.args,22);
-        handlePoseTmp.handlePoseL_Elevation = Uint8ArrToFloat(cftemp.payload.args,26);
-        handlePoseTmp.handlePoseL_Roll = Uint8ArrToFloat(cftemp.payload.args,30);
-
-        handlePoseTmp.handlePoseR_X = Uint8ArrToFloat(cftemp.payload.args,38);
-        handlePoseTmp.handlePoseR_Y = Uint8ArrToFloat(cftemp.payload.args,42);
-        handlePoseTmp.handlePoseR_Z = Uint8ArrToFloat(cftemp.payload.args,46);
-        handlePoseTmp.handlePoseR_Arzimuth = Uint8ArrToFloat(cftemp.payload.args,50);
-        handlePoseTmp.handlePoseR_Elevation = Uint8ArrToFloat(cftemp.payload.args,54);
-        handlePoseTmp.handlePoseR_Roll = Uint8ArrToFloat(cftemp.payload.args,58);
-        handlePoseTmp.stepPedal = cftemp.payload.args[9];
-
-        // qDebug()<<"cftemp.payload.args[0]: " <<cftemp.payload.args[0] ;
+        std::array<std::array<double, 7>, 2> viperDataTmp = {0};
+        for(int i = 0; i < 2; i++)
+        {
+            for(int j = 0; j < 6; j++)
+            {
+                viperDataTmp[i][j] = Uint8ArrToFloat(cftemp.payload.args,(28 * i + 4 * j + 10));
+            }
+        }
+        int stepPedal = cftemp.payload.args[9];
         if(cftemp.payload.args[0] == Dev_Sta_OK)
         {
             Handle_Angle_LEFT = cftemp.payload.args[2];
@@ -312,9 +305,9 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
             Handle_Key_RIGHT+=cftemp.payload.args[7];
 
             auto openAngle = calculateOpenAngle(Handle_Angle_LEFT, Handle_Angle_RIGHT);
-            handlePoseTmp.handlePoseL_OpenAngle = openAngle[0];
-            handlePoseTmp.handlePoseR_OpenAngle = openAngle[1];
+            handlePoseTmp = motionMapping(viperDataTmp, openAngle, stepPedal);
 
+            // LOG(INFO)<<"m_armAnglePerSide: "<<m_armAnglePerSide;
         }
         else if(cftemp.payload.args[0]== Dev_Sta_LEFTHANDLE_ERROR)
         {
@@ -337,143 +330,151 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
     }
 }
 
-// PosDataFromViper Viper_Transmitter::motionMapping(const PosDataFromViper& posDataFromViperTmp)
-// {
+HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,viperDataNumPerSensor>,2>& viperData, const std::array<double,2>& openAngle, const int& stepPedal)
+{
 
-//     double arzimuth_Cur_R   = posDataFromViperTmp.viperDataR.viperData_Arzimuth *  M_PI / 180;
-//     double Elevation_Cur_R  = posDataFromViperTmp.viperDataR.viperData_Elevation *  M_PI / 180;
-//     double Roll_Cur_R       = posDataFromViperTmp.viperDataR.viperData_Roll *  M_PI / 180;
+    double arzimuth_Cur_R   = viperData[1][3] *  M_PI / 180;
+    double Elevation_Cur_R  = viperData[1][4]  *  M_PI / 180;
+    double Roll_Cur_R       = viperData[1][5]  *  M_PI / 180;
 
-//     double arzimuth_Cur_L   = posDataFromViperTmp.viperDataL.viperData_Arzimuth *  M_PI / 180;
-//     double Elevation_Cur_L  = posDataFromViperTmp.viperDataL.viperData_Elevation *  M_PI / 180;
-//     double Roll_Cur_L       = posDataFromViperTmp.viperDataL.viperData_Roll *  M_PI / 180;
+    double arzimuth_Cur_L   = viperData[0][3]  *  M_PI / 180;
+    double Elevation_Cur_L  = viperData[0][4] *  M_PI / 180;
+    double Roll_Cur_L       = viperData[0][5] *  M_PI / 180;
 
-//     //Define the Euler rotation Matrix
-//     Eigen::Matrix3d rotAroundZ_R, rotAroundY_R, rotAroundX_R;
-//     Eigen::Matrix3d rotAroundZ_L, rotAroundY_L, rotAroundX_L;
-//     Eigen::Matrix3d rotAroundX_Init_R, rotAroundY_Init_R;
-//     Eigen::Matrix3d rotAroundX_Init_L, rotAroundY_Init_L;
-//     Eigen::Matrix3d mappingMatrix;
-//     mappingMatrix << 0, 0, 1,
-//         0, 1, 0,
-//         -1, 0, 0;
+    //Define the Euler rotation Matrix
+    Eigen::Matrix3d rotAroundZ_R, rotAroundY_R, rotAroundX_R;
+    Eigen::Matrix3d rotAroundZ_L, rotAroundY_L, rotAroundX_L;
+    Eigen::Matrix3d rotAroundX_Init_R, rotAroundY_Init_R;
+    Eigen::Matrix3d rotAroundX_Init_L, rotAroundY_Init_L;
+    Eigen::Matrix3d mappingMatrix;
+    mappingMatrix << 0, 0, 1,
+        0, 1, 0,
+        -1, 0, 0;
 
-//     rotAroundZ_R = Eigen::AngleAxisd(arzimuth_Cur_R, Eigen::Vector3d::UnitZ());
-//     rotAroundY_R = Eigen::AngleAxisd(Elevation_Cur_R, Eigen::Vector3d::UnitY());
-//     rotAroundX_R = Eigen::AngleAxisd(Roll_Cur_R, Eigen::Vector3d::UnitX());
+    rotAroundZ_R = Eigen::AngleAxisd(arzimuth_Cur_R, Eigen::Vector3d::UnitZ());
+    rotAroundY_R = Eigen::AngleAxisd(Elevation_Cur_R, Eigen::Vector3d::UnitY());
+    rotAroundX_R = Eigen::AngleAxisd(Roll_Cur_R, Eigen::Vector3d::UnitX());
 
-//     rotAroundZ_L = Eigen::AngleAxisd(arzimuth_Cur_L, Eigen::Vector3d::UnitZ());
-//     rotAroundY_L = Eigen::AngleAxisd(Elevation_Cur_L, Eigen::Vector3d::UnitY());
-//     rotAroundX_L = Eigen::AngleAxisd(Roll_Cur_L, Eigen::Vector3d::UnitX());
+    rotAroundZ_L = Eigen::AngleAxisd(arzimuth_Cur_L, Eigen::Vector3d::UnitZ());
+    rotAroundY_L = Eigen::AngleAxisd(Elevation_Cur_L, Eigen::Vector3d::UnitY());
+    rotAroundX_L = Eigen::AngleAxisd(Roll_Cur_L, Eigen::Vector3d::UnitX());
 
-//     //Initial two rotations
-//     rotAroundX_Init_R = Eigen::AngleAxisd(-M_PI / 6, Eigen::Vector3d::UnitX());// M_PI / 6
-//     rotAroundY_Init_R = Eigen::AngleAxisd(-M_PI / 3, Eigen::Vector3d::UnitY());//-5 * M_PI/12
+    //Initial two rotations
+    rotAroundX_Init_R = Eigen::AngleAxisd(-m_armAnglePerSide / 180 * M_PI, Eigen::Vector3d::UnitX());//armAnglePerSide=M_PI / 6    M_PI / 12
+    rotAroundY_Init_R = Eigen::AngleAxisd(-M_PI / 3, Eigen::Vector3d::UnitY());
 
-//     rotAroundX_Init_L = Eigen::AngleAxisd( M_PI / 6, Eigen::Vector3d::UnitX());// M_PI / 6
-//     rotAroundY_Init_L = Eigen::AngleAxisd(-M_PI / 3, Eigen::Vector3d::UnitY());//-5 * M_PI/12
+    rotAroundX_Init_L = Eigen::AngleAxisd( m_armAnglePerSide / 180 * M_PI, Eigen::Vector3d::UnitX());// M_PI / 6
+    rotAroundY_Init_L = Eigen::AngleAxisd(-M_PI / 3, Eigen::Vector3d::UnitY());
 
+    Eigen::Matrix3d rotMatrix_R = rotAroundX_Init_R * rotAroundY_Init_R * rotAroundZ_R * rotAroundY_R * rotAroundX_R * mappingMatrix;
+    Eigen::Matrix3d rotMatrix_L = rotAroundX_Init_L * rotAroundY_Init_L * rotAroundZ_L * rotAroundY_L * rotAroundX_L * mappingMatrix;
 
-//     Eigen::Matrix3d rotMatrix_R = rotAroundX_Init_R * rotAroundY_Init_R * rotAroundZ_R * rotAroundY_R * rotAroundX_R * mappingMatrix;
-//     Eigen::Matrix3d rotMatrix_L = rotAroundX_Init_L * rotAroundY_Init_L * rotAroundZ_L * rotAroundY_L * rotAroundX_L * mappingMatrix;
+    double alpha_R = atan2(rotMatrix_R(1, 0), rotMatrix_R(0, 0));
+    double beta_R = atan2(-rotMatrix_R(2,0), sqrt(rotMatrix_R(2,1) * rotMatrix_R(2,1) + rotMatrix_R(2,2) * rotMatrix_R(2,2)));
+    double gamma_R = atan2(rotMatrix_R(2,1), rotMatrix_R(2,2));
 
-//     double alpha_R = atan2(rotMatrix_R(1, 0), rotMatrix_R(0, 0));
-//     double beta_R = atan2(-rotMatrix_R(2,0), sqrt(rotMatrix_R(2,1) * rotMatrix_R(2,1) + rotMatrix_R(2,2) * rotMatrix_R(2,2)));
-//     double gamma_R = atan2(rotMatrix_R(2,1), rotMatrix_R(2,2));
+    double alpha_L = atan2(rotMatrix_L(1, 0), rotMatrix_L(0, 0));
+    double beta_L = atan2(-rotMatrix_L(2,0), sqrt(rotMatrix_L(2,1) * rotMatrix_L(2,1) + rotMatrix_L(2,2) * rotMatrix_L(2,2)));
+    double gamma_L = atan2(rotMatrix_L(2,1), rotMatrix_L(2,2));
 
-//     double alpha_L = atan2(rotMatrix_L(1, 0), rotMatrix_L(0, 0));
-//     double beta_L = atan2(-rotMatrix_L(2,0), sqrt(rotMatrix_L(2,1) * rotMatrix_L(2,1) + rotMatrix_L(2,2) * rotMatrix_L(2,2)));
-//     double gamma_L = atan2(rotMatrix_L(2,1), rotMatrix_L(2,2));
+    if(alpha_R > 160 * M_PI / 180)
+    {
+        alpha_R  = 160 * M_PI / 180;
+    }else if(alpha_R * 180 / M_PI < -160)
+    {
+        alpha_R  = -160 * M_PI / 180;
+    }
 
-//     PosDataFromViper poseDataCurInSlaveFrame;
+    if(beta_R >  80 * M_PI / 180)
+    {
+        beta_R = 80 * M_PI / 180;
+    }else if(beta_R < -80 * M_PI / 180)
+    {
+        beta_R = -80 * M_PI / 180;
+    }
 
-//     poseDataCurInSlaveFrame.viperDataR.viperData_Roll = alpha_R * 180 / M_PI;
-//     poseDataCurInSlaveFrame.viperDataR.viperData_Elevation = beta_R * 180 / M_PI;
-//     poseDataCurInSlaveFrame.viperDataR.viperData_Arzimuth = gamma_R * 180 / M_PI;
+    if(gamma_R > 160 * M_PI / 180)
+    {
+        gamma_R = 160 * M_PI / 180;
+    }else if(gamma_R < -160 * M_PI / 180)
+    {
+        gamma_R = -160 * M_PI / 180;
+    }
 
-//     poseDataCurInSlaveFrame.viperDataL.viperData_Roll = alpha_L * 180 / M_PI;
-//     poseDataCurInSlaveFrame.viperDataL.viperData_Elevation = beta_L * 180 / M_PI;
-//     poseDataCurInSlaveFrame.viperDataL.viperData_Arzimuth = gamma_L * 180 / M_PI;
+    if(alpha_L > 160 * M_PI / 180)
+    {
+        alpha_L = 160 * M_PI / 180;
+    }else if(alpha_L < -160 * M_PI / 180)
+    {
+        alpha_L = -160 * M_PI / 180;
+    }
 
-//     if(poseDataCurInSlaveFrame.viperDataL.viperData_Roll > 160)
-//     {
-//         poseDataCurInSlaveFrame.viperDataL.viperData_Roll = 160;
-//     }else if(poseDataCurInSlaveFrame.viperDataL.viperData_Roll < -160)
-//     {
-//         poseDataCurInSlaveFrame.viperDataL.viperData_Roll = -160;
-//     }
+    if(beta_L > 80 * M_PI / 180)
+    {
+        beta_L = 80 * M_PI / 180;
+    }else if(beta_L < -80 * M_PI / 180)
+    {
+        beta_L = -80 * M_PI / 180;
+    }
 
-//     if(poseDataCurInSlaveFrame.viperDataL.viperData_Elevation > 80)
-//     {
-//         poseDataCurInSlaveFrame.viperDataL.viperData_Elevation = 80;
-//     }else if(poseDataCurInSlaveFrame.viperDataL.viperData_Elevation < -80)
-//     {
-//         poseDataCurInSlaveFrame.viperDataL.viperData_Elevation = -80;
-//     }
+    if(gamma_L > 160 * M_PI / 180)
+    {
+        gamma_L = 160 * M_PI / 180;
+    }else if(gamma_L < -160 * M_PI / 180)
+    {
+        gamma_L = -160 * M_PI / 180;
+    }
 
-//     if(poseDataCurInSlaveFrame.viperDataL.viperData_Arzimuth > 160)
-//     {
-//         poseDataCurInSlaveFrame.viperDataL.viperData_Arzimuth = 160;
-//     }else if(poseDataCurInSlaveFrame.viperDataL.viperData_Arzimuth < -160)
-//     {
-//         poseDataCurInSlaveFrame.viperDataL.viperData_Arzimuth = -160;
-//     }
+    HandlePose poseDataCurInSlaveFrame;
 
-//     if(poseDataCurInSlaveFrame.viperDataR.viperData_Roll > 160)
-//     {
-//         poseDataCurInSlaveFrame.viperDataR.viperData_Roll = 160;
-//     }else if(poseDataCurInSlaveFrame.viperDataR.viperData_Roll < -160)
-//     {
-//         poseDataCurInSlaveFrame.viperDataR.viperData_Roll = -160;
-//     }
+    poseDataCurInSlaveFrame.handlePoseR_Roll = alpha_R;
+    poseDataCurInSlaveFrame.handlePoseR_Elevation = beta_R;
+    poseDataCurInSlaveFrame.handlePoseR_Arzimuth = gamma_R;
 
-//     if(poseDataCurInSlaveFrame.viperDataR.viperData_Elevation > 80)
-//     {
-//         poseDataCurInSlaveFrame.viperDataR.viperData_Elevation = 80;
-//     }else if(poseDataCurInSlaveFrame.viperDataR.viperData_Elevation < -80)
-//     {
-//         poseDataCurInSlaveFrame.viperDataR.viperData_Elevation = -80;
-//     }
+    poseDataCurInSlaveFrame.handlePoseL_Roll = alpha_L;
+    poseDataCurInSlaveFrame.handlePoseL_Elevation = beta_L;
+    poseDataCurInSlaveFrame.handlePoseL_Arzimuth = gamma_L;
 
-//     if(poseDataCurInSlaveFrame.viperDataR.viperData_Arzimuth > 160)
-//     {
-//         poseDataCurInSlaveFrame.viperDataR.viperData_Arzimuth = 160;
-//     }else if(poseDataCurInSlaveFrame.viperDataR.viperData_Arzimuth < -160)
-//     {
-//         poseDataCurInSlaveFrame.viperDataR.viperData_Arzimuth = -160;
-//     }
+    Eigen::Vector3d  masterPositionViaSensor;
+    masterPositionViaSensor << -2.0,
+                                0,
+                               -2.0;
 
-//     Eigen::Vector3d  masterPositionViaSensor;
-//     masterPositionViaSensor << -2.0,
-//         0,
-//         -7.5;
+    Eigen::Vector3d  sensorPosition_L, sensorPosition_R;
+    sensorPosition_L << viperData[0][0],
+                        viperData[0][1],
+                        viperData[0][2];
 
-//     Eigen::Vector3d  sensorPosition_L, sensorPosition_R;
-//     sensorPosition_L << poseDataCurInSlaveFrame.viperDataL.viperData_X * 2.54,
-//         poseDataCurInSlaveFrame.viperDataL.viperData_Y * 2.54,
-//         poseDataCurInSlaveFrame.viperDataL.viperData_Z * 2.54;
+    sensorPosition_R << viperData[1][0],
+                        viperData[1][1],
+                        viperData[1][2];
 
-//     sensorPosition_R << poseDataCurInSlaveFrame.viperDataR.viperData_X * 2.54,
-//         poseDataCurInSlaveFrame.viperDataR.viperData_Y * 2.54,
-//         poseDataCurInSlaveFrame.viperDataR.viperData_Z * 2.54;
+    Eigen::Matrix3d rotAroundWorldY;
+    rotAroundWorldY = Eigen::AngleAxisd(-M_PI / 6, Eigen::Vector3d::UnitY());
 
-//     Eigen::Matrix3d rotAroundWorldY;
-//     rotAroundWorldY = Eigen::AngleAxisd(-M_PI / 3, Eigen::Vector3d::UnitY());
+    Eigen::Vector3d  endPosition_L, endPosition_R;
+    endPosition_L = rotAroundWorldY * (sensorPosition_L + rotAroundZ_L * rotAroundY_L * rotAroundX_L * masterPositionViaSensor);
+    endPosition_R = rotAroundWorldY * (sensorPosition_R + rotAroundZ_R * rotAroundY_R * rotAroundX_R * masterPositionViaSensor);
 
-//     Eigen::Vector3d  endPosition_L, endPosition_R;
-//     endPosition_L = rotAroundWorldY * (sensorPosition_L + rotAroundZ_L * rotAroundY_L * rotAroundX_L * masterPositionViaSensor);
-//     endPosition_R = rotAroundWorldY * (sensorPosition_R + rotAroundZ_R * rotAroundY_R * rotAroundX_R * masterPositionViaSensor);
+    poseDataCurInSlaveFrame.handlePoseL_X = endPosition_L[0];
+    poseDataCurInSlaveFrame.handlePoseL_Y = endPosition_L[1];
+    poseDataCurInSlaveFrame.handlePoseL_Z = endPosition_L[2];
 
-//     poseDataCurInSlaveFrame.viperDataL.viperData_X = endPosition_L[0];
-//     poseDataCurInSlaveFrame.viperDataL.viperData_Y = endPosition_L[1];
-//     poseDataCurInSlaveFrame.viperDataL.viperData_Z = endPosition_L[2];
+    poseDataCurInSlaveFrame.handlePoseR_X= endPosition_R[0];
+    poseDataCurInSlaveFrame.handlePoseR_Y = endPosition_R[1];
+    poseDataCurInSlaveFrame.handlePoseR_Z = endPosition_R[2];
 
-//     poseDataCurInSlaveFrame.viperDataR.viperData_X = endPosition_R[0];
-//     poseDataCurInSlaveFrame.viperDataR.viperData_Y = endPosition_R[1];
-//     poseDataCurInSlaveFrame.viperDataR.viperData_Z = endPosition_R[2];
+    poseDataCurInSlaveFrame.handlePoseL_OpenAngle = openAngle[0];
+    poseDataCurInSlaveFrame.handlePoseR_OpenAngle = openAngle[1];
 
-//     return poseDataCurInSlaveFrame;
-// }
+    poseDataCurInSlaveFrame.stepPedal = stepPedal;
+
+    auto handlePoseCur = poseDataCurInSlaveFrame;
+
+    // LOG(INFO)   << " yaw_R: " << handlePoseCur.handlePoseR_Arzimuth / M_PI * 180  << " pitch_R: " << handlePoseCur.handlePoseR_Elevation / M_PI * 180 << " roll_R: " << handlePoseCur.handlePoseR_Roll / M_PI * 180;
+    // LOG(INFO)<<"X: "<<poseDataCurInSlaveFrame.handlePoseR_X<<" Z: "<<poseDataCurInSlaveFrame.handlePoseR_Z;
+    return poseDataCurInSlaveFrame;
+}
 
 void Viper_Transmitter::readHandleData_Quaternion(QByteArray qba)
 {
@@ -550,34 +551,17 @@ void Viper_Transmitter::readHandleData_Quaternion(QByteArray qba)
 
 std::array<double, 2> Viper_Transmitter::calculateOpenAngle(const uint16_t& adcValueL, const uint16_t& adcValueR) const
 {
-    double delt_adcValueL = 0;
-    double delt_adcValueR = 0;
     std::array<double, 2> openAngle = {0,0};
-    delt_adcValueL = (adcValueL - adcValueClose_L);
-    if(delt_adcValueL < 0)
-    {
-        delt_adcValueL = 0;
-    }
-    if(delt_adcValueL >= abs(adcValueOpen_L - adcValueClose_L))
-    {
-        delt_adcValueL = abs(adcValueOpen_L - adcValueClose_L);
-    }
+    double adcValueL_Tmp = adcValueL;
+    double adcValueR_Tmp = adcValueR;
 
-    delt_adcValueR = (adcValueR - adcValueClose_R);
-    if(delt_adcValueR < 0)
-    {
-        delt_adcValueR = 0;
-    }
-    if(delt_adcValueR >= abs(adcValueOpen_R - adcValueClose_R))
-    {
-        delt_adcValueR = abs(adcValueOpen_R - adcValueClose_R);
-    }
-    // auto angle_0 = (delt_adcValueL/abs(adcValueOpen_L - adcValueClose_L)) * 30 - 10;
-    // auto angle_1 = (delt_adcValueR/abs(adcValueOpen_R - adcValueClose_R)) * 30 - 10;
-    // openAngle[0] = (angle_0 < 0) ? 0.008 * pow(angle_0, 3) : pow(angle_0, 3)/400;
-    // openAngle[1] = (angle_1 < 0) ? 0.008 * pow(angle_1, 3) : pow(angle_1, 3)/400;
-    openAngle[0] = (delt_adcValueL/abs(adcValueOpen_L - adcValueClose_L)) * 30 - 10;
-    openAngle[1] = (delt_adcValueR/abs(adcValueOpen_R - adcValueClose_R)) * 30 - 10;
+    if(adcValueL_Tmp > adcValueOpen_L) {adcValueL_Tmp = adcValueOpen_L;}
+    if(adcValueL_Tmp < adcValueClose_L) {adcValueL_Tmp = adcValueClose_L;}
+    openAngle[0] = (adcValueL_Tmp >= adcValueGrasp_L)? (adcValueL_Tmp - adcValueGrasp_L)/(adcValueOpen_L - adcValueGrasp_L) * 20.0 : (adcValueL_Tmp - adcValueGrasp_L)/(adcValueGrasp_L - adcValueClose_L) * 10.0;
+
+    if(adcValueR_Tmp > adcValueOpen_R) {adcValueR_Tmp = adcValueOpen_R;}
+    if(adcValueR_Tmp < adcValueClose_R) {adcValueR_Tmp = adcValueClose_R;}
+    openAngle[1] = (adcValueR_Tmp >= adcValueGrasp_R)? (adcValueR_Tmp - adcValueGrasp_R)/(adcValueOpen_R - adcValueGrasp_R) * 20.0 : (adcValueR_Tmp - adcValueGrasp_R)/(adcValueGrasp_R - adcValueClose_R) * 10.0;
     return openAngle;
 }
 
@@ -615,4 +599,3 @@ void Viper_Transmitter::statusMonitor()
         }
     }
 }
-

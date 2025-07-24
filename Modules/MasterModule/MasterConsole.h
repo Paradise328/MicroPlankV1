@@ -13,6 +13,7 @@
 #include "Modules/MsgModule/messagequeue.h"
 #include "Modules/SystemUtilsModule/SystemUtils.h"
 #include "MasterConsole_Lib/viper_transmitter.h"
+#include "Modules/MsgModule/messagequeue.h"
 
 enum class MasterConsoleType
 {

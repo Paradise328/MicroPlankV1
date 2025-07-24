@@ -118,10 +118,6 @@ struct HandlePose
     double          handlePoseL_Roll;
     double          handlePoseL_OpenAngle;
 
-    double          handlePoseInSlaveFrameL_Arzimuth;
-    double          handlePoseInSlaveFrameL_Elevation;
-    double          handlePoseInSlaveFrameL_Roll;
-
     double          handlePoseR_X;
     double          handlePoseR_Y;
     double          handlePoseR_Z;
@@ -129,10 +125,6 @@ struct HandlePose
     double          handlePoseR_Elevation;
     double          handlePoseR_Roll;
     double          handlePoseR_OpenAngle;
-
-    double          handlePoseInSlaveFrameR_Arzimuth;
-    double          handlePoseInSlaveFrameR_Elevation;
-    double          handlePoseInSlaveFrameR_Roll;
 
     unsigned int    enableButton_L; //7: enable; 3: disable
     unsigned int    enableButton_R; //7: enable; 3: disable
@@ -254,31 +246,22 @@ struct HandlePose
 //        enableButton_L = 0; //2: enable; 3: disable
 //        enableButton_R = 0; //2: enable; 3: disable
         stepPedal = 0;
-
-        handlePoseInSlaveFrameL_Arzimuth = 0;
-        handlePoseInSlaveFrameL_Elevation = 0;
-        handlePoseInSlaveFrameL_Roll = 0;
-
-        handlePoseInSlaveFrameR_Arzimuth = 0;
-        handlePoseInSlaveFrameR_Elevation = 0;
-        handlePoseInSlaveFrameR_Roll = 0;
     }
-    void setMyConsoleData(const std::array<std::array<double,viperDataNumPerSensor>,2>& poseData_Cur , const handleOtherData& otherData_Cur)
+    void setMyConsoleData(const std::array<std::array<double,viperDataNumPerSensor>,2>& PNOData_Cur)
     {
-        handlePoseL_X = poseData_Cur[0][0];
-        handlePoseL_Y = poseData_Cur[0][1];
-        handlePoseL_Z = poseData_Cur[0][2];
-        handlePoseL_Arzimuth = poseData_Cur[0][3];
-        handlePoseL_Elevation = poseData_Cur[0][4];
-        handlePoseL_Roll = poseData_Cur[0][5];
-        // handlePoseL_OpenAngle = ;
+        handlePoseL_X = PNOData_Cur[0][0];
+        handlePoseL_Y = PNOData_Cur[0][1];
+        handlePoseL_Z = PNOData_Cur[0][2];
+        handlePoseL_Arzimuth = PNOData_Cur[0][3];
+        handlePoseL_Elevation = PNOData_Cur[0][4];
+        handlePoseL_Roll = PNOData_Cur[0][5];
 
-        handlePoseR_X = poseData_Cur[1][0] * cos(-45 * M_PI / 180) + poseData_Cur[1][2] * sin(-45 * M_PI / 180);
-        handlePoseR_Y = poseData_Cur[1][1];
-        handlePoseR_Z = poseData_Cur[1][2] * cos(-45 * M_PI / 180) - poseData_Cur[1][0] * sin(-45 * M_PI / 180);
-        handlePoseR_Arzimuth = poseData_Cur[1][3];
-        handlePoseR_Elevation = poseData_Cur[1][4];
-        handlePoseR_Roll = poseData_Cur[1][5];
+        handlePoseR_X = PNOData_Cur[1][0];
+        handlePoseR_Y = PNOData_Cur[1][1];
+        handlePoseR_Z = PNOData_Cur[1][2];
+        handlePoseR_Arzimuth = PNOData_Cur[1][3];
+        handlePoseR_Elevation = PNOData_Cur[1][4];
+        handlePoseR_Roll = PNOData_Cur[1][5];
         
     }
 
@@ -372,58 +355,6 @@ struct HandlePose
 
     }
 
-    void setMyConsoleData(const std::array<std::array<double,viperDataNumPerSensor>,2>& poseData_Cur)
-    {
-
-        Eigen::Matrix3d rotAroundWorldY;
-        rotAroundWorldY = Eigen::AngleAxisd(-M_PI/4, Eigen::Vector3d::UnitY());
-
-        Eigen::Vector3d sensorPosition_Cur_L, sensorPosition_Cur_R, endPosition_Cur_L, endPosition_Cur_R;
-
-        sensorPosition_Cur_L << poseData_Cur[0][0],
-            poseData_Cur[0][1],
-            poseData_Cur[0][2];
-        sensorPosition_Cur_R << poseData_Cur[1][0],
-            poseData_Cur[1][1],
-            poseData_Cur[1][2];
-
-        Eigen::Matrix3d rotAroundZ_R, rotAroundY_R, rotAroundX_R;
-        Eigen::Matrix3d rotAroundZ_L, rotAroundY_L, rotAroundX_L;
-
-        rotAroundZ_R = Eigen::AngleAxisd((poseData_Cur[1][3] * M_PI / 180), Eigen::Vector3d::UnitZ());
-        rotAroundY_R = Eigen::AngleAxisd((poseData_Cur[1][4] * M_PI / 180), Eigen::Vector3d::UnitY());
-        rotAroundX_R = Eigen::AngleAxisd((poseData_Cur[1][5] * M_PI / 180), Eigen::Vector3d::UnitX());
-
-        rotAroundZ_L = Eigen::AngleAxisd((poseData_Cur[0][3] * M_PI / 180), Eigen::Vector3d::UnitZ());
-        rotAroundY_L = Eigen::AngleAxisd((poseData_Cur[0][4] * M_PI / 180), Eigen::Vector3d::UnitY());
-        rotAroundX_L = Eigen::AngleAxisd((poseData_Cur[0][5] * M_PI / 180), Eigen::Vector3d::UnitX());
-
-
-        Eigen::Vector3d  masterPositionViaSensor;
-        masterPositionViaSensor<< -2.0,
-                                     0,
-                                  -7.5;
-
-        endPosition_Cur_L = rotAroundWorldY * (sensorPosition_Cur_L + rotAroundZ_L * rotAroundY_L * rotAroundX_L * masterPositionViaSensor);
-        endPosition_Cur_R = rotAroundWorldY * (sensorPosition_Cur_R + rotAroundZ_R * rotAroundY_R * rotAroundX_R * masterPositionViaSensor);
-
-        handlePoseL_X = endPosition_Cur_L[0];
-        handlePoseL_Y = endPosition_Cur_L[1];
-        handlePoseL_Z = endPosition_Cur_L[2];
-
-        handlePoseR_X = endPosition_Cur_R[0];
-        handlePoseR_Y = endPosition_Cur_R[1];
-        handlePoseR_Z = endPosition_Cur_R[2];
-
-        handlePoseL_Arzimuth = poseData_Cur[0][3];
-        handlePoseL_Elevation = poseData_Cur[0][4];
-        handlePoseL_Roll = poseData_Cur[0][5];
-
-        handlePoseR_Arzimuth = poseData_Cur[1][3];
-        handlePoseR_Elevation = poseData_Cur[1][4];
-        handlePoseR_Roll = poseData_Cur[1][5];
-    }
-
     void setEulerRotationMatrix(const std::array<std::array<double,viperDataNumPerSensor>,2>& poseData_Cur)
     {
         /*RIGHT HAND*/
@@ -465,171 +396,6 @@ struct HandlePose
         setRotationDataL(EulerRotationMatrix_L);
     }
 
-    void setHandlePoseInSlaveFrameL(int armAnglePerSide){
-
-        Eigen::Matrix3d viper30_Matrix;
-        Eigen::Matrix3d mappingMatrix;
-        Eigen::Matrix3d handlePoseCur;//处理完毕的旋转矩阵
-        Eigen::Matrix3d handlePoseCur_old;//读取的旋转矩阵
-        Eigen::Matrix3d rotMaster_L;
-
-        mappingMatrix << 1, 0, 0,
-            0, -1, 0,
-            0, 0, -1;//viper平放
-
-        viper30_Matrix << cos(-35 * M_PI / 180),  0, sin(-35 * M_PI / 180),
-            0,         1,          0,
-            -sin(-35 * M_PI / 180), 0, cos(-35 * M_PI / 180);//Viper 斜35度放置
-
-        handlePoseCur_old = getRotationDataL();
-
-        handlePoseCur = viper30_Matrix * handlePoseCur_old;
-
-        rotMaster_L = mappingMatrix * handlePoseCur * mappingMatrix.inverse();
-
-        double theta = -90 - armAnglePerSide; //theta为机械臂绕x轴转动角度（机械臂初始与y轴重合）
-        double rotation_roll = 0;//实际上是绕yaw轴转-30度
-        double rotation_pitch = -30;//根据实际情况赋值-30，可以理解为pitch角
-
-        Eigen::Matrix3d rotationMatrix_2, rotationMatrix_3, rotation_theta, rotationMatrix_pitch, rotationMatrix_roll;
-
-        rotationMatrix_2 = Eigen::AngleAxisd(90 *  M_PI / 180, Eigen::Vector3d::UnitX());
-
-        rotationMatrix_3 = Eigen::AngleAxisd(90 *  M_PI / 180, Eigen::Vector3d::UnitY());
-
-        rotation_theta = Eigen::AngleAxisd(theta *  M_PI / 180, Eigen::Vector3d::UnitZ());
-
-        rotationMatrix_roll = Eigen::AngleAxisd(rotation_roll *  M_PI / 180, Eigen::Vector3d::UnitX());
-
-        rotationMatrix_pitch = Eigen::AngleAxisd(rotation_pitch * M_PI / 180, Eigen::Vector3d::UnitY());
-
-        Eigen::Matrix3d rotSlaveMatrix_L = rotationMatrix_2 * rotationMatrix_3 * rotation_theta * rotationMatrix_pitch * rotationMatrix_roll;
-
-        Eigen::Matrix3d rotMatrix_Cur_L = rotSlaveMatrix_L.inverse() * rotMaster_L;
-
-        /* alpha(Elevation) */
-        // double InSlaveFrame_Elevation_L = asin(rotMatrix_Cur_L(0, 2));
-        double InSlaveFrame_Elevation_L = atan2(rotMatrix_Cur_L(0, 2),sqrt(rotMatrix_Cur_L(0, 0) * rotMatrix_Cur_L(0, 0) + rotMatrix_Cur_L(0, 1) * rotMatrix_Cur_L(0, 1)));
-
-        /*计算 beta(Arzimuth) */
-        double InSlaveFrame_Arzimuth_L = atan2(-rotMatrix_Cur_L(0, 1), rotMatrix_Cur_L(0, 0));
-
-        /*计算 gamma（roll）*/
-        double InSlaveFrame_Roll_L = atan2(-rotMatrix_Cur_L(1, 2), rotMatrix_Cur_L(2, 2));
-
-        // if(InSlaveFrame_Roll_L > 160)
-        // {
-        //     InSlaveFrame_Roll_L = 160;
-        // }else if(InSlaveFrame_Roll_L < -160)
-        // {
-        //     InSlaveFrame_Roll_L = -160;
-        // }
-
-        // if(InSlaveFrame_Elevation_L > 80)
-        // {
-        //     InSlaveFrame_Elevation_L = 80;
-        // }else if(InSlaveFrame_Elevation_L < -80)
-        // {
-        //     InSlaveFrame_Elevation_L = -80;
-        // }
-
-        // if(InSlaveFrame_Arzimuth_L > 160)
-        // {
-        //     InSlaveFrame_Arzimuth_L = 160;
-        // }else if(InSlaveFrame_Arzimuth_L < -160)
-        // {
-        //     InSlaveFrame_Arzimuth_L = -160;
-        // }
-
-        handlePoseInSlaveFrameL_Arzimuth = InSlaveFrame_Arzimuth_L;
-        handlePoseInSlaveFrameL_Elevation = InSlaveFrame_Elevation_L;
-        handlePoseInSlaveFrameL_Roll = InSlaveFrame_Roll_L;
-
-    }
-
-    void setHandlePoseInSlaveFrameR(int armAnglePerSide){
-
-        Eigen::Matrix3d viper30_Matrix;
-        Eigen::Matrix3d mappingMatrix;
-        Eigen::Matrix3d handlePoseCur;//处理完毕的旋转矩阵
-        Eigen::Matrix3d handlePoseCur_old;//读取的旋转矩阵
-        Eigen::Matrix3d rotMaster_R;
-
-        mappingMatrix << 1, 0, 0,
-            0, -1, 0,
-            0, 0, -1;//viper平放
-
-        viper30_Matrix << cos(-35 * M_PI / 180),  0, sin(-35 * M_PI / 180),
-            0,         1,          0,
-            -sin(-35 * M_PI / 180), 0, cos(-35 * M_PI / 180);//Viper 斜35度放置
-
-        handlePoseCur_old = getRotationDataR();
-        handlePoseCur = viper30_Matrix * handlePoseCur_old;
-
-        rotMaster_R = mappingMatrix * handlePoseCur * mappingMatrix.inverse();
-
-        double theta = -(90 - armAnglePerSide);
-        double rotation_roll = 0;
-        double rotation_pitch = -30;
-
-        Eigen::Matrix3d rotationMatrix_2, rotationMatrix_3, rotation_theta, rotationMatrix_pitch, rotationMatrix_roll;
-
-        rotationMatrix_2 = Eigen::AngleAxisd(90 * M_PI / 180, Eigen::Vector3d::UnitX());
-
-        rotationMatrix_3 = Eigen::AngleAxisd(90 * M_PI / 180, Eigen::Vector3d::UnitY());
-
-        rotation_theta = Eigen::AngleAxisd(theta * M_PI / 180, Eigen::Vector3d::UnitZ());
-
-        rotationMatrix_roll = Eigen::AngleAxisd(rotation_roll * M_PI / 180, Eigen::Vector3d::UnitX());
-
-        rotationMatrix_pitch = Eigen::AngleAxisd(rotation_pitch * M_PI / 180, Eigen::Vector3d::UnitY());
-
-        Eigen::Matrix3d rotSlaveMatrix_R = rotationMatrix_2 * rotationMatrix_3 * rotation_theta * rotationMatrix_pitch * rotationMatrix_roll;
-
-        Eigen::Matrix3d rotMatrix_Cur_R = rotSlaveMatrix_R.inverse() * rotMaster_R;
-
-        /* alpha(pitch) */
-        // double InSlaveFrame_Elevation_R = asin(rotMatrix_Cur_R(0, 2));
-        double InSlaveFrame_Elevation_R = atan2(rotMatrix_Cur_R(0, 2),sqrt(rotMatrix_Cur_R(0, 0) * rotMatrix_Cur_R(0, 0) + rotMatrix_Cur_R(0, 1) * rotMatrix_Cur_R(0, 1)));
-
-        /*计算 beta(yaw) */
-        double InSlaveFrame_Arzimuth_R = atan2(-rotMatrix_Cur_R(0, 1), rotMatrix_Cur_R(0, 0));
-
-        /*计算 gamma（roll）*/
-        double InSlaveFrame_Roll_R = atan2(-rotMatrix_Cur_R(1, 2), rotMatrix_Cur_R(2, 2));
-
-        if(handlePoseR_Roll > 160)
-        {
-            handlePoseR_Roll = 160;
-        }else if(handlePoseR_Roll < -160)
-        {
-            handlePoseR_Roll = -160;
-        }
-
-        if(handlePoseR_Elevation > 80)
-        {
-            handlePoseR_Elevation = 80;
-        }else if(handlePoseR_Elevation < -80)
-        {
-            handlePoseR_Elevation = -80;
-        }
-
-        if(handlePoseR_Arzimuth > 160)
-        {
-            handlePoseR_Arzimuth = 160;
-        }else if(handlePoseR_Arzimuth < -160)
-        {
-            handlePoseR_Arzimuth = -160;
-        }
-
-        handlePoseInSlaveFrameR_Arzimuth = InSlaveFrame_Arzimuth_R;
-        handlePoseInSlaveFrameR_Elevation = InSlaveFrame_Elevation_R;
-        handlePoseInSlaveFrameR_Roll = InSlaveFrame_Roll_R;
-        // LOG(INFO)<<" ";
-        LOG(INFO)<<"YAW: "<<handlePoseInSlaveFrameR_Arzimuth * 180 / M_PI<<" PITCH: "<<handlePoseInSlaveFrameR_Elevation * 180 / M_PI<<" Roll: "<<handlePoseInSlaveFrameR_Roll * 180 / M_PI;
-        // LOG(INFO)<<"Arzimuth: "<<handlePoseR_Arzimuth <<" Elevation: "<< handlePoseR_Elevation <<" ROLL: "<<handlePoseR_Roll ;
-
-    }
     std::array<std::array<double, 7>, 2> returnPNOData()
     {
         std::array<std::array<double, 7>, 2> posdeData_Tmp;
@@ -714,11 +480,15 @@ enum class EndeffectorConfiguration{
     sixMaxons  = 0x02
 };
 
-constexpr int adcValueOpen_L = 18820;
-constexpr int adcValueClose_L = 16560;
+constexpr int adcValueOpen_L = 36440;
+constexpr int adcValueGrasp_L = 34540;
+constexpr int adcValueClose_L = 33200;
+constexpr int adcValuePerRevolution_L = 65536;
 
-constexpr int adcValueOpen_R = 19580;
-constexpr int adcValueClose_R = 16125;
+constexpr int adcValueOpen_R = 35900;
+constexpr int adcValueGrasp_R = 34200;
+constexpr int adcValueClose_R = 32700;
+constexpr int adcValuePerRevolution_R = 65536;
 
 constexpr double graspThreshold = 0;
 
