@@ -637,7 +637,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
     if(m_endeffectorConfiguration == EndeffectorConfiguration::fourMaxons){
         controlValueTmp_L[4] = (delt_beta_L + delt_alpha_L * m_compRatio_L) - openAngle_L_new;
         controlValueTmp_L[5] = (delt_beta_L + delt_alpha_L * m_compRatio_L) + openAngle_L_new;
-        controlValueTmp_L[6] = -delt_alpha_L;
+        controlValueTmp_L[6] = delt_alpha_L;
         controlValueTmp_L[7] = -delt_gamma_L;
 
         controlValueTmp_L[8] = 0;
@@ -713,8 +713,6 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     double delt_gammaOrg_R = (gamma_Last_R - gamma_Org_R) * 180 / M_PI;
     double delt_gamma_R = delt_gammaCur_R + delt_gammaInit_R * m_alignmentNumber_R / 100 + delt_gammaOrg_R;
 
-    LOG(INFO)<<"Roll: "<<handlePoseCur.handlePoseR_Roll * 180 / M_PI<<"YAW: "<<handlePoseCur.handlePoseR_Arzimuth * 180 / M_PI<<"PITCH: "<<handlePoseCur.handlePoseR_Elevation * 180 / M_PI;
-
     double endEffectorInit_X_R = m_endEffectorInitPosition_R[0];
     double endEffectorInit_Y_R = m_endEffectorInitPosition_R[1];// +m_endArm_3 * sin(jointAngle1_Init_R + jointAngle2_Init_R + jointAngle3_Init_R)
     double endEffectorInit_Z_R = m_endEffectorInitPosition_R[2];// -m_endArm_3 * sin(jointAngle1_Init_R + jointAngle2_Init_R + jointAngle3_Init_R)
@@ -777,7 +775,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     if(m_endeffectorConfiguration == EndeffectorConfiguration::fourMaxons){
         controlValueTmp_R[4] = (delt_beta_R + delt_alpha_R * m_compRatio_R) - openAngle_R_new;
         controlValueTmp_R[5] = (delt_beta_R + delt_alpha_R * m_compRatio_R) + openAngle_R_new;
-        controlValueTmp_R[6] = -delt_alpha_R;
+        controlValueTmp_R[6] = delt_alpha_R;
         controlValueTmp_R[7] = -delt_gamma_R;
 
         controlValueTmp_R[8] = 0;

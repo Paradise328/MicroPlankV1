@@ -288,6 +288,7 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
                 viperDataTmp[i][j] = Uint8ArrToFloat(cftemp.payload.args,(28 * i + 4 * j + 10));
             }
         }
+        LOG(INFO) << " x: " << viperDataTmp[0][0] << " y: " << viperDataTmp[0][1] << " z: " << viperDataTmp[0][2];
         int stepPedal = cftemp.payload.args[9];
         if(cftemp.payload.args[0] == Dev_Sta_OK)
         {
@@ -438,7 +439,7 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
     Eigen::Vector3d  masterPositionViaSensor;
     masterPositionViaSensor << -2.0,
                                 0,
-                               -2.0;
+                               2.0;
 
     Eigen::Vector3d  sensorPosition_L, sensorPosition_R;
     sensorPosition_L << viperData[0][0],
