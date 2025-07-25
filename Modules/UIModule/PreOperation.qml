@@ -14,7 +14,7 @@ Rectangle {
     property real currentMaxSpeed: 100
     property int currentSpeedVal: 0
     property string timeText: "00:01:35"
-    property bool isInstrumentAngle30: true
+    property bool isInstrumentAngle30: false
 
     function setSpeed(axis,level){
         currentMinSpeed = json[axis][level].speedMin;
@@ -176,9 +176,6 @@ Rectangle {
              objectName: "po_robotArmEnable"
              id: po_robotArmEnable
              y: 125
-//             anchors.verticalCenter: btnType1.verticalCenter
-//             anchors.left: btnFastDown.left
-//             anchors.bottom: robotArmDisable.bottom
              x: 415
              font.pixelSize: 28
              font.italic: false
@@ -253,100 +250,21 @@ Rectangle {
                     }
                     default:break;
                  }
-             }
-             onClicked: {
-                 uiInterface.setRobotControlMode(2);
-             }
-         }
+            }
+            onClicked: {
+                uiInterface.setRobotControlMode(2);
+            }
+        }
 
-         Button {
-             //@disable-check M16
-             objectName: "robotArmDisable"
-             id: robotArmDisable
-             y: 202
-             anchors.top: robotArmEnable.top
-             x: 885
-             font.pixelSize: 28
-             anchors.topMargin: 0
-             // 设置字体大小
-             // 设置按钮文本
-             contentItem: Text {
-                 //@disable-check M16
-                 objectName: "contentItem"
-                 id: txtRobotArmDisable
-                 text: qsTr("锁定")
-                 font.pixelSize: 28
-                 opacity: 1.0
-                 color: "#48FFFF"
-                 horizontalAlignment: Text.AlignHCenter
-                 verticalAlignment: Text.AlignVCenter
-                 elide: Text.ElideRight
-             }
-            signal triggerKinematics(int num)
-             // 设置按钮背景
-             background: Rectangle {
-                 //@disable-check M16
-                 objectName: "background"
-                 id:robotArmDisable_background
-                 implicitWidth: 200
-                 implicitHeight: 56
-                 opacity: 0.25
-                 color: "#003033"
-                 border.color: "#2CDFE8"
-                 border.width: 2
-             }
-             function setsta(sta)
-             {
-                 switch(sta)
-                 {
-                    case 0x00:
-                    {
-                        txtRobotArmDisable.color="#7f7f7f"
-                        robotArmDisable_background.border.color="#7f7f7f"
-                        robotArmDisable_background.color="#7f7f7f"
-                        break;
-                    }
-                    case 0x01:
-                    {
-                        txtRobotArmDisable.color="#48FFFF"
-                        robotArmDisable_background.color="#003033"
-                        robotArmDisable_background.border.color="#2CDFE8"
-                        break;
-                    }
-                    case 0x02:
-                    {
-                        txtRobotArmDisable.color="#FFFFFF"
-                        robotArmDisable_background.color="#48FFFF"
-                        robotArmDisable_background.border.color="#2CDFE8"
-                        break;
-                    }
-                    default:break;
-                 }
-             }
-             onClicked: {
-                 robotArmEnable.changecolor()
-                 uiInterface.setRobotControlMode(1);
-             }
-         }
-
-         Button {
+        Button {
            //@disable-check M16
            objectName: "po_btnFastUp"
            id: po_btnFastUp
-
            x: 931
            y: 125
            width: 200
            height: 53
-//           anchors.right: robotArmDisable.right
-//           anchors.top: speedName.top
-//           anchors.bottom: speedName.bottom
-
            font.pixelSize: 28
-//           anchors.topMargin: 2
-//           anchors.bottomMargin: 0
-           // 设置字体大小
-           // 设置按钮文本
 
            Image {
                //@disable-check M16
@@ -434,21 +352,11 @@ Rectangle {
            //@disable-check M16
            objectName: "po_btnSlowUp"
            id: po_btnSlowUp
-//           x: 1540
-//           y: 132
            x: 1407
            y: 125
            width: 200
            height: 53
-//           anchors.left: btnSlowDown.right
-//           anchors.top: speedName.top
-//           anchors.bottom: speedName.bottom
            font.pixelSize: 28
-//           anchors.leftMargin: 62
-//           anchors.topMargin: 2
-//           anchors.bottomMargin: 0
-           // 设置字体大小
-           // 设置按钮文本
            Image {
                //@disable-check M16
                objectName: "po_imageFastUp"
@@ -539,14 +447,8 @@ Rectangle {
            y: 214
            width: 200
            height: 53
-//           anchors.top: btnSlowUp.top
-//           anchors.bottom: speedName.bottom
            x: 1407
            font.pixelSize: 28
-//           anchors.topMargin: 0
-//           anchors.horizontalCenterOffset: 76
-//           anchors.bottomMargin: 0
-//           anchors.horizontalCenter: btnReleaseInstrument.horizontalCenter // 设置字体大小
 
            Image {
                //@disable-check M16
@@ -575,7 +477,7 @@ Rectangle {
            // 设置按钮背景
            background: Rectangle {
                id:po_btnSlowDown_background
-               implicitWidth: 200
+               implicitWidth: 250
                implicitHeight: 56
                opacity: 0.25
                color: "#003033"
@@ -583,38 +485,38 @@ Rectangle {
                border.width: 2
                radius: 10
            }
-           function setsta(sta)
-           {
-               switch(sta)
-               {
-               case 0x00:
-               {
-                   po_btnSlowDown.enabled=false
-                   po_txtSlowDown.color="#7f7f7f"
-                   po_btnSlowDown_background.border.color="#7f7f7f"
-                   po_btnSlowDown_background.color="#7f7f7f"
-                   break;
-               }
-                  case 0x01:
-                  {
-                      po_btnSlowDown.enabled=true
-                      po_txtSlowDown.color="#48FFFF"
-                      po_btnSlowDown_background.color="#003033"
-                      po_btnSlowDown_background.border.color="#2CDFE8"
-                      break;
-                  }
-                  case 0x02:
-                  {
+            function setsta(sta)
+            {
+                switch(sta)
+                {
+                    case 0x00:
+                    {
+                        po_btnSlowDown.enabled=false
+                        po_txtSlowDown.color="#7f7f7f"
+                        po_btnSlowDown_background.border.color="#7f7f7f"
+                        po_btnSlowDown_background.color="#7f7f7f"
+                        break;
+                    }
+                    case 0x01:
+                    {
+                        po_btnSlowDown.enabled=true
+                        po_txtSlowDown.color="#48FFFF"
+                        po_btnSlowDown_background.color="#003033"
+                        po_btnSlowDown_background.border.color="#2CDFE8"
+                        break;
+                    }
+                    case 0x02:
+                    {
 
-                      po_btnSlowDown.enabled=true
-                      po_txtSlowDown.color="#FFFFFF"
-                      po_btnSlowDown_background.color="#48FFFF"
-                      po_btnSlowDown_background.border.color="#2CDFE8"
-                      break;
-                  }
-                  default:break;
-               }
-           }
+                        po_btnSlowDown.enabled=true
+                        po_txtSlowDown.color="#FFFFFF"
+                        po_btnSlowDown_background.color="#48FFFF"
+                        po_btnSlowDown_background.border.color="#2CDFE8"
+                        break;
+                    }
+                    default:break;
+                }
+            }
 
            onPressed:
            {
@@ -641,13 +543,8 @@ Rectangle {
                id: po_btnFastDown
                y: 214
                width: 200
-//               anchors.verticalCenter: btnSlowDown.verticalCenter
-//               anchors.top: btnSlowDown.top
-//               anchors.bottom: speedName.bottom
                x: 931
                font.pixelSize: 28
-//               anchors.bottomMargin: 0
-//               anchors.topMargin: 0
                // 设置字体大小
                Image {
                    //@disable-check M16
@@ -675,7 +572,7 @@ Rectangle {
                // 设置按钮背景
                background: Rectangle {
                    id:po_btnFastDown_background
-                   implicitWidth: 200
+                   implicitWidth: 250
                    implicitHeight: 56
                    opacity: 0.25
                    color: "#003033"
@@ -732,139 +629,131 @@ Rectangle {
            }
 
           //左侧云台归零按钮
-          Button {
-              //@disable-check M16
-              objectName: "po_btnCaliGimbalL"
-              id: po_btnCaliGimbalL
-              y: 665
-              x: 575
-              width: 200
-              height: 53
-//              anchors.left: po_robotArmEnable.left
-//              anchors.right: po_robotArmEnable.right
-//              anchors.bottom: po_speedName3.bottom
-              font.pixelSize: 28
-              anchors.bottomMargin: 0
+            Button {
+                //@disable-check M16
+                objectName: "po_btnCaliGimbalL"
+                id: po_btnCaliGimbalL
+                y: 665
+                x: 575
+                width: 250
+                height: 53
+                font.pixelSize: 28
+                anchors.bottomMargin: 0
 
-              // 设置字体大小
-              // 设置按钮文本
-              contentItem: Text {
-                  id: po_btnCaliGimbalL_Text
-                  text: qsTr("云台归零")
-                  font.pixelSize: 28
-                  opacity: 1.0
-                  color: "#48FFFF"
-                  horizontalAlignment: Text.AlignHCenter
-                  verticalAlignment: Text.AlignVCenter
-                  elide: Text.ElideRight
-              }
+                contentItem: Text {
+                    id: po_btnCaliGimbalL_Text
+                    text: qsTr("左侧机械臂复位")
+                    font.pixelSize: 28
+                    opacity: 1.0
+                    color: "#48FFFF"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                }
               // 设置按钮背景
-              background: Rectangle {
-                  id: po_btnCaliGimbalL_Background
-                  implicitWidth: 200
-                  implicitHeight: 56
-                  opacity: 0.25
-                  color: "#003033"//#7f7f7f
-                  border.color: "#2CDFE8"
-                  border.width: 2
-                  radius:10
-              }
-              function setsta(sta)
-              {
-                  switch(sta)
-                  {
-                     case 0x00:
-                     {
-                         po_btnCaliGimbalL_Text.color = "#7f7f7f"
-                         po_btnCaliGimbalL_Background.border.color = "#7f7f7f"
-                         po_btnCaliGimbalL_Background.color = "#7f7f7f"
-                         break;
-                     }
-                     case 0x01:
-                     {
-                         po_btnCaliGimbalL_Text.text = qsTr("左侧云台归零")
-                         po_btnCaliGimbalL_Text.color = "#48FFFF"
-                         po_btnCaliGimbalL_Background.color = "#003033"
-                         po_btnCaliGimbalL_Background.border.color = "#2CDFE8"
-                         break;
-                     }
-                     case 0x02:
-                     {
-                         po_btnCaliGimbalL_Text.text = qsTr("归零中")
-                         po_btnCaliGimbalL_Text.color = "#FFFFFF"
-                         po_btnCaliGimbalL_Background.color = "#48FFFF"
-                         po_btnCaliGimbalL_Background.border.color = "#2CDFE8"
-                         break;
-                     }
-                     default:break;
-                  }
-              }
-          }
+                background: Rectangle {
+                    id: po_btnCaliGimbalL_Background
+                    implicitWidth: 250
+                    implicitHeight: 56
+                    opacity: 0.25
+                    color: "#003033"//#7f7f7f
+                    border.color: "#2CDFE8"
+                    border.width: 2
+                    radius:10
+                }
+                function setsta(sta)
+                {
+                    switch(sta)
+                    {
+                        case 0x00:
+                        {
+                            po_btnCaliGimbalL_Text.color = "#7f7f7f"
+                            po_btnCaliGimbalL_Background.border.color = "#7f7f7f"
+                            po_btnCaliGimbalL_Background.color = "#7f7f7f"
+                            break;
+                        }
+                        case 0x01:
+                        {
+                            po_btnCaliGimbalL_Text.text = qsTr("左侧机械臂复位")
+                            po_btnCaliGimbalL_Text.color = "#48FFFF"
+                            po_btnCaliGimbalL_Background.color = "#003033"
+                            po_btnCaliGimbalL_Background.border.color = "#2CDFE8"
+                            break;
+                        }
+                        case 0x02:
+                        {
+                            po_btnCaliGimbalL_Text.text = qsTr("左侧机械臂复位中")
+                            po_btnCaliGimbalL_Text.color = "#FFFFFF"
+                            po_btnCaliGimbalL_Background.color = "#48FFFF"
+                            po_btnCaliGimbalL_Background.border.color = "#2CDFE8"
+                            break;
+                        }
+                        default:break;
+                    }
+                }
+            }
 
-          //左侧器械归零按钮
-          Button {
-              //@disable-check M16
-              objectName: "po_btnCaliInstrumentL"
-              id: po_btnCaliInstrumentL
-              y: 750//843
-              x: 575
-              font.pixelSize: 28
-              anchors.rightMargin: 0
-              anchors.horizontalCenter: po_btnCaliGimbalL.horizontalCenter
-              // 设置字体大小
-              // 设置按钮文本
-              contentItem: Text {
-                  id: po_btnCaliInstrumentL_Text
-                  text: qsTr("器械归零")
-                  font.pixelSize: 28
-                  opacity: 1.0
-                  color: "#48FFFF"
-                  horizontalAlignment: Text.AlignHCenter
-                  verticalAlignment: Text.AlignVCenter
-                  elide: Text.ElideRight
-              }
-              // 设置按钮背景
-              background: Rectangle {
-                  id: po_btnCaliInstrumentL_Background
-                  implicitWidth: 200
-                  implicitHeight: 56
-                  opacity: 0.25
-                  color: "#003033"
-                  border.color: "#2CDFE8"
-                  border.width: 2
-                  radius:10
-              }
-              function setsta(sta)
-              {
-                  switch(sta)
-                  {
-                     case 0x00:
-                     {
-                         po_btnCaliInstrumentL_Text.color="#7f7f7f"
-                         po_btnCaliInstrumentL_Background.border.color="#7f7f7f"
-                         po_btnCaliInstrumentL_Background.color="#7f7f7f"
-                         break;
-                     }
-                     case 0x01:
-                     {
-                         po_btnCaliInstrumentL_Text.text = qsTr("左侧器械归零")
-                         po_btnCaliInstrumentL_Text.color="#48FFFF"
-                         po_btnCaliInstrumentL_Background.color="#003033"
-                         po_btnCaliInstrumentL_Background.border.color="#2CDFE8"
-                         break;
-                     }
-                     case 0x02:
-                     {
-                         po_btnCaliInstrumentL_Text.text = qsTr("归零中")
-                         po_btnCaliInstrumentL_Text.color="#FFFFFF"
-                         po_btnCaliInstrumentL_Background.color="#48FFFF"
-                         po_btnCaliInstrumentL_Background.border.color="#2CDFE8"
-                         break;
-                     }
-                     default:break;
-                  }
-              }
-          }
+            //左侧器械归零按钮
+            Button {
+                //@disable-check M16
+                objectName: "po_btnCaliInstrumentL"
+                id: po_btnCaliInstrumentL
+                y: 750//843
+                x: 575
+                font.pixelSize: 28
+                anchors.rightMargin: 0
+                anchors.horizontalCenter: po_btnCaliGimbalL.horizontalCenter
+                contentItem: Text {
+                    id: po_btnCaliInstrumentL_Text
+                    text: qsTr("左侧器械复位")
+                    font.pixelSize: 28
+                    opacity: 1.0
+                    color: "#48FFFF"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                }
+                background: Rectangle {
+                    id: po_btnCaliInstrumentL_Background
+                    implicitWidth: 250
+                    implicitHeight: 56
+                    opacity: 0.25
+                    color: "#003033"
+                    border.color: "#2CDFE8"
+                    border.width: 2
+                    radius:10
+                }
+                function setsta(sta)
+                {
+                    switch(sta)
+                    {
+                        case 0x00:
+                        {
+                            po_btnCaliInstrumentL_Text.color="#7f7f7f"
+                            po_btnCaliInstrumentL_Background.border.color="#7f7f7f"
+                            po_btnCaliInstrumentL_Background.color="#7f7f7f"
+                            break;
+                        }
+                    case 0x01:
+                    {
+                        po_btnCaliInstrumentL_Text.text = qsTr("左侧器械复位")
+                        po_btnCaliInstrumentL_Text.color="#48FFFF"
+                        po_btnCaliInstrumentL_Background.color="#003033"
+                        po_btnCaliInstrumentL_Background.border.color="#2CDFE8"
+                        break;
+                    }
+                    case 0x02:
+                    {
+                        po_btnCaliInstrumentL_Text.text = qsTr("左侧器械复位中")
+                        po_btnCaliInstrumentL_Text.color="#FFFFFF"
+                        po_btnCaliInstrumentL_Background.color="#48FFFF"
+                        po_btnCaliInstrumentL_Background.border.color="#2CDFE8"
+                        break;
+                    }
+                    default:break;
+                }
+            }
+        }
           //右侧云台归零
           Button {
               //@disable-check M16
@@ -872,7 +761,7 @@ Rectangle {
               id: po_btnCaliGimbalR
               x: 1430
               y: 665
-              width: 200
+              width: 250
               height: 53
               anchors.verticalCenter: po_btnCaliGimbalL.verticalCenter
               anchors.top: po_btnCaliGimbalL.top
@@ -881,7 +770,7 @@ Rectangle {
               // 设置按钮文本
               contentItem: Text {
                   id: po_btnCaliGimbalR_Text
-                  text: qsTr("机械臂归零")
+                  text: qsTr("右侧机械臂复位")
                   font.pixelSize: 28
                   opacity: 1.0
                   color: "#48FFFF"
@@ -892,7 +781,7 @@ Rectangle {
               // 设置按钮背景
               background: Rectangle {
                   id:po_btnCaliGimbalR_Background
-                  implicitWidth: 200
+                  implicitWidth: 250
                   implicitHeight: 56
                   opacity: 0.25
                   color: "#003033"
@@ -913,7 +802,7 @@ Rectangle {
                      }
                      case 0x01:
                      {
-                         po_btnCaliGimbalR_Text.text = qsTr("机械臂归零")
+                         po_btnCaliGimbalR_Text.text = qsTr("右侧机械臂复位")
                          po_btnCaliGimbalR_Text.color="#48FFFF"
                          po_btnCaliGimbalR_Background.color="#003033"
                          po_btnCaliGimbalR_Background.border.color="#2CDFE8"
@@ -921,7 +810,7 @@ Rectangle {
                      }
                      case 0x02:
                      {
-                         po_btnCaliGimbalR_Text.text = qsTr("机械臂归零中")
+                         po_btnCaliGimbalR_Text.text = qsTr("右侧机械臂复位中")
                          po_btnCaliGimbalR_Text.color="#FFFFFF"
                          po_btnCaliGimbalR_Background.color="#48FFFF"
                          po_btnCaliGimbalR_Background.border.color="#2CDFE8"
@@ -945,7 +834,7 @@ Rectangle {
               // 设置按钮文本
               contentItem: Text {
                   id: po_btnCaliInstrumentR_Text
-                  text: qsTr("器械归零")
+                  text: qsTr("右侧器械复位")
                   font.pixelSize: 28
                   opacity: 1.0
                   color: "#48FFFF"
@@ -956,7 +845,7 @@ Rectangle {
               // 设置按钮背景
               background: Rectangle {
                   id:po_btnCaliInstrumentR_Background
-                  implicitWidth: 200
+                  implicitWidth: 250
                   implicitHeight: 56
                   opacity: 0.25
                   color: "#003033"
@@ -977,7 +866,7 @@ Rectangle {
                      }
                      case 0x01:
                      {
-                         po_btnCaliInstrumentR_Text.text = qsTr("右侧器械归零")
+                         po_btnCaliInstrumentR_Text.text = qsTr("右侧器械复位")
                          po_btnCaliInstrumentR_Text.color="#48FFFF"
                          po_btnCaliInstrumentR_Background.color="#003033"
                          po_btnCaliInstrumentR_Background.border.color="#2CDFE8"
@@ -985,7 +874,7 @@ Rectangle {
                      }
                      case 0x02:
                      {
-                         po_btnCaliInstrumentR_Text.text = qsTr("右侧器械归零中")
+                         po_btnCaliInstrumentR_Text.text = qsTr("右侧器械复位中")
                          po_btnCaliInstrumentR_Text.color="#FFFFFF"
                          po_btnCaliInstrumentR_Background.color="#48FFFF"
                          po_btnCaliInstrumentR_Background.border.color="#2CDFE8"
@@ -1363,7 +1252,7 @@ Rectangle {
 //              font.family: "Microsoft YaHei UI"
 //              font.bold: true
 //          }
-          Button {
+        Button {
             //@disable-check M16
             objectName: "po_btnEnterOpreation"
             id: po_btnEnterOpreation
@@ -1371,16 +1260,7 @@ Rectangle {
             y: 950
             width: 300
             height: 72
- //           anchors.right: robotArmDisable.right
- //           anchors.top: speedName.top
- //           anchors.bottom: speedName.bottom
-
             font.pixelSize: 36
- //           anchors.topMargin: 2
- //           anchors.bottomMargin: 0
-            // 设置字体大小
-            // 设置按钮文本
-
 
             contentItem: Text {
                 id:po_txt_btnEnterOpreation
@@ -1406,114 +1286,328 @@ Rectangle {
             }
             onPressed:
             {
-                //  uiInterface.liftingFastup();
-                  po_txt_btnEnterOpreation.color="#FFFFFF"
-                  po_btnEnterOpreation_background.color="#48FFFF"
+                po_txt_btnEnterOpreation.color="#FFFFFF"
+                po_btnEnterOpreation_background.color="#48FFFF"
             }
             onReleased:
             {
-                //uiInterface.liftingBrake();
                 po_txt_btnEnterOpreation.color="#48FFFF"
                 po_btnEnterOpreation_background.color="#003033"
             }
             onClicked: {
-                UIinterface.setRobotControlMode(3);
-                inOpreationPage.visible = true
-                preOpreationPage.visible = false
+                onClicked: po_sureEnterOperation.open()
             }
-         }
+            //确认进入手术中
+            Popup{
+                    id: po_sureEnterOperation
+                    width: 518
+                    height: 312
+                    anchors.centerIn: Overlay.overlay
+                    modal: true
+                    focus: true
+                    closePolicy: Popup.NoAutoClose
+                    background: Image {
+                        anchors.centerIn: parent
+                        source: "images/bg_tab_win.png"
+                }
+                Rectangle {
+                    id: po_sureEnterOperationBoard
+                    x:-50
+                    y:50
+                    width: 745
+                    height:220
+                    color: "#003033"
+                    border.color: "#18fefe"
+                    opacity: 0.8
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.top: parent.top
+                        text: qsTr("确认进入手术中页面？") ;
+                        color: itemColor
+                        font.pixelSize: 40
+                        anchors.topMargin: 40  // 调整顶部的间距
+                    }
+                }
+
+                 //确定按钮
+                Button {
+                    //@disable-check M16
+                    objectName: "po_btnSureEnterOperationOk"
+                    id: po_btnSureEnterOperationOk
+                    x: 205
+                    y: 175
+                    contentItem: Text {
+                        id: po_btnSureEnterOperationOkText
+                        text: qsTr("确定")
+                        font.pixelSize: 28
+                        opacity: 1.0
+                        color: itemColor
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                    }
+                     // 设置按钮背景
+                    background: Rectangle {
+                        id: po_btnSureEnterOperationOkText_background
+                        implicitWidth: 120
+                        implicitHeight: 56
+                        opacity: 0.25
+                        color: "#003033"
+                        border.color: "#2CDFE8"
+                        border.width: 2
+                    }
+                    onPressed:
+                    {
+                        po_btnSureEnterOperationOkText.color="#FFFFFF"
+                        po_btnSureEnterOperationOkText_background.color="#48FFFF"
+                    }
+                    onReleased:
+                    {
+                        po_btnSureEnterOperationOkText.color="#48FFFF"
+                        po_btnSureEnterOperationOkText_background.color="#003033"
+                    }
+                    onClicked: {
+                        console.log("sure go to operation")
+                        UIinterface.setRobotControlMode(3);
+                        po_sureEnterOperation.close()
+                        inOpreationPage.visible = true
+                        preOpreationPage.visible = false
+                    }
+                }
+                //取消按钮
+                Button {
+                    id: po_btnSureEnterOperationCancel
+                    x: 345
+                    y: 175
+                    // 设置按钮文本
+                    contentItem: Text {
+                        id: btnDelCancelText
+                        text: qsTr("取消")
+                        font.pixelSize: 28
+                        opacity: 1.0
+                        color: itemColor
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                    }
+                     // 设置按钮背景
+                     background: Rectangle {
+                        implicitWidth: 120
+                        implicitHeight: 56
+                        opacity: 0.25
+                        color: "#003033"
+                        border.color: "#2CDFE8"
+                        border.width: 2
+                    }
+                    onClicked: {
+                        po_sureEnterOperation.close()
+                    }
+                }
+            }
+        }
+
         Text {
-                id: po_txtInitialInstrumentAngle
-                //@disable-check M16
-                objectName: "po_txtInitialInstrumentAngle"
-                x: 650
-                y: 950
-                color: "#18fefe"
-                text: "器械夹角"
-                font.pixelSize: 36
-                font.family: "Microsoft YaHei UI"
-                font.bold: true
+            id: po_txtInitialInstrumentAngle
+            //@disable-check M16
+            objectName: "po_txtInitialInstrumentAngle"
+            x: 650
+            y: 950
+            color: "#18fefe"
+            text: "器械夹角"
+            font.pixelSize: 36
+            font.family: "Microsoft YaHei UI"
+            font.bold: true
         }
 
         Button {
-          //@disable-check M16
-          objectName: "po_btnInitialInstrumentAngle30"
-          id: po_btnInitialInstrumentAngle30
-          x: 1250
-          y: 950
-          width: 200
-          height: 72
-          font.pixelSize: 36
-          contentItem: Text {
-              id:po_txtInitialInstrumentAngle30
-              width: 100
-              text: qsTr("30°")
-              font.pixelSize: 36
-              opacity: 1.0
-              color: isInstrumentAngle30 ? "#48FFFF" : "#FFFFFF"
-              horizontalAlignment: Text.AlignHCenter
-              verticalAlignment: Text.AlignVCenter
-              elide: Text.ElideRight
-          }
-          // 设置按钮背景
-          background: Rectangle {
-              id:po_btnInitialInstrumentAngle30_background
-              implicitWidth: 200
-              implicitHeight: 56
-              opacity: 0.25
-              color: isInstrumentAngle30 ? "#003033" : "#48FFFF"
-              border.color: "#2CDFE8"
-              border.width: 2
-              radius: 10
-          }
-          MouseArea {
-              anchors.fill: parent
-              onClicked: {
-                  isInstrumentAngle30 = !isInstrumentAngle30
-                  UIinterface.setInstrumentAngle(30);
-              }
-          }
-       }
-
-        Button {
-          //@disable-check M16
-          objectName: "po_btnInitialInstrumentAngle60"
-          id: po_btnInitialInstrumentAngle60
-          x: 950
-          y: 950
-          width: 200
-          height: 72
-          font.pixelSize: 36
-          contentItem: Text {
-              id:po_txtInitialInstrumentAngle60
-              width: 100
-              text: qsTr("60°")
-              font.pixelSize: 36
-              opacity: 1.0
-              color: isInstrumentAngle30 ? "#FFFFFF" : "#48FFFF"
-              horizontalAlignment: Text.AlignHCenter
-              verticalAlignment: Text.AlignVCenter
-              elide: Text.ElideRight
-          }
-          // 设置按钮背景
-          background: Rectangle {
-              id:po_btnInitialInstrumentAngle60_background
-              implicitWidth: 200
-              implicitHeight: 56
-              opacity: 0.25
-              color: isInstrumentAngle30 ? "#48FFFF": "#003033"
-              border.color: "#2CDFE8"
-              border.width: 2
-              radius: 10
-          }
-          MouseArea {
-              anchors.fill: parent
-              onClicked: {
-                  isInstrumentAngle30 = !isInstrumentAngle30
-                  UIinterface.setInstrumentAngle(60);
-              }
+            //@disable-check M16
+            objectName: "po_btnInitialInstrumentAngle30"
+            id: po_btnInitialInstrumentAngle30
+            enabled: !isInstrumentAngle30
+            x: 1250
+            y: 950
+            width: 200
+            height: 72
+            font.pixelSize: 36
+            contentItem: Text {
+                id:po_txtInitialInstrumentAngle30
+                width: 100
+                text: qsTr("30°")
+                font.pixelSize: 36
+                opacity: 1.0
+                color: isInstrumentAngle30 ? "#FFFFFF" : "#48FFFF"
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+            }
+            background: Rectangle {
+                id:po_btnInitialInstrumentAngle30_background
+                implicitWidth: 200
+                implicitHeight: 56
+                opacity: 0.25
+                color: isInstrumentAngle30 ? "#48FFFF" : "#003033"
+                border.color: "#2CDFE8"
+                border.width: 2
+                radius: 10
+            }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    po_sureToSwitchInstrumentAngle_pop.open()
+                }
             }
         }
 
+        Button {
+            id: po_btnInitialInstrumentAngle60
+            enabled: isInstrumentAngle30
+            x: 950
+            y: 950
+            width: 200
+            height: 72
+            font.pixelSize: 36
+            contentItem: Text {
+                id:po_txtInitialInstrumentAngle60
+                width: 100
+                text: qsTr("60°")
+                font.pixelSize: 36
+                opacity: 1.0
+                color: isInstrumentAngle30 ? "#48FFFF" : "#FFFFFF"
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+            }
+            background: Rectangle {
+                id:po_btnInitialInstrumentAngle60_background
+                implicitWidth: 200
+                implicitHeight: 56
+                opacity: 0.25
+                color: isInstrumentAngle30 ? "#003033" : "#48FFFF"
+                border.color: "#2CDFE8"
+                border.width: 2
+                radius: 10
+            }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    po_sureToSwitchInstrumentAngle_pop.open()
+                }
+            }
+        }
 
+        //确认切换器械角度
+        Popup{
+                id: po_sureToSwitchInstrumentAngle_pop
+                width: 518
+                height: 312
+                anchors.centerIn: Overlay.overlay
+                modal: true
+                focus: true
+                closePolicy: Popup.NoAutoClose
+                background: Image {
+                    anchors.centerIn: parent
+                    source: "images/bg_tab_win.png"
+                }
+                Rectangle {
+                    id: po_sureToSwitchInstrumentAngle_Board
+                    x:-50
+                    y:50
+                    width: 745
+                    height:220
+                    color: "#003033"
+                    border.color: "#18fefe"
+                    opacity: 0.8
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: isInstrumentAngle30? qsTr("确认更改末端器械角度为60度？") : qsTr("确认更改末端器械角度为30度？")
+                        anchors.top: parent.top
+                        anchors.topMargin: 40  // 调整顶部的间距
+                        font.pixelSize: 40
+                        color: itemColor
+                    }
+                }
+
+                 //确定按钮
+                Button {
+                    id: po_sureToSwitchInstrumentAngleOk
+                    x: 205
+                    y: 175
+                    contentItem: Text {
+                        id: po_sureToSwitchInstrumentAngleOk_Text
+                        text: qsTr("确定")
+                        font.pixelSize: 28
+                        opacity: 1.0
+                        color: itemColor
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                    }
+                     // 设置按钮背景
+                    background: Rectangle {
+                        id: po_sureToSwitchInstrumentAngleOk_Text_background
+                        implicitWidth: 120
+                        implicitHeight: 56
+                        opacity: 0.25
+                        color: "#003033"
+                        border.color: "#2CDFE8"
+                        border.width: 2
+                    }
+                    onPressed:
+                    {
+                        po_sureToSwitchInstrumentAngleOk_Text.color="#FFFFFF"
+                        po_sureToSwitchInstrumentAngleOk_Text_background.color="#48FFFF"
+                    }
+                    onReleased:
+                    {
+                        po_sureToSwitchInstrumentAngleOk_Text.color="#48FFFF"
+                        po_sureToSwitchInstrumentAngleOk_Text_background.color="#003033"
+                    }
+                    onClicked: {
+                        if(isInstrumentAngle30 === true)
+                        {
+                            UIinterface.setInstrumentAngle(60)
+                            isInstrumentAngle30 = false
+                            po_sureToSwitchInstrumentAngle_pop.close()
+                            return;
+                        }
+                        if(isInstrumentAngle30 == false)
+                        {
+                            UIinterface.setInstrumentAngle(30)
+                            isInstrumentAngle30 = true
+                            po_sureToSwitchInstrumentAngle_pop.close()
+                            return;
+                        }
+
+                    }
+                }
+                //取消按钮
+                Button {
+                    id: po_cancelSwitchInstrumentAngle30Ok
+                    x: 345
+                    y: 175
+                    // 设置按钮文本
+                    contentItem: Text {
+                        id: po_cancelSwitchInstrumentAngle30OkText
+                        text: qsTr("取消")
+                        font.pixelSize: 28
+                        opacity: 1.0
+                        color: itemColor
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                    }
+                     // 设置按钮背景
+                     background: Rectangle {
+                        implicitWidth: 120
+                        implicitHeight: 56
+                        opacity: 0.25
+                        color: "#003033"
+                        border.color: "#2CDFE8"
+                        border.width: 2
+                    }
+                    onClicked: {
+                        po_sureToSwitchInstrumentAngle_pop.close()
+                    }
+                }
+        }
 }

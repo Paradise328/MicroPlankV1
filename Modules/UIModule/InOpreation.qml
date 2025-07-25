@@ -1962,17 +1962,7 @@ Rectangle {
             y: 950
             width: 300
             height: 72
- //           anchors.right: robotArmDisable.right
- //           anchors.top: speedName.top
- //           anchors.bottom: speedName.bottom
-
             font.pixelSize: 36
- //           anchors.topMargin: 2
- //           anchors.bottomMargin: 0
-            // 设置字体大小
-            // 设置按钮文本
-
-
             contentItem: Text {
                 id:io_txt_btnReturnPreOpreation
                 width: 100
@@ -1997,22 +1987,112 @@ Rectangle {
             }
             onPressed:
             {
-                //  uiInterface.liftingFastup();
                   io_txt_btnReturnPreOpreation.color="#FFFFFF"
                   io_btnReturnPreOpreation_background.color="#48FFFF"
             }
             onReleased:
             {
-                //uiInterface.liftingBrake();
                 io_txt_btnReturnPreOpreation.color="#48FFFF"
                 io_btnReturnPreOpreation_background.color="#003033"
             }
             onClicked: {
-                UIinterface.setRobotControlMode(1);
-                inOpreationPage.visible = false
-                preOpreationPage.visible = true
+                io_sureBackToOperation.open()
+
             }
-         }
+            //确认返回术前准备
+            Popup{
+                id: io_sureBackToOperation
+                width: 518
+                height: 312
+                anchors.centerIn: Overlay.overlay
+                modal: true
+                focus: true
+                closePolicy: Popup.NoAutoClose
+                background: Image {
+                    anchors.centerIn: parent
+                    source: "images/bg_tab_win.png"
+                }
+                Rectangle {
+                    id: io_sureBackToOperationBoard
+                    x:-50
+                    y:50
+                    width: 745
+                    height: 220
+                    color: "#003033"
+                    border.color: "#18fefe"
+                    opacity: 0.8
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.top: parent.top
+                        text: qsTr("确认返回术前准备页面？") ;
+                        color: itemColor
+                        font.pointSize: 40
+                        anchors.topMargin: 40  // 调整顶部的间距
+                    }
+                }
+
+                 //确定按钮
+                Button {
+                    id: io_btnSureBackToOperationOk
+                    x: 205
+                    y: 175
+                     // 设置按钮文本
+                    contentItem: Text {
+                        id: btnDelText
+                        text: qsTr("确定")
+                        font.pixelSize: 28
+                        opacity: 1.0
+                        color: itemColor
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                    }
+                    background: Rectangle {
+                        implicitWidth: 120
+                        implicitHeight: 56
+                        opacity: 0.25
+                        color: "#003033"
+                        border.color: "#2CDFE8"
+                        border.width: 2
+                    }
+                     onClicked: {
+                        io_sureBackToOperation.close()
+                        UIinterface.setRobotControlMode(1)
+                        inOpreationPage.visible = false
+                        preOpreationPage.visible = true
+                    }
+                }
+                 //删除取消按钮
+                 Button {
+                     id: io_btnsureBackToOperationCancel
+                     x: 345
+                     y: 175
+                     // 设置按钮文本
+                     contentItem: Text {
+                         id: io_btnsureBackToOperationCancelText
+                         text: qsTr("取消")
+                         font.pixelSize: 28
+                         opacity: 1.0
+                         color: itemColor
+                         horizontalAlignment: Text.AlignHCenter
+                         verticalAlignment: Text.AlignVCenter
+                         elide: Text.ElideRight
+                     }
+                     // 设置按钮背景
+                     background: Rectangle {
+                         implicitWidth: 120
+                         implicitHeight: 56
+                         opacity: 0.25
+                         color: "#003033"
+                         border.color: "#2CDFE8"
+                         border.width: 2
+                     }
+                     onClicked: {
+                         io_sureBackToOperation.close()
+                     }
+                 }
+              }
+        }
 }
 
 /*##^##

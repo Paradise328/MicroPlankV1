@@ -16,7 +16,7 @@ void MicroPlank::startSystem()
 
     // startForceSensor();
 
-    startDomainControlerThread();
+    // startDomainControlerThread();
 
     /* 开启MotorDriver线程 */
     initMotorDriver();

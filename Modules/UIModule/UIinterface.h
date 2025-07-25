@@ -148,8 +148,6 @@ public Q_SLOTS:
     void onButton_CaliGimbalR_Clicked();
     void onButton_CaliInstrumentL_Clicked();
     void onButton_CaliInstrumentR_Clicked();
-    void PO_GoToOperation_Clicked();
-    void IO_BackToPrepare_Clicked();
     void onButton_PowerOff();
     void resetButton_Calibration();
 
@@ -224,8 +222,8 @@ private:
     QObject                 *m_PO_Button_CaliInstrument_L = nullptr;
     QObject                 *m_PO_Button_CaliInstrument_R = nullptr;
     QObject                 *m_PowerOffButton = nullptr;
-    QObject                 *m_PO_GoToOperation = nullptr;
-    QObject                 *m_IO_BackToPrepare = nullptr;
+    // QObject                 *m_PO_GoToOperation = nullptr;
+    // QObject                 *m_IO_BackToPrepare = nullptr;
 
     QObject                 *m_IO_Text_Enable_L = nullptr;
     QObject                 *m_IO_Text_Enable_R = nullptr;

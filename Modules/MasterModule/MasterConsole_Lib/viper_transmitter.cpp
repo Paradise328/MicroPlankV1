@@ -288,7 +288,6 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
                 viperDataTmp[i][j] = Uint8ArrToFloat(cftemp.payload.args,(28 * i + 4 * j + 10));
             }
         }
-        LOG(INFO) << " x: " << viperDataTmp[0][0] << " y: " << viperDataTmp[0][1] << " z: " << viperDataTmp[0][2];
         int stepPedal = cftemp.payload.args[9];
         if(cftemp.payload.args[0] == Dev_Sta_OK)
         {
@@ -307,8 +306,6 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
 
             auto openAngle = calculateOpenAngle(Handle_Angle_LEFT, Handle_Angle_RIGHT);
             handlePoseTmp = motionMapping(viperDataTmp, openAngle, stepPedal);
-
-            // LOG(INFO)<<"m_armAnglePerSide: "<<m_armAnglePerSide;
         }
         else if(cftemp.payload.args[0]== Dev_Sta_LEFTHANDLE_ERROR)
         {
@@ -470,10 +467,6 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
 
     poseDataCurInSlaveFrame.stepPedal = stepPedal;
 
-    auto handlePoseCur = poseDataCurInSlaveFrame;
-
-    // LOG(INFO)   << " yaw_R: " << handlePoseCur.handlePoseR_Arzimuth / M_PI * 180  << " pitch_R: " << handlePoseCur.handlePoseR_Elevation / M_PI * 180 << " roll_R: " << handlePoseCur.handlePoseR_Roll / M_PI * 180;
-    // LOG(INFO)<<"X: "<<poseDataCurInSlaveFrame.handlePoseR_X<<" Z: "<<poseDataCurInSlaveFrame.handlePoseR_Z;
     return poseDataCurInSlaveFrame;
 }
 
@@ -522,7 +515,6 @@ void Viper_Transmitter::readHandleData_Quaternion(QByteArray qba)
             Handle_Key_RIGHT=cftemp.payload.args[8];
             Handle_Key_RIGHT<<=8;
             Handle_Key_RIGHT+=cftemp.payload.args[7];
-            qDebug()<< "Handle_Key_LEFT: " << Handle_Key_LEFT << " Handle_Key_Right" << Handle_Key_RIGHT;
 
             auto openAngle = calculateOpenAngle(Handle_Angle_LEFT, Handle_Angle_RIGHT);
 

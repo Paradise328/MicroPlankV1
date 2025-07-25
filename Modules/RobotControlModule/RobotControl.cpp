@@ -3049,9 +3049,6 @@ void RobotControl::changeAngle_R(){
     jointAngle3_Cur_R = -(static_cast<double>(motorPos_Cur_R[Joint3_R] - JointEncoderPerRevolution / 2)) /
                         static_cast<double>(JointEncoderPerRevolution) * 360.0 /180.0 * M_PI;
 
-
-    // LOG(INFO)<<"jointAngle1_Cur_R: "<<jointAngle1_Cur_R *180/M_PI<<" jointAngle2_Cur_R: "<<jointAngle2_Cur_R *180/M_PI<<" jointAngle3_Cur_R: "<<jointAngle3_Cur_R *180/M_PI;
-
     double y_Cur_R = m_endArm_1 * sin(jointAngle1_Cur_R) + m_endArm_2 * sin(jointAngle1_Cur_R + jointAngle2_Cur_R) + m_endArm_3 * sin(jointAngle1_Cur_R + jointAngle2_Cur_R + jointAngle3_Cur_R);
     double z_Cur_R = - m_endArm_1 * cos(jointAngle1_Cur_R) - m_endArm_2 * cos(jointAngle1_Cur_R + jointAngle2_Cur_R) - m_endArm_3 * cos(jointAngle1_Cur_R + jointAngle2_Cur_R + jointAngle3_Cur_R);
     double alpha_R;
@@ -3177,10 +3174,7 @@ void RobotControl::MaxonGoHome_4Maxons(const char& side)//yu
             LOG(INFO) << "Start left Maxon homing! ";
             while(true)
             {
-
                 auto homeStatusTmp = m_motorHomingStatus_L.load();
-                // LOG(INFO) << " m_motorHomingStatus_L: " << homeStatusTmp;
-
                 if(homeStatusTmp[4] == false &&
                     homeStatusTmp[5] == false &&
                     homeStatusTmp[6] == false &&
@@ -3193,7 +3187,6 @@ void RobotControl::MaxonGoHome_4Maxons(const char& side)//yu
                 }
                 usleep(20 * 1000);
             }
-
         });
         calibration.detach();
         usleep(20 * 1000);
@@ -3397,8 +3390,8 @@ void RobotControl::dealWithMsg()
                     LOG(INFO) << "Instrument Angle : 30";
 
                     if(m_armAnglePerSide == 30){
-                    changeAngle_L();
-                    changeAngle_R();
+                        changeAngle_L();
+                        changeAngle_R();
                     }
                     m_armAnglePerSide = 15;
                 }else if(i.value() ==  "60")
@@ -3406,8 +3399,8 @@ void RobotControl::dealWithMsg()
                     LOG(INFO) << "Instrument Angle : 60";
 
                     if(m_armAnglePerSide == 15){
-                    changeAngle_L();
-                    changeAngle_R();
+                        changeAngle_L();
+                        changeAngle_R();
                     }
                     m_armAnglePerSide = 30;
                 }

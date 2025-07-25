@@ -507,66 +507,51 @@ Item {
         }
     }
 
-    //左侧末端信息检查
-    Text {
-        //@disable-check M16
-        objectName: "init_txt_leftfinialcheck"
-        id: init_txt_leftfinialcheck
-        y: 638
-        color: "#18fefe"
-        text: "左执行末端检查中"
-        horizontalAlignment: Text.AlignLeft
-        verticalAlignment: Text.verticalCenter
-        anchors.verticalCenter: parent.verticalCenter
-        //anchors.left: parent.left
-        font.letterSpacing: 20
-        font.pixelSize: 44
-        anchors.leftMargin: 760
-        anchors.verticalCenterOffset: textFirstColOffset
-        anchors.horizontalCenterOffset: textRightRowOffset
-        anchors.horizontalCenter: parent.horizontalCenter
-        font.bold: true
-        font.family: "Microsoft YaHei UI"
-    }
+        //左侧末端信息检查
+        Text {
+            //@disable-check M16
+            objectName: "init_txt_leftfinialcheck"
+            id: init_txt_leftfinialcheck
+            y: 638
+            color: "#18fefe"
+            text: "左执行末端检查中"
+            horizontalAlignment: Text.AlignLeft
+            verticalAlignment: Text.verticalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            //anchors.left: parent.left
+            font.letterSpacing: 20
+            font.pixelSize: 44
+            anchors.leftMargin: 760
+            anchors.verticalCenterOffset: textFirstColOffset
+            anchors.horizontalCenterOffset: textRightRowOffset
+            anchors.horizontalCenter: parent.horizontalCenter
+            font.bold: true
+            font.family: "Microsoft YaHei UI"
+        }
 
-    //右侧末端信息检查
-    Text {
-         //@disable-check M16
-         objectName: "init_txt_rightfinialcheck"
-         id: init_txt_rightfinialcheck
-         y: 702
-         color: "#13e0da"
-         text: "右执行末端检查中"
-         horizontalAlignment: Text.AlignLeft
-         verticalAlignment: Text.verticalCenter
-         anchors.verticalCenter: parent.verticalCenter
-        // anchors.left: parent.left
-         font.letterSpacing: 20
-         font.pixelSize: 44
-         anchors.leftMargin: 760
-         anchors.verticalCenterOffset: textSecondColOffset
-         anchors.horizontalCenterOffset: textRightRowOffset
-         anchors.horizontalCenter: parent.horizontalCenter
-         font.bold: true
-         font.family: "Microsoft YaHei UI"
-     }
+        //右侧末端信息检查
+        Text {
+            //@disable-check M16
+            objectName: "init_txt_rightfinialcheck"
+            id: init_txt_rightfinialcheck
+            y: 702
+            color: "#13e0da"
+            text: "右执行末端检查中"
+            horizontalAlignment: Text.AlignLeft
+            verticalAlignment: Text.AlignCenter
+            anchors.verticalCenter: parent.verticalCenter
+            // anchors.left: parent.left
+            font.letterSpacing: 20
+            font.pixelSize: 44
+            anchors.leftMargin: 760
+            anchors.verticalCenterOffset: textSecondColOffset
+            anchors.horizontalCenterOffset: textRightRowOffset
+            anchors.horizontalCenter: parent.horizontalCenter
+            font.bold: true
+            font.family: "Microsoft YaHei UI"
+        }
 
 
-    //启动过程信息
-    Text
-    {
-          id: init_initStatusText
-          width: 400
-          height: 40
-          x: 1100
-          y: 600
-          font.letterSpacing: 20
-          font.pixelSize: 44
-          font.bold: true
-          font.family: "Microsoft YaHei UI"
-          text: qsTr("启动中")
-          color: "#48FFFF"
-      }
 
     //进度条
     ProgressBar {
@@ -583,14 +568,32 @@ Item {
               //@disable-check M16
               objectName: "init_initprogressbar"
               id: init_initprogressbar
-              x:750
-              y:675
+              x:475
+              y:500
              // anchors.centerIn: parent
               value: (progress/100) //进度条默认值
               padding: 0
               width: init_initprogressbar.w;
               height:init_initprogressbar.h;
               visible: true
+
+              //启动过程信息
+              Text
+              {
+                    id: init_initStatusText
+                    width: 400
+                    height: 60
+                    x:340
+                    anchors.top: parent.top
+                    anchors.topMargin: -60  // 调整顶部的间距
+                    font.letterSpacing: 20
+                    font.pixelSize: 40
+                    font.bold: true
+                    font.family: "Microsoft YaHei UI"
+                    text: qsTr("启动中")
+                    color: "#48FFFF"
+              }
+
 
               //取计时器状态
               function isRunning(){
@@ -625,44 +628,43 @@ Item {
                   opacity: 0.1
               }
 
-              Rectangle {
-                  id: initprogressbar_borderrect
-                  x:initprogressbar_backgroundrect.x
-                  y:initprogressbar_backgroundrect.y
-                  width: initprogressbar_backgroundrect.width
-                  height:initprogressbar_backgroundrect.height
-                  radius: init_initprogressbar.proRadius
-                  color: "#003033"
-                  border.color: "#18fefe"
-                  opacity: 0.8
-              }
+                Rectangle {
+                    id: initprogressbar_borderrect
+                    x:initprogressbar_backgroundrect.x
+                    y:initprogressbar_backgroundrect.y
+                    width: initprogressbar_backgroundrect.width
+                    height:initprogressbar_backgroundrect.height
+                    radius: init_initprogressbar.proRadius
+                    color: "#003033"
+                    border.color: "#18fefe"
+                    opacity: 0.8
+                }
 
-              //当前进度色
-              contentItem: Item {
-                  implicitWidth: init_initprogressbar.w
-                  implicitHeight: init_initprogressbar.h
-                  Rectangle {
-                      width: init_initprogressbar.visualPosition * init_initprogressbard.w
-                      height: init_initprogressbar.h
-                      radius: init_initprogressbar.proRadius
-                      color: init_initprogressbar.proColor
-                  }
-              }
-              //@disable-check M300
-              Timer{
-                  id: timer
-                  running: false //默认不启动
-                  repeat: true //重复使用
-                  interval: 10 //每50毫秒响应一次
-                  onTriggered:{
-                      console.log("progressbar timer trig");
-                      init_initprogressbar.progress++;//响应进度
-                      if (init_initprogressbar.progress > 100){
-                          init_initprogressbar.onStop();
-                          return;
-                      }
-                  }
-              }
-          }
-
+                //当前进度色
+                contentItem: Item {
+                    implicitWidth: init_initprogressbar.w
+                    implicitHeight: init_initprogressbar.h
+                    Rectangle {
+                        width: init_initprogressbar.visualPosition * init_initprogressbard.w
+                        height: init_initprogressbar.h
+                        radius: init_initprogressbar.proRadius
+                        color: init_initprogressbar.proColor
+                    }
+                }
+                //@disable-check M300
+                Timer{
+                    id: timer
+                    running: false //默认不启动
+                    repeat: true //重复使用
+                    interval: 10 //每50毫秒响应一次
+                    onTriggered:{
+                        console.log("progressbar timer trig");
+                        init_initprogressbar.progress++;//响应进度
+                        if (init_initprogressbar.progress > 100){
+                            init_initprogressbar.onStop();
+                            return;
+                        }
+                    }
+                }
+            }
 }

@@ -63,10 +63,6 @@ void UIinterface::setQMLComponent()
     this->m_PO_Button_CaliInstrument_L = this->m_Engine.rootObjects().first()->findChild<QObject*>("po_btnCaliInstrumentL");
     this->m_PO_Button_CaliInstrument_R = this->m_Engine.rootObjects().first()->findChild<QObject*>("po_btnCaliInstrumentR");//调用右侧末端归零qml
 
-    this->m_PO_GoToOperation= this->m_Engine.rootObjects().first()->findChild<QObject*>("po_btnEnterOpreation");
-    this->m_IO_BackToPrepare= this->m_Engine.rootObjects().first()->findChild<QObject*>("io_btnReturnPreOpreation");
-
-
     this->m_PowerOffButton = this->m_Engine.rootObjects().first()->findChild<QObject*>("btn_sureShutDownSystem");
 
     this->m_IO_Text_Enable_L = this->m_Engine.rootObjects().first()->findChild<QObject*>("io_txtEnable_L");
@@ -137,10 +133,6 @@ void UIinterface::setConnections()
     connect(this->m_PO_Button_Fastdown,SIGNAL(released()),this,SLOT(onButton_Fastdown_Released()));
     connect(this->m_PO_Button_Slowdown,SIGNAL(pressed()),this,SLOT(onButton_Slowdown_Pressed()));
     connect(this->m_PO_Button_Slowdown,SIGNAL(released()),this,SLOT(onButton_Slowdown_Released()));
-
-    //switch page
-    connect(this->m_PO_GoToOperation,SIGNAL(clicked()),this,SLOT(PO_GoToOperation_Clicked()));
-    connect(this->m_IO_BackToPrepare,SIGNAL(clicked()),this,SLOT(IO_BackToPrepare_Clicked()));
 
     connect(this->m_PowerOffButton,SIGNAL(clicked()),this,SLOT(onButton_PowerOff()));
 
@@ -395,41 +387,16 @@ void UIinterface::setInstrumentAngle(int initInstrumentAngle)
 {
     if(initInstrumentAngle == 30)
     {
-        // QList<QString> arglist;
-        // arglist.append(QString::number(30));
         SendInnerMsg(Module_Inner_E::RobotControl, static_cast<int>(RobotControlAction_E::SwitchInstrumentAngle), "30");
         SendInnerMsg(Module_Inner_E::MasterConsole, static_cast<int>(MasterConsoleAction_E::SwitchInstrumentAngle), "30");
-
     }
 
     if(initInstrumentAngle == 60)
     {
-        // QList<QString> arglist;
-        // arglist.append(QString::number(30));
         SendInnerMsg(Module_Inner_E::RobotControl, static_cast<int>(RobotControlAction_E::SwitchInstrumentAngle), "60");
         SendInnerMsg(Module_Inner_E::MasterConsole, static_cast<int>(MasterConsoleAction_E::SwitchInstrumentAngle), "60");
-
     }
 }
-
-void UIinterface::PO_GoToOperation_Clicked()
-{
-    qDebug()<<"Change Page from 0 to 1";
-//    SendInnerMsg(Module_Inner_E::Slave,static_cast<int>(SlaveAction_E::GALIL_INIT),"l");
-//    SendInnerMsg(Module_Inner_E::Slave,static_cast<int>(SlaveAction_E::GALIL_INIT),"r");
-//    SendInnerMsg(Module_Inner_E::Slave,static_cast<int>(SlaveAction_E::ExecuateControlSet),"true");
-}
-
-void UIinterface::IO_BackToPrepare_Clicked()
-{
-    qDebug()<<"Change Page from 1 to 0";
-//    SendInnerMsg(Module_Inner_E::Slave,static_cast<int>(SlaveAction_E::GALIL_INIT),"l");
-//    SendInnerMsg(Module_Inner_E::Slave,static_cast<int>(SlaveAction_E::GALIL_INIT),"r");
-//    SendInnerMsg(Module_Inner_E::Slave,static_cast<int>(SlaveAction_E::ExecuateControlSet),"false");
-    qDebug()<<"Change Page from 1 to 0 finish";
-}
-
-
 
 void UIinterface::onLightBoardStickChange(uint8_t sta)
 {
