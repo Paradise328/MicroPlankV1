@@ -30,10 +30,10 @@
 #include "Modules/MsgModule/messagequeue.h"
 #include "Modules/SecurityModule/security.h"
 #include "Modules/UIModule/UIinterface.h"
+#include "Modules/UIModule/Audioplay.h"
 #include "Modules/ForceSensorModule/ForceSensor.h"
-//#include "Modules/MotorDriverModule/MotorDriver.h"
 #include "Modules/RobotControlModule/RobotControl.h"
-#include "Modules/RobotControlModule/DomainControler.h"
+#include "Modules/RobotControlModule/DomainController.h"
 
 class MicroPlank:public QObject
 {
@@ -42,11 +42,13 @@ public:
     MicroPlank() = delete;
     explicit MicroPlank(QGuiApplication &app,
                         const MasterConsoleType& MasterConsoleType,
-                        const MotorDriverParameter& motorDriverParameter):
+                        const MotorDriverParameter& motorDriverParameter,
+                        const std::unordered_map<std::string, std::string>& audioMap):
                         m_app(app),
                         m_masterConsoleType(MasterConsoleType),
                         m_motorDriverParameter(motorDriverParameter),
-                        m_isSystemTerminated(false)
+                        m_isSystemTerminated(false),
+                        m_audioMap(audioMap)
                         {
                            m_forceSensor = new ForceSensor(this);
                            // m_forceSensor->initDevice();
@@ -64,6 +66,8 @@ private:
     QGuiApplication     &m_app;
 
     MasterConsoleType   m_masterConsoleType;
+
+    std::unordered_map<std::string, std::string> m_audioMap;
 
     /*整机系统开启线程*/
     void                startSystem();
@@ -98,7 +102,7 @@ private:
     void                startRobotControl();
     void                startForceSensor();
 
-    void                startDomainControlerThread();
+    void                startDomainControllerThread();
 
     /*各模块定义及初始化*/
     MasterConsole       m_masterConsole = MasterConsole(m_masterConsoleType, m_MsgPool);
@@ -113,8 +117,12 @@ private:
 
     RobotControl        m_robotControl = RobotControl(m_masterConsole, m_motorDriver, m_MsgPool);
 
+    AudioPlay           m_audioPlay = AudioPlay(m_audioMap, m_MsgPool);
 
-    DomainControler*    m_domainControler_Right;
+    /* TODO: armNum = 0: Left, armNum = 1: Right */
+    DomainController*    m_domainController_Right = new DomainController(1);
+
+    DomainController*    m_domainController_Left = new DomainController(0);
 };
 
 #endif // MICROPLANK_H

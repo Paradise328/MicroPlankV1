@@ -87,8 +87,8 @@ private:
     std::atomic<int>            m_FilterCase; //0: No Filter; 1: IR Filter; 2: IIR Filter
     const std::vector<double>   m_IRnum{0.0337, 0.0337};  // Numerator coefficients
     const std::vector<double>   m_IRden{1.0, -0.9325};
-    const std::vector<double>   m_IIRnum{0.0200833655642112, 0.0401667311284225, 0.0200833655642112};  // Numerator coefficients ()
-    const std::vector<double>   m_IIRden{1.0, -1.56101807580072, 0.641351538057563};// (b)
+    const std::vector<double>   m_IIRnum{0.0144014403465112, 0.0288028806930224, 0.0144014403465112};  // Numerator coefficients ()
+    const std::vector<double>   m_IIRden{1.0, -1.63299316185545, 0.690598923241497};// (b)
     mutable std::array<std::array<double,viperDataNumPerSensor>,2> m_poseData_Cur, m_poseData_Pre, m_poseData_PrePre, m_poseDataAF_Pre, m_poseDataAF_PrePre; 
     std::array<std::array<double,viperDataNumPerSensor>,2>        returnIRFilteredData(const std::array<std::array<double,viperDataNumPerSensor>,2>& poseData_Cur);
     std::array<std::array<double,viperDataNumPerSensor>,2>        returnIIRFilteredData(const std::array<std::array<double,viperDataNumPerSensor>,2>& poseData_Cur);

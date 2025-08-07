@@ -1,11 +1,14 @@
  #include "MasterConsole.h"
+std::ofstream outfile2("filterDataCheck_0805.txt");
+std::chrono::high_resolution_clock::time_point startTime_master;
 
 void MasterConsole::updateConsoleDataThread()
 {
     while(!m_isSystemTerminated && !m_isSystemReset)
     {
+        std::this_thread::sleep_until(startTime_master + std::chrono::milliseconds(5));
         masterConsoleStatusCheck();
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        startTime_master = std::chrono::high_resolution_clock::now();
     }
 }
 
@@ -111,7 +114,9 @@ void MasterConsole::assembleDataFromUSBAndEthernet()
     }
     else if (m_FilterCase == static_cast<int>(FilterCase::IIRFilterOn))
     {
+        // auto PNODataAFIR_Tmp = returnIRFilteredData(posDataFromViperTmp);
         auto PNODataAFIIR_Tmp = returnIIRFilteredData(posDataFromViperTmp);
+        // handlePoseIR_Tmp.setMyConsoleData(PNODataAFIR_Tmp);
         handlePoseIIR_Tmp.setMyConsoleData(PNODataAFIIR_Tmp);
         m_handlePose_Cur.store(handlePoseIIR_Tmp);
     }
@@ -163,6 +168,12 @@ std::array<std::array<double,viperDataNumPerSensor>,2>  MasterConsole::returnIIR
    m_poseData_PrePre    = t_Pre;
    m_poseDataAF_Pre     = t_AF_Cur;
    m_poseDataAF_PrePre  = t_AF_Pre;
+   outfile2 << poseData_Cur[0][0] << " " << poseData_Cur[0][1] << " " << poseData_Cur[0][2] << " "
+            << poseData_Cur[1][0] << " " << poseData_Cur[1][1] << " " << poseData_Cur[1][2] << " "
+            << t_AF_Cur[0][0] << " " << t_AF_Cur[0][1] << " " << t_AF_Cur[0][2] << " "
+            << t_AF_Cur[1][0] << " " << t_AF_Cur[1][1] << " " << t_AF_Cur[1][2] << "\n";
+   // LOG(INFO)<<"poseData_Cur[0][0]: "<<poseData_Cur[0][0];
+
    return t_AF_Cur;
 }
 

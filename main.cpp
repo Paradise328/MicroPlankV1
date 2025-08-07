@@ -25,7 +25,6 @@ int main(int argc, char *argv[])
 
    MotorDriverParameter motorDriverParameter;
 
-
    motorDriverParameter.guidingJointMotorNum = 3;           /* number of motor to control the arm */
    motorDriverParameter.armNum = 2;
    motorDriverParameter.endGimbalMotorNum = 2;              /* total number of motor to control end-effector gimbal */
@@ -34,8 +33,10 @@ int main(int argc, char *argv[])
    motorDriverParameter.endJointMotorNumPerArm = 3;         /* number of motor to control end-effector joint on each arm */
    motorDriverParameter.endInstrumentMotorNum = 8;         /* total number of motor to control end-effector instruments */
    motorDriverParameter.endInstrumentMotorNumPerArm = 4;    /* number of motor to control end-effector instruments on each arm */
+   motorDriverParameter.motorNumPerArm = 8;
    motorDriverParameter.slaveNum = 19;                      /* total number of ethercat slaves*/
    motorDriverParameter.motorNum = 19;                      /* total number of ethercat slaves*/
+
    motorDriverParameter.forceSensorNumPerArm = 0;
 
    /* Log File Configuration */
@@ -46,7 +47,16 @@ int main(int argc, char *argv[])
    el::Loggers::reconfigureAllLoggers(conf);
    LOG(INFO)<< "Successfully init Logger Config Module ";
 
-   MicroPlank MicroPlank(app, MasterConsoleType::DessightMaster, motorDriverParameter);//初始化MicroPlank，输入值为Viper，和电机信息
+   std::unordered_map<std::string, std::string> audioMap = {
+       {"1", "/home/a/Desktop/codes/MikroPlanckV1/Modules/UIModule/sound/1.wav"},
+       {"2", "/home/a/Desktop/codes/MikroPlanckV1/Modules/UIModule/sound/2.wav"},
+       {"3", "/home/a/Desktop/codes/MikroPlanckV1/Modules/UIModule/sound/3.wav"},
+       {"4", "/home/a/Desktop/codes/MikroPlanckV1/Modules/UIModule/sound/4.wav"},
+       {"enable", "/home/a/Desktop/codes/MikroPlanckV1/Modules/UIModule/sound/enable.wav"},
+   };
+
+
+   MicroPlank MicroPlank(app, MasterConsoleType::DessightMaster, motorDriverParameter, audioMap);//初始化MicroPlank，输入值为Viper，和电机信息
 
    return app.exec();
 }

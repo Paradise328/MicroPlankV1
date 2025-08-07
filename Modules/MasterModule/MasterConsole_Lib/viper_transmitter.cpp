@@ -280,6 +280,7 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
 
     if(edr == Depack_SUCCESS)
     {
+        // LOG(INFO)<<"get data";
         std::array<std::array<double, 7>, 2> viperDataTmp = {0};
         for(int i = 0; i < 2; i++)
         {
@@ -303,6 +304,8 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
             Handle_Key_RIGHT=cftemp.payload.args[8];
             Handle_Key_RIGHT<<=8;
             Handle_Key_RIGHT+=cftemp.payload.args[7];
+
+            // LOG(INFO)<<"viperDataTmp[0][1]: "<<viperDataTmp[0][0]<<" Handle_Angle_RIGHT: "<<Handle_Angle_RIGHT;
 
             auto openAngle = calculateOpenAngle(Handle_Angle_LEFT, Handle_Angle_RIGHT);
             handlePoseTmp = motionMapping(viperDataTmp, openAngle, stepPedal);

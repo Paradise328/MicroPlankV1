@@ -438,6 +438,7 @@ struct MotorDriverParameter
     int endInstrumentMotorNumPerArm;    /* number of motor to control end-effector instruments on each arm */
     int slaveNum;                       /* total number of ethercat slaves */
     int motorNum;                       /* total number of ethercat controlled motors */
+    int motorNumPerArm;
     int forceSensorNumPerArm;           /* 每个臂上有几个forceSensor*/
 };
 

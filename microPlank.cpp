@@ -82,17 +82,12 @@ void MicroPlank::startForceSensor()
     m_forceSensor->initDevice();
 }
 
-void MicroPlank::startDomainControlerThread()
+void MicroPlank::startDomainControllerThread()
 {
-
-
     QThread *thread = QThread::create([this](){
-
-        m_domainControler_Right=new DomainControler(1);
-
         while(1){
-                m_domainControler_Right->read_Write_Data();
-                SteadyDelay(1);
+            m_domainController_Right->read_Write_Data();
+            SteadyDelay(1);
         }
     });
 
@@ -104,7 +99,7 @@ void MicroPlank::startMsgThread()
 {
     m_msgThread = std::thread(&MicroPlank::messagePoll, this);
     m_msgThread.detach();
-    LOG(INFO)<<"Successfully start Message Thread ";
+    LOG(INFO)<<" Successfully start Message Thread ";
 }
 
 void MicroPlank::messagePoll()

@@ -23,7 +23,7 @@ typedef enum eDeviceType
     DEV_RIGHT_HANDLE=0x44,
     DEV_LIGHT=0x55,
     DEV_VIPER_TRANSMITTER=0x66,
-    DEV_DOMAINCONTROLER=0x77
+    DEV_DOMAINCONTROLLER=0x77
 } eDeviceType;
 
 typedef enum eCmdRes
@@ -77,11 +77,11 @@ typedef enum eViper_Transmitter_Actions
     VIPER_TRANSMITTER_RESET_HANDLE=0xAC,
 }eViper_Transmitter_Actions;
 
-typedef enum eDomainControler_Actions
+typedef enum eDomainController_Actions
 {
-    DOMAINCONTROLER_READ_WRITE_DATA=0xCC,
-    DOMAINCONTROLER_RESET=0xDC,
-}eDomainControler_Actions;
+    DOMAINCONTROLLER_READ_WRITE_DATA=0xCC,
+    DOMAINCONTROLLER_RESET=0xDC,
+}eDomainController_Actions;
 
 
 typedef enum eLightColor

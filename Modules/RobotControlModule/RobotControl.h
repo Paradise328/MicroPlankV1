@@ -421,8 +421,8 @@ private:
     int                             enableCase_KeepPressPedal(const HandlePose& masterHandlePose_Cur, const char& side);/*使能方式:踩脚踏*/
     bool                            isPoseRight(const HandlePose& masterHandlePose_Cur, const char& side) const;
     bool                            isPoseMatch(const HandlePose& masterHandlePose_Cur, const char& side) const;
-    mutable int                     m_enableTagPrev_L ;
-    mutable int                     m_enableTagPrev_R ;
+    mutable int                     m_enableTagPrev_L = 4;
+    mutable int                     m_enableTagPrev_R = 4;
     mutable int                     m_enableTagCur_L ;
     mutable int                     m_enableTagCur_R ;
 
@@ -519,6 +519,13 @@ private:
     double m_z_out;
 
     int m_waitTime = 200;//适用于运行状态
+
+    /*以下为重复定位测试修改的部分*/
+    Eigen::Vector3d m_compensation_LastR;
+    Eigen::Vector3d m_compensation_LastL;
+
+    Eigen::Vector3d m_compensation_CurR;
+    Eigen::Vector3d m_compensation_CurL;
 
     mutable std::array<int, MotorNumPerSide>                m_motorPositionPrev_L = {0};
     mutable std::array<int, MotorNumPerSide>                m_motorPositionPrev_R = {0};

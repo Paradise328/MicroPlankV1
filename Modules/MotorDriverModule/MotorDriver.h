@@ -248,6 +248,7 @@ public:
         m_endGimbalMotorNumPerArm(t_motorDriverParameter.endGimbalMotorNumPerArm),
         m_guidingJointMotorNum(t_motorDriverParameter.guidingJointMotorNum),
         m_forceSensorNumPerArm(t_motorDriverParameter.forceSensorNumPerArm),
+        m_motorNumPerArm(t_motorDriverParameter.motorNumPerArm),
         m_motorNum(t_motorDriverParameter.motorNum),
         m_slaveNum(t_motorDriverParameter.slaveNum)
         {
@@ -383,6 +384,7 @@ public:
     void operationHOME(const MotorType& type, const int& index, const int& armNum);
     void motorDriverExit();
     void disableAllMotors();
+    void setJointEnableStatus(const MotorType& type, const int& index, const int& armNum, const bool& enabledStatus);
 
     int getAbSendDataByteNum(){return m_abSendDataByteNum;}
     int getAbRecvDataByteNum(){return m_abRecvDataByteNum;}
@@ -428,6 +430,7 @@ private:
     int m_forceSensorNumPerArm;
     int m_motorNum;
     int m_slaveNum;
+    int m_motorNumPerArm;
     int m_abRecvDataLengthPerArm;
     int m_abSendDataLengthPerArm;
     int m_abRecvDataLengthGuiding;
@@ -441,6 +444,8 @@ private:
     std::atomic<bool> m_threadTerminated;
 
     std::mutex m_myMutex;
+    std::mutex m_cyclicMutex;
+
     std::thread m_etherCatThread;
 
     //MessageQueue relative function

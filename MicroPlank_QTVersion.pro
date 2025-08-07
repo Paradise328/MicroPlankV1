@@ -18,7 +18,8 @@ LIBS += -L"/home/a/Desktop/install_packages/cifx_linux/cifx/driver/my_build_fold
 LIBS += -lX11 -lpthread -lrt -lstdc++ -lm
 LIBS += -L$$PWD/../../../usr/lib/x86_64-linux-gnu/ -latomic
 LIBS+= -ldrd -ldhd -lusb-1.0
-
+INCLUDEPATH += /path/to/sfml/include
+LIBS += -L/path/to/sfml/lib -lsfml-audio -lsfml-graphics -lsfml-window -lsfml-system
 
 
 TEMPLATE = app
@@ -41,10 +42,11 @@ SOURCES += \
         Modules/MasterModule/Viper_Lib/viper_usb.cpp \
         Modules/MotorDriverModule/MotorDriver.cpp \
         Modules/MsgModule/messagequeue.cpp \
-        Modules/RobotControlModule/DomainControler.cpp \
+        Modules/RobotControlModule/DomainController.cpp \
         Modules/RobotControlModule/RobotControl.cpp \
         Modules/RobotControlModule/RobotGuidingArmControl.cpp \
         Modules/SecurityModule/security.cpp \
+        Modules/UIModule/Audioplay.cpp \
         Modules/UIModule/UIinterface.cpp \
         Modules/PeripheralDeviceModule/CRC16.cpp \
         Modules/PeripheralDeviceModule/peripheral_device.cpp \
@@ -80,10 +82,11 @@ HEADERS += \
     Modules/MotorDriverModule/cifXEndianess.h \
     Modules/MsgModule/messagequeue.h \
     Modules/MsgModule/threadsafequeue.h \
-    Modules/RobotControlModule/DomainControler.h \
+    Modules/RobotControlModule/DomainController.h \
     Modules/RobotControlModule/RobotControl.h \
     Modules/SecurityModule/security.h \
     Modules/SystemUtilsModule/SystemUtils.h \
+    Modules/UIModule/Audioplay.h \
     Modules/UIModule/UIinterface.h \
     Modules/PeripheralDeviceModule/CRC16.h \
     Modules/PeripheralDeviceModule/CommunicationProtol.h \
@@ -100,6 +103,39 @@ DISTFILES += \
     Config/RobotData.toml \
     Config/commands \
     Config/logConf.conf \
+    Modules/UIModule/sound/1.mp3 \
+    Modules/UIModule/sound/1.wav \
+    Modules/UIModule/sound/2.mp3 \
+    Modules/UIModule/sound/2.wav \
+    Modules/UIModule/sound/3.mp3 \
+    Modules/UIModule/sound/3.wav \
+    Modules/UIModule/sound/4.mp3 \
+    Modules/UIModule/sound/4.wav \
+    Modules/UIModule/sound/5.mp3 \
+    Modules/UIModule/sound/5.wav \
+    Modules/UIModule/sound/Deceleration.mp3 \
+    Modules/UIModule/sound/EnableNew.mp3 \
+    Modules/UIModule/sound/EnableNew1.wav \
+    Modules/UIModule/sound/UnableNew.mp3 \
+    Modules/UIModule/sound/bb.wav \
+    Modules/UIModule/sound/bf.wav \
+    Modules/UIModule/sound/bgf.wav \
+    Modules/UIModule/sound/bgm.wav \
+    Modules/UIModule/sound/bwd.mp3 \
+    Modules/UIModule/sound/bwd.wav \
+    Modules/UIModule/sound/cn1.mp3 \
+    Modules/UIModule/sound/cn2.mp3 \
+    Modules/UIModule/sound/cn3.mp3 \
+    Modules/UIModule/sound/cn4.mp3 \
+    Modules/UIModule/sound/cn5.mp3 \
+    Modules/UIModule/sound/enable.wav \
+    Modules/UIModule/sound/enable1.wav \
+    Modules/UIModule/sound/fk.mp3 \
+    Modules/UIModule/sound/fk.wav \
+    Modules/UIModule/sound/fwd.mp3 \
+    Modules/UIModule/sound/fwd.wav \
+    Modules/UIModule/sound/ik.mp3 \
+    Modules/UIModule/sound/ik.wav
 
 RESOURCES += \
     Modules/UIModule/qrc/images.qrc \

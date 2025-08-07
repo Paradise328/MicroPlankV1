@@ -246,27 +246,6 @@ uint16_t MotorDriver::getStatusWord(const MotorType& type, const int& index, con
                 }
             }
             case MotorType::MAXON:{
-                int index_test = m_abRecvDataLengthGuiding
-                                     + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
-                                     + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
-                                     + endInstrumentMotor_sizeRecvData * index
-                                     + armNum * m_abRecvDataLengthPerArm
-                                 + variable.offset;
-                // LOG(INFO) << "*************calculate index_test: " << std::dec << index_test;
-                // if(index_test > 500){
-
-                //     LOG(INFO) << "*************calculate index_test: " << std::dec << index_test;
-                //     LOG(INFO) << " m_abRecvDataLengthGuiding: " << std::dec << m_abRecvDataLengthGuiding;
-                //     LOG(INFO) << " endGimbalMotor_sizeRecvData: " << std::dec << endGimbalMotor_sizeRecvData;
-                //     LOG(INFO) << " m_endGimbalMotorNumPerArm: " << std::dec << m_endGimbalMotorNumPerArm;
-                //     LOG(INFO) << " endJointMotor_sizeRecvData: " << std::dec << endJointMotor_sizeRecvData;
-                //     LOG(INFO) << " m_endJointMotorNumPerArm: " << std::dec << m_endJointMotorNumPerArm;
-                //     LOG(INFO) << " endInstrumentMotor_sizeRecvData: " << std::dec << endInstrumentMotor_sizeRecvData;
-                //     LOG(INFO) << " index: " << std::dec << index;
-                //     LOG(INFO) << " armNum: " << std::dec << armNum;
-                //     LOG(INFO) << " m_abRecvDataLengthPerArm: " << std::dec << m_abRecvDataLengthPerArm;
-                //     LOG(INFO) << " variable.offset: " << std::dec << variable.offset;
-                // }
                 const auto statusWord = hex2Uint16(m_abRecvData[m_abRecvDataLengthGuiding
                                                                 + endGimbalMotor_sizeRecvData * m_endGimbalMotorNumPerArm
                                                                 + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
@@ -2076,7 +2055,7 @@ int MotorDriver::motorDriverInit(){
             tChannelInfo.usFWYear);
 
     printf("Mailbox Size     : %lu\r\n",(long unsigned int)tChannelInfo.ulMailboxSize);
-    sleep(1);
+    sleep(2);
     lRet = openBusConnection();
 
     return lRet;
@@ -2131,8 +2110,10 @@ int MotorDriver::closeBusConnection(){
 
 // This method should be called after openBusConnection()
 int MotorDriver::cyclicDataTransfer(){
-    int lRet;
 
+    std::lock_guard<std::mutex> lock(m_selfPointer->m_cyclicMutex);
+
+    int lRet;
     lRet = xChannelWatchdog(m_hChannel, CIFX_WATCHDOG_START, &m_ulWatchdogValue);
 
     if(CIFX_NO_ERROR != (lRet = xChannelIORead(m_hChannel, 0, 0, sizeof(m_abRecvData), m_abRecvData, timeOutCyclicIO))){
@@ -2153,20 +2134,27 @@ void MotorDriver::enableMotor(const MotorType& type, const int& index, const int
 
     switch(type){
         case MotorType::MOONS:{
-            // // TODO
-            // if(m_jointEnabled[m_endGimbalMotorNum + index]){
-            //     LOG(INFO) << "Moons Motor " << index << " is already enabled." ;
-            //     break;
-            // }
+            auto errCode = getErrorCode(type, index, armNum);
+            if(errCode == 0)
+            {
+                if(m_jointEnabled[m_guidingJointMotorNum + armNum * m_motorNumPerArm + index]){
+                    LOG(INFO) << "Moons Motor " << index << " is already enabled." ;
+                    break;
+                }
+            }else
+            {
+                LOG(INFO) << "current Moons " << index << " error code is: " << std::hex << errCode;
+            }
+
             LOG(INFO) << "Starting initialize Moons Motor:" << " motor " << index << " on arm " << armNum;
             if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to clear error for Moons motor!" ;
                 break;
             }
-            LOG(INFO) << "Finish initialize Moons Motor:" << " motor " << index << " on arm " << armNum;
+
             usleep(50*1000);
             LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index, armNum);
-
+\
             if(setControlWord(type, index, ControlCommand::SHUT_DOWN, armNum) != T_NOERROR){
                 LOG(ERROR) << "Error: Failed to shut down Moons motor!" ;
                 break;
@@ -2189,7 +2177,7 @@ void MotorDriver::enableMotor(const MotorType& type, const int& index, const int
             usleep(50*1000);
             LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-            // m_jointEnabled[index] = true;
+            m_jointEnabled[m_guidingJointMotorNum + armNum * m_motorNumPerArm + index] = true;
             LOG(INFO) << "Successfully enable Moons motor " << index ;
             break;
         }
@@ -2197,18 +2185,27 @@ void MotorDriver::enableMotor(const MotorType& type, const int& index, const int
 
             auto statusword = getStatusWord(type, index, armNum);
             LOG(INFO) << "current ZeroErr " << index << " status word is: " << std::hex <<statusword;
-
             auto errCode = getErrorCode(type, index, armNum);
-            LOG(INFO) << "current ZeroErr " << index << " error code is: " << std::hex <<errCode;
 
-            // //TODO
-            // if(armNum != arm_guiding && errCode == 0)
-            // {
-            //     if (m_jointEnabled[m_guidingJointMotorNum + armNum * 8 + index + 1]){
-            //         LOG(INFO) << "ZeroErr Motor " << index << " is already enabled." ;
-            //         break;
-            //     }
-            // }
+            if(errCode == 0)
+            {
+                if(armNum == arm_guiding)
+                {
+                    if(m_jointEnabled[index]){
+                        LOG(INFO) << "Zero Error Motor " << index << " is already enabled." ;
+                        break;
+                    }
+                }else
+                {
+                    if(m_jointEnabled[m_guidingJointMotorNum + m_endGimbalMotorNumPerArm + armNum * m_motorNumPerArm + index]){
+                        LOG(INFO) << "Zero Error Motor " << index << " is already enabled." ;
+                        break;
+                    }
+                }
+            }
+            else{
+                LOG(INFO) << "current ZeroErr " << index << " error code is: " << std::hex <<errCode;
+            }
 
             LOG(INFO) << "Starting initialize ZeroErr Motor: " <<  " motor" << index;
             if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
@@ -2239,20 +2236,30 @@ void MotorDriver::enableMotor(const MotorType& type, const int& index, const int
             usleep(50*1000);
             LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum) << " on arm " << armNum << ", index " << index ;
 
-            // //TODO
-            // if(armNum != arm_guiding)
-            // {
-            //     m_jointEnabled[m_guidingJointMotorNum + armNum * 8 + index + 1] = true;
-            // }
-            LOG(INFO) << "Successfully enable ZeroErr motor " << index  << " on arm " << armNum << ", index " << index ;;
+            if(armNum == arm_guiding)
+            {
+                m_jointEnabled[index] = true;
+            }else
+            {
+                m_jointEnabled[m_guidingJointMotorNum + m_endGimbalMotorNumPerArm + armNum * m_motorNumPerArm + index] = true;
+            }
+            LOG(INFO) << "Successfully enable ZeroErr motor " << index  << " on arm " << armNum << ", index " << index ;
             break;
         }
         case MotorType::MAXON:{
             //TODO
-            // if(m_jointEnabled[m_endJointMotorNum + m_endGimbalMotorNum + m_endJointMotorNum + index]){
-            //     LOG(INFO) << "Maxon motor " << index << " is already enabled." ;
-            //     break;
-            // }
+            auto errCode = getErrorCode(type, index, armNum);
+            if(errCode == 0)
+            {
+                if(m_jointEnabled[m_guidingJointMotorNum + m_endJointMotorNumPerArm + m_endGimbalMotorNumPerArm + armNum * m_motorNumPerArm  + index]){
+                    LOG(INFO) << "Maxon motor " << index << " is already enabled." ;
+                    break;
+                }
+            }
+            else{
+                LOG(INFO) << "current Maxon " << index << " error code is: " << std::hex <<errCode;
+            }
+
             LOG(INFO) << "Starting initialize Maxon Motor:" << " motor " << index << " on arm "<< armNum;
             usleep(50 * 1000);
 
@@ -2285,7 +2292,7 @@ void MotorDriver::enableMotor(const MotorType& type, const int& index, const int
             usleep(50*1000);
             LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
             //TODO
-            // m_jointEnabled[m_endJointMotorNum + m_endGimbalMotorNum + m_endJointMotorNum + index] = true;
+            m_jointEnabled[m_guidingJointMotorNum + m_endJointMotorNumPerArm + m_endGimbalMotorNumPerArm + armNum * m_motorNumPerArm  + index] = true;
             LOG(INFO) << "Successfully enable Maxon motor " << index << " on arm " << armNum;
             break;
         }
@@ -2301,6 +2308,32 @@ void MotorDriver::enableMotor_PP(const MotorType& type, const int& index, const 
     switch(type){
 
     case MotorType::MOONS:{
+        auto errCode = getErrorCode(type, index, armNum);
+        if(errCode == 0){
+            if(m_jointEnabled[m_guidingJointMotorNum + armNum * m_motorNumPerArm + index]){
+                LOG(INFO) << "Moons Motor " << index << " is already enabled." ;
+                if(setControlWord(type, index, ControlCommand::ENABLE, armNum) != T_NOERROR){
+                    LOG(ERROR) << "Error: Failed to enable Moons motor!";
+                    break;
+                }
+                usleep(50*1000);
+                LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
+
+
+                if(setControlWord(type, index, ControlCommand::NEW_SET_POINT_MOONS, armNum) != T_NOERROR){
+                    LOG(ERROR) << "Error: Failed to Set Point relavtive of Moons motor!";
+                    break;
+                }
+                usleep(50*1000);
+                LOG(INFO) << "5: the control word is: " << static_cast<int>(ControlCommand::NEW_SET_POINT_MOONS) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
+                break;
+            }
+
+        }else
+        {
+            LOG(INFO) << "current Moons " << index << " error code is: " << std::hex << errCode;
+        }
+
         LOG(INFO) << "Starting initialize Moons Motor:" << " motor " << index<< " on arm "<< armNum;
 
         if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
@@ -2339,23 +2372,61 @@ void MotorDriver::enableMotor_PP(const MotorType& type, const int& index, const 
         usleep(50*1000);
         LOG(INFO) << "5: the control word is: " << static_cast<int>(ControlCommand::NEW_SET_POINT_MOONS) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-
-        // m_jointEnabled[index] = true;
         LOG(INFO) << "Successfully enable Moons motor in PP Mode" << index << " on arm "<< armNum;
-
+        m_jointEnabled[m_guidingJointMotorNum + armNum * m_motorNumPerArm + index] = true;
         break;
     }
     case MotorType::ZERO_ERR:{
         auto errCode = getErrorCode(type, index, armNum);
+        if(errCode == 0)
+        {
+            if(armNum == arm_guiding)
+            {
+                if(m_jointEnabled[index]){
+                    LOG(INFO) << "Zero Error Motor " << index << " is already enabled." ;
+                    if(setControlWord(type, index, ControlCommand::ENABLE, armNum) != T_NOERROR){
+                        LOG(ERROR) << "Error: Failed to enable ZeroErr motor!";
+                        break;
+                    }
+                    usleep(50*1000);
+                    LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
+
+                    if(setControlWord(type, index, ControlCommand::ZERRERR_START_PP, armNum) != T_NOERROR){
+                        LOG(ERROR) << "Error: Failed to enable ZeroErr motor!";
+                        break;
+                    }
+                    usleep(50*1000);
+                    LOG(INFO) << "5: the control word is: " << static_cast<int>(ControlCommand::ZERRERR_START_PP) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
+
+                    break;
+                }
+            }else
+            {
+                if(m_jointEnabled[m_guidingJointMotorNum + m_endGimbalMotorNumPerArm + armNum * m_motorNumPerArm + index]){
+                    LOG(INFO) << "Zero Error Motor " << index << " is already enabled." ;
+                    if(setControlWord(type, index, ControlCommand::ENABLE, armNum) != T_NOERROR){
+                        LOG(ERROR) << "Error: Failed to enable ZeroErr motor!";
+                        break;
+                    }
+                    usleep(50*1000);
+                    LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
+
+                    if(setControlWord(type, index, ControlCommand::ZERRERR_START_PP, armNum) != T_NOERROR){
+                        LOG(ERROR) << "Error: Failed to enable ZeroErr motor!";
+                        break;
+                    }
+                    usleep(50*1000);
+                    LOG(INFO) << "5: the control word is: " << static_cast<int>(ControlCommand::ZERRERR_START_PP) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
+
+                    break;
+                }
+            }
+        }
+        else{
+            LOG(INFO) << "current ZeroErr " << index << " error code is: " << std::hex <<errCode;
+        }
+
         LOG(INFO) << "Starting initialize ZeroErr Motor in PP Mode: " <<  " motor " << index << " on arm "<< armNum;
-        // if(armNum != arm_guiding && errCode == 0)
-        // {
-        //     if (m_jointEnabled[m_guidingJointMotorNum + armNum * 8 + index + 1]){
-        //         LOG(INFO) << "ZeroErr Motor " << index << " is already enabled." ;
-        //         break;
-        //     }
-        //     LOG(INFO) << "Starting initialize ZeroErr Motor: " <<  " motor" << index;
-        // }
         if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
             LOG(ERROR) << "Error: Failed to clear error for ZeroErr motor!" ;
             break;
@@ -2392,17 +2463,28 @@ void MotorDriver::enableMotor_PP(const MotorType& type, const int& index, const 
         LOG(INFO) << "5: the control word is: " << static_cast<int>(ControlCommand::ZERRERR_START_PP) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
         //TODO
-        // m_jointEnabled[m_guidingJointMotorNum + armNum * 8 + index + 1] = true;
+        if(armNum == arm_guiding)
+        {
+            m_jointEnabled[index] = true;
+        }else
+        {
+            m_jointEnabled[m_guidingJointMotorNum + m_endGimbalMotorNumPerArm + armNum * m_motorNumPerArm + index] = true;
+        }
         LOG(INFO) << "Successfully enable ZeroErr motor " << index ;
         break;
     }
     case MotorType::MAXON:{
-        //TODO
-        // if(m_jointEnabled[m_endJointMotorNum + m_endGimbalMotorNum + m_endJointMotorNum + index]){
-        //     LOG(INFO) << "Maxon Motor " << index << " is already enabled." ;
-        //     break;
-        // }
-
+        auto errCode = getErrorCode(type, index, armNum);
+        if(errCode == 0)
+        {
+            if(m_jointEnabled[m_guidingJointMotorNum + m_endJointMotorNumPerArm + m_endGimbalMotorNumPerArm + armNum * m_motorNumPerArm  + index]){
+                LOG(INFO) << "Maxon motor " << index << " is already enabled." ;
+                break;
+            }
+        }
+        else{
+            LOG(INFO) << "current Maxon " << index << " error code is: " << std::hex <<errCode;
+        }
         LOG(INFO) << "Starting initialize Maxon Motor " << index << " on arm " << armNum;
         if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
             LOG(ERROR) << "Error: Failed to clear error for maxon motor!";
@@ -2431,7 +2513,7 @@ void MotorDriver::enableMotor_PP(const MotorType& type, const int& index, const 
         usleep(50*1000);
         LOG(INFO) << "3: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
         //TODO
-        m_jointEnabled[m_endJointMotorNum + m_endGimbalMotorNum + m_endJointMotorNum + index] = true;
+        m_jointEnabled[m_guidingJointMotorNum + m_endJointMotorNumPerArm + m_endGimbalMotorNumPerArm + armNum * m_motorNumPerArm  + index] = true;
         LOG(INFO) << "Successfully enable Maxon motor " << index ;
         break;
     }
@@ -2507,6 +2589,26 @@ void MotorDriver::enableMotor_PV(const MotorType& type, const int& index, const 
         break;
     }
     case MotorType::ZERO_ERR:{
+        auto errCode = getErrorCode(type, index, armNum);
+        if(errCode == 0)
+        {
+            if(armNum == arm_guiding)
+            {
+                if(m_jointEnabled[index]){
+                    LOG(INFO) << "Zero Error Motor " << index << " is already enabled." ;
+                    break;
+                }
+            }else
+            {
+                if(m_jointEnabled[m_guidingJointMotorNum + m_endGimbalMotorNumPerArm + armNum * m_motorNumPerArm + index]){
+                    LOG(INFO) << "Zero Error Motor " << index << " is already enabled." ;
+                    break;
+                }
+            }
+        }
+        else{
+            LOG(INFO) << "current ZeroErr " << index << " error code is: " << std::hex <<errCode;
+        }
 
         LOG(INFO) << "Starting initialize ZeroErr Motor in PV Mode: " <<  " motor " << index << " on arm "<< armNum;
         if(setControlWord(type, index, ControlCommand::CLEAR_ERROR, armNum) != T_NOERROR){
@@ -2536,9 +2638,15 @@ void MotorDriver::enableMotor_PV(const MotorType& type, const int& index, const 
         }
         usleep(50*1000);
         LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
-
-        // m_jointEnabled[index] = true;
         LOG(INFO) << "Successfully enable ZeroErr motor in PV mode " << index ;
+
+        if(armNum == arm_guiding)
+        {
+            m_jointEnabled[index] = true;
+        }else
+        {
+            m_jointEnabled[m_guidingJointMotorNum + m_endGimbalMotorNumPerArm + armNum * m_motorNumPerArm + index] = true;
+        }
         break;
     }
     case MotorType::MAXON:{
@@ -2666,11 +2774,11 @@ void MotorDriver::operationCSP(const MotorType& type, const int& index, const in
             }
             usleep(20 * 1000);
 
-            if (setMaxPosErr(type, index, SDO_COMMAND::MAX_POS_ERR, armNum) != T_NOERROR){
-                LOG(ERROR) << " Failed to set SDO 0x6065: Max Position Error for ZeroErr!" ;
-                break;
-            }
-            usleep(20 * 1000);
+            // if (setMaxPosErr(type, index, SDO_COMMAND::MAX_POS_ERR, armNum) != T_NOERROR){
+            //     LOG(ERROR) << " Failed to set SDO 0x6065: Max Position Error for ZeroErr!" ;
+            //     break;
+            // }
+            // usleep(20 * 1000);
 
             if(setOperationMode(type, index, OperationMode::CSP, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set operation mode to CSP for ZeroErr!" ;
@@ -2768,10 +2876,10 @@ void MotorDriver::operationCSV(const MotorType& type, const int& index, const in
                 LOG(ERROR) << "Failed to set profile deceleration for ZeroErr!" << std::endl;
                 break;
             }
-            if (setMaxVelErr(type, index, SDO_COMMAND::MAX_VEL_ERR, armNum) != T_NOERROR){
-                LOG(ERROR) << "Failed to set SDO 0x3B60: Max Velocity Error for ZeroErr!" << std::endl;
-                break;
-            }
+            // if (setMaxVelErr(type, index, SDO_COMMAND::MAX_VEL_ERR, armNum) != T_NOERROR){
+            //     LOG(ERROR) << "Failed to set SDO 0x3B60: Max Velocity Error for ZeroErr!" << std::endl;
+            //     break;
+            // }
             usleep(50*1000);
             enableMotor(type, index, armNum);
             break;
@@ -3014,7 +3122,7 @@ void MotorDriver::operationPV(const MotorType& type, const int& index, const int
 
     }
     case MotorType::ZERO_ERR:{
-        LOG(INFO) << "Starting set operation mode to PT for ZeroErr." ;
+        LOG(INFO) << "Starting set operation mode to PV for ZeroErr." ;
         const auto actualPos = getActualPos(type, index, armNum);
         if(setTargetPos(type, index, actualPos, armNum) != T_NOERROR){
             LOG(ERROR) << "Failed to set actual pos to target pos for ZeroErr!" ;
@@ -3498,6 +3606,32 @@ void MotorDriver::disableAllMotors()
     m_selfPointer->m_threadTerminated = true;
 }
 
+
+
+void MotorDriver::setJointEnableStatus(const MotorType& type, const int& index, const int& armNum, const bool& enabledStatus)
+{
+    switch(type){
+        case MotorType::MOONS:
+        {
+            m_jointEnabled[m_guidingJointMotorNum + index + armNum * m_motorNumPerArm] = enabledStatus;
+        }
+        case MotorType::ZERO_ERR:
+        {
+            if(armNum == arm_guiding){
+                m_jointEnabled[index] = enabledStatus;
+            }else{
+                m_jointEnabled[m_guidingJointMotorNum + m_endGimbalMotorNumPerArm + index + armNum * m_motorNumPerArm] = enabledStatus;
+            }
+        }
+        case MotorType::MAXON:
+        {
+            m_jointEnabled[m_guidingJointMotorNum + m_endGimbalMotorNumPerArm + m_endJointMotorNumPerArm + index + armNum * m_motorNumPerArm] = enabledStatus;
+        }
+        default:break;
+    }
+}
+
+
 void MotorDriver::SendInnerMsg(Module_Inner_E recever,int Action, QString arg)
 {
     Message_Inner_T msgTemp;
@@ -3530,7 +3664,7 @@ void MotorDriver::GetAmMsg(Message_Inner_T msg)
 
 void MotorDriver::dealWithMsg()
 {
-  SteadyDelay(10);
+    SteadyDelay(10);
     Message_Inner_T msg;
     while(1){
 

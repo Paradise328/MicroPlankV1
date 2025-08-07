@@ -5,3 +5,4 @@ sudo rm -f /var/lock/LCK..tty*
 
 
 
+sudo rm -f /var/lock/LCK..tty*

@@ -10,25 +10,24 @@ void RobotControl::startGuidingArmControlThread()
 /* control loop of guiding arm */
 void RobotControl::guidingArmControl(){
     while(true){
-
         updateGuidingArmMotion();
 
         updateGuidingArmState();
 
-        switch(m_guidingArm.m_guidingArmCurrentState){
-        case GuidingArmState::HOLD:
-            applyGuidingArmVelocityControl();
-            break;
-        case GuidingArmState::DAMPING:
-            applyGuidingArmDampingControl();
-            break;
-        case GuidingArmState::DRAG:
-            applyGuidingArmForceControl();
-            break;
-        }
+        // switch(m_guidingArm.m_guidingArmCurrentState){
+        //     case GuidingArmState::HOLD:
+        //         applyGuidingArmVelocityControl();
+        //         break;
+        //     case GuidingArmState::DAMPING:
+        //         applyGuidingArmDampingControl();
+        //         break;
+        //     case GuidingArmState::DRAG:
+        //         applyGuidingArmForceControl();
+        //         break;
+        // }
 
         /* print guiding Arm Motion Values to Screen */
-        guidingArmPrinting();
+        // guidingArmPrinting();
 
         /* Log Arm info to a file */
         // guidingArmLogging();
@@ -61,10 +60,16 @@ void RobotControl::initGuidingArm(){
 
 void RobotControl::disableGuidingArm(){
     LOG(INFO)<<"[DISABLE GUIDING ARM]";
-    m_guidingArm.m_guidingArmCurrentState = GuidingArmState::INIT;
-    m_motorDriver->setControlWord(MotorType::ZERO_ERR, 0, ControlCommand::DISABLE, arm_guiding);
-    m_motorDriver->setControlWord(MotorType::ZERO_ERR, 1, ControlCommand::DISABLE, arm_guiding);
-    m_motorDriver->setControlWord(MotorType::ZERO_ERR, 2, ControlCommand::DISABLE, arm_guiding);
+    // m_guidingArm.m_guidingArmCurrentState = GuidingArmState::INIT;
+    // m_motorDriver->setControlWord(MotorType::ZERO_ERR, 0, ControlCommand::DISABLE, arm_guiding);
+    // m_motorDriver->setControlWord(MotorType::ZERO_ERR, 1, ControlCommand::DISABLE, arm_guiding);
+    // m_motorDriver->setControlWord(MotorType::ZERO_ERR, 2, ControlCommand::DISABLE, arm_guiding);
+    // m_motorDriver->setJointEnableStatus(MotorType::ZERO_ERR, 0, arm_guiding,  false);
+    // m_motorDriver->setJointEnableStatus(MotorType::ZERO_ERR, 1, arm_guiding,  false);
+    // m_motorDriver->setJointEnableStatus(MotorType::ZERO_ERR, 2, arm_guiding,  false);
+    m_motorDriver->operationPV(MotorType::ZERO_ERR, 0, arm_guiding);
+    m_motorDriver->operationPV(MotorType::ZERO_ERR, 1, arm_guiding);
+    m_motorDriver->operationPV(MotorType::ZERO_ERR, 2, arm_guiding);
 }
 
 void RobotControl::guidingArmHold2Drag(){
@@ -105,7 +110,8 @@ void RobotControl::applyGuidingArmForceControl(){
     LOG(INFO)<<"[MODE:DRAG]";
     double target_trq_0 = signDouble(m_guidingArm.m_velocity_1stOrder[0]) * 20.0;
     double target_trq_1 = signDouble(m_guidingArm.m_velocity_1stOrder[1]) * 15.0;
-    double target_trq_2 = signDouble(m_guidingArm.m_velocity_1stOrder[2]) * 110.0;
+    double target_trq_2 = signDouble(m_guidingArm.m_velocity_1stOrder[2]) * 15.0;
+
     tmp1 = signDouble(m_guidingArm.m_velocity_1stOrder[0]);
     tmp2 = signDouble(m_guidingArm.m_velocity_1stOrder[1]);
     tmp3 = signDouble(m_guidingArm.m_velocity_1stOrder[2]);
@@ -135,40 +141,43 @@ void RobotControl::applyGuidingArmVelocityControl(){
 
 /* update state machine of guiding arm */
 void RobotControl::updateGuidingArmState(){
+    LOG(INFO) << "updateGuidingArmState";
     switch(m_guidingArm.m_guidingArmCurrentState){
-    case GuidingArmState::HOLD :
-        if(m_guidingArm.m_guidingArmEnableBtnPressed){
-            guidingArmHold2Drag();
-            m_guidingArm.m_guidingArmCurrentState = GuidingArmState::DRAG;
-        }else{
-            m_guidingArm.m_guidingArmCurrentState = GuidingArmState::HOLD;
-        }
-        break;
-    case GuidingArmState::DRAG :
-        if(!m_guidingArm.m_guidingArmEnableBtnPressed){
-            guidingArmDrag2Damp();
-            m_guidingArm.m_guidingArmCurrentState = GuidingArmState::DAMPING;
-        }else{
-            m_guidingArm.m_guidingArmCurrentState = GuidingArmState::DRAG;
-        }
-        break;
-    case GuidingArmState::DAMPING :
-        if(m_guidingArm.m_guidingArmEnableBtnPressed){
-            guidingArmDamp2Drag();
-            m_guidingArm.m_guidingArmCurrentState = GuidingArmState::DRAG;
-        }else{
-            if(!isGuidingArmDamping() || m_guidingArm.m_isGuidingArmStable){
-                guidingArmDamp2Hold();
+        case GuidingArmState::HOLD :
+            if(m_guidingArm.m_guidingArmEnableBtnPressed){
+                LOG(INFO) << "guidingArmHold2Drag() ";
+                guidingArmHold2Drag();
+                m_guidingArm.m_guidingArmCurrentState = GuidingArmState::DRAG;
+            }else{
                 m_guidingArm.m_guidingArmCurrentState = GuidingArmState::HOLD;
             }
-            m_guidingArm.m_guidingArmCurrentState = GuidingArmState::DAMPING;
-        }
-        break;
+            break;
+        case GuidingArmState::DRAG :
+            if(!m_guidingArm.m_guidingArmEnableBtnPressed){
+                LOG(INFO) << "guidingArmDrag2Damp() ";
+                guidingArmDrag2Damp();
+                m_guidingArm.m_guidingArmCurrentState = GuidingArmState::DAMPING;
+            }else{
+                m_guidingArm.m_guidingArmCurrentState = GuidingArmState::DRAG;
+            }
+            break;
+        case GuidingArmState::DAMPING :
+            if(m_guidingArm.m_guidingArmEnableBtnPressed){
+                LOG(INFO) << "guidingArmDamp2Drag() ";
+                guidingArmDamp2Drag();
+                m_guidingArm.m_guidingArmCurrentState = GuidingArmState::DRAG;
+            }else{
+                if(!isGuidingArmDamping() || m_guidingArm.m_isGuidingArmStable){
+                    LOG(INFO) << "guidingArmDamp2Hold() ";
+                    guidingArmDamp2Hold();
+                    m_guidingArm.m_guidingArmCurrentState = GuidingArmState::HOLD;
+                }
+                m_guidingArm.m_guidingArmCurrentState = GuidingArmState::DAMPING;
+            }
+            break;
+        default:
+            break;
     }
-
-    // if(m_guidingArm.frictionStateJoint0 == GuidingArmFrictionState::IDLE){
-    //     if(vel)
-    // }
 }
 
 double RobotControl::signDouble(double target){
@@ -181,12 +190,15 @@ void RobotControl::updateGuidingArmMotion(){
 
     m_guidingArm.m_guidingArmEnableBtnPressed = static_cast<bool>(digitalInputGuiding[4]);
     m_guidingArm.m_isGuidingArmStable = judgeGuidingArmStable();
+
     m_guidingArm.m_actualCurrent0 = m_motorDriver->getActualCur(MotorType::ZERO_ERR, 0, arm_guiding);
     m_guidingArm.m_actualTorque0 = m_motorDriver->getActualTrq(MotorType::ZERO_ERR, 0, arm_guiding);
     m_guidingArm.m_actualVelocity0 = static_cast<double>(m_motorDriver->getActualVel(MotorType::ZERO_ERR, 0, arm_guiding));
+
     m_guidingArm.m_actualCurrent1 = m_motorDriver->getActualCur(MotorType::ZERO_ERR, 1, arm_guiding);
     m_guidingArm.m_actualTorque1 = m_motorDriver->getActualTrq(MotorType::ZERO_ERR, 1, arm_guiding);
     m_guidingArm.m_actualVelocity1 = static_cast<double>(m_motorDriver->getActualVel(MotorType::ZERO_ERR, 1, arm_guiding));
+
     m_guidingArm.m_actualCurrent2 = m_motorDriver -> getActualCur(MotorType::ZERO_ERR, 2, arm_guiding);
     m_guidingArm.m_actualTorque2 = m_motorDriver -> getActualTrq(MotorType::ZERO_ERR, 2, arm_guiding);
     m_guidingArm.m_actualVelocity2 = static_cast<double>(m_motorDriver->getActualVel(MotorType::ZERO_ERR, 2, arm_guiding));
@@ -200,25 +212,25 @@ void RobotControl::updateGuidingArmMotion(){
 }
 
 void RobotControl::guidingArmPrinting(){
-    // system("clear");
+    system("clear");
 
-    // LOG(INFO) << "m_flag_guidingArmEnableBtn: " << m_guidingArm.m_guidingArmEnableBtnPressed ;
-    // LOG(INFO) << "m_guidingArmCurrentState: " << static_cast<int>(m_guidingArm.m_guidingArmCurrentState) ;
-    // LOG(INFO) << "guiding arm joint 0 operation mode: " << m_motorDriver -> getOperationMode(MotorType::ZERO_ERR, 0, arm_guiding);
-    // LOG(INFO) << "guiding arm joint 0 actual current: " << std::dec<< m_guidingArm.m_actualCurrent0;
-    // LOG(INFO) << "guiding arm joint 0 actual torque: " << std::dec << m_guidingArm.m_actualTorque0;
-    // LOG(INFO) << "guiding arm joint 0 actual velocity: " << std::dec << m_guidingArm.m_actualVelocity0;
-    // LOG(INFO) << "guiding arm joint 1 operation mode: " << m_motorDriver -> getOperationMode(MotorType::ZERO_ERR, 1, arm_guiding);
-    // LOG(INFO) << "guiding arm joint 1 actual current: " << std::dec << m_guidingArm.m_actualCurrent1;
-    // LOG(INFO) << "guiding arm joint 1 actual torque: " << std::dec << m_guidingArm.m_actualTorque1;
-    // LOG(INFO) << "guiding arm joint 1 actual velocity: " << std::dec << m_guidingArm.m_actualVelocity1;
-    // LOG(INFO) << "guiding arm joint 2 operation mode: " << m_motorDriver -> getOperationMode(MotorType::ZERO_ERR, 2, arm_guiding);
-    // LOG(INFO) << "guiding arm joint 2 actual current: " << std::dec << m_guidingArm.m_actualCurrent2;
-    // LOG(INFO) << "guiding arm joint 2 actual torque: " << std::dec << m_guidingArm.m_actualTorque2;
-    // LOG(INFO) << "guiding arm joint 2 actual velocity: " << std::dec << m_guidingArm.m_actualVelocity2;
-    // LOG(INFO) << "guiding arm joint 2 1st-filtered velocity: " << std::dec << m_guidingArm.m_velocity_1stOrder[2];
-    // LOG(INFO) << "tmp values: " << std::dec << tmp1 << " " << tmp2 << " " << tmp3;
-    // LOG(INFO) << "tmp values: " << std::dec << tmp4 << " " << tmp5 << " " << tmp6;
+    LOG(INFO) << "m_flag_guidingArmEnableBtn: " << m_guidingArm.m_guidingArmEnableBtnPressed ;
+    LOG(INFO) << "m_guidingArmCurrentState: " << static_cast<int>(m_guidingArm.m_guidingArmCurrentState) ;
+    LOG(INFO) << "guiding arm joint 0 operation mode: " << m_motorDriver -> getOperationMode(MotorType::ZERO_ERR, 0, arm_guiding);
+    LOG(INFO) << "guiding arm joint 0 actual current: " << std::dec<< m_guidingArm.m_actualCurrent0;
+    LOG(INFO) << "guiding arm joint 0 actual torque: " << std::dec << m_guidingArm.m_actualTorque0;
+    LOG(INFO) << "guiding arm joint 0 actual velocity: " << std::dec << m_guidingArm.m_actualVelocity0;
+    LOG(INFO) << "guiding arm joint 1 operation mode: " << m_motorDriver -> getOperationMode(MotorType::ZERO_ERR, 1, arm_guiding);
+    LOG(INFO) << "guiding arm joint 1 actual current: " << std::dec << m_guidingArm.m_actualCurrent1;
+    LOG(INFO) << "guiding arm joint 1 actual torque: " << std::dec << m_guidingArm.m_actualTorque1;
+    LOG(INFO) << "guiding arm joint 1 actual velocity: " << std::dec << m_guidingArm.m_actualVelocity1;
+    LOG(INFO) << "guiding arm joint 2 operation mode: " << m_motorDriver -> getOperationMode(MotorType::ZERO_ERR, 2, arm_guiding);
+    LOG(INFO) << "guiding arm joint 2 actual current: " << std::dec << m_guidingArm.m_actualCurrent2;
+    LOG(INFO) << "guiding arm joint 2 actual torque: " << std::dec << m_guidingArm.m_actualTorque2;
+    LOG(INFO) << "guiding arm joint 2 actual velocity: " << std::dec << m_guidingArm.m_actualVelocity2;
+    LOG(INFO) << "guiding arm joint 2 1st-filtered velocity: " << std::dec << m_guidingArm.m_velocity_1stOrder[2];
+    LOG(INFO) << "tmp values: " << std::dec << tmp1 << " " << tmp2 << " " << tmp3;
+    LOG(INFO) << "tmp values: " << std::dec << tmp4 << " " << tmp5 << " " << tmp6;
 }
 
 void RobotControl::guidingArmLogging(){
