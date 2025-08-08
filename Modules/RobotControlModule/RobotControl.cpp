@@ -248,11 +248,11 @@ void RobotControl::initiAllData()
     // m_ruckigInputState_L.max_jerk = {10000.0, 10000.0, 10000.0};//
 
     m_ruckigInputState_R.max_velocity = {300000.0, 300000.0, 300000.0};//500000.0
-    m_ruckigInputState_R.max_acceleration = {10000.0, 10000.0, 10000.0};//15000.0
+    m_ruckigInputState_R.max_acceleration = {20000.0, 20000.0, 20000.0};//15000.0
     m_ruckigInputState_R.max_jerk = {5000.0, 5000.0, 5000.0};//8000.0
 
     m_ruckigInputState_L.max_velocity = {300000.0, 300000.0, 300000.0};
-    m_ruckigInputState_L.max_acceleration = {10000.0, 10000.0, 10000.0};
+    m_ruckigInputState_L.max_acceleration = {20000.0, 20000.0, 20000.0};
     m_ruckigInputState_L.max_jerk = {5000.0, 5000.0, 5000.0};
 
 }
@@ -424,7 +424,7 @@ void RobotControl::teleoperation()
             targetEncoder_R[9] = m_motorTargetEncoderLast_R[9];
         }
         targetVelocity_R = {0};
-    }  
+    }
 
     sendMotorData(targetEncoder_R, targetVelocity_R, targetEncoder_L, targetVelocity_L);
     storeCurAsPrev(handlePoseCur, controlValueCur_L, motorEncoderCur_L, targetEncoder_L, enableTagCur_L, controlValueCur_R, motorEncoderCur_R, targetEncoder_R, enableTagCur_R);
@@ -773,12 +773,6 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     double gamma_Init_R = m_handlePoseInit_R.handlePoseR_Roll ;
     double gamma_Last_R = m_handlePoseLastLoop_R.handlePoseR_Roll;
     double gamma_Cur_R = handlePoseCur.handlePoseR_Roll;
-
-    // LOG(INFO)<<"delt_alpha_R: "<<delt_alpha_R;
-    // LOG(INFO)<<"alpha_Cur_R: "<<alpha_Cur_R * 180.0 / M_PI;
-    // LOG(INFO)<<"alpha_Last_R: "<<alpha_Last_R * 180.0 / M_PI;
-    // LOG(INFO)<<"alpha_Init_R: "<<alpha_Init_R * 180.0 / M_PI;
-    // LOG(INFO)<<"alpha_Org_R: "<<alpha_Org_R * 180.0 / M_PI;
 
     double delt_gammaCur_R = (gamma_Cur_R - gamma_Init_R) * 180 / M_PI;
     double delt_gammaInit_R = (gamma_Init_R - gamma_Last_R) * 180 / M_PI;
