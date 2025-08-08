@@ -383,9 +383,6 @@ void RobotControl::teleoperation()
         targetVelocity_L = {0};
     }
 
-    // LOG(INFO)<<std::dec<<"targetEncoder_L[0]: "<<targetEncoder_L[0]<<" targetEncoder_L[1]: "<<targetEncoder_L[1]<<" targetEncoder_L[2]: "<<targetEncoder_L[2];
-
-
     if(enableTagCur_R == enableAction||enableTagCur_R == keepEnabling)
     {
         if(enableTagCur_R == enableAction)
