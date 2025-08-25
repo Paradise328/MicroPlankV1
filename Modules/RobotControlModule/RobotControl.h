@@ -93,7 +93,6 @@ constexpr int Joint_DOF = 3;
 
 // constexpr int m_angle = 30;
 
-
 namespace msm = boost::msm;
 namespace mpl = boost::mpl;//Meta Programming Library
 
@@ -218,6 +217,20 @@ private:
 
     double                          m_initMoonsEncode;//光电门为0时moons编码器数值
 
+    //自适应低通滤波参数
+
+    std::array<bool,3> inited_ {false, false, false};
+    std::array<double,3> xhat_   {0.0, 0.0, 0.0};
+    std::array<double,3> vhat_   {0.0, 0.0, 0.0};
+
+
+    double fmin     = 1.2;   // 低速/静止截止 [Hz]
+    double beta     = 0.43;  // 速度->截止斜率 [Hz/(单位/秒)]
+    double fd       = 18.0;  // 速度通道固定截止 [Hz]
+    double dt       = 0.004; // 采样周期（固定 4 ms；若用真实 dt 就每帧更新它）
+    double fc_max   = 40.0;  // f_c 上限（<=0 则不限制）
+    double vel_dead = 0.0;   // 速度微小死区（0 关闭）
+
     /*控制函数*/
     std::thread                     m_calculateControlDataThread;
 
@@ -324,8 +337,12 @@ private:
     std::atomic<std::array<int, MotorNumPerSide>>           m_MotorTargetVel_L;
     std::atomic<std::array<int, MotorNumPerSide>>           m_MotorTargetVel_R;
 
+    std::array<double,3> OneEuroStep(const std::array<double,3>&raw);
     /*进入使能时计算初始位置*/
-    void                           calculateEndEffectorPosition(const HandlePose& handlePoseCur, const std::array<int,MotorNumPerSide>& motorPos_Cur, const char& side);
+    void                           calculateEndEffectorPosition_init(const HandlePose& handlePoseCur, const std::array<int,MotorNumPerSide>& motorPos_Cur, const char& side);
+
+    /*机械臂实际位置*/
+    std::array<double, 3>             calculateEndEffectorPosition(const std::array<int,MotorNumPerSide>& motorPos_Cur, const char& side);
 
     /*轨迹规划部分*/
     ruckig::Ruckig<DOF>             m_ruckigPlanner_R;
@@ -445,8 +462,16 @@ private:
     mutable std::array<int, MotorNumPerSide>                m_motorTargetEncoderPrev_L;
     mutable std::array<int, MotorNumPerSide>                m_motorTargetEncoderPrev_R;
 
+    mutable std::array<double, MotorNumPerSide>                m_motorTargetEncoderPrev_L_new;
+    mutable std::array<double, MotorNumPerSide>                m_motorTargetEncoderPrev_R_new;
+
     mutable std::array<int, MotorNumPerSide>                m_motorTargetEncoderLast_L = {0};
     mutable std::array<int, MotorNumPerSide>                m_motorTargetEncoderLast_R = {0};
+
+    double m_jointAngle0_velocity_L;
+    double m_jointAngle1_velocity_L;
+    double m_jointAngle2_velocity_L;
+    double m_jointAngle3_velocity_L;
 
     /*保存当前状态*/
     void                        storeCurAsPrev(const HandlePose& handlePoseCur,
@@ -455,8 +480,11 @@ private:
                                                const int&  enableTagCur_L, const int&  enableTagCur_R);
 
     /*通过主手目标位置解算各轴转动角度*/
-    std::array<double, ControlValueNum>          motionMapping_L(const HandlePose& handlePoseCur);
-    std::array<double, ControlValueNum>          motionMapping_R(const HandlePose& handlePoseCur);
+    std::array<double, ControlValueNum>          motionMapping_L(const HandlePose& handlePoseCur, const std::array<int, MotorNumPerSide>& motorPositionCur_L);
+    std::array<double, ControlValueNum>          motionMapping_R(const HandlePose& handlePoseCur, const std::array<int, MotorNumPerSide>& motorPositionCur_R);
+
+    std::array<double, ControlValueNum>          test_motionMapping_L(const HandlePose& handlePoseCur);
+    std::array<double, ControlValueNum>          test_motionMapping_R(const HandlePose& handlePoseCur);
 
     std::array<double, ControlValueNum>          motionMapping_L_ForceControl(const HandlePose& handlePoseCur);
     std::array<double, ControlValueNum>          motionMapping_R_ForceControl(const HandlePose& handlePoseCur);
@@ -471,6 +499,14 @@ private:
     std::array<int, MotorNumPerSide>            calculateTargetVelocity(const std::array<int, MotorNumPerSide>& targetEncoderCur,
                                                                         const std::array<int, MotorNumPerSide>& targetEncoderPrev,
                                                                         const char& side)const;
+
+    std::array<double, MotorNumPerSide>            calculateTargetEncoder_new(const std::array<double, ControlValueNum>& controlValue_Cur,
+                                                            const std::array<int, MotorNumPerSide>& motorPosition_Init,
+                                                            const char& side)const;
+
+    std::array<int, MotorNumPerSide>            calculateTargetVelocity_new(const std::array<double, MotorNumPerSide>& targetEncoderCur,
+                                                             const std::array<double, MotorNumPerSide>& targetEncoderPrev,
+                                                             const char& side)const;
 
     /*控制循环结束后*/
     void                    storeCurAsPrev(const HandlePose& handlePoseCur, const std::array<double, ControlValueNum> controlValueCur_L,
@@ -513,12 +549,25 @@ private:
     /*以下为重复定位测试修改的部分*/
     int test_index;
     int test_time;
-    int test_circle;
+
     double m_x_out;
     double m_y_out;
     double m_z_out;
 
-    int m_waitTime = 200;//适用于运行状态
+    double test_x;
+    double test_y;
+    double test_z;
+    int step_flag;
+    double angle;
+    double pitch;
+
+    /*角度改变*/
+    double x_cur;
+    double y_cur;
+    double z_cur;
+
+    int savetime;
+
 
     /*以下为重复定位测试修改的部分*/
     Eigen::Vector3d m_compensation_LastR;
@@ -529,6 +578,9 @@ private:
 
     mutable std::array<int, MotorNumPerSide>                m_motorPositionPrev_L = {0};
     mutable std::array<int, MotorNumPerSide>                m_motorPositionPrev_R = {0};
+
+    mutable std::array<double, MotorNumPerSide>                m_motorPositionPrev_L_new = {0};
+    mutable std::array<double, MotorNumPerSide>                m_motorPositionPrev_R_new = {0};
 
     mutable std::array<double, Position_DOF>                m_endEffectorInitPosition_R = {0};//{0,119.09,-187.9};//{0};
     mutable std::array<double, Position_DOF>                m_endEffectorInitPosition_L = {0};//{0,-119.09,-187.9};
@@ -566,15 +618,6 @@ private:
 
     /*Maxon电机*/
     std::array<int,6> m_maxonInit;
-    /*用于步进测试*/
-    double test_x;
-    double test_y;
-    double test_z;
-    double x_cur;
-    double y_cur;
-    double z_cur;
-    double index;
-    int savetime;
 
     /*扭矩传感*/
     void                            openTorqueSensor();

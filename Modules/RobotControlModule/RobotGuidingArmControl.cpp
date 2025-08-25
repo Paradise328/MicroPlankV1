@@ -14,17 +14,17 @@ void RobotControl::guidingArmControl(){
 
         updateGuidingArmState();
 
-        // switch(m_guidingArm.m_guidingArmCurrentState){
-        //     case GuidingArmState::HOLD:
-        //         applyGuidingArmVelocityControl();
-        //         break;
-        //     case GuidingArmState::DAMPING:
-        //         applyGuidingArmDampingControl();
-        //         break;
-        //     case GuidingArmState::DRAG:
-        //         applyGuidingArmForceControl();
-        //         break;
-        // }
+        switch(m_guidingArm.m_guidingArmCurrentState){
+            case GuidingArmState::HOLD:
+                applyGuidingArmVelocityControl();
+                break;
+            case GuidingArmState::DAMPING:
+                applyGuidingArmDampingControl();
+                break;
+            case GuidingArmState::DRAG:
+                applyGuidingArmForceControl();
+                break;
+        }
 
         /* print guiding Arm Motion Values to Screen */
         // guidingArmPrinting();
@@ -133,7 +133,7 @@ void RobotControl::applyGuidingArmDampingControl(){
 
 void RobotControl::applyGuidingArmVelocityControl(){
     /* apply PV update in this function */
-    LOG(INFO)<<"[MODE:HOLD]";
+    // LOG(INFO)<<"[MODE:HOLD]";
     m_motorDriver->setTargetVel(MotorType::ZERO_ERR, 0, 0, arm_guiding);
     m_motorDriver->setTargetVel(MotorType::ZERO_ERR, 1, 0, arm_guiding);
     m_motorDriver->setTargetVel(MotorType::ZERO_ERR, 2, 0, arm_guiding);
@@ -141,7 +141,7 @@ void RobotControl::applyGuidingArmVelocityControl(){
 
 /* update state machine of guiding arm */
 void RobotControl::updateGuidingArmState(){
-    LOG(INFO) << "updateGuidingArmState";
+    // LOG(INFO) << "updateGuidingArmState";
     switch(m_guidingArm.m_guidingArmCurrentState){
         case GuidingArmState::HOLD :
             if(m_guidingArm.m_guidingArmEnableBtnPressed){

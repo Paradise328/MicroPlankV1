@@ -1,4 +1,5 @@
 #include "viper_transmitter.h"
+std::ofstream outfile3("openAngle.txt");
 
 void Viper_Transmitter::initDevice()
 {
@@ -305,7 +306,9 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
             Handle_Key_RIGHT<<=8;
             Handle_Key_RIGHT+=cftemp.payload.args[7];
 
-            // LOG(INFO)<<"viperDataTmp[0][1]: "<<viperDataTmp[0][0]<<" Handle_Angle_RIGHT: "<<Handle_Angle_RIGHT;
+            // LOG(INFO)<<"viperDataTmp[0][1]: "<<viperDataTmp[0][0]<<" Handle_Angle_RIGHT: "<< std::dec <<Handle_Angle_RIGHT;
+            // outfile3<<viperDataTmp[0][0]<<" "<<viperDataTmp[0][1]<<" "<<viperDataTmp[0][2]<< " "<<std::dec <<Handle_Angle_RIGHT << "\n";
+            // outfile.close();
 
             auto openAngle = calculateOpenAngle(Handle_Angle_LEFT, Handle_Angle_RIGHT);
             handlePoseTmp = motionMapping(viperDataTmp, openAngle, stepPedal);
@@ -345,8 +348,8 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
     //Define the Euler rotation Matrix
     Eigen::Matrix3d rotAroundZ_R, rotAroundY_R, rotAroundX_R;
     Eigen::Matrix3d rotAroundZ_L, rotAroundY_L, rotAroundX_L;
-    Eigen::Matrix3d rotAroundX_Init_R, rotAroundY_Init_R;
-    Eigen::Matrix3d rotAroundX_Init_L, rotAroundY_Init_L;
+    Eigen::Matrix3d rotAroundX_Init_R, rotAroundY_Init_R, rotAroundZ_Init_R;
+    Eigen::Matrix3d rotAroundX_Init_L, rotAroundY_Init_L, rotAroundZ_Init_L;
     Eigen::Matrix3d mappingMatrix;
     mappingMatrix << 0, 0, 1,
         0, 1, 0,
@@ -364,19 +367,45 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
     rotAroundX_Init_R = Eigen::AngleAxisd(-m_armAnglePerSide / 180 * M_PI, Eigen::Vector3d::UnitX());//armAnglePerSide=M_PI / 6    M_PI / 12
     rotAroundY_Init_R = Eigen::AngleAxisd(-M_PI / 3, Eigen::Vector3d::UnitY());
 
+    rotAroundZ_Init_R = Eigen::AngleAxisd(M_PI / 6, Eigen::Vector3d::UnitZ());
+
     rotAroundX_Init_L = Eigen::AngleAxisd( m_armAnglePerSide / 180 * M_PI, Eigen::Vector3d::UnitX());// M_PI / 6
     rotAroundY_Init_L = Eigen::AngleAxisd(-M_PI / 3, Eigen::Vector3d::UnitY());
+
+    rotAroundZ_Init_L = Eigen::AngleAxisd(-M_PI / 6, Eigen::Vector3d::UnitZ());
 
     Eigen::Matrix3d rotMatrix_R = rotAroundX_Init_R * rotAroundY_Init_R * rotAroundZ_R * rotAroundY_R * rotAroundX_R * mappingMatrix;
     Eigen::Matrix3d rotMatrix_L = rotAroundX_Init_L * rotAroundY_Init_L * rotAroundZ_L * rotAroundY_L * rotAroundX_L * mappingMatrix;
 
-    double alpha_R = atan2(rotMatrix_R(1, 0), rotMatrix_R(0, 0));
-    double beta_R = atan2(-rotMatrix_R(2,0), sqrt(rotMatrix_R(2,1) * rotMatrix_R(2,1) + rotMatrix_R(2,2) * rotMatrix_R(2,2)));
-    double gamma_R = atan2(rotMatrix_R(2,1), rotMatrix_R(2,2));
+    Eigen::AngleAxisd axang_R(rotMatrix_R);
+    Eigen::Vector3d u_R = axang_R.axis();
+    double theta_R = axang_R.angle();
+    double k = 1.25;
+    double theta_scaled_R = k * theta_R;
+    Eigen::AngleAxisd axang_scaled_R(theta_scaled_R, u_R);
+    Eigen::Matrix3d R_scaled = axang_scaled_R.toRotationMatrix();
+    double alpha_R = atan2(R_scaled(1, 0), R_scaled(0, 0));
+    double beta_R = atan2(-R_scaled(2,0), sqrt(R_scaled(2,1) * R_scaled(2,1) + R_scaled(2,2) * R_scaled(2,2)));
+    double gamma_R = atan2(R_scaled(2,1), R_scaled(2,2));
 
-    double alpha_L = atan2(rotMatrix_L(1, 0), rotMatrix_L(0, 0));
-    double beta_L = atan2(-rotMatrix_L(2,0), sqrt(rotMatrix_L(2,1) * rotMatrix_L(2,1) + rotMatrix_L(2,2) * rotMatrix_L(2,2)));
-    double gamma_L = atan2(rotMatrix_L(2,1), rotMatrix_L(2,2));
+    Eigen::AngleAxisd axang_L(rotMatrix_L);
+    Eigen::Vector3d u_L = axang_L.axis();
+    double theta_L = axang_L.angle();
+    double theta_scaled_L = k * theta_L;
+    Eigen::AngleAxisd axang_scaled_L(theta_scaled_L, u_L);
+    Eigen::Matrix3d L_scaled = axang_scaled_L.toRotationMatrix();
+    double alpha_L = atan2(L_scaled(1, 0), L_scaled(0, 0));
+    double beta_L = atan2(-L_scaled(2,0), sqrt(L_scaled(2,1) * L_scaled(2,1) + L_scaled(2,2) * L_scaled(2,2)));
+    double gamma_L = atan2(L_scaled(2,1), L_scaled(2,2));
+
+
+    // double alpha_R = atan2(rotMatrix_R(1, 0), rotMatrix_R(0, 0));
+    // double beta_R = atan2(-rotMatrix_R(2,0), sqrt(rotMatrix_R(2,1) * rotMatrix_R(2,1) + rotMatrix_R(2,2) * rotMatrix_R(2,2)));
+    // double gamma_R = atan2(rotMatrix_R(2,1), rotMatrix_R(2,2));
+
+    // double alpha_L = atan2(rotMatrix_L(1, 0), rotMatrix_L(0, 0));
+    // double beta_L = atan2(-rotMatrix_L(2,0), sqrt(rotMatrix_L(2,1) * rotMatrix_L(2,1) + rotMatrix_L(2,2) * rotMatrix_L(2,2)));
+    // double gamma_L = atan2(rotMatrix_L(2,1), rotMatrix_L(2,2));
 
     if(alpha_R > 160 * M_PI / 180)
     {
@@ -436,11 +465,19 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
     poseDataCurInSlaveFrame.handlePoseL_Elevation = beta_L;
     poseDataCurInSlaveFrame.handlePoseL_Arzimuth = gamma_L;
 
-    Eigen::Vector3d  masterPositionViaSensor;
-    masterPositionViaSensor << -2.0,
-                                0,
-                               2.0;
-
+    Eigen::Vector3d  masterPositionViaSensor_L, masterPositionViaSensor_R;
+    // masterPositionViaSensor_L << -8.0,
+    //                                -3.0,
+    //                                8.0;
+    masterPositionViaSensor_L << -2.0,
+        0,
+        2.0;
+    // masterPositionViaSensor_R << -6.0,
+    //                                -5.0,
+    //                                8.0;
+    masterPositionViaSensor_R << -2.0,
+        0,
+        2.0;
     Eigen::Vector3d  sensorPosition_L, sensorPosition_R;
     sensorPosition_L << viperData[0][0],
                         viperData[0][1],
@@ -454,14 +491,14 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
     rotAroundWorldY = Eigen::AngleAxisd(-M_PI / 6, Eigen::Vector3d::UnitY());
 
     Eigen::Vector3d  endPosition_L, endPosition_R;
-    endPosition_L = rotAroundWorldY * (sensorPosition_L + rotAroundZ_L * rotAroundY_L * rotAroundX_L * masterPositionViaSensor);
-    endPosition_R = rotAroundWorldY * (sensorPosition_R + rotAroundZ_R * rotAroundY_R * rotAroundX_R * masterPositionViaSensor);
+    endPosition_L = rotAroundWorldY * (sensorPosition_L + rotAroundZ_L * rotAroundY_L * rotAroundX_L * masterPositionViaSensor_L);
+    endPosition_R = rotAroundWorldY * (sensorPosition_R + rotAroundZ_R * rotAroundY_R * rotAroundX_R * masterPositionViaSensor_R);
 
     poseDataCurInSlaveFrame.handlePoseL_X = endPosition_L[0];
     poseDataCurInSlaveFrame.handlePoseL_Y = endPosition_L[1];
     poseDataCurInSlaveFrame.handlePoseL_Z = endPosition_L[2];
 
-    poseDataCurInSlaveFrame.handlePoseR_X= endPosition_R[0];
+    poseDataCurInSlaveFrame.handlePoseR_X = endPosition_R[0];
     poseDataCurInSlaveFrame.handlePoseR_Y = endPosition_R[1];
     poseDataCurInSlaveFrame.handlePoseR_Z = endPosition_R[2];
 

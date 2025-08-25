@@ -77,6 +77,8 @@ enum class _MasterConsoleAction_E
     BootSelfCheck=0x40,
     MasterShutDown,
     SwitchInstrumentAngle,
+    Open3rdFilter,
+    Open2rdFilter,
 };
 using MasterConsoleAction_E = enum _MasterConsoleAction_E;
 

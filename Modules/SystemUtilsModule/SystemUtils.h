@@ -252,16 +252,18 @@ struct HandlePose
         handlePoseL_X = PNOData_Cur[0][0];
         handlePoseL_Y = PNOData_Cur[0][1];
         handlePoseL_Z = PNOData_Cur[0][2];
-        handlePoseL_Arzimuth = PNOData_Cur[0][3];
-        handlePoseL_Elevation = PNOData_Cur[0][4];
-        handlePoseL_Roll = PNOData_Cur[0][5];
+        // handlePoseL_Arzimuth = PNOData_Cur[0][3];
+        // handlePoseL_Elevation = PNOData_Cur[0][4];
+        // handlePoseL_Roll = PNOData_Cur[0][5];
+        // handlePoseL_OpenAngle = PNOData_Cur[0][6];
 
         handlePoseR_X = PNOData_Cur[1][0];
         handlePoseR_Y = PNOData_Cur[1][1];
         handlePoseR_Z = PNOData_Cur[1][2];
-        handlePoseR_Arzimuth = PNOData_Cur[1][3];
-        handlePoseR_Elevation = PNOData_Cur[1][4];
-        handlePoseR_Roll = PNOData_Cur[1][5];
+        // handlePoseR_Arzimuth = PNOData_Cur[1][3];
+        // handlePoseR_Elevation = PNOData_Cur[1][4];
+        // handlePoseR_Roll = PNOData_Cur[1][5];
+        // handlePoseR_OpenAngle = PNOData_Cur[1][6];
         
     }
 
@@ -424,6 +426,7 @@ enum class FilterCase
     FilterOFF = 0x00,
     IRFilterOn = 0x01,
     IIRFilterOn = 0x02,
+    IIIRFilterOn = 0x03,
 };
 
 struct MotorDriverParameter

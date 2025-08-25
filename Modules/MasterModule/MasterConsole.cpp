@@ -1,5 +1,5 @@
  #include "MasterConsole.h"
-std::ofstream outfile2("filterDataCheck_0805.txt");
+// std::ofstream outfile2("filterDataCheck_0805.txt");
 std::chrono::high_resolution_clock::time_point startTime_master;
 
 void MasterConsole::updateConsoleDataThread()
@@ -100,6 +100,7 @@ void MasterConsole::assembleDataFromUSBAndEthernet()
 
     auto handlePoseIR_Tmp = handlePoseTmp;
     auto handlePoseIIR_Tmp = handlePoseTmp;
+    auto handlePoseIIIR_Tmp = handlePoseTmp;
 
     /*将viper数组中的数据取出进行滤波*/
     auto posDataFromViperTmp = handlePoseTmp.returnPNOData();
@@ -114,14 +115,29 @@ void MasterConsole::assembleDataFromUSBAndEthernet()
     }
     else if (m_FilterCase == static_cast<int>(FilterCase::IIRFilterOn))
     {
-        // auto PNODataAFIR_Tmp = returnIRFilteredData(posDataFromViperTmp);
         auto PNODataAFIIR_Tmp = returnIIRFilteredData(posDataFromViperTmp);
-        // handlePoseIR_Tmp.setMyConsoleData(PNODataAFIR_Tmp);
         handlePoseIIR_Tmp.setMyConsoleData(PNODataAFIIR_Tmp);
         m_handlePose_Cur.store(handlePoseIIR_Tmp);
     }
+    else if (m_FilterCase == static_cast<int>(FilterCase::IIIRFilterOn))
+    {
+        auto PNODataAFIIIR_Tmp = returnIIIRFilteredData(posDataFromViperTmp);
+        handlePoseIIIR_Tmp.setMyConsoleData(PNODataAFIIIR_Tmp);
+        // std::cout << posDataFromViperTmp[0][0] << " " << posDataFromViperTmp[0][1] << " "<< posDataFromViperTmp[0][2]  << "\n";
+        // std::cout << PNODataAFIIIR_Tmp[0][0] << " " << PNODataAFIIIR_Tmp[0][1] << " "<< PNODataAFIIIR_Tmp[0][2]  << "\n";
+        m_handlePose_Cur.store(handlePoseIIIR_Tmp);
+    }
 }
 
+void MasterConsole::initFilter()
+{
+    m_poseData_Pre = {0};
+    m_poseData_PrePre = {0};
+    m_poseData_PrePrePre = {0};
+    m_poseDataAF_Pre = {0};
+    m_poseDataAF_PrePre = {0};
+    m_poseDataAF_PrePrePre = {0};
+}
 
 std::array<std::array<double,viperDataNumPerSensor>,2>  MasterConsole::returnIRFilteredData(const std::array<std::array<double,viperDataNumPerSensor>,2>& poseData_Cur)
 {
@@ -157,24 +173,51 @@ std::array<std::array<double,viperDataNumPerSensor>,2>  MasterConsole::returnIIR
 
    for(int j = 0; j < 2; j++)
    {
-      for(int i = 0; i < viperDataNumPerSensor; i++)
+      for(int i = 0; i < 6; i++)
       {
-         t_AF_Cur[j][i] = t_Cur[j][i] * m_IRnum[0] + t_Pre[j][i] * m_IRnum[1] + t_PrePre[j][i] * m_IRnum[2]
-                         - t_AF_Pre[j][i] * m_IRden[1] - t_AF_PrePre[j][i] * m_IRden[2];
+        t_AF_Cur[j][i] = t_Cur[j][i] * m_IIRnum[0] + t_Pre[j][i] * m_IIRnum[1] + t_PrePre[j][i] * m_IIRnum[2]
+                     - t_AF_Pre[j][i] * m_IIRden[1] - t_AF_PrePre[j][i] * m_IIRden[2];
       }
    }
-   
+
    m_poseData_Pre       = t_Cur;
    m_poseData_PrePre    = t_Pre;
    m_poseDataAF_Pre     = t_AF_Cur;
    m_poseDataAF_PrePre  = t_AF_Pre;
-   outfile2 << poseData_Cur[0][0] << " " << poseData_Cur[0][1] << " " << poseData_Cur[0][2] << " "
-            << poseData_Cur[1][0] << " " << poseData_Cur[1][1] << " " << poseData_Cur[1][2] << " "
-            << t_AF_Cur[0][0] << " " << t_AF_Cur[0][1] << " " << t_AF_Cur[0][2] << " "
-            << t_AF_Cur[1][0] << " " << t_AF_Cur[1][1] << " " << t_AF_Cur[1][2] << "\n";
-   // LOG(INFO)<<"poseData_Cur[0][0]: "<<poseData_Cur[0][0];
 
    return t_AF_Cur;
+}
+
+std::array<std::array<double,viperDataNumPerSensor>,2>  MasterConsole::returnIIIRFilteredData(const std::array<std::array<double,viperDataNumPerSensor>,2>& poseData_Cur)
+{
+    std::array<std::array<double,viperDataNumPerSensor>,2> t_AF_Cur;
+    std::array<std::array<double,viperDataNumPerSensor>,2> t_AF_Pre = m_poseDataAF_Pre;
+    std::array<std::array<double,viperDataNumPerSensor>,2> t_AF_PrePre = m_poseDataAF_PrePre;
+    std::array<std::array<double,viperDataNumPerSensor>,2> t_AF_PrePrePre = m_poseDataAF_PrePrePre;
+
+    std::array<std::array<double,viperDataNumPerSensor>,2> t_Cur = poseData_Cur;
+    std::array<std::array<double,viperDataNumPerSensor>,2> t_Pre = m_poseData_Pre;
+    std::array<std::array<double,viperDataNumPerSensor>,2> t_PrePre = m_poseData_PrePre;
+    std::array<std::array<double,viperDataNumPerSensor>,2> t_PrePrePre = m_poseData_PrePrePre;
+
+    for(int j = 0; j < 2; j++)
+    {
+        for(int i = 0; i < 6; i++)
+        {
+            t_AF_Cur[j][i] = t_Cur[j][i] * m_IIIRnum[0] + t_Pre[j][i] * m_IIIRnum[1] + t_PrePre[j][i] * m_IIIRnum[2] + t_PrePrePre[j][i] * m_IIIRnum[3]
+                             - t_AF_Pre[j][i] * m_IIIRden[1] - t_AF_PrePre[j][i] * m_IIIRden[2] - t_AF_PrePrePre[j][i] * m_IIIRden[3];
+        }
+    }
+
+    m_poseData_Pre          = t_Cur;
+    m_poseData_PrePre       = t_Pre;
+    m_poseData_PrePrePre    = t_PrePre;
+
+    m_poseDataAF_Pre        = t_AF_Cur;
+    m_poseDataAF_PrePre     = t_AF_Pre;
+    m_poseDataAF_PrePrePre  = t_AF_PrePre;
+
+    return t_AF_Cur;
 }
 
 void MasterConsole::masterConsoleBootSelfCheck()
@@ -321,6 +364,21 @@ void MasterConsole::dealWithMsg()
                     break;
                 }
 
+                case static_cast<int>(MasterConsoleAction_E::Open3rdFilter):
+                {
+                    m_FilterCase.store(static_cast<int>(FilterCase::IIIRFilterOn));
+                    LOG(INFO) << "Open 3rd Filter";
+                    initFilter();
+                    break;
+                }
+                case static_cast<int>(MasterConsoleAction_E::Open2rdFilter):
+                {
+                    m_FilterCase.store(static_cast<int>(FilterCase::IIRFilterOn));
+                    initFilter();
+                    LOG(INFO) << "Open 2rd Filter";
+
+                    break;
+                }
                 default:break;
             }
             i++;
