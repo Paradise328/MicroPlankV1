@@ -224,7 +224,7 @@ private:
     std::array<double,3> vhat_   {0.0, 0.0, 0.0};
 
 
-    double fmin     = 1.2;   // 低速/静止截止 [Hz]
+    double fmin     = 0.8;//1.2;   // 低速/静止截止 [Hz]
     double beta     = 0.43;  // 速度->截止斜率 [Hz/(单位/秒)]
     double fd       = 18.0;  // 速度通道固定截止 [Hz]
     double dt       = 0.004; // 采样周期（固定 4 ms；若用真实 dt 就每帧更新它）

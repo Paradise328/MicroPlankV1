@@ -344,9 +344,9 @@ void RobotControl::teleoperation()
     auto motorEncoderInit_R = m_motorEncoderInit_R;
     auto motorEncoderInit_L = m_motorEncoderInit_L;
 
-    std::ofstream outfile("DataSTATIC.txt",std::ios::app);
-    outfile << motorEncoderCur_L[1] << " " << motorEncoderCur_R[1] << "\n";
-    outfile.close();
+    // std::ofstream outfile("DataSTATIC.txt",std::ios::app);
+    // outfile << motorEncoderCur_L[1] << " " << motorEncoderCur_R[1] << "\n";
+    // outfile.close();
 
     std::array<int, MotorNumPerSide>   targetEncoder_R = {0};
     std::array<int, MotorNumPerSide>   targetEncoder_L = {0};
@@ -369,6 +369,7 @@ void RobotControl::teleoperation()
     std::array<double, ControlValueNum> controlValueCur_R = {0};
     std::array<double, ControlValueNum> controlValueCur_L = {0};
 
+    // LOG(INFO) << "openAngle_L: " << handlePoseCur.handlePoseL_OpenAngle << " x: " << handlePoseCur.handlePoseL_X << " stepPedal: " << handlePoseCur.stepPedal;
 
     auto motorOperationMode_L = m_motorOperationMode_L.load();
     auto motorErrorCode_L = m_motorErrorCode_L.load();
@@ -436,9 +437,7 @@ void RobotControl::teleoperation()
             targetVelocity_L = {0};
             targetVelocity_L_new = {0};
         }
-        // std::ofstream outfile("Velocity.txt",std::ios::app);
-        // outfile<<m_motionScaling[m_speedPedalIndex_Cur]<<" "<<targetVelocity_L_new[0]<<" "<<targetVelocity_L_new[1] <<" "<<targetVelocity_L_new[2]<<" "<<targetVelocity_L_new[3]<< "\n";
-        // outfile.close();
+
 
         // LOG(INFO)<<std::dec<<"targetVelocity1_L: "<<targetVelocity_L_new[1]<<"targetVelocity2_L: "<<targetVelocity_L_new[2]<<"targetVelocity3_L: "<<targetVelocity_L_new[3];
 
@@ -499,11 +498,6 @@ void RobotControl::teleoperation()
             targetVelocity_R_new = {0};
         }
 
-        std::ofstream outfile("DataYES.txt",std::ios::app);
-        outfile << targetEncoder_R_new[1] << " " << motorEncoderCur_R[1] << "\n";
-        outfile.close();
-
-
     }
     else
     {
@@ -520,7 +514,10 @@ void RobotControl::teleoperation()
         }
         targetVelocity_R = {0};
     }
-
+    std::ofstream outfile("Velocity.txt",std::ios::app);
+    outfile <<" "<<targetVelocity_L[0]<<" "<<targetVelocity_L[1] <<" "<<targetVelocity_L[2]<<" "<<targetVelocity_L[3]
+            <<" "<<targetVelocity_R[0]<<" "<<targetVelocity_R[1] <<" "<<targetVelocity_R[2]<<" "<<targetVelocity_R[3] << "\n";
+    outfile.close();
     sendMotorData(targetEncoder_R, targetVelocity_R_new, targetEncoder_L, targetVelocity_L_new);
     // sendMotorData(targetEncoder_R, targetVelocity_R, targetEncoder_L, targetVelocity_L_new);
 
@@ -781,6 +778,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
     endEffectorTarget_Y_L = endEffectorFilter_L[1];
     endEffectorTarget_Z_L = endEffectorFilter_L[2];
 
+
     // std::ofstream outfile("Position.txt",std::ios::app);
     // outfile<<m_motionScaling[m_speedPedalIndex_Cur]<<" "<<endEffectorTarget_X_L<<" "<<endEffectorTarget_Y_L <<" "<<endEffectorTarget_Z_L<<" "<<endEffectorFilter_L[0]<<" "<<endEffectorFilter_L[1]<<" "<<endEffectorFilter_L[2]<<"\n";
     // outfile.close();
@@ -1020,6 +1018,21 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     double endEffectorTarget_X_R = m_ruckigOutputState_R.new_position[0];// / m_motionScaling[2]，初始值加上delta值为末端点应该移动到的位置，以此位置解算
     double endEffectorTarget_Y_R = m_ruckigOutputState_R.new_position[1];// / m_motionScaling[0]
     double endEffectorTarget_Z_R = m_ruckigOutputState_R.new_position[2];// / m_motionScaling[0]
+
+    /*自适应低通滤波*/
+    // std::array<double,3> endEffector_R;
+
+    // endEffector_R[0] = endEffectorTarget_X_R;
+    // endEffector_R[1] = endEffectorTarget_Y_R;
+    // endEffector_R[2] = endEffectorTarget_Z_R;
+
+    // std::array<double,3> endEffectorFilter_R = OneEuroStep(endEffector_R);
+
+    // endEffectorTarget_X_R = endEffectorFilter_R[0];
+    // endEffectorTarget_Y_R = endEffectorFilter_R[1];
+    // endEffectorTarget_Z_R = endEffectorFilter_R[2];
+
+
     /*jacobi*/
     double endEffectorVelocity_X_R = m_ruckigOutputState_R.new_velocity[0];
     double endEffectorVelocity_Y_R = m_ruckigOutputState_R.new_velocity[1];
@@ -1175,70 +1188,81 @@ std::array<double, ControlValueNum> RobotControl::test_motionMapping_L(const Han
     double endEffectorInit_Z_L = m_endEffectorInitPosition_L[2];// -m_endArm_3 * sin(jointAngle1_Init_R + jointAngle2_Init_R + jointAngle3_Init_R)
 
 
-    /*重复定位精度运动测试*/
-    int test_step = 1000;
-    double length = 30;//边长
+    // /*重复定位精度运动测试*/
+    // int test_step = 1000;
+    // double length = 30;//边长
 
-    Eigen::Vector3d Point_0 = {0, 0, 0};
-    Eigen::Vector3d Point_1 = {-0.5 * length, 0.5 * length, -0.5 * length};
-    Eigen::Vector3d Point_2 = {-0.5 * length, -0.5 * length, -0.5 * length};
-    Eigen::Vector3d Point_3 = {0.5 * length, -0.5 * length, 0.5 * length};
-    Eigen::Vector3d Point_4 = {0.5 * length, 0.5 * length, 0.5 * length};
+    // Eigen::Vector3d Point_0 = {0, 0, 0};
+    // Eigen::Vector3d Point_1 = {-0.5 * length, 0.5 * length, -0.5 * length};
+    // Eigen::Vector3d Point_2 = {-0.5 * length, -0.5 * length, -0.5 * length};
+    // Eigen::Vector3d Point_3 = {0.5 * length, -0.5 * length, 0.5 * length};
+    // Eigen::Vector3d Point_4 = {0.5 * length, 0.5 * length, 0.5 * length};
 
-    switch (test_index) {
-    case 1:
-        test_x = test_x + (Point_1.x() - Point_0.x())/test_step;
-        test_y = test_y + (Point_1.y() - Point_0.y())/test_step;
-        test_z = test_z + (Point_1.z() - Point_0.z())/test_step;
-        break;
-    case 2:
-        test_x = test_x + (Point_2.x() - Point_1.x())/test_step;
-        test_y = test_y + (Point_2.y() - Point_1.y())/test_step;
-        test_z = test_z + (Point_2.z() - Point_1.z())/test_step;
-        break;
-    case 3:
-        test_x = test_x + (Point_3.x() - Point_2.x())/test_step;
-        test_y = test_y + (Point_3.y() - Point_2.y())/test_step;
-        test_z = test_z + (Point_3.z() - Point_2.z())/test_step;
-        break;
-    case 4:
-        test_x = test_x + (Point_4.x() - Point_3.x())/test_step;
-        test_y = test_y + (Point_4.y() - Point_3.y())/test_step;
-        test_z = test_z + (Point_4.z() - Point_3.z())/test_step;
-        break;
-    case 5:
-        test_x = test_x + (Point_0.x() - Point_4.x())/test_step;
-        test_y = test_y + (Point_0.y() - Point_4.y())/test_step;
-        test_z = test_z + (Point_0.z() - Point_4.z())/test_step;
-        break;
-    }
+    // switch (test_index) {
+    // case 1:
+    //     test_x = test_x + (Point_1.x() - Point_0.x())/test_step;
+    //     test_y = test_y + (Point_1.y() - Point_0.y())/test_step;
+    //     test_z = test_z + (Point_1.z() - Point_0.z())/test_step;
+    //     break;
+    // case 2:
+    //     test_x = test_x + (Point_2.x() - Point_1.x())/test_step;
+    //     test_y = test_y + (Point_2.y() - Point_1.y())/test_step;
+    //     test_z = test_z + (Point_2.z() - Point_1.z())/test_step;
+    //     break;
+    // case 3:
+    //     test_x = test_x + (Point_3.x() - Point_2.x())/test_step;
+    //     test_y = test_y + (Point_3.y() - Point_2.y())/test_step;
+    //     test_z = test_z + (Point_3.z() - Point_2.z())/test_step;
+    //     break;
+    // case 4:
+    //     test_x = test_x + (Point_4.x() - Point_3.x())/test_step;
+    //     test_y = test_y + (Point_4.y() - Point_3.y())/test_step;
+    //     test_z = test_z + (Point_4.z() - Point_3.z())/test_step;
+    //     break;
+    // case 5:
+    //     test_x = test_x + (Point_0.x() - Point_4.x())/test_step;
+    //     test_y = test_y + (Point_0.y() - Point_4.y())/test_step;
+    //     test_z = test_z + (Point_0.z() - Point_4.z())/test_step;
+    //     break;
+    // }
 
-    test_time = test_time + 1;
+    // test_time = test_time + 1;
 
-    if((test_time >= 0) && (test_time < test_step)){
-        test_index = 0;
-    }else if((test_time >= test_step) && (test_time < 2 * test_step)){
-        test_index = 1;
-    }else if((test_time >= 2 * test_step) && (test_time < 3 * test_step)){
-        test_index = 2;
-    }else if((test_time >= 3 * test_step) && (test_time < 4 * test_step)){
-        test_index = 3;
-    }else if((test_time >= 4 * test_step) && (test_time < 5 * test_step)){
-        test_index = 4;
-    }else if((test_time >= 5 * test_step) && (test_time < 6 * test_step)){
-        test_index = 5;
-    }else if(test_time == 6 * test_step){
-        test_index = 6;
+    // if((test_time >= 0) && (test_time < test_step)){
+    //     test_index = 0;
+    // }else if((test_time >= test_step) && (test_time < 2 * test_step)){
+    //     test_index = 1;
+    // }else if((test_time >= 2 * test_step) && (test_time < 3 * test_step)){
+    //     test_index = 2;
+    // }else if((test_time >= 3 * test_step) && (test_time < 4 * test_step)){
+    //     test_index = 3;
+    // }else if((test_time >= 4 * test_step) && (test_time < 5 * test_step)){
+    //     test_index = 4;
+    // }else if((test_time >= 5 * test_step) && (test_time < 6 * test_step)){
+    //     test_index = 5;
+    // }else if(test_time == 6 * test_step){
+    //     test_index = 6;
+    // }
+
+    // endEffectorDelta_X_L = test_x;
+    // endEffectorDelta_Y_L = test_y;
+    // endEffectorDelta_Z_L = test_z;
+
+    // if(test_index == 6){
+
+    //     LOG(INFO)<<"=================================================================================================================================================";
+    // }
+
+    if(test_index < 25){//每次测试步进25*0.004=0.1mm
+
+        test_x = test_x + 0.004;
+        test_index = test_index + 1;
     }
 
     endEffectorDelta_X_L = test_x;
     endEffectorDelta_Y_L = test_y;
     endEffectorDelta_Z_L = test_z;
 
-    if(test_index == 6){
-
-        LOG(INFO)<<"=================================================================================================================================================";
-    }
 
 
     double X_L = (handlePoseCur.handlePoseL_X) / 0.1;

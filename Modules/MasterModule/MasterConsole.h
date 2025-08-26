@@ -89,8 +89,8 @@ private:
     const std::vector<double>   m_IRden{1.0, -0.9325};
     // const std::vector<double>   m_IIRnum{0.0144014403465112, 0.0288028806930224, 0.0144014403465112};  // 10HZ :cutoff
     // const std::vector<double>   m_IIRden{1.0, -1.63299316185545, 0.690598923241497};// (b)
-    const std::vector<double>   m_IIRnum{0.021, 0.042, 0.021};  // 5HZ :cutoff
-    const std::vector<double>   m_IIRden{1.0, -1.8669, 0.8752};// (b)
+    const std::vector<double>   m_IIRnum{0.00554271721028068, 0.0110854344205614, 0.00554271721028068};  // 5HZ :cutoff
+    const std::vector<double>   m_IIRden{1.0, -1.77863177782459, 0.800802646665708};// (b)
     const std::vector<double>   m_IIIRnum{0.0029, 0.0087, 0.0087, 0.0029};  // Numerator coefficients ()
     const std::vector<double>   m_IIIRden{1.000, -2.3741, 1.9294, -0.5321};  // Numerator coefficients ()
 
