@@ -312,21 +312,21 @@ void RobotControl::control()
         }
         if(m_flagInCollaboration_GuidingArm.load())
         {
-            // updateGuidingArmMotion();
+            updateGuidingArmMotion();
 
-            // updateGuidingArmState();
+            updateGuidingArmState();
 
-            // switch(m_guidingArm.m_guidingArmCurrentState){
-            // case GuidingArmState::HOLD:
-            //     applyGuidingArmVelocityControl();
-            //     break;
-            // case GuidingArmState::DAMPING:
-            //     applyGuidingArmDampingControl();
-            //     break;
-            // case GuidingArmState::DRAG:
-            //     applyGuidingArmForceControl();
-            //     break;
-            // }
+            switch(m_guidingArm.m_guidingArmCurrentState){
+            case GuidingArmState::HOLD:
+                applyGuidingArmVelocityControl();
+                break;
+            case GuidingArmState::DAMPING:
+                applyGuidingArmDampingControl();
+                break;
+            case GuidingArmState::DRAG:
+                applyGuidingArmForceControl();
+                break;
+            }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(3));
     }
@@ -2676,10 +2676,10 @@ void RobotControl::goToCollaboration_GuidingArm()
             m_motorDriver->operationPV(MotorType::ZERO_ERR, 2, arm_guiding);
 
             std::array<int, MotorNumPerSide> statusWord = {0};
-            statusWord[1] = m_motorDriver->getStatusWord(MotorType::ZERO_ERR, 0, arm_guiding);
-            statusWord[2] = m_motorDriver->getStatusWord(MotorType::ZERO_ERR, 1, arm_guiding);
-            statusWord[3] = m_motorDriver->getStatusWord(MotorType::ZERO_ERR, 2, arm_guiding);
-            LOG(INFO) << "status Word of Guiding Arm: "<<statusWord;
+            statusWord[0] = m_motorDriver->getStatusWord(MotorType::ZERO_ERR, 0, arm_guiding);
+            statusWord[1] = m_motorDriver->getStatusWord(MotorType::ZERO_ERR, 1, arm_guiding);
+            statusWord[2] = m_motorDriver->getStatusWord(MotorType::ZERO_ERR, 2, arm_guiding);
+            LOG(INFO) << "status Word of Guiding Arm: " << statusWord;
 
             LOG(INFO) << "SWITCH TO Collaboration MODE, previous Statis is: IN HOLD STAUTS";
             break;
@@ -4077,7 +4077,6 @@ void RobotControl::dealWithMsg()
             case static_cast<int>(RobotControlAction_E::GoToGuidingArmCollaboration):
             {
                 LOG(INFO)<<"Get INFO Execuate Control Set in RobotControl: Go To  Guiding Arm Collaboration";
-                // initGuidingArm();
                 setRobotControlMode(RobotControlMode::Collaboration_GuidingArm);
                 break;
             }
@@ -4085,7 +4084,6 @@ void RobotControl::dealWithMsg()
             {
                 LOG(INFO)<<"Get INFO Execuate Control Set in RobotControl: Disable Guiding Arm Collaboration";
                 setRobotControlMode(RobotControlMode::Hold);
-                // disableGuidingArm();
                 break;
             }
 
@@ -4128,7 +4126,6 @@ void RobotControl::dealWithMsg()
                 if(i.value() == "30")
                 {
                     LOG(INFO) << "Instrument Angle : 30";
-
                     if(m_armAnglePerSide == 30){
                         changeAngle_L();
                         changeAngle_R();
@@ -4137,7 +4134,6 @@ void RobotControl::dealWithMsg()
                 }else if(i.value() ==  "60")
                 {
                     LOG(INFO) << "Instrument Angle : 60";
-
                     if(m_armAnglePerSide == 15){
                         changeAngle_L();
                         changeAngle_R();
