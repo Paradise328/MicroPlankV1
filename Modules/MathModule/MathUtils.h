@@ -18,7 +18,8 @@
 #include <queue>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/LU>
-
+#include <eigen3/Eigen/Geometry>
+#include <deque>
 using JointCoords = Eigen::Vector3d;
 using CartesianCoords = Eigen::Vector3d;
 using JacobianType = Eigen::Matrix3d;
@@ -28,6 +29,8 @@ using DigitalInput = std::array<int, 8>;
 
 #define T_NOERROR ((int32_t)1)
 #define T_ERROR ((int32_t)0)
+using Mat3 = Eigen::Matrix3d;
+using Vec3 = Eigen::Vector3d;
 
 constexpr double PI = 3.14159265358979323846;
 
@@ -377,5 +380,54 @@ private:
     std::deque<T> buffer_;
     int windowSize_;
 };
+
+template <typename T, std::size_t N>
+class MoveMeanArray {
+public:
+    explicit MoveMeanArray(int windowSize)
+        : windowSize_(windowSize), sum_{} {}
+
+    // 添加一个新值
+    void add(const std::array<T, N>& newValue) {
+        if (buffer_.size() < windowSize_) {
+            buffer_.push_back(newValue);
+            for (std::size_t i = 0; i < N; ++i)
+                sum_[i] += newValue[i];
+        } else {
+            // 移除最老的
+            const auto& old = buffer_.front();
+            for (std::size_t i = 0; i < N; ++i)
+                sum_[i] -= old[i];
+            buffer_.pop_front();
+
+            // 加入新的
+            buffer_.push_back(newValue);
+            for (std::size_t i = 0; i < N; ++i)
+                sum_[i] += newValue[i];
+        }
+    }
+
+    // 获取当前窗口的平均
+    std::array<T, N> getMean() const {
+        std::array<T, N> mean{};
+        if (buffer_.empty()) return mean;
+
+        double denom = static_cast<double>(buffer_.size());
+        for (std::size_t i = 0; i < N; ++i)
+            mean[i] = static_cast<T>(sum_[i] / denom);
+
+        return mean;
+    }
+
+    int size() const { return buffer_.size(); }
+    int capacity() const { return windowSize_; }
+
+private:
+    std::deque<std::array<T, N>> buffer_;
+    int windowSize_;
+    std::array<long double, N> sum_;  // 累计和，避免精度损失
+};
+
+
 
 #endif 

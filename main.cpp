@@ -23,29 +23,29 @@ int main(int argc, char *argv[])
 
     QGuiApplication app(argc, argv);
 
-   MotorDriverParameter motorDriverParameter;
+    MotorDriverParameter motorDriverParameter;
 
-   motorDriverParameter.guidingJointMotorNum = 3;           /* number of motor to control the arm */
-   motorDriverParameter.armNum = 2;
-   motorDriverParameter.endGimbalMotorNum = 2;              /* total number of motor to control end-effector gimbal */
-   motorDriverParameter.endGimbalMotorNumPerArm = 1;        /* number of motor to control end-effector gimbal on each arm */
-   motorDriverParameter.endJointMotorNum = 6;               /* total number of motor to control end-effector joint */
-   motorDriverParameter.endJointMotorNumPerArm = 3;         /* number of motor to control end-effector joint on each arm */
-   motorDriverParameter.endInstrumentMotorNum = 8;         /* total number of motor to control end-effector instruments */
-   motorDriverParameter.endInstrumentMotorNumPerArm = 4;    /* number of motor to control end-effector instruments on each arm */
-   motorDriverParameter.motorNumPerArm = 8;
-   motorDriverParameter.slaveNum = 19;                      /* total number of ethercat slaves*/
-   motorDriverParameter.motorNum = 19;                      /* total number of ethercat slaves*/
+    motorDriverParameter.guidingJointMotorNum = 3;           /* number of motor to control the arm */
+    motorDriverParameter.armNum = 2;
+    motorDriverParameter.endGimbalMotorNum = 2;              /* total number of motor to control end-effector gimbal */
+    motorDriverParameter.endGimbalMotorNumPerArm = 1;        /* number of motor to control end-effector gimbal on each arm */
+    motorDriverParameter.endJointMotorNum = 6;               /* total number of motor to control end-effector joint */
+    motorDriverParameter.endJointMotorNumPerArm = 3;         /* number of motor to control end-effector joint on each arm */
+    motorDriverParameter.endInstrumentMotorNum = 8;         /* total number of motor to control end-effector instruments */
+    motorDriverParameter.endInstrumentMotorNumPerArm = 4;    /* number of motor to control end-effector instruments on each arm */
+    motorDriverParameter.motorNumPerArm = 8;
+    motorDriverParameter.slaveNum = 19;                      /* total number of ethercat slaves*/
+    motorDriverParameter.motorNum = 19;                      /* total number of ethercat slaves*/
 
-   motorDriverParameter.forceSensorNumPerArm = 0;
+    motorDriverParameter.forceSensorNumPerArm = 0;
 
-   /* Log File Configuration */
-   const auto timeStamp = getCurrentTimeAsString();
-   const auto logFileName = "../logs/app_" + timeStamp + ".log";
-   el::Configurations conf("/home/a/Desktop/codes/MikroPlanckV1/Config/logConf.conf");  // path have to be adapted
-   conf.setGlobally(el::ConfigurationType::Filename, logFileName);
-   el::Loggers::reconfigureAllLoggers(conf);
-   LOG(INFO)<< "Successfully init Logger Config Module ";
+    /* Log File Configuration */
+    const auto timeStamp = getCurrentTimeAsString();
+    const auto logFileName = "../logs/app_" + timeStamp + ".log";
+    el::Configurations conf("/home/a/Desktop/codes/MikroPlanckV1/Config/logConf.conf");  // path have to be adapted
+    conf.setGlobally(el::ConfigurationType::Filename, logFileName);
+    el::Loggers::reconfigureAllLoggers(conf);
+    LOG(INFO)<< "Successfully init Logger Config Module ";
 
    std::unordered_map<std::string, std::string> audioMap = {
        {"1", "/home/a/Desktop/codes/MikroPlanckV1/Modules/UIModule/sound/1.wav"},

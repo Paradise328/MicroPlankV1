@@ -2119,7 +2119,6 @@ int MotorDriver::cyclicDataTransfer(){
     if(CIFX_NO_ERROR != (lRet = xChannelIORead(m_hChannel, 0, 0, sizeof(m_abRecvData), m_abRecvData, timeOutCyclicIO))){
         LOG(ERROR) << "Error reading IO Data area! Error Code: 0x" << std::hex << lRet ;
         return T_ERROR;
-        
     }
     else{
         if (CIFX_NO_ERROR != (lRet = xChannelIOWrite(m_hChannel, 0, 0, sizeof(m_abSendData), m_abSendData, timeOutCyclicIO))){
@@ -3532,7 +3531,7 @@ void MotorDriver::motorDriverThread(std::promise<bool> &promiseCommunication){
         m_selfPointer->checkMotorState();
 
         if(m_selfPointer->m_flagSDO){
-            std::lock_guard<std::mutex> lock(m_selfPointer->m_myMutex);
+            // std::lock_guard<std::mutex> lock(m_selfPointer->m_myMutex);
             if (T_NOERROR != (lRet = m_selfPointer->mailboxPacketTransfer())){
                 LOG(ERROR) << "SDO service is offline, connection may be lost." ;
                 // m_isMotorDriverOk.store(false);

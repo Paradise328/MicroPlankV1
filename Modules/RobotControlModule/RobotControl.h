@@ -8,7 +8,7 @@
 #include "BlasControl/actuators_controler.h"
 #include "BlasControl/BLA_API.h"
 #include "BlasControl/communication.h"
-
+#include "DomainController.h"
 #include <boost/statechart/event.hpp>
 #include <boost/statechart/state_machine.hpp>
 #include <boost/statechart/simple_state.hpp>
@@ -30,12 +30,6 @@ constexpr int MotorNumPerSide = 11;
 constexpr int GuidingMotorNum = 3;
 
 constexpr int JointEncoderPerRevolution = 524288;
-// constexpr int JointEncoderInit_1_R = 324400;//初始值，角度为0时的编码器值
-// constexpr int JointEncoderInit_2_R = 66000;
-// constexpr int JointEncoderInit_3_R = 360500;
-// constexpr int JointEncoderInit_1_L = 372000;
-// constexpr int JointEncoderInit_2_L = 281500;
-// constexpr int JointEncoderInit_3_L = 215996;
 
 constexpr int JointEncoderInit_1_R = 524288/2;//初始值，角度为0时的编码器值
 constexpr int JointEncoderInit_2_R = 524288/2;
@@ -144,13 +138,15 @@ public:
     //    std::array<double, 11>    m_SpeedDirection_L = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     //    std::array<double, 11>    m_kForcepPosition_L = {1456.356, 1638.4, 1638.4, 1638.4, 1638.4, 1638.4, 1638.4, 1, 1456.356, 1456.356, 1456.356};//电机1456.356位每度 电缸1683.4位每毫米
 
-    explicit RobotControl(MasterConsole& masterConsole, MotorDriver* motorDriver, MessageQueue&  messagePool):
+    explicit RobotControl(MasterConsole& masterConsole, MotorDriver* motorDriver, DomainController* domainController_L,DomainController* domainController_R,MessageQueue&  messagePool):
         m_masterConsole(masterConsole),
         m_motorDriver(motorDriver),
+        m_domainController_L(domainController_L),
+        m_domainController_R(domainController_R),
         m_messagePool(messagePool),
         m_teleOperationdMode(TeleOperationMode::CSV_Mode),
-        m_ruckigPlanner_R(0.004),
-        m_ruckigPlanner_L(0.004),
+        m_ruckigPlanner_R(0.005),
+        m_ruckigPlanner_L(0.005),
         m_flagControlThread(false),
         m_isSystemTerminated(false),
         m_guidingArm1stOrder({0}),
@@ -189,6 +185,10 @@ private:
 
     Viper_Transmitter*              m_viper_Transmitter;
 
+    DomainController*               m_domainController_L;
+
+    DomainController*               m_domainController_R;
+
     MasterConsoleType               m_masterConsoleType;
 
     MasterConsole&                  m_masterConsole;
@@ -215,21 +215,30 @@ private:
 
     void                            initiAllData();
 
-    double                          m_initMoonsEncode;//光电门为0时moons编码器数值
+    double                          m_initMoonsEn5code;//光电门为0时moons编码器数值
 
     //自适应低通滤波参数
 
     std::array<bool,3> inited_ {false, false, false};
     std::array<double,3> xhat_   {0.0, 0.0, 0.0};
     std::array<double,3> vhat_   {0.0, 0.0, 0.0};
+    std::array<double,3> ahat_   {0.0, 0.0, 0.0};
+    std::array<double,3> fc_smooth_   {0.0, 0.0, 0.0};
 
+    //位移累积（滑动窗口）
+    std::deque<double> dispHist_[3];
 
-    double fmin     = 0.8;//1.2;   // 低速/静止截止 [Hz]
-    double beta     = 0.43;  // 速度->截止斜率 [Hz/(单位/秒)]
+    double fmin     = 1.2;//1.2;   // 低速/静止截止 [Hz]
+    double beta     = 2.53;//0.43;  // 速度->截止斜率 [Hz/(单位/秒)]
     double fd       = 18.0;  // 速度通道固定截止 [Hz]
     double dt       = 0.004; // 采样周期（固定 4 ms；若用真实 dt 就每帧更新它）
     double fc_max   = 40.0;  // f_c 上限（<=0 则不限制）
     double vel_dead = 0.0;   // 速度微小死区（0 关闭）
+    double beta_a = 0.2;//加速度权重
+    double beta_d = 0.7;//累积位移权重
+    double win_len = 0.5;//位移窗口累计
+    double tau_up = 0.05;//fc下降时间常数
+    double tau_down = 0.3;//fc上升时间常数
 
     /*控制函数*/
     std::thread                     m_calculateControlDataThread;
@@ -312,6 +321,9 @@ private:
 
     /*与MotorDriver通信*/
     void                            receiveMotorData();
+    /* communicate with domain controller */
+    void                            receiveDomainController();
+
     void                            sendMotorData(const std::array<int, MotorNumPerSide>& targetEncoder_R, const std::array<int, MotorNumPerSide>& targetVel_R,
                                                   const std::array<int, MotorNumPerSide>& targetEncoder_L, const std::array<int, MotorNumPerSide>& targetVel_L);
 
@@ -483,8 +495,8 @@ private:
     std::array<double, ControlValueNum>          motionMapping_L(const HandlePose& handlePoseCur, const std::array<int, MotorNumPerSide>& motorPositionCur_L);
     std::array<double, ControlValueNum>          motionMapping_R(const HandlePose& handlePoseCur, const std::array<int, MotorNumPerSide>& motorPositionCur_R);
 
-    std::array<double, ControlValueNum>          test_motionMapping_L(const HandlePose& handlePoseCur);
-    std::array<double, ControlValueNum>          test_motionMapping_R(const HandlePose& handlePoseCur);
+    std::array<double, ControlValueNum>          test_motionMapping_L(const HandlePose& handlePoseCur, const std::array<int, MotorNumPerSide>& motorPositionCur_L);
+    std::array<double, ControlValueNum>          test_motionMapping_R(const HandlePose& handlePoseCur, const std::array<int, MotorNumPerSide>& motorPositionCur_R);
 
     std::array<double, ControlValueNum>          motionMapping_L_ForceControl(const HandlePose& handlePoseCur);
     std::array<double, ControlValueNum>          motionMapping_R_ForceControl(const HandlePose& handlePoseCur);
@@ -506,6 +518,8 @@ private:
 
     std::array<int, MotorNumPerSide>            calculateTargetVelocity_new(const std::array<double, MotorNumPerSide>& targetEncoderCur,
                                                              const std::array<double, MotorNumPerSide>& targetEncoderPrev,
+                                                             const std::array<int, MotorNumPerSide>& targetEncoderCur_int,
+                                                             const std::array<int, MotorNumPerSide>& motorEncode,
                                                              const char& side)const;
 
     /*控制循环结束后*/
@@ -538,13 +552,6 @@ private:
     double                          m_endArm_1 = 150;
     double                          m_endArm_2 = 180;
     double                          m_endArm_3 = 349.66;//单位mm
-
-    /*以下为画圆测试修改部分*/
-    double delta_x;
-    double delta_y;
-    double delta_z = 0;
-    double r_test = 10;//画圆半径为100mm
-    double test_angle = 0;
 
     /*以下为重复定位测试修改的部分*/
     int test_index;
@@ -635,6 +642,7 @@ private:
     std::atomic<TorqueSensorData>   m_torqueSensorData_Left;
 
     std::atomic<TorqueSensorData>   m_torqueSensorData_Right;
+
 };
 
 #endif // ROBOTCONTROL_H

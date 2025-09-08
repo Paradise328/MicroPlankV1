@@ -3,8 +3,10 @@
 #include "../../PeripheralDeviceModule//peripheral_device.h"
 #include "../../LoggerModule/easylogging++.h"
 #include "../../SystemUtilsModule/SystemUtils.h"
+#include "../../MathModule/MathUtils.h"
 #include "../Viper_Lib/viper_ui.h"
 #include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Geometry>
 #include <atomic>
 #include <array>
 #include <QSerialPort>
@@ -20,7 +22,8 @@ public:
 
     explicit Viper_Transmitter():
         m_communicateTemp(0),
-        m_isMonitorTerminated(false)
+        m_isMonitorTerminated(false),
+        m_moveMeanFilter(5)
         {
             this->type=DEV_VIPER_TRANSMITTER;
             this->Qhash_Cmd_Classify.insert("GETSINGLE",VIPER_TRANSMITTER_GET_SINGLE_DATA);
@@ -28,8 +31,13 @@ public:
             this->Qhash_Cmd_Classify.insert("RESETHANDLE",VIPER_TRANSMITTER_RESET_HANDLE);
             this->Qhash_Cmd_Classify.insert("STARTCONTINUS",VIPER_TRANSMITTER_START_CONTINUS);
             initDevice();
-        }
-
+            m_rotMatrixPrev_L << 1,0,0,
+                              0,1,0,
+                            0,0,1;
+            m_rotMatrixPrev_R << 1,0,0,
+                            0,1,0,
+                            0,0,1;
+            }
     HandlePose              returnHandlePose(){return m_handlePoseData.load();}
 
     bool                    return422Status(){return m_is422Ok;}
@@ -69,9 +77,18 @@ private:
     HandlePose              motionMapping(const std::array<std::array<double,viperDataNumPerSensor>,2>& viperData, const std::array<double,2>& openAngle, const int& stepPedal);
     void                    readHandleData(QByteArray qba);
     void                    readHandleData_Quaternion(QByteArray qba);
+    Eigen::Matrix3d         m_rotMatrixPrev_R;
+    Eigen::Matrix3d         m_rotMatrixPrev_L;
 
     /*字符转换*/
     float                   Uint8ArrToFloat(uint8_t *arr,unsigned char StartIndex);
+    double m_alpha_L_pre = 0.0;
+    double m_gamma_L_pre = 0.0;
+    double m_alpha_R_pre = 0.0;
+    double m_gamma_R_pre = 0.0;
+    int m_index_beta = 1;
+
+    MoveMeanArray<int, 2>               m_moveMeanFilter;
 
 };
 

@@ -101,6 +101,29 @@ private:
     std::array<std::array<double,viperDataNumPerSensor>,2>        returnIIIRFilteredData(const std::array<std::array<double,viperDataNumPerSensor>,2>& poseData_Cur);
     void initFilter();
 
+    /*kalman滤波*/
+    std::array<double,3> KalmanStep(const std::array<double,3>& raw);
+
+    // 采样周期
+    double dt = 0.004;              // 秒
+
+    // 噪声参数
+    double sigma_a = 0.2;           // 假设的加速度噪声标准差
+    double R = 0.0005;                // 观测噪声方差
+
+    // 状态估计: [位置; 速度]
+    std::array<std::array<double,2>,3> x_est_ {{{0,0},{0,0},{0,0}}};
+
+    // 协方差矩阵 (2x2) * 3
+    std::array<std::array<std::array<double,2>,2>,3> P_ {{
+        {{{1,0},{0,1}}},
+        {{{1,0},{0,1}}},
+        {{{1,0},{0,1}}}
+    }};
+
+    // 初始化标志
+    std::array<bool,3> inited_ {false, false, false};
+
     //MessageQueue relative function
     MessageQueue            &m_messagePool;
     QQueue<Message_Inner_T> m_MsgGottenQueue;

@@ -14,6 +14,18 @@
 #include <QQmlApplicationEngine>
 #include "../MasterModule/Viper_Lib/viper_ui.h"
 #include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Geometry>
+#include <algorithm>
+#include <cmath>
+
+
+
+
+
+using Mat3 = Eigen::Matrix3d;
+
+
+using Vec3 = Eigen::Vector3d;
 
 
 #define SteadyDelay(time_ms)\
@@ -484,14 +496,14 @@ enum class EndeffectorConfiguration{
     sixMaxons  = 0x02
 };
 
-constexpr int adcValueOpen_L = 36440;
-constexpr int adcValueGrasp_L = 34540;
-constexpr int adcValueClose_L = 33200;
+constexpr int adcValueOpen_L = 36690;
+constexpr int adcValueGrasp_L = 34810;
+constexpr int adcValueClose_L = 33090;
 constexpr int adcValuePerRevolution_L = 65536;
 
-constexpr int adcValueOpen_R = 35900;
-constexpr int adcValueGrasp_R = 34200;
-constexpr int adcValueClose_R = 32700;
+constexpr int adcValueOpen_R = 36320;
+constexpr int adcValueGrasp_R = 33998;
+constexpr int adcValueClose_R = 32390;
 constexpr int adcValuePerRevolution_R = 65536;
 
 constexpr double graspThreshold = 0;

@@ -2,15 +2,29 @@
 
 DomainController::DomainController(uint32_t ID):
     m_forceSensorFilter_IR(m_forceSensorIR, k_forceSensor_sample_rate, k_forceSensor_cutoff_rate),
-    m_forceSensorFilter_IIR(m_forceSensorIIR, k_forceSensor_sample_rate, k_forceSensor_cutoff_rate)/* init lowpassfilter */
+    m_forceSensorFilter_IIR(m_forceSensorIIR, k_forceSensor_sample_rate, k_forceSensor_cutoff_rate),
+    isSystemTerminated(false)/* init lowpassfilter */
 {
     this -> m_ID = ID;
     this -> type = DEV_DOMAINCONTROLLER;
 
     this -> Qhash_Cmd_Classify.insert("READWRITEDATA", DOMAINCONTROLLER_READ_WRITE_DATA);
     this -> Qhash_Cmd_Classify.insert("RESET", DOMAINCONTROLLER_RESET);
-
+    m_LightCmd.store(0);
+    set_Light_Color_Model(LightColor_Green,LightModel_Blink);
     openSerialPort(921600);
+}
+
+void DomainController::startThread()
+{
+    QThread *thread = QThread::create([this](){
+        while(!isSystemTerminated){
+            read_Write_Data();
+            SteadyDelay(1000);
+        }
+    });
+    thread->start();
+    QObject::connect(thread, &QThread::finished, thread, &QObject::deleteLater);
 }
 
 /* TOCHECK: what is the difference between these two constructors */
@@ -48,9 +62,9 @@ void DomainController::openSerialPort(qint32 baudrate)
     m_serial_422_domain_controller -> setStopBits(QSerialPort::OneStop);
     m_serial_422_domain_controller -> setFlowControl(QSerialPort::NoFlowControl);
     if (m_serial_422_domain_controller -> open(QIODevice::ReadWrite)) {
-        LOG(INFO) << "RS422 port for domain-controller open successful.";
+        LOG(INFO) << "---RS422 port for domain-controller open successful.";
     } else {
-        LOG(ERROR) << "RS422 port for domain-controller open failed.";
+        LOG(ERROR) << "---RS422 port for domain-controller open failed.";
     }
     connect(m_serial_422_domain_controller, &QSerialPort::readyRead, this, &DomainController::On422DataIn);
 }
@@ -94,7 +108,6 @@ void DomainController::On422DataIn(void)
 {
     if(m_serial_422_domain_controller -> canReadLine())
     {
-
         m_422ReceiveBuffer += m_serial_422_domain_controller -> readAll();
         int len = this -> m_422ReceiveBuffer.length();
         int headindex = findFrameHead(m_422ReceiveBuffer);
@@ -107,16 +120,14 @@ void DomainController::On422DataIn(void)
             m_422ReceiveBuffer.remove(0, headindex);
             return;
         }
-
         while(len >= 50){
             if((this -> m_422ReceiveBuffer.at(48) == 0x0D)&&((this -> m_422ReceiveBuffer.at(49) == 0x0a)))
             {
                 QByteArray datatemp = m_422ReceiveBuffer.left(50);
                 readHandleOtherData(datatemp);
-
             }
             m_422ReceiveBuffer.remove(0, 50);
-            len=this -> m_422ReceiveBuffer.length();
+            len = this -> m_422ReceiveBuffer.length();
         }
     }
 }
@@ -125,9 +136,7 @@ eSendReturn DomainController::Send_Frame_By_422(COMMU_FRAME cftemp)
 {
     QByteArray DataQBA;
     this -> Packet_Frame(DataQBA, cftemp);
-
     m_serial_422_domain_controller -> write(DataQBA.data(), DataQBA.length());
-
     return SEND_SUCCESS;
 }
 
@@ -148,61 +157,53 @@ float DomainController::Uint8ArrToFloat(uint8_t *arr, unsigned char StartIndex)
 /* TOCHECK: what is VCMD */
 void DomainController::VCMD(QString cmd, int arg1, int arg2, int arg3)
 {
-
     cmd=cmd.toUpper();
-    QStringList slist = cmd.split("=");
+    QStringList slist=cmd.split("=");
 
     COMMU_FRAME cf;
-    memset(&cf, 0, sizeof (COMMU_FRAME));
-    uint8_t action1[2] = {0};
-    int actionLen = 2;
-    action1[0] = this -> Qhash_Cmd_Classify[slist[0]];
+    memset(&cf,0,sizeof (COMMU_FRAME));
+    uint8_t action1[10]={0};
 
-    switch (this -> Qhash_Cmd_Classify[slist[0]])
+    int actionIndex=0;
+    action1[actionIndex]=this->Qhash_Cmd_Classify[slist[0]];
+    actionIndex++;
+
+    switch (this->Qhash_Cmd_Classify[slist[0]])
     {
-        case DOMAINCONTROLLER_READ_WRITE_DATA:
-        {
-            action1[1] = 0;
-            actionLen = 1;
-            cf.payload.type = CMD_READ_WRITE;
-            break;
-        }
-        case DOMAINCONTROLLER_RESET:
-        {
-            action1[1] = 0;
-            actionLen = 1;
-            cf.payload.type = CMD_CTRL_WRITE;
-            break;
-        }
-        default: break;
+    case DOMAINCONTROLLER_READ_WRITE_DATA:
+    {
+        cf.payload.type=CMD_READ_WRITE;
+        break;
+    }
+    case DOMAINCONTROLLER_RESET:
+    {
+        cf.payload.type=CMD_CTRL_WRITE;
+        break;
+    }
+    default:break;
     }
 
-    if(arg1 != -1)    actionLen++;
-    if(arg2 != -1)    actionLen++;
-    if(arg3 != -1)    actionLen++;
+    if(arg1!=-1){action1[actionIndex]=(uint8_t)arg1;actionIndex++;}
+    if(arg2!=-1){action1[actionIndex]=(uint8_t)arg2;actionIndex++;}
+    if(arg3!=-1){action1[actionIndex]=(uint8_t)arg3;actionIndex++;}
 
-    uint8_t payloadsize = 3 + actionLen;
-    uint8_t framelength = 17 + payloadsize;
+    for(int j=0;j<actionIndex;j++)  //action length = actionindex here
+    {cf.payload.args[j]=action1[j];}
 
-    cf.preamble = PREAMBLE;
-    cf.ID = this -> GetRandNum();
-    cf.size = framelength;
-    cf.sender = DEV_HOST;
+    uint8_t payloadsize=3+actionIndex;//action length = actionindex here
+    uint8_t framelen=17+payloadsize;
 
-    cf.recever = this -> type;
+    cf.preamble=PREAMBLE;
+    cf.ID=this->GetRandNum();
+    cf.size=framelen;
+    cf.sender=DEV_HOST;
 
-    cf.payload.size = payloadsize;
-    cf.payload.argscounter = actionLen;
+    cf.recever=this->type;
 
-    unsigned int j = 0;
-    for( j = 0; j < sizeof(action1); j++){
-        cf.payload.args[j] = action1[j];
-    }
+    cf.payload.size=payloadsize;
+    cf.payload.argscounter=actionIndex;//action length = actionindex here
 
-    if(arg1 != -1){ cf.payload.args[j] = (uint8_t)arg1; j++; }
-    if(arg2 != -1){ cf.payload.args[j] = (uint8_t)arg2; j++; }
-    if(arg3 != -1){ cf.payload.args[j] = (uint8_t)arg3; j++; }
-
+    // Send_Frame(cf);
     Send_Frame_By_422(cf);
 }
 
@@ -211,10 +212,19 @@ void DomainController::reset()
     this -> VCMD("RESET");
 }
 
+void DomainController::set_Light_Color_Model(LightColor_e color, LightModel_e model)
+{
+    uint8_t LightCmdTemp=0;
+    LightCmdTemp=(color<<4);
+    LightCmdTemp|=(model&0X0F);
+    m_LightCmd.store(LightCmdTemp);
+}
+
 void DomainController::read_Write_Data()
 {
-    this -> VCMD("READWRITEDATA");
+    this->VCMD("READWRITEDATA",m_LightCmd.load());
 }
+
 bool DomainController::findForceSensorZero(std::array<double,6> new_sample){
     /* push new value to zero-point dectect buffer */
     m_forceZeroDetectBuffer.push_back(new_sample);
@@ -268,15 +278,25 @@ void DomainController::readHandleOtherData(QByteArray qba)
         if(cftemp.payload.args[0] == Dev_Sta_OK)
         {
             /* parse data for magnetic-scale */
+           uint32_t  magneticScale_counter = 0;
             m_domainControllerData.MagneticScale_Counter=0;
-            m_domainControllerData.MagneticScale_Counter|=cftemp.payload.args[4];
-            m_domainControllerData.MagneticScale_Counter<<=8;
-            m_domainControllerData.MagneticScale_Counter|=cftemp.payload.args[3];
+            m_domainControllerData.MagneticScale_Counter|=cftemp.payload.args[1];
             m_domainControllerData.MagneticScale_Counter<<=8;
             m_domainControllerData.MagneticScale_Counter|=cftemp.payload.args[2];
             m_domainControllerData.MagneticScale_Counter<<=8;
-            m_domainControllerData.MagneticScale_Counter|=cftemp.payload.args[1];
+            m_domainControllerData.MagneticScale_Counter|=cftemp.payload.args[3];
+            m_domainControllerData.MagneticScale_Counter<<=8;
+            m_domainControllerData.MagneticScale_Counter|=cftemp.payload.args[4];
+            uint8_t data1=cftemp.payload.args[1];
+            uint8_t data2=cftemp.payload.args[2];
+            uint8_t data3=cftemp.payload.args[3];
+            uint8_t data4=cftemp.payload.args[4];
 
+            magneticScale_counter = m_domainControllerData.MagneticScale_Counter;
+            //printf("%x %x %x %x \r\n", data1, data2, data3, data4);
+            //qDebug() << "magneticScale_counter: "  << magneticScale_counter;
+            // LOG(INFO) << "magneticScale_counter: " << std::dec << magneticScale_counter;
+            // m_endGimbalMagneticCounter.store(magneticScale_counter);
             /* parse data for forceSensor */
             m_domainControllerData.ForceSensor.ForceSensor_Fx = Uint8ArrToFloat(cftemp.payload.args,5);
             m_domainControllerData.ForceSensor.ForceSensor_Fy = Uint8ArrToFloat(cftemp.payload.args,9);
@@ -285,12 +305,12 @@ void DomainController::readHandleOtherData(QByteArray qba)
             m_domainControllerData.ForceSensor.ForceSensor_My = Uint8ArrToFloat(cftemp.payload.args,21);
             m_domainControllerData.ForceSensor.ForceSensor_Mz = Uint8ArrToFloat(cftemp.payload.args,25);
 
-            m_forceSensorRaw = {m_domainControllerData.ForceSensor.ForceSensor_Fx / 10000.0,
-                                m_domainControllerData.ForceSensor.ForceSensor_Fy / 10000.0,
-                                m_domainControllerData.ForceSensor.ForceSensor_Fz / 10000.0,
-                                m_domainControllerData.ForceSensor.ForceSensor_Mx / 10000.0,
-                                m_domainControllerData.ForceSensor.ForceSensor_My / 10000.0,
-                                m_domainControllerData.ForceSensor.ForceSensor_Mz / 10000.0 };
+            m_forceSensorRaw = {m_domainControllerData.ForceSensor.ForceSensor_Fx * 9.8,
+                                m_domainControllerData.ForceSensor.ForceSensor_Fy * 9.8,
+                                m_domainControllerData.ForceSensor.ForceSensor_Fz * 9.8,
+                                m_domainControllerData.ForceSensor.ForceSensor_Mx * 9.8,
+                                m_domainControllerData.ForceSensor.ForceSensor_My * 9.8,
+                                m_domainControllerData.ForceSensor.ForceSensor_Mz * 9.8 };
 
             if (!m_forceZeroFound) {
                 findForceSensorZero(m_forceSensorRaw);

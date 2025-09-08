@@ -10,6 +10,7 @@
 
 #include "../MathModule/lowpass_filter.h"
 #include "../PeripheralDeviceModule/peripheral_device.h"
+#include "../SystemUtilsModule/SystemUtils.h"
 
 struct ForceSensorData{
     double              ForceSensor_Fx;
@@ -31,16 +32,40 @@ struct DomainControllerData{
     bool                BtnInstrumentCalibration;
     bool                BtnInstrumentInstalled;
     uint8_t             LightStatus;
+    uint8_t             TestByte=31;
 };
 
 class DomainController : public Peripheral_Device
 {
 public:
+    enum LightModel_e
+    {
+        LightModel_Off=0,
+        LightModel_Blink,
+        LightModel_On
+    };
+
+    enum LightColor_e
+    {
+        LightColor_None=0,
+        LightColor_Red,
+        LightColor_Green,
+        LightColor_Yellow
+    };
+
+    enum ForceSensor_e
+    {
+        Not_Calibrated=0,
+        Calibrating,
+        Calibrated
+    };
+
     DomainController() = delete;
     DomainController(uint32_t ID = 0);
     DomainController(QString ip, quint16 port, uint32_t ID = 0);
     ~DomainController();
 
+    void                                            startThread();
     void                                            VCMD(QString cmd, int arg1=-1, int arg2=-1, int arg3=-1);
     void                                            SendTestFrame(void);
     void                                            StartContinus();
@@ -61,22 +86,26 @@ public:
     std::array<double, 3>                           getForce(double tilt_angle);
     std::array<double, 3>                           getMomentum();
     std::array<double, 3>                           getMomentum(double tilt_angle);
+
     bool                                            isForceSensorZeroFound();
     bool                                            getEnableButton();
     bool                                            getResetButton();
     uint8_t                                         getDigitalInput();
+    DomainControllerData                            m_domainControllerData;     /* struct for data read by domain controller */
+    void                                            set_Light_Color_Model(LightColor_e color,LightModel_e model);
 
+    int                                             getMagneticScale(){return m_endGimbalMagneticCounter.load();}
 private:
-    uint32_t                                        m_ID=0;                     /* ID for the domain controller board */
+    uint32_t                                        m_ID = 0;                     /* ID for the domain controller board */
     QSerialPort                                    *m_serial_422_domain_controller = nullptr;
     bool                                            m_selfCheckOK = false;
     QByteArray                                      m_422ReceiveBuffer;
     QHash<QString,eDomainController_Actions>        Qhash_Cmd_Classify;
+    std::atomic<bool>                               isSystemTerminated;
 
-    DomainControllerData                            m_domainControllerData;     /* struct for data read by domain controller */
+    std::atomic<int>                                m_endGimbalMagneticCounter;
 
     std::array<double, 6>                           m_forceSensorRaw = {0} ;
-
     std::array<double, 6>                           m_forceSensorInit = {0};
     std::deque<std::array<double,6>>                m_forceZeroDetectBuffer;
     std::array<double, 6>                           m_forceSensorZeroCompensated = {0};
@@ -85,13 +114,15 @@ private:
     const double                                    k_forceSensor_cutoff_rate = 20.0;
     bool                                            m_forceZeroFound = false;
     const unsigned int                              m_forceZeroWindowSize = 1000;
-    const double                                    m_forceZeroThreshold = 0.10; // 单位: N 或 Nm，可根据实际调
+    const double                                    m_forceZeroThreshold = 1; // 单位: N 或 Nm，可根据实际调
 
     std::array<double, 6>                           m_forceSensorIR = {0} ;
     LowpassFilter1stOrder<std::array<double, 6>>    m_forceSensorFilter_IR;     /* IR for force sensor data */
 
     std::array<double, 6>                           m_forceSensorIIR = {0} ;
     LowpassFilter2ndOrder<std::array<double, 6>>    m_forceSensorFilter_IIR;    /* IIR for force sensor data */
+
+    std::atomic<uint8_t>                            m_LightCmd;
 
     bool                                            findForceSensorZero(std::array<double,6> new_sample);
 };

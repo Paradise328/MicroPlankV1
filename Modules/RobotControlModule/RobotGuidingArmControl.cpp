@@ -80,7 +80,7 @@ void RobotControl::guidingArmHold2Drag(){
 }
 
 void RobotControl::guidingArmDamp2Hold(){
-    LOG(INFO)<<"[DAMP] SWITCH TO [HOLD]";
+    // LOG(INFO)<<"[DAMP] SWITCH TO [HOLD]";
     // m_motorDriver->switchPT2PV(MotorType::ZERO_ERR, 0, arm_guiding);
     // m_motorDriver->switchPT2PV(MotorType::ZERO_ERR, 1, arm_guiding);
     // m_motorDriver->switchPT2PV(MotorType::ZERO_ERR, 2, arm_guiding);
@@ -125,7 +125,7 @@ void RobotControl::applyGuidingArmForceControl(){
 
 void RobotControl::applyGuidingArmDampingControl(){
     /* apply a decay-damping when the button is released */
-    LOG(INFO)<<"[MODE:DAMP]";
+    // LOG(INFO)<<"[MODE:DAMP]";
     m_motorDriver->setTargetVel(MotorType::ZERO_ERR, 0, 0, arm_guiding);
     m_motorDriver->setTargetVel(MotorType::ZERO_ERR, 1, 0, arm_guiding);
     m_motorDriver->setTargetVel(MotorType::ZERO_ERR, 2, 0, arm_guiding);
@@ -145,7 +145,7 @@ void RobotControl::updateGuidingArmState(){
     switch(m_guidingArm.m_guidingArmCurrentState){
         case GuidingArmState::HOLD :
             if(m_guidingArm.m_guidingArmEnableBtnPressed){
-                LOG(INFO) << "guidingArmHold2Drag() ";
+                // LOG(INFO) << "guidingArmHold2Drag() ";
                 guidingArmHold2Drag();
                 m_guidingArm.m_guidingArmCurrentState = GuidingArmState::DRAG;
             }else{
@@ -154,7 +154,7 @@ void RobotControl::updateGuidingArmState(){
             break;
         case GuidingArmState::DRAG :
             if(!m_guidingArm.m_guidingArmEnableBtnPressed){
-                LOG(INFO) << "guidingArmDrag2Damp() ";
+                // LOG(INFO) << "guidingArmDrag2Damp() ";
                 guidingArmDrag2Damp();
                 m_guidingArm.m_guidingArmCurrentState = GuidingArmState::DAMPING;
             }else{
@@ -163,12 +163,12 @@ void RobotControl::updateGuidingArmState(){
             break;
         case GuidingArmState::DAMPING :
             if(m_guidingArm.m_guidingArmEnableBtnPressed){
-                LOG(INFO) << "guidingArmDamp2Drag() ";
+                // LOG(INFO) << "guidingArmDamp2Drag() ";
                 guidingArmDamp2Drag();
                 m_guidingArm.m_guidingArmCurrentState = GuidingArmState::DRAG;
             }else{
                 if(!isGuidingArmDamping() || m_guidingArm.m_isGuidingArmStable){
-                    LOG(INFO) << "guidingArmDamp2Hold() ";
+                    // LOG(INFO) << "guidingArmDamp2Hold() ";
                     guidingArmDamp2Hold();
                     m_guidingArm.m_guidingArmCurrentState = GuidingArmState::HOLD;
                 }

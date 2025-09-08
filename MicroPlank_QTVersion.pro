@@ -45,6 +45,7 @@ SOURCES += \
         Modules/RobotControlModule/DomainController.cpp \
         Modules/RobotControlModule/RobotControl.cpp \
         Modules/RobotControlModule/RobotGuidingArmControl.cpp \
+        Modules/RobotControlModule/controlModeTransition.cpp \
         Modules/SecurityModule/security.cpp \
         Modules/UIModule/Audioplay.cpp \
         Modules/UIModule/UIinterface.cpp \

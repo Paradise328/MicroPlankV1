@@ -16,7 +16,7 @@ void MicroPlank::startSystem()
 
     // startForceSensor();
 
-    // startDomainControlerThread();
+    startDomainControllerThread();
 
     /* 开启MotorDriver线程 */
     initMotorDriver();
@@ -84,13 +84,13 @@ void MicroPlank::startForceSensor()
 
 void MicroPlank::startDomainControllerThread()
 {
+    //m_domainController_Left->startThread();
     QThread *thread = QThread::create([this](){
         while(1){
-            m_domainController_Right->read_Write_Data();
-            SteadyDelay(1);
+            m_domainController_Left->read_Write_Data();
+            SteadyDelay(10);
         }
     });
-
     thread->start();
     QObject::connect(thread, &QThread::finished, thread, &QObject::deleteLater);
 }

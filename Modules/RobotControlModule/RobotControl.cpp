@@ -298,9 +298,9 @@ void RobotControl::control()
     startTime = std::chrono::high_resolution_clock::now();
     while(m_flagControlThread && !m_isSystemTerminated)
     {
-
         receiveMotorData();
-        // receiveMotorData_4Maxons();
+        receiveDomainController();
+
         if(m_flagInTeleoperation.load())
         {
             teleoperation();
@@ -308,7 +308,8 @@ void RobotControl::control()
 
         if(m_flagInCollaboration_EndJoint.load())
         {
-            // collaboration();
+            collaboration();
+
         }
         if(m_flagInCollaboration_GuidingArm.load())
         {
@@ -328,7 +329,6 @@ void RobotControl::control()
                 break;
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(3));
     }
 }
 
@@ -344,15 +344,11 @@ void RobotControl::teleoperation()
     auto motorEncoderInit_R = m_motorEncoderInit_R;
     auto motorEncoderInit_L = m_motorEncoderInit_L;
 
-    // std::ofstream outfile("DataSTATIC.txt",std::ios::app);
-    // outfile << motorEncoderCur_L[1] << " " << motorEncoderCur_R[1] << "\n";
-    // outfile.close();
-
     std::array<int, MotorNumPerSide>   targetEncoder_R = {0};
     std::array<int, MotorNumPerSide>   targetEncoder_L = {0};
 
-    std::array<double, MotorNumPerSide>   targetEncoder_R_new = {0};
-    std::array<double, MotorNumPerSide>   targetEncoder_L_new = {0};
+    std::array<double, MotorNumPerSide>   targetEncoder_R_forVelocity = {0};
+    std::array<double, MotorNumPerSide>   targetEncoder_L_forVelocity = {0};
 
     std::array<int, MotorNumPerSide>   targetEncoderPrev_R = m_motorTargetEncoderPrev_R;
     std::array<int, MotorNumPerSide>   targetEncoderPrev_L = m_motorTargetEncoderPrev_L;
@@ -360,8 +356,8 @@ void RobotControl::teleoperation()
     std::array<double, MotorNumPerSide>   targetEncoderPrev_R_new = m_motorTargetEncoderPrev_R_new;
     std::array<double, MotorNumPerSide>   targetEncoderPrev_L_new = m_motorTargetEncoderPrev_L_new;
 
-    std::array<int, MotorNumPerSide>   targetVelocity_R = {0};
-    std::array<int, MotorNumPerSide>   targetVelocity_L = {0};
+    // std::array<int, MotorNumPerSide>   targetVelocity_R = {0};
+    // std::array<int, MotorNumPerSide>   targetVelocity_L = {0};
 
     std::array<int, MotorNumPerSide>   targetVelocity_R_new = {0};
     std::array<int, MotorNumPerSide>   targetVelocity_L_new = {0};
@@ -406,43 +402,24 @@ void RobotControl::teleoperation()
         }
 
         controlValueCur_L = motionMapping_L(handlePoseCur,motorEncoderCur_L);
-        // controlValueCur_L = test_motionMapping_L(handlePoseCur,motorEncoderCur_L);
 
         targetEncoder_L = calculateTargetEncoder(controlValueCur_L, motorEncoderInit_L, 'l');
 
-        targetVelocity_L = calculateTargetVelocity(targetEncoder_L, targetEncoderPrev_L, 'l');
+        targetEncoder_L_forVelocity = calculateTargetEncoder_new(controlValueCur_L, motorEncoderInit_L, 'l');
 
-        targetEncoder_L_new = calculateTargetEncoder_new(controlValueCur_L, motorEncoderInit_L, 'l');
+        targetVelocity_L_new = calculateTargetVelocity_new(targetEncoder_L_forVelocity, targetEncoderPrev_L_new, targetEncoder_L, motorEncoderCur_L, 'l');
+        // LOG(INFO)<< std::dec << targetEncoder_L;
+/*jacobi*/
 
-        targetVelocity_L_new = calculateTargetVelocity_new(targetEncoder_L_new, targetEncoderPrev_L_new, 'l');
+         // targetVelocity_L_new[0] = m_jointAngle0_velocity_L;
+         // targetVelocity_L_new[1] = m_jointAngle1_velocity_L;
+         // targetVelocity_L_new[2] = m_jointAngle2_velocity_L;
+         // targetVelocity_L_new[3] = m_jointAngle3_velocity_L;
 
-        // LOG(INFO)<<std::dec<<"controlValueCur_L: "<<controlValueCur_L[3]<<" targetEncoder_L_new: "<<targetEncoder_L_new[3]<<" targetVelocity_L_new: "<<targetVelocity_L_new[3]<<" targetVelocity_L: "<<targetVelocity_L[3];
-
-        auto delt_encoder0 = 3 * (targetEncoder_L[0] - motorEncoderCur_L[0]);
-        auto delt_encoder1 = 3 * (targetEncoder_L[1] - motorEncoderCur_L[1]);
-        auto delt_encoder2 = 3 * (targetEncoder_L[2] - motorEncoderCur_L[2]);
-        auto delt_encoder3 = 3 * (targetEncoder_L[3] - motorEncoderCur_L[3]);
-
-        targetVelocity_L_new[0] = targetVelocity_L_new[0] + delt_encoder0;
-        targetVelocity_L_new[1] = targetVelocity_L_new[1] + delt_encoder1;
-        targetVelocity_L_new[2] = targetVelocity_L_new[2] + delt_encoder2;
-        targetVelocity_L_new[3] = targetVelocity_L_new[3] + delt_encoder3;
-
-        targetVelocity_L_new[0] = m_jointAngle0_velocity_L;
-        targetVelocity_L_new[1] = m_jointAngle1_velocity_L;
-        targetVelocity_L_new[2] = m_jointAngle2_velocity_L;
-        targetVelocity_L_new[3] = m_jointAngle3_velocity_L;
 
         if(enableTagCur_L == enableAction){
-            targetVelocity_L = {0};
             targetVelocity_L_new = {0};
         }
-
-
-        // LOG(INFO)<<std::dec<<"targetVelocity1_L: "<<targetVelocity_L_new[1]<<"targetVelocity2_L: "<<targetVelocity_L_new[2]<<"targetVelocity3_L: "<<targetVelocity_L_new[3];
-
-        // LOG(INFO)<< std::dec <<"targetEncoder_L[4]: "<<targetEncoder_L[4]<<"targetEncoder_L[5]: "<<targetEncoder_L[5]<<"targetEncoder_L[6]: "<<targetEncoder_L[6]<<"targetEncoder_L[7]: "<<targetEncoder_L[7];
-
     }
     else
     {
@@ -456,9 +433,9 @@ void RobotControl::teleoperation()
             targetEncoder_L[8] = m_motorTargetEncoderLast_L[8];
             targetEncoder_L[9] = m_motorTargetEncoderLast_L[9];
         }
-        targetVelocity_L = {0};
         targetVelocity_L_new = {0};
     }
+
 
     if(enableTagCur_R == enableAction||enableTagCur_R == keepEnabling)
     {
@@ -476,25 +453,11 @@ void RobotControl::teleoperation()
         controlValueCur_R = motionMapping_R(handlePoseCur,motorEncoderCur_R);
 
         targetEncoder_R = calculateTargetEncoder(controlValueCur_R, motorEncoderInit_R, 'r');
-
-        targetVelocity_R = calculateTargetVelocity(targetEncoder_R, targetEncoderPrev_R, 'r');
-
-        targetEncoder_R_new = calculateTargetEncoder_new(controlValueCur_R, motorEncoderInit_R, 'r');
-
-        targetVelocity_R_new = calculateTargetVelocity_new(targetEncoder_R_new, targetEncoderPrev_R_new, 'r');
-
-        auto delt_encoder0 = 3 * (targetEncoder_R[0] - motorEncoderCur_R[0]);
-        auto delt_encoder1 = 3 * (targetEncoder_R[1] - motorEncoderCur_R[1]);
-        auto delt_encoder2 = 3 * (targetEncoder_R[2] - motorEncoderCur_R[2]);
-        auto delt_encoder3 = 3 * (targetEncoder_R[3] - motorEncoderCur_R[3]);
-
-        targetVelocity_R_new[0] = targetVelocity_R_new[0] + delt_encoder0;
-        targetVelocity_R_new[1] = targetVelocity_R_new[1] + delt_encoder1;
-        targetVelocity_R_new[2] = targetVelocity_R_new[2] + delt_encoder2;
-        targetVelocity_R_new[3] = targetVelocity_R_new[3] + delt_encoder3;
+        targetEncoder_R_forVelocity = calculateTargetEncoder_new(controlValueCur_R, motorEncoderInit_R, 'r');
+        targetVelocity_R_new = calculateTargetVelocity_new(targetEncoder_R_forVelocity, targetEncoderPrev_R_new, targetEncoder_R, motorEncoderCur_R, 'r');
+        // LOG(INFO)<<"targetVelocity_R_new: "<<targetVelocity_R_new[0]<<" targetEncoder_R_forVelocity: "<<targetEncoder_R_forVelocity[0];
 
         if(enableTagCur_R == enableAction){
-            targetVelocity_R = {0};
             targetVelocity_R_new = {0};
         }
 
@@ -512,17 +475,12 @@ void RobotControl::teleoperation()
             targetEncoder_R[8] = m_motorTargetEncoderLast_R[8];
             targetEncoder_R[9] = m_motorTargetEncoderLast_R[9];
         }
-        targetVelocity_R = {0};
+        targetVelocity_R_new = {0};
     }
-    std::ofstream outfile("Velocity.txt",std::ios::app);
-    outfile <<" "<<targetVelocity_L[0]<<" "<<targetVelocity_L[1] <<" "<<targetVelocity_L[2]<<" "<<targetVelocity_L[3]
-            <<" "<<targetVelocity_R[0]<<" "<<targetVelocity_R[1] <<" "<<targetVelocity_R[2]<<" "<<targetVelocity_R[3] << "\n";
-    outfile.close();
-    sendMotorData(targetEncoder_R, targetVelocity_R_new, targetEncoder_L, targetVelocity_L_new);
-    // sendMotorData(targetEncoder_R, targetVelocity_R, targetEncoder_L, targetVelocity_L_new);
 
-    m_motorTargetEncoderPrev_L_new = targetEncoder_L_new;
-    m_motorTargetEncoderPrev_R_new = targetEncoder_R_new;
+    sendMotorData(targetEncoder_R, targetVelocity_R_new, targetEncoder_L, targetVelocity_L_new);
+    m_motorTargetEncoderPrev_L_new = targetEncoder_L_forVelocity;
+    m_motorTargetEncoderPrev_R_new = targetEncoder_R_forVelocity;
     storeCurAsPrev(handlePoseCur, controlValueCur_L, motorEncoderCur_L, targetEncoder_L, enableTagCur_L, controlValueCur_R, motorEncoderCur_R, targetEncoder_R, enableTagCur_R);
 }
 
@@ -537,7 +495,6 @@ void RobotControl::collaboration(){
     auto motorEncoderCur_L = m_motorEncoderCur_L.load();
     auto motorEncoderInit_R = m_motorEncoderInit_R;
     auto motorEncoderInit_L = m_motorEncoderInit_L;
-
 
     std::array<int, MotorNumPerSide>   targetEncoder_R = {0};
     std::array<int, MotorNumPerSide>   targetEncoder_L = {0};
@@ -672,7 +629,6 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
     double delt_gammaInit_L = (gamma_Init_L - gamma_Last_L) * 180 / M_PI;
     double delt_gammaOrg_L = (gamma_Last_L - gamma_Org_L) * 180 / M_PI;
     double delt_gamma_L = delt_gammaCur_L + delt_gammaInit_L * m_alignmentNumber_L / 100 + delt_gammaOrg_L;
-
     /*position 解算*/
     double endEffectorInit_X_L = m_endEffectorInitPosition_L[0];
     double endEffectorInit_Y_L = m_endEffectorInitPosition_L[1];// +m_endArm_3 * sin(jointAngle1_Init_R + jointAngle2_Init_R + jointAngle3_Init_R)
@@ -759,25 +715,29 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
         //        LOG(INFO) << "planner Status: " <<std::dec << plannerStatus;
     }
     m_ruckigOutputState_L.pass_to_input(m_ruckigInputState_L);
-
+    // outfile1 << (endEffectorInit_X_L + endEffectorDelta_X_L) << " " << (endEffectorInit_Y_L + endEffectorDelta_Y_L) << " " << (endEffectorInit_Z_L + endEffectorDelta_Z_L) << " "
+    //          << m_ruckigOutputState_L.new_position[0] << " " << m_ruckigOutputState_L.new_position[1] << " " << m_ruckigOutputState_L.new_position[2] << "\n";
     double endEffectorTarget_X_L = m_ruckigOutputState_L.new_position[0];// / m_motionScaling[2]，初始值加上delta值为末端点应该移动到的位置，以此位置解算
     double endEffectorTarget_Y_L = m_ruckigOutputState_L.new_position[1];// / m_motionScaling[0]
     double endEffectorTarget_Z_L = m_ruckigOutputState_L.new_position[2];// / m_motionScaling[0]
 
 
+    // std::ofstream outfile("positiontest.txt",std::ios::app);
+    // outfile<<m_motionScaling[m_speedPedalIndex_Cur]<<" "<<endEffectorTarget_X_L<<" "<<endEffectorTarget_Y_L <<" "<<endEffectorTarget_Z_L<<" "<<endEffectorDelta_X_L<<" "<<endEffectorDelta_Y_L<<" "<<endEffectorDelta_Z_L<<"\n";
+    // outfile.close();
 
-    std::array<double,3> endEffector_L;
+/*自适应低通滤波*/
+    // std::array<double,3> endEffector_L;
 
-    endEffector_L[0] = endEffectorTarget_X_L;
-    endEffector_L[1] = endEffectorTarget_Y_L;
-    endEffector_L[2] = endEffectorTarget_Z_L;
+    // endEffector_L[0] = endEffectorTarget_X_L;
+    // endEffector_L[1] = endEffectorTarget_Y_L;
+    // endEffector_L[2] = endEffectorTarget_Z_L;
 
-    std::array<double,3> endEffectorFilter_L = OneEuroStep(endEffector_L);
+    // std::array<double,3> endEffectorFilter_L = OneEuroStep(endEffector_L);
 
-    endEffectorTarget_X_L = endEffectorFilter_L[0];
-    endEffectorTarget_Y_L = endEffectorFilter_L[1];
-    endEffectorTarget_Z_L = endEffectorFilter_L[2];
-
+    // endEffectorTarget_X_L = endEffectorFilter_L[0];
+    // endEffectorTarget_Y_L = endEffectorFilter_L[1];
+    // endEffectorTarget_Z_L = endEffectorFilter_L[2];
 
     // std::ofstream outfile("Position.txt",std::ios::app);
     // outfile<<m_motionScaling[m_speedPedalIndex_Cur]<<" "<<endEffectorTarget_X_L<<" "<<endEffectorTarget_Y_L <<" "<<endEffectorTarget_Z_L<<" "<<endEffectorFilter_L[0]<<" "<<endEffectorFilter_L[1]<<" "<<endEffectorFilter_L[2]<<"\n";
@@ -814,7 +774,6 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
     jointAngle3_target_L = (m_armAnglePerSide - jointAngle1_target_L  - jointAngle2_target_L)
                            -(m_armAnglePerSide - jointAngle1_Init_L- jointAngle2_Init_L);
 
-
     /*jacob*/
 
     double jointAngle1_velocity_L, jointAngle2_velocity_L, jointAngle3_velocity_L;
@@ -848,6 +807,8 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
 
     /*4轴器械*/
     if(m_endeffectorConfiguration == EndeffectorConfiguration::fourMaxons){
+        // controlValueTmp_L[4] = (delt_beta_L - delt_alpha_L * m_compRatio_L) - openAngle_L_new;
+        // controlValueTmp_L[5] = (delt_beta_L - delt_alpha_L * m_compRatio_L) + openAngle_L_new;
         controlValueTmp_L[4] = (delt_beta_L - delt_alpha_L * m_compRatio_L) - openAngle_L_new;
         controlValueTmp_L[5] = (delt_beta_L - delt_alpha_L * m_compRatio_L) + openAngle_L_new;
         controlValueTmp_L[6] = delt_alpha_L;
@@ -1020,17 +981,17 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     double endEffectorTarget_Z_R = m_ruckigOutputState_R.new_position[2];// / m_motionScaling[0]
 
     /*自适应低通滤波*/
-    // std::array<double,3> endEffector_R;
+    std::array<double,3> endEffector_R;
 
-    // endEffector_R[0] = endEffectorTarget_X_R;
-    // endEffector_R[1] = endEffectorTarget_Y_R;
-    // endEffector_R[2] = endEffectorTarget_Z_R;
+    endEffector_R[0] = endEffectorTarget_X_R;
+    endEffector_R[1] = endEffectorTarget_Y_R;
+    endEffector_R[2] = endEffectorTarget_Z_R;
 
-    // std::array<double,3> endEffectorFilter_R = OneEuroStep(endEffector_R);
+    std::array<double,3> endEffectorFilter_R = OneEuroStep(endEffector_R);
 
-    // endEffectorTarget_X_R = endEffectorFilter_R[0];
-    // endEffectorTarget_Y_R = endEffectorFilter_R[1];
-    // endEffectorTarget_Z_R = endEffectorFilter_R[2];
+    endEffectorTarget_X_R = endEffectorFilter_R[0];
+    endEffectorTarget_Y_R = endEffectorFilter_R[1];
+    endEffectorTarget_Z_R = endEffectorFilter_R[2];
 
 
     /*jacobi*/
@@ -1070,6 +1031,8 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
 
     /*4轴器械*/
     if(m_endeffectorConfiguration == EndeffectorConfiguration::fourMaxons){
+        // controlValueTmp_R[4] = - openAngle_R_new;
+        // controlValueTmp_R[5] = + openAngle_R_new;
         controlValueTmp_R[4] = (delt_beta_R - delt_alpha_R * m_compRatio_R) - openAngle_R_new;
         controlValueTmp_R[5] = (delt_beta_R - delt_alpha_R * m_compRatio_R) + openAngle_R_new;
         controlValueTmp_R[6] = delt_alpha_R;
@@ -1093,7 +1056,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     return controlValueTmp_R;
 }
 
-std::array<double, ControlValueNum> RobotControl::test_motionMapping_L(const HandlePose& handlePoseCur)
+std::array<double, ControlValueNum> RobotControl::test_motionMapping_L(const HandlePose& handlePoseCur, const std::array<int, MotorNumPerSide>& motorPositionCur_L)
 {
     std::array<double, ControlValueNum> controlValueTmp_L = {0};
 
@@ -1105,51 +1068,32 @@ std::array<double, ControlValueNum> RobotControl::test_motionMapping_L(const Han
     double alpha_Last_L = m_handlePoseLastLoop_L.handlePoseL_Elevation;
     double alpha_Cur_L = handlePoseCur.handlePoseL_Elevation;
 
+    /*夹持角度测试*/
+    // alpha_Cur_L = -30.0/180 * M_PI;//测t2
+    // alpha_Cur_L = 60.0/180 * M_PI;//测拉力
+
+    //beta_Cur_L = 60.0;//测t1
+    //gamma_Cur_L = 90.0;
+
     double delt_alphaCur_L = (alpha_Cur_L - alpha_Init_L) * 180 / M_PI;
     double delt_alphaInit_L = (alpha_Init_L - alpha_Last_L) * 180 / M_PI;
     double delt_alphaOrg_L = (alpha_Last_L - alpha_Org_L) * 180 / M_PI;
-    // double delt_alpha_L = delt_alphaCur_L + delt_alphaInit_L * m_alignmentNumber_L / 100 + delt_alphaOrg_L;
+    double delt_alpha_L = delt_alphaCur_L + delt_alphaInit_L * m_alignmentNumber_L / 100 + delt_alphaOrg_L;
+    delt_alpha_L = 0.0;
 
     double openAngle_L;
-    double delt_alpha_L;
     double endEffectorDelta_X_L;
     double endEffectorDelta_Y_L;
     double endEffectorDelta_Z_L;
-
-    /*夹持角度测试*/
-    // if(step_flag == 0){
-    //     pitch = pitch - 0.03;
-    //     if(pitch <= -30.0){
-    //         step_flag = 1;
-    //     }
-    // }else if(step_flag == 1){
-    //     angle = angle + 0.05;
-    //     if(angle >= 15.0){
-    //         step_flag = 2;
-    //     }
-    // }else if(step_flag == 2){
-    //     angle = angle - 0.02;
-    //     if(angle <= -4.0){
-    //         step_flag = 3;
-    //     }
-    // }else if(step_flag == 3){
-    //     test_x = test_x + 0.0005;
-    // }
-    // endEffectorDelta_X_L = test_x;
-    // delt_alpha_L = pitch;
-    // openAngle_L = angle;
-
-    // LOG(INFO)<<"delt_alpha_L: "<<delt_alpha_L<<" openangle: "<<openAngle_L;
-
-    delt_alpha_L = 0.0;
-    openAngle_L = 0.0;
 
     /* 计算 deltLength_alpha_L */
     double deltLength_alpha_L_1 = cableLengths_2(delt_alpha_L);
     double deltLength_alpha_L_2 = cableLengths_2(-delt_alpha_L);
 
     /* 计算单边 OpenAngle */
-    // openAngle_L = handlePoseCur.handlePoseL_OpenAngle;
+    openAngle_L = handlePoseCur.handlePoseL_OpenAngle;
+
+    openAngle_L = 0.0;
     auto openAngle_L_new = (openAngle_L < 0) ? 0.008 * pow(openAngle_L, 3) : pow(openAngle_L, 3)/600;
 
     /*计算 beta(yaw) */
@@ -1188,95 +1132,103 @@ std::array<double, ControlValueNum> RobotControl::test_motionMapping_L(const Han
     double endEffectorInit_Z_L = m_endEffectorInitPosition_L[2];// -m_endArm_3 * sin(jointAngle1_Init_R + jointAngle2_Init_R + jointAngle3_Init_R)
 
 
-    // /*重复定位精度运动测试*/
-    // int test_step = 1000;
-    // double length = 30;//边长
+ /*重复定位精度运动测试*/
+    int test_step = 3000;
+    double length = 20;//边长
 
-    // Eigen::Vector3d Point_0 = {0, 0, 0};
-    // Eigen::Vector3d Point_1 = {-0.5 * length, 0.5 * length, -0.5 * length};
-    // Eigen::Vector3d Point_2 = {-0.5 * length, -0.5 * length, -0.5 * length};
-    // Eigen::Vector3d Point_3 = {0.5 * length, -0.5 * length, 0.5 * length};
-    // Eigen::Vector3d Point_4 = {0.5 * length, 0.5 * length, 0.5 * length};
+    Eigen::Vector3d Point_0 = {0, 0, 0};
+    Eigen::Vector3d Point_1 = {-0.5 * length, 0.5 * length, -0.5 * length};
+    Eigen::Vector3d Point_2 = {-0.5 * length, -0.5 * length, -0.5 * length};
+    Eigen::Vector3d Point_3 = {0.5 * length, -0.5 * length, 0.5 * length};
+    Eigen::Vector3d Point_4 = {0.5 * length, 0.5 * length, 0.5 * length};
 
-    // switch (test_index) {
-    // case 1:
-    //     test_x = test_x + (Point_1.x() - Point_0.x())/test_step;
-    //     test_y = test_y + (Point_1.y() - Point_0.y())/test_step;
-    //     test_z = test_z + (Point_1.z() - Point_0.z())/test_step;
-    //     break;
-    // case 2:
-    //     test_x = test_x + (Point_2.x() - Point_1.x())/test_step;
-    //     test_y = test_y + (Point_2.y() - Point_1.y())/test_step;
-    //     test_z = test_z + (Point_2.z() - Point_1.z())/test_step;
-    //     break;
-    // case 3:
-    //     test_x = test_x + (Point_3.x() - Point_2.x())/test_step;
-    //     test_y = test_y + (Point_3.y() - Point_2.y())/test_step;
-    //     test_z = test_z + (Point_3.z() - Point_2.z())/test_step;
-    //     break;
-    // case 4:
-    //     test_x = test_x + (Point_4.x() - Point_3.x())/test_step;
-    //     test_y = test_y + (Point_4.y() - Point_3.y())/test_step;
-    //     test_z = test_z + (Point_4.z() - Point_3.z())/test_step;
-    //     break;
-    // case 5:
-    //     test_x = test_x + (Point_0.x() - Point_4.x())/test_step;
-    //     test_y = test_y + (Point_0.y() - Point_4.y())/test_step;
-    //     test_z = test_z + (Point_0.z() - Point_4.z())/test_step;
-    //     break;
-    // }
+    switch (test_index) {
+    case 1:
+        test_x = test_x + (Point_1.x() - Point_0.x())/test_step;
+        test_y = test_y + (Point_1.y() - Point_0.y())/test_step;
+        test_z = test_z + (Point_1.z() - Point_0.z())/test_step;
+        break;
+    case 2:
+        test_x = test_x + (Point_2.x() - Point_1.x())/test_step;
+        test_y = test_y + (Point_2.y() - Point_1.y())/test_step;
+        test_z = test_z + (Point_2.z() - Point_1.z())/test_step;
+        break;
+    case 3:
+        test_x = test_x + (Point_3.x() - Point_2.x())/test_step;
+        test_y = test_y + (Point_3.y() - Point_2.y())/test_step;
+        test_z = test_z + (Point_3.z() - Point_2.z())/test_step;
+        break;
+    case 4:
+        test_x = test_x + (Point_4.x() - Point_3.x())/test_step;
+        test_y = test_y + (Point_4.y() - Point_3.y())/test_step;
+        test_z = test_z + (Point_4.z() - Point_3.z())/test_step;
+        break;
+    case 5:
+        test_x = test_x + (Point_0.x() - Point_4.x())/test_step;
+        test_y = test_y + (Point_0.y() - Point_4.y())/test_step;
+        test_z = test_z + (Point_0.z() - Point_4.z())/test_step;
+        break;
+    }
 
-    // test_time = test_time + 1;
+    test_time = test_time + 1;
 
-    // if((test_time >= 0) && (test_time < test_step)){
-    //     test_index = 0;
-    // }else if((test_time >= test_step) && (test_time < 2 * test_step)){
-    //     test_index = 1;
-    // }else if((test_time >= 2 * test_step) && (test_time < 3 * test_step)){
-    //     test_index = 2;
-    // }else if((test_time >= 3 * test_step) && (test_time < 4 * test_step)){
-    //     test_index = 3;
-    // }else if((test_time >= 4 * test_step) && (test_time < 5 * test_step)){
-    //     test_index = 4;
-    // }else if((test_time >= 5 * test_step) && (test_time < 6 * test_step)){
-    //     test_index = 5;
-    // }else if(test_time == 6 * test_step){
-    //     test_index = 6;
-    // }
-
-    // endEffectorDelta_X_L = test_x;
-    // endEffectorDelta_Y_L = test_y;
-    // endEffectorDelta_Z_L = test_z;
-
-    // if(test_index == 6){
-
-    //     LOG(INFO)<<"=================================================================================================================================================";
-    // }
-
-    if(test_index < 25){//每次测试步进25*0.004=0.1mm
-
-        test_x = test_x + 0.004;
-        test_index = test_index + 1;
+    if((test_time >= 0) && (test_time < test_step)){
+        test_index = 0;
+    }else if((test_time >= test_step) && (test_time < 2 * test_step)){
+        test_index = 1;
+    }else if((test_time >= 2 * test_step) && (test_time < 3 * test_step)){
+        test_index = 2;
+    }else if((test_time >= 3 * test_step) && (test_time < 4 * test_step)){
+        test_index = 3;
+    }else if((test_time >= 4 * test_step) && (test_time < 5 * test_step)){
+        test_index = 4;
+    }else if((test_time >= 5 * test_step) && (test_time < 6 * test_step)){
+        test_index = 5;
+    }else if(test_time == 6 * test_step){
+        test_index = 6;
     }
 
     endEffectorDelta_X_L = test_x;
     endEffectorDelta_Y_L = test_y;
     endEffectorDelta_Z_L = test_z;
 
+    if(test_index == 6){
+
+        LOG(INFO)<<"=================================================================================================================================================";
+    }
 
 
+    // if(test_index < 25){//每次测试步进25*0.004=0.1mm
+
+    //     test_x = test_x + 0.004;
+    //     test_index = test_index + 1;
+    // }
+
+    // endEffectorDelta_X_L = test_x;
+    // endEffectorDelta_Y_L = test_y;
+    // endEffectorDelta_Z_L = test_z;
+
+// LOG(INFO)<<"endEffectorDelta_X_L: "<<endEffectorDelta_X_L;
+
+    /*记录位置*/
     double X_L = (handlePoseCur.handlePoseL_X) / 0.1;
     double Y_L = -(handlePoseCur.handlePoseL_Y)/ 0.1;
     double Z_L = -(handlePoseCur.handlePoseL_Z) / 0.1;
 
     // LOG(INFO) << "X_L: " << X_L << " Y_L: "<<Y_L<<" Z_L: "<<Z_L;
 
-    std::ofstream outfile("viperData.txt",std::ios::app);
+    std::ofstream outfile("viperjacobi.txt",std::ios::app);
     outfile<<X_L<<" "<<Y_L<<" "<<Z_L<< "\n";
      if(test_index == 6){
         outfile<<" =========================================================================== "<<"\n";
      }
     outfile.close();
+
+
+
+    // endEffectorDelta_X_L = (handlePoseCur.handlePoseL_X - m_handlePoseInit_L.handlePoseL_X) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+    // endEffectorDelta_Y_L = -(handlePoseCur.handlePoseL_Y - m_handlePoseInit_L.handlePoseL_Y) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+    // endEffectorDelta_Z_L = -(handlePoseCur.handlePoseL_Z - m_handlePoseInit_L.handlePoseL_Z) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
 
     /*路径规划*/
     m_ruckigInputState_L.target_position = {(endEffectorInit_X_L + endEffectorDelta_X_L), (endEffectorInit_Y_L + endEffectorDelta_Y_L), (endEffectorInit_Z_L + endEffectorDelta_Z_L)};
@@ -1297,6 +1249,13 @@ std::array<double, ControlValueNum> RobotControl::test_motionMapping_L(const Han
     double endEffectorTarget_X_L = m_ruckigOutputState_L.new_position[0];// / m_motionScaling[2]，初始值加上delta值为末端点应该移动到的位置，以此位置解算
     double endEffectorTarget_Y_L = m_ruckigOutputState_L.new_position[1];// / m_motionScaling[0]
     double endEffectorTarget_Z_L = m_ruckigOutputState_L.new_position[2];// / m_motionScaling[0]
+
+
+    /*jacobi*/
+    // double endEffectorVelocity_X_L = m_ruckigOutputState_L.new_velocity[0];
+    // double endEffectorVelocity_Y_L = m_ruckigOutputState_L.new_velocity[1];
+    // double endEffectorVelocity_Z_L = m_ruckigOutputState_L.new_velocity[2];
+
 
     double jointAngle1_Init_L, jointAngle2_Init_L, jointAngle3_Init_L;
     jointAngle1_Init_L = m_endEffectorInitJointAngle_L[0];
@@ -1324,6 +1283,27 @@ std::array<double, ControlValueNum> RobotControl::test_motionMapping_L(const Han
     //Control Value:
     //  [0]:         X-Axis          Target position
     //[1 - 3]:   End Joint 1 - 3     Target Angle
+
+
+    /*jacob*/
+
+    // double jointAngle1_velocity_L, jointAngle2_velocity_L, jointAngle3_velocity_L;
+
+    // /* [velocity_y, velocity_z] = [a,b; c,d] * [joint1_velocity; joint2_velocity]*/
+    // double a = m_endArm_1 * cos(jointAngle1_target_L) + m_endArm_2 * cos(jointAngle1_target_L + jointAngle2_target_L);
+    // double b = m_endArm_2 * cos(jointAngle1_target_L + jointAngle2_target_L);
+    // double c = m_endArm_1 * sin(jointAngle1_target_L) + m_endArm_2 * sin(jointAngle1_target_L + jointAngle2_target_L);
+    // double d = m_endArm_2 * sin(jointAngle1_target_L + jointAngle2_target_L);
+
+    // jointAngle1_velocity_L = (d * endEffectorVelocity_Y_L - b * endEffectorVelocity_Z_L) / (a * d - b * c) * 180 / M_PI;
+    // jointAngle2_velocity_L = (- c * endEffectorVelocity_Y_L + a * endEffectorVelocity_Z_L) / (a * d - b * c) * 180 / M_PI;
+    // jointAngle3_velocity_L = - jointAngle1_velocity_L - jointAngle2_velocity_L;
+
+    // m_jointAngle0_velocity_L = 1 * endEffectorVelocity_X_L * 4000;
+    // m_jointAngle1_velocity_L = -1 * jointAngle1_velocity_L * 1456.36;
+    // m_jointAngle2_velocity_L = 1 * jointAngle2_velocity_L * 1456.36;
+    // m_jointAngle3_velocity_L = -1 * jointAngle3_velocity_L * 1456.36;
+
 
     controlValueTmp_L[0] = endEffectorTarget_X_L - endEffectorInit_X_L; //(handpose_cur-handpose_init)单位为mm
     controlValueTmp_L[1] = (jointAngle1_target_L - jointAngle1_Init_L) * 180 / M_PI;//输出为各关节角度
@@ -1619,6 +1599,8 @@ double RobotControl::cableLengths_3(double alpha, double q_3_pre, double Openang
     return pl3_c;
 }
 
+/*自适应低通*/
+/*
 std::array<double, 3> RobotControl::OneEuroStep(const std::array<double, 3>&raw)
 {
         const double dt_used = (std::isfinite(dt) && dt > 0.0) ? dt : 0.004;
@@ -1659,7 +1641,86 @@ std::array<double, 3> RobotControl::OneEuroStep(const std::array<double, 3>&raw)
 
         return out;
     }
+*/
 
+std::array<double, 3> RobotControl::OneEuroStep(const std::array<double, 3>& raw)
+{
+    const double dt_used = (std::isfinite(dt) && dt > 0.0) ? dt : 0.004;
+    int win_N = std::max(1, int(std::round(win_len / dt_used)));
+
+    auto alphaFromFc = [dt_used](double fc) {
+        constexpr double TWO_PI = 6.28318530717958647692;
+        fc = std::max(fc, 1e-9);
+        double tau = 1.0 / (TWO_PI * fc);
+        return dt_used / (dt_used + tau);
+    };
+
+    auto alphaFromTau = [dt_used](double tau) {
+        return dt_used / (tau + dt_used);
+    };
+
+    std::array<double,3> out{};
+
+    for (int i = 0; i < 3; ++i) {
+        if (!inited_[i]) {
+            inited_[i]    = true;
+            xhat_[i]      = raw[i];
+            vhat_[i]      = 0.0;
+            ahat_[i]      = 0.0;
+            fc_smooth_[i] = fmin;
+            dispHist_[i].clear();
+            out[i] = xhat_[i];
+            continue;
+        }
+
+        // 1) 速度估计
+        double vx = (raw[i] - xhat_[i]) / dt_used;
+        if (vel_dead > 0.0 && std::abs(vx) < vel_dead) vx = 0.0;
+
+        double a_d = alphaFromFc(fd);
+        double vprev = vhat_[i];
+        vhat_[i] += a_d * (vx - vhat_[i]);
+
+        // 2) 加速度估计
+        if (beta_a > 0.0) {
+            double ax = (vhat_[i] - vprev) / dt_used;
+            ahat_[i] += a_d * (ax - ahat_[i]);
+        } else {
+            ahat_[i] = 0.0;
+        }
+
+        // 3) 窗口累计位移
+        double disp_inc = std::abs(raw[i] - xhat_[i]);
+        dispHist_[i].push_back(disp_inc);
+        if ((int)dispHist_[i].size() > win_N)
+            dispHist_[i].pop_front();
+
+        double disp_accum = 0.0;
+        for (double d : dispHist_[i]) disp_accum += d;
+
+        // 4) 原始 fc
+        double fc_raw = fmin
+                      + beta   * std::abs(vhat_[i])
+                      + beta_a * std::abs(ahat_[i])
+                      + beta_d * disp_accum;
+        if (fc_max > 0.0)
+            fc_raw = std::min(fc_raw, fc_max);
+
+        // 5) fc 平滑（快起慢降）
+        double alpha_fc = (fc_raw > fc_smooth_[i])
+                          ? alphaFromTau(tau_up)
+                          : alphaFromTau(tau_down);
+        fc_smooth_[i] += alpha_fc * (fc_raw - fc_smooth_[i]);
+
+        // 6) 位置一阶低通
+        double a_p = alphaFromFc(fc_smooth_[i]);
+        xhat_[i] += a_p * (raw[i] - xhat_[i]);
+
+        out[i] = xhat_[i];
+    }
+
+    return out;
+}
 
 
 void RobotControl::calculateEndEffectorPosition_init(const HandlePose& handlePoseCur, const std::array<int,MotorNumPerSide>& motorPos_Cur, const char& side)//yu 通过各电机的读数推断端点在坐标系中的位置
@@ -1744,7 +1805,7 @@ std::array<int, MotorNumPerSide> RobotControl::calculateTargetEncoder(const std:
         {
             for(int i = 4; i < 10; i++)
             {
-                targetEncoder[i] = controlValue_Cur[i] * m_kForcepPosition_R[i - 4];
+                targetEncoder[i] = static_cast<int>(controlValue_Cur[i] * m_kForcepPosition_R[i - 4]);
             }
         }
         if(m_endeffectorConfiguration == EndeffectorConfiguration::fourMaxons)
@@ -1766,7 +1827,7 @@ std::array<int, MotorNumPerSide> RobotControl::calculateTargetEncoder(const std:
         {
             for(int i = 4; i < 10; i++)
             {
-                targetEncoder[i] = controlValue_Cur[i] * m_kForcepPosition_L[i - 4];
+                targetEncoder[i] = static_cast<int>(controlValue_Cur[i] * m_kForcepPosition_L[i - 4]);
             }
         }
         if(m_endeffectorConfiguration == EndeffectorConfiguration::fourMaxons)
@@ -1856,19 +1917,52 @@ std::array<double, MotorNumPerSide> RobotControl::calculateTargetEncoder_new(con
 }
 
 std::array<int, MotorNumPerSide> RobotControl::calculateTargetVelocity_new(const std::array<double, MotorNumPerSide>& targetEncoderCur,
-                                                                       const std::array<double, MotorNumPerSide>& targetEncoderPrev,
-                                                                       const char& side)const
+                                                                        const std::array<double, MotorNumPerSide>& targetEncoderPrev,
+                                                                        const std::array<int, MotorNumPerSide>& targetEncoder,
+                                                                        const std::array<int, MotorNumPerSide>& motorEncoderCur,
+                                                                        const char& side)const
 {
     std::array<int, MotorNumPerSide> targetVel = {0};
 
     for(int i = 0; i < 9; i++)
     {
-        targetVel[i] = static_cast<int>((targetEncoderCur[i] - targetEncoderPrev[i]) / (0.006));//单位 位每秒 (Viper更新频率为240Hz，for循环的更新频率为400Hz）
+        targetVel[i] = static_cast<int>((targetEncoderCur[i] - targetEncoderPrev[i]) / (0.005));//单位 位每秒 (Viper更新频率为240Hz，for循环的更新频率为400Hz）
+
     }
+    if(m_speedPedalIndex_Cur == pedalSwitchFour)
+    {
+        if(abs(targetVel[0]) < 3000){targetVel[0] = 0;}
+        for(int i = 1; i < 4; i++){if(abs(targetVel[i]) < 100){targetVel[i]=0;}}
+    }
+    // LOG(INFO) << std::dec<<targetVel[0] << " "<< targetVel[1] << " "<< targetVel[2] << " "<< targetVel[3];
+    // auto delt_encoder0 = 3 * (targetEncoder[0] - motorEncoderCur[0]);
+    // auto delt_encoder1 = 3 * (targetEncoder[1] - motorEncoderCur[1]);
+    // auto delt_encoder2 = 3 * (targetEncoder[2] - motorEncoderCur[2]);
+    // auto delt_encoder3 = 3 * (targetEncoder[3] - motorEncoderCur[3]);
+
+    // targetVel[0] = targetVel[0] + delt_encoder0;
+    // targetVel[1] = targetVel[1] + delt_encoder1;
+    // targetVel[2] = targetVel[2] + delt_encoder2;
+    // targetVel[3] = targetVel[3] + delt_encoder3;
+
     return targetVel;
 }
 
-void RobotControl::receiveMotorData()//yu接受传回来的数据
+void RobotControl::receiveDomainController(){
+    // LOG(INFO) << "domainController info: "
+              // << m_domainController_L->m_domainControllerData.TestByte;
+    // LOG(INFO) << "L domain controller info: "
+    //           << m_domainController_L->getForce()[0]<<" "
+    //           << m_domainController_L->getForce()[1]<<" "
+    //           << m_domainController_L->getForce()[2];
+    // LOG(INFO) << "R domain controller info: "
+    //           << m_domainController_R->getForce()[0]<<" "
+    //           << m_domainController_R->getForce()[1]<<" "
+    //           << m_domainController_R->getForce()[2];
+}
+
+/* 接受传回来的数据 */
+void RobotControl::receiveMotorData()
 {
     std::lock_guard(m_motorDriver->m_cyclicMutex);
 
@@ -2049,8 +2143,9 @@ void RobotControl::receiveMotorData()//yu接受传回来的数据
         motorInputs_L[9] = m_motorDriver->getDigitalInputs(MotorType::MAXON, 5, arm_1)[2];
     }
 
-
-
+    /*磁栅尺*/
+    auto magneticEncoder = m_domainController_L->getMagneticScale();
+    // std::cout << "magneticEncoder: " << magneticEncoder << std::endl;
 /*new*/
     std::array<int, MotorNumPerSide> motorTrq_R = {0};
     std::array<int, MotorNumPerSide> motorTrq_L = {0};
@@ -2127,7 +2222,7 @@ void RobotControl::receiveMotorData()//yu接受传回来的数据
 void RobotControl::sendMotorData(const std::array<int, MotorNumPerSide>& targetEncoder_R, const std::array<int, MotorNumPerSide>& targetVel_R,
                                  const std::array<int, MotorNumPerSide>& targetEncoder_L, const std::array<int, MotorNumPerSide>& targetVel_L)
 {
-    std::this_thread::sleep_until(startTime + std::chrono::milliseconds(5));
+    // std::this_thread::sleep_until(startTime + std::chrono::milliseconds(5));
     std::lock_guard(m_motorDriver->m_cyclicMutex);
 
     m_motorDriver->setTargetVel(MotorType::MOONS, 0, targetVel_R[0], arm_0);
@@ -2158,7 +2253,7 @@ void RobotControl::sendMotorData(const std::array<int, MotorNumPerSide>& targetE
         m_motorDriver->setTargetPos(MotorType::MAXON, 5, targetEncoder_L[9], arm_1);
     }
 
-    startTime = std::chrono::high_resolution_clock::now();
+    // startTime = std::chrono::high_resolution_clock::now();
 }
 
 void RobotControl::sendMotorData_4Maxons_ForceControl(const std::array<int, MotorNumPerSide>& targetEncoder_R, const std::array<int, MotorNumPerSide>& targetVel_R,
@@ -2339,33 +2434,6 @@ float RobotControl::covertQbytearrayToFloat(QByteArray data, int startindex)
 }
 
 
-void RobotControl::setRobotControlMode(const RobotControlMode& tartgetRobotControlMode)
-{
-    switch(static_cast<int>(tartgetRobotControlMode))
-    {
-    case static_cast<int>(RobotControlMode::TeleOperation):
-    {
-        goToTeleOperation();
-        break;
-    }
-    case static_cast<int>(RobotControlMode::Collaboration_GuidingArm):
-    {
-        goToCollaboration_GuidingArm();
-        break;
-    }
-    case static_cast<int>(RobotControlMode::Collaboration_EndJoint):
-    {
-        goToCollaboration_EndJoint();
-        break;
-    }
-    case static_cast<int>(RobotControlMode::Hold):
-    {
-        goToHold();
-        break;
-    }
-    default: break;
-    }
-}
 
 void RobotControl::goToHold()
 {
@@ -2974,6 +3042,7 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
 
      if(side =='l'){
 
+        if (handlePoseCur.handlePoseL_Roll * 180 / M_PI < 135 && handlePoseCur.handlePoseL_Roll * 180 / M_PI > -135){//67
         if (handlePoseCur.handlePoseL_Elevation * 180 / M_PI < 75 && handlePoseCur.handlePoseL_Elevation * 180 / M_PI > -75){//67
 
              if (handlePoseCur.handlePoseL_Arzimuth * 180 / M_PI < 120 && handlePoseCur.handlePoseL_Arzimuth * 180 / M_PI > -120){//87
@@ -3004,6 +3073,7 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
                 }
              }
         }
+        }
         else{
             return false;
         }
@@ -3012,7 +3082,7 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
 
 
      if(side =='r'){
-
+        if (handlePoseCur.handlePoseR_Roll * 180 / M_PI < 135 && handlePoseCur.handlePoseR_Roll * 180 / M_PI > -135){//67
         if (handlePoseCur.handlePoseR_Elevation * 180 / M_PI < 75  && handlePoseCur.handlePoseR_Elevation * 180 / M_PI > -75){
 
              if (handlePoseCur.handlePoseR_Arzimuth * 180 / M_PI < 120 && handlePoseCur.handlePoseR_Arzimuth * 180 / M_PI > -120){
@@ -3054,6 +3124,7 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
         return true;
     }
     usleep(2*1000);
+}
 }
 
 bool RobotControl::isPoseMatch(const HandlePose& masterHandlePose_Cur, const char& side) const//yu
@@ -3100,8 +3171,11 @@ void RobotControl::setControlInitHandleMotorPositionAndPose(const std::array<int
         m_ruckigInputState_L.current_velocity = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
         m_ruckigInputState_L.current_acceleration = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
+        // inited_ = {false, false, false};
+        // xhat_ = {m_endEffectorInitPosition_L[0], m_endEffectorInitPosition_L[1], m_endEffectorInitPosition_L[2]};
+        // vhat_ = {0.0, 0.0, 0.0};
         inited_ = {false, false, false};
-        xhat_ = {0.0, 0.0, 0.0};
+        xhat_ = {0, 0, 0};
         vhat_ = {0.0, 0.0, 0.0};
     }
     if(side == 'r')
@@ -3331,7 +3405,8 @@ void RobotControl::zeroErrGoHome(const char& side)
         if(m_armAnglePerSide == 30){
             targetPosition = {JointEncoderPerRevolution / 2 - static_cast<int>(45.2336 * EncoderPerGrade),
                               JointEncoderPerRevolution / 2 - static_cast<int>(97.0599 * EncoderPerGrade),
-                              JointEncoderPerRevolution / 2 - static_cast<int>(21.8223 * EncoderPerGrade)};
+                              JointEncoderPerRevolution / 2 - static_cast<int>(21.8223* EncoderPerGrade)};//21.8223
+
             // targetPosition = {JointEncoderPerRevolution / 2 - static_cast<int>(47 * EncoderPerGrade),
             //                   JointEncoderPerRevolution / 2 - static_cast<int>(96 * EncoderPerGrade),
             //                   JointEncoderPerRevolution / 2 - static_cast<int>(19 * EncoderPerGrade)};
@@ -3590,6 +3665,7 @@ void RobotControl::MaxonGoHome(const char& side)//yu
             m_motorDriver->operationHOME(MotorType::MAXON, 1, arm_1);
             m_motorDriver->operationHOME(MotorType::MAXON, 2, arm_1);
             m_motorDriver->operationHOME(MotorType::MAXON, 3, arm_1);
+
             m_motorDriver->operationHOME(MotorType::MAXON, 4, arm_1);
             m_motorDriver->operationHOME(MotorType::MAXON, 5, arm_1);
 

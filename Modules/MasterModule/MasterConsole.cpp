@@ -6,7 +6,7 @@ void MasterConsole::updateConsoleDataThread()
 {
     while(!m_isSystemTerminated && !m_isSystemReset)
     {
-        std::this_thread::sleep_until(startTime_master + std::chrono::milliseconds(5));
+        std::this_thread::sleep_until(startTime_master + std::chrono::milliseconds(2));
         masterConsoleStatusCheck();
         startTime_master = std::chrono::high_resolution_clock::now();
     }
@@ -14,23 +14,23 @@ void MasterConsole::updateConsoleDataThread()
 
 void MasterConsole::startUpdateConsoleDataThread()
 {
-   /*根据外设初始化主手*/
-   std::promise<bool> masterPromise;
-   std::future<bool> masterFuture = masterPromise.get_future();
-   if(m_MasterConsoleType == MasterConsoleType::Viper)
-   {
-      //Start Read-Viper-Data thread;
+    /*根据外设初始化主手*/
+    std::promise<bool> masterPromise;
+    std::future<bool> masterFuture = masterPromise.get_future();
+    if(m_MasterConsoleType == MasterConsoleType::Viper)
+    {
+        //Start Read-Viper-Data thread;
       m_viper.viper_start_directly();
       auto flagViper = m_viper.getReadyFuture().get();
       LOG(INFO) << "flagViper thread status: " << flagViper;
       if(flagViper == true)
       {
-         m_isViperOk = true;
+        m_isViperOk = true;
       }
       else
       {
-         m_isViperOk = false;
-         //send to security
+        m_isViperOk = false;
+        //send to security
       }
 
       bool flag422 = true;
@@ -105,6 +105,22 @@ void MasterConsole::assembleDataFromUSBAndEthernet()
     /*将viper数组中的数据取出进行滤波*/
     auto posDataFromViperTmp = handlePoseTmp.returnPNOData();
 
+    std::array<double,3> raw_L;
+    std::array<double,3> raw_R;
+
+    raw_L[0]=posDataFromViperTmp[0][0];
+    raw_L[1]=posDataFromViperTmp[0][1];
+    raw_L[2]=posDataFromViperTmp[0][2];
+    raw_R[0]=posDataFromViperTmp[1][0];
+    raw_R[1]=posDataFromViperTmp[1][1];
+    raw_R[2]=posDataFromViperTmp[1][2];
+
+    auto kalman_result = KalmanStep(raw_L);
+
+    // std::ofstream outfile("positionkalman.txt",std::ios::app);
+    // outfile<<raw_L[1]<<" "<<raw_L[2] <<" "<<kalman_result[1]<<" "<<kalman_result[2]<<"\n";
+    // outfile.close();
+
     /*保存滤波后的数据*/
 
     if(m_FilterCase == static_cast<int>(FilterCase::FilterOFF) || m_FilterCase == static_cast<int>(FilterCase::IRFilterOn))
@@ -117,6 +133,7 @@ void MasterConsole::assembleDataFromUSBAndEthernet()
     {
         auto PNODataAFIIR_Tmp = returnIIRFilteredData(posDataFromViperTmp);
         handlePoseIIR_Tmp.setMyConsoleData(PNODataAFIIR_Tmp);
+        // outfile2<< <<handlePoseIIR_Tmp.handlePoseL_OpenAngle<<" "<<handlePoseIIR_Tmp.handlePoseR_OpenAngle<<"\n";
         m_handlePose_Cur.store(handlePoseIIR_Tmp);
     }
     else if (m_FilterCase == static_cast<int>(FilterCase::IIIRFilterOn))
@@ -127,6 +144,7 @@ void MasterConsole::assembleDataFromUSBAndEthernet()
         // std::cout << PNODataAFIIIR_Tmp[0][0] << " " << PNODataAFIIIR_Tmp[0][1] << " "<< PNODataAFIIIR_Tmp[0][2]  << "\n";
         m_handlePose_Cur.store(handlePoseIIIR_Tmp);
     }
+
 }
 
 void MasterConsole::initFilter()
@@ -173,7 +191,7 @@ std::array<std::array<double,viperDataNumPerSensor>,2>  MasterConsole::returnIIR
 
    for(int j = 0; j < 2; j++)
    {
-      for(int i = 0; i < 6; i++)
+      for(int i = 0; i < 7; i++)
       {
         t_AF_Cur[j][i] = t_Cur[j][i] * m_IIRnum[0] + t_Pre[j][i] * m_IIRnum[1] + t_PrePre[j][i] * m_IIRnum[2]
                      - t_AF_Pre[j][i] * m_IIRden[1] - t_AF_PrePre[j][i] * m_IIRden[2];
@@ -202,7 +220,7 @@ std::array<std::array<double,viperDataNumPerSensor>,2>  MasterConsole::returnIII
 
     for(int j = 0; j < 2; j++)
     {
-        for(int i = 0; i < 6; i++)
+        for(int i = 0; i < 7; i++)
         {
             t_AF_Cur[j][i] = t_Cur[j][i] * m_IIIRnum[0] + t_Pre[j][i] * m_IIIRnum[1] + t_PrePre[j][i] * m_IIIRnum[2] + t_PrePrePre[j][i] * m_IIIRnum[3]
                              - t_AF_Pre[j][i] * m_IIIRden[1] - t_AF_PrePre[j][i] * m_IIIRden[2] - t_AF_PrePrePre[j][i] * m_IIIRden[3];
@@ -218,6 +236,85 @@ std::array<std::array<double,viperDataNumPerSensor>,2>  MasterConsole::returnIII
     m_poseDataAF_PrePrePre  = t_AF_PrePre;
 
     return t_AF_Cur;
+}
+
+std::array<double,3> MasterConsole::KalmanStep(const std::array<double,3>& raw)
+{
+    std::array<double,3> out{};
+
+    // 状态转移矩阵 F, 观测矩阵 H
+    double F[2][2] = {{1, dt}, {0, 1}};
+    double H[2] = {1, 0};
+
+    // 过程噪声 Q
+    double q11 = sigma_a*sigma_a * (dt*dt*dt/3.0);
+    double q12 = sigma_a*sigma_a * (dt*dt/2.0);
+    double q22 = sigma_a*sigma_a * dt;
+
+    double Q[2][2] = {{q11, q12}, {q12, q22}};
+
+    for (int i = 0; i < 3; ++i) {
+        if (!inited_[i]) {
+            // 初始化
+            x_est_[i][0] = raw[i];   // 初始位置
+            x_est_[i][1] = 0.0;      // 初始速度
+            P_[i] = {{{1,0},{0,1}}};
+            inited_[i] = true;
+            out[i] = raw[i];
+            continue;
+        }
+
+        // ---- 预测 ----
+        double x_pred[2];
+        x_pred[0] = F[0][0]*x_est_[i][0] + F[0][1]*x_est_[i][1];
+        x_pred[1] = F[1][0]*x_est_[i][0] + F[1][1]*x_est_[i][1];
+
+        double P_pred[2][2];
+        for(int r=0;r<2;++r){
+            for(int c=0;c<2;++c){
+                P_pred[r][c] = F[r][0]*P_[i][0][c] + F[r][1]*P_[i][1][c];
+            }
+        }
+        // P_pred = F P F^T + Q
+        double P_pred_full[2][2];
+        for(int r=0;r<2;++r){
+            for(int c=0;c<2;++c){
+                P_pred_full[r][c] = P_pred[r][0]*F[c][0] + P_pred[r][1]*F[c][1] + Q[r][c];
+            }
+        }
+
+        // ---- 更新 ----
+        double z = raw[i];
+        double y = z - (H[0]*x_pred[0] + H[1]*x_pred[1]); // 创新
+
+        double S = H[0]*(P_pred_full[0][0]*H[0] + P_pred_full[0][1]*H[1])
+                   + H[1]*(P_pred_full[1][0]*H[0] + P_pred_full[1][1]*H[1])
+                   + R;
+
+        double K[2];
+        K[0] = (P_pred_full[0][0]*H[0] + P_pred_full[0][1]*H[1]) / S;
+        K[1] = (P_pred_full[1][0]*H[0] + P_pred_full[1][1]*H[1]) / S;
+
+        // 更新状态
+        x_est_[i][0] = x_pred[0] + K[0]*y;
+        x_est_[i][1] = x_pred[1] + K[1]*y;
+
+        // 更新协方差: P = (I - K H) P_pred
+        double KH[2][2] = {{K[0]*H[0], K[0]*H[1]},
+                           {K[1]*H[0], K[1]*H[1]}};
+        double I_KH[2][2] = {{1-KH[0][0], -KH[0][1]},
+                             {-KH[1][0], 1-KH[1][1]}};
+        for(int r=0;r<2;++r){
+            for(int c=0;c<2;++c){
+                P_[i][r][c] = I_KH[r][0]*P_pred_full[0][c] + I_KH[r][1]*P_pred_full[1][c];
+            }
+        }
+
+        // 输出位置
+        out[i] = x_est_[i][0];
+    }
+
+    return out;
 }
 
 void MasterConsole::masterConsoleBootSelfCheck()

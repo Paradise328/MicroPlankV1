@@ -30,8 +30,6 @@ void Actuators_Controler::openSerialPort(qint32 baud)
 
 void Actuators_Controler::On422DataIn(void)
 {
-//    std::cout << "after star qserialPort111" <<std::endl;
-
     if(m_serial_422->canReadLine())
     {
         Data422Received+=m_serial_422->readAll();
@@ -42,8 +40,6 @@ void Actuators_Controler::On422DataIn(void)
             Data422Received.clear();
         }
     }
-//    std::cout << "after star qserialPort111" <<std::endl;
-
 }
 
 int Actuators_Controler::parseDataFrom422(QByteArray data)

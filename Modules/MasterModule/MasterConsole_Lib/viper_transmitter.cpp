@@ -71,13 +71,10 @@ int Viper_Transmitter::findFrameHead(QByteArray &data)
             return i;
         }
     }
-     qDebug()<<"frame head err            4";
-    qDebug()<<"len=                "<<len;
      if(len>400)
     {
         for(int i=0;i<400;i++){
              uint8_t u8temp=data.at(i);
-            // qDebug()<<"u8temp="<<u8temp;
         }
      }
     return -1;
@@ -294,24 +291,27 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
         if(cftemp.payload.args[0] == Dev_Sta_OK)
         {
             Handle_Angle_LEFT = cftemp.payload.args[2];
-            Handle_Angle_LEFT<<=8;
+            Handle_Angle_LEFT <<= 8;
             Handle_Angle_LEFT += cftemp.payload.args[1];
             Handle_Key_LEFT = cftemp.payload.args[4];
             Handle_Key_LEFT <<= 8;
             Handle_Key_LEFT += cftemp.payload.args[3];
-            Handle_Angle_RIGHT=cftemp.payload.args[6];
-            Handle_Angle_RIGHT<<=8;
-            Handle_Angle_RIGHT+=cftemp.payload.args[5];
-            Handle_Key_RIGHT=cftemp.payload.args[8];
-            Handle_Key_RIGHT<<=8;
-            Handle_Key_RIGHT+=cftemp.payload.args[7];
+            Handle_Angle_RIGHT = cftemp.payload.args[6];
+            Handle_Angle_RIGHT <<=8;
+            Handle_Angle_RIGHT += cftemp.payload.args[5];
+            Handle_Key_RIGHT = cftemp.payload.args[8];
+            Handle_Key_RIGHT <<=8;
+            Handle_Key_RIGHT += cftemp.payload.args[7];
 
-            // LOG(INFO)<<"viperDataTmp[0][1]: "<<viperDataTmp[0][0]<<" Handle_Angle_RIGHT: "<< std::dec <<Handle_Angle_RIGHT;
-            // outfile3<<viperDataTmp[0][0]<<" "<<viperDataTmp[0][1]<<" "<<viperDataTmp[0][2]<< " "<<std::dec <<Handle_Angle_RIGHT << "\n";
-            // outfile.close();
-
-            auto openAngle = calculateOpenAngle(Handle_Angle_LEFT, Handle_Angle_RIGHT);
+            std::array<int, 2> handle_Key;
+            handle_Key[0] = static_cast<int>(Handle_Angle_LEFT);
+            handle_Key[1] = static_cast<int>(Handle_Angle_RIGHT);
+            m_moveMeanFilter.add(handle_Key);
+            auto handleKey_afterFilter = m_moveMeanFilter.getMean();
+            auto openAngle = calculateOpenAngle(handleKey_afterFilter[0], handleKey_afterFilter[1]);
             handlePoseTmp = motionMapping(viperDataTmp, openAngle, stepPedal);
+            LOG(INFO)<< "openAngle: " << openAngle[0] << " " << openAngle[1];
+
         }
         else if(cftemp.payload.args[0]== Dev_Sta_LEFTHANDLE_ERROR)
         {
@@ -345,6 +345,7 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
     double Elevation_Cur_L  = viperData[0][4] *  M_PI / 180;
     double Roll_Cur_L       = viperData[0][5] *  M_PI / 180;
 
+
     //Define the Euler rotation Matrix
     Eigen::Matrix3d rotAroundZ_R, rotAroundY_R, rotAroundX_R;
     Eigen::Matrix3d rotAroundZ_L, rotAroundY_L, rotAroundX_L;
@@ -377,10 +378,11 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
     Eigen::Matrix3d rotMatrix_R = rotAroundX_Init_R * rotAroundY_Init_R * rotAroundZ_R * rotAroundY_R * rotAroundX_R * mappingMatrix;
     Eigen::Matrix3d rotMatrix_L = rotAroundX_Init_L * rotAroundY_Init_L * rotAroundZ_L * rotAroundY_L * rotAroundX_L * mappingMatrix;
 
+
     Eigen::AngleAxisd axang_R(rotMatrix_R);
     Eigen::Vector3d u_R = axang_R.axis();
     double theta_R = axang_R.angle();
-    double k = 1.25;
+    double k = 1.2;
     double theta_scaled_R = k * theta_R;
     Eigen::AngleAxisd axang_scaled_R(theta_scaled_R, u_R);
     Eigen::Matrix3d R_scaled = axang_scaled_R.toRotationMatrix();
@@ -407,12 +409,60 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
     // double beta_L = atan2(-rotMatrix_L(2,0), sqrt(rotMatrix_L(2,1) * rotMatrix_L(2,1) + rotMatrix_L(2,2) * rotMatrix_L(2,2)));
     // double gamma_L = atan2(rotMatrix_L(2,1), rotMatrix_L(2,2));
 
-    if(alpha_R > 160 * M_PI / 180)
+    // std::cout << "alpha_L: " << alpha_L*180/M_PI << " beta_L: " << beta_L*180/M_PI << " gamma_L: " << gamma_L*180/M_PI << std::endl;
+
+
+    // int index_alpha_L = 0;
+    // double a = alpha_L;
+
+    // if (((alpha_L - m_alpha_L_pre) * 180 / M_PI > 180)){
+    //     index_alpha_L = -1;
+    // }else if((alpha_L - m_alpha_L_pre) * 180/M_PI < -180){
+
+    //     index_alpha_L = 1;
+    // }else{index_alpha_L = 0;}
+    // alpha_L = alpha_L + 2 * M_PI * index_alpha_L;
+
+
+    // outfile3 << a << " " << alpha_L << " " << index_alpha_L << " "<< beta_L << " "<< gamma_L << "\n";
+
+    // std::cout << "a: " << a*180/M_PI << " alpha_L: " << alpha_L*180/M_PI <<" delt alpha: "<< (alpha_L - m_alpha_L_pre) * 180 / M_PI<< " index_alpha_L: " << index_alpha_L<<" pitch_L: "<< beta_L * 180/M_PI << std::endl;
+    // std::cout << " alpha_L: " << alpha_L*180/M_PI <<" yaw: "<< gamma_L * 180 / M_PI <<" pitch_L: "<< beta_L * 180/M_PI << std::endl;
+    m_alpha_L_pre = alpha_L;
+
+    // int index_gamma_L = 0;
+    // if (((gamma_L - m_gamma_L_pre) * 180 / M_PI > 300)){
+    //     index_gamma_L = -1;
+    // }else if((gamma_L - m_gamma_L_pre) * 180/M_PI < -300){
+    //     index_gamma_L = 1;
+    // }else{index_gamma_L = 0;}
+    // gamma_L = gamma_L + 2 * M_PI * index_gamma_L;
+    // m_gamma_L_pre = gamma_L;
+
+    // int index_alpha_R = 0;
+    // if (((alpha_R - m_alpha_R_pre) * 180 / M_PI > 300)){
+    //     index_alpha_R = -1;
+    // }else if((alpha_R - m_alpha_R_pre) * 180/M_PI < -300){
+    //     index_alpha_R = 1;
+    // }
+    // alpha_R = alpha_R + 2 * M_PI * index_alpha_R;
+    // m_alpha_R_pre = alpha_R;
+
+    // int index_gamma_R = 0;
+    // if (((gamma_R - m_gamma_R_pre) * 180 / M_PI > 300)){
+    //     index_gamma_R = -1;
+    // }else if((gamma_R - m_gamma_R_pre) * 180/M_PI < -300){
+    //     index_gamma_R = 1;
+    // }
+    // gamma_R = gamma_R + 2 * M_PI * index_gamma_R;
+    // m_gamma_R_pre = gamma_R;
+
+    if(alpha_R > 150 * M_PI / 180)
     {
-        alpha_R  = 160 * M_PI / 180;
-    }else if(alpha_R * 180 / M_PI < -160)
+        alpha_R  = 150 * M_PI / 180;
+    }else if(alpha_R < -150 * M_PI / 180 )
     {
-        alpha_R  = -160 * M_PI / 180;
+        alpha_R  = -150 * M_PI / 180;
     }
 
     if(beta_R >  80 * M_PI / 180)
@@ -423,47 +473,50 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
         beta_R = -80 * M_PI / 180;
     }
 
-    if(gamma_R > 160 * M_PI / 180)
+    if(gamma_R > 100 * M_PI / 180)
     {
-        gamma_R = 160 * M_PI / 180;
-    }else if(gamma_R < -160 * M_PI / 180)
+        gamma_R = 100 * M_PI / 180;
+    }else if(gamma_R < -100 * M_PI / 180)
     {
-        gamma_R = -160 * M_PI / 180;
+        gamma_R = -100 * M_PI / 180;
     }
 
-    if(alpha_L > 160 * M_PI / 180)
+    if(alpha_L > 150 * M_PI / 180)
     {
-        alpha_L = 160 * M_PI / 180;
-    }else if(alpha_L < -160 * M_PI / 180)
+        alpha_L = 150 * M_PI / 180;
+    }else if(alpha_L < -150 * M_PI / 180)
     {
-        alpha_L = -160 * M_PI / 180;
+        alpha_L = -150 * M_PI / 180;
     }
 
-    if(beta_L > 80 * M_PI / 180)
+    if(beta_L > 75 * M_PI / 180)
     {
-        beta_L = 80 * M_PI / 180;
-    }else if(beta_L < -80 * M_PI / 180)
+        beta_L = 75 * M_PI / 180;
+    }else if(beta_L < -75 * M_PI / 180)
     {
-        beta_L = -80 * M_PI / 180;
+        beta_L = -75 * M_PI / 180;
     }
 
-    if(gamma_L > 160 * M_PI / 180)
+    if(gamma_L > 100 * M_PI / 180)
     {
-        gamma_L = 160 * M_PI / 180;
-    }else if(gamma_L < -160 * M_PI / 180)
+        gamma_L = 100 * M_PI / 180;
+    }else if(gamma_L < -100 * M_PI / 180)
     {
-        gamma_L = -160 * M_PI / 180;
+        gamma_L = -100 * M_PI / 180;
     }
+
+    // std::cout << "alpha_L: " << a*180/M_PI << " beta_L: " << beta_L*180/M_PI << " gamma_L: " << gamma_L*180/M_PI << std::endl;
 
     HandlePose poseDataCurInSlaveFrame;
 
     poseDataCurInSlaveFrame.handlePoseR_Roll = alpha_R;
     poseDataCurInSlaveFrame.handlePoseR_Elevation = beta_R;
-    poseDataCurInSlaveFrame.handlePoseR_Arzimuth = gamma_R;
+    poseDataCurInSlaveFrame.handlePoseR_Arzimuth = gamma_R*1.2;
+
 
     poseDataCurInSlaveFrame.handlePoseL_Roll = alpha_L;
     poseDataCurInSlaveFrame.handlePoseL_Elevation = beta_L;
-    poseDataCurInSlaveFrame.handlePoseL_Arzimuth = gamma_L;
+    poseDataCurInSlaveFrame.handlePoseL_Arzimuth = gamma_L;//*1.2;
 
     Eigen::Vector3d  masterPositionViaSensor_L, masterPositionViaSensor_R;
     // masterPositionViaSensor_L << -8.0,
@@ -497,6 +550,8 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
     poseDataCurInSlaveFrame.handlePoseL_X = endPosition_L[0];
     poseDataCurInSlaveFrame.handlePoseL_Y = endPosition_L[1];
     poseDataCurInSlaveFrame.handlePoseL_Z = endPosition_L[2];
+
+    // LOG(INFO)<<"a: "<<a*180/M_PI<<" Roll: "<<poseDataCurInSlaveFrame.handlePoseL_Roll * 180 / M_PI<<" pitch: "<<poseDataCurInSlaveFrame.handlePoseL_Elevation* 180 / M_PI<<" YAW: "<<poseDataCurInSlaveFrame.handlePoseL_Arzimuth* 180 / M_PI;
 
     poseDataCurInSlaveFrame.handlePoseR_X = endPosition_R[0];
     poseDataCurInSlaveFrame.handlePoseR_Y = endPosition_R[1];
@@ -556,7 +611,7 @@ void Viper_Transmitter::readHandleData_Quaternion(QByteArray qba)
             Handle_Key_RIGHT<<=8;
             Handle_Key_RIGHT+=cftemp.payload.args[7];
 
-            auto openAngle = calculateOpenAngle(Handle_Angle_LEFT, Handle_Angle_RIGHT);
+            auto openAngle = calculateOpenAngle(Handle_Angle_LEFT, Handle_Key_RIGHT);
 
             handlePoseTmp.handlePoseL_OpenAngle = openAngle[0];
             handlePoseTmp.handlePoseR_OpenAngle = openAngle[1];
@@ -590,11 +645,12 @@ std::array<double, 2> Viper_Transmitter::calculateOpenAngle(const uint16_t& adcV
 
     if(adcValueL_Tmp > adcValueOpen_L) {adcValueL_Tmp = adcValueOpen_L;}
     if(adcValueL_Tmp < adcValueClose_L) {adcValueL_Tmp = adcValueClose_L;}
-    openAngle[0] = (adcValueL_Tmp >= adcValueGrasp_L)? (adcValueL_Tmp - adcValueGrasp_L)/(adcValueOpen_L - adcValueGrasp_L) * 20.0 : (adcValueL_Tmp - adcValueGrasp_L)/(adcValueGrasp_L - adcValueClose_L) * 10.0;
 
     if(adcValueR_Tmp > adcValueOpen_R) {adcValueR_Tmp = adcValueOpen_R;}
     if(adcValueR_Tmp < adcValueClose_R) {adcValueR_Tmp = adcValueClose_R;}
+    openAngle[0] = (adcValueL_Tmp >= adcValueGrasp_L)? (adcValueL_Tmp - adcValueGrasp_L)/(adcValueOpen_L - adcValueGrasp_L) * 20.0 : (adcValueL_Tmp - adcValueGrasp_L)/(adcValueGrasp_L - adcValueClose_L) * 10.0;
     openAngle[1] = (adcValueR_Tmp >= adcValueGrasp_R)? (adcValueR_Tmp - adcValueGrasp_R)/(adcValueOpen_R - adcValueGrasp_R) * 20.0 : (adcValueR_Tmp - adcValueGrasp_R)/(adcValueGrasp_R - adcValueClose_R) * 10.0;
+    // LOG(ERROR) << std::dec << adcValueL << " " << openAngle[0] <<" " << adcValueR <<" " << openAngle[1];
     return openAngle;
 }
 
@@ -607,7 +663,7 @@ void Viper_Transmitter::DataIn(QByteArray data)
     }
     COMMU_FRAME cftemp;
     eDepackReturn edr=this->Depack_Frame(data,cftemp);
-    if(edr==Depack_SUCCESS)
+    if(edr == Depack_SUCCESS)
     {
         qDebug()<<"Depack_SUCCESS";
         if(cftemp.payload.type==CMD_TEST&&cftemp.payload.args[0]==0x00)
