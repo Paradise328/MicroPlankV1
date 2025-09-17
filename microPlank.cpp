@@ -87,8 +87,10 @@ void MicroPlank::startDomainControllerThread()
     //m_domainController_Left->startThread();
     QThread *thread = QThread::create([this](){
         while(1){
-            m_domainController_Left->read_Write_Data();
-            SteadyDelay(10);
+            m_domainController->read_Write_Data(1);
+            SteadyDelay(5);
+            m_domainController->read_Write_Data(2);
+            SteadyDelay(5);
         }
     });
     thread->start();

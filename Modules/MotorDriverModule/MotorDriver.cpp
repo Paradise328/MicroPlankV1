@@ -3269,16 +3269,16 @@ void MotorDriver::operationHOME(const MotorType& type, const int& index, const i
         // }
 
         // if(armNum == 1){
-        //     if (setHomeVel(type, index, 50*1000, armNum) != T_NOERROR){
-        //         LOG(ERROR) << "Failed to set profile SearchZeroVel for MAXONS!";
-        //         return;
-        //     }
-        // }
-
-            if (setHomeVel(type, index, 200, armNum) != T_NOERROR){
+            if (setHomeVel(type, index, 250*1000, armNum) != T_NOERROR){
                 LOG(ERROR) << "Failed to set profile SearchZeroVel for MAXONS!";
                 return;
             }
+        // }
+
+            // if (setHomeVel(type, index, 200, armNum) != T_NOERROR){
+            //     LOG(ERROR) << "Failed to set profile SearchZeroVel for MAXONS!";
+            //     return;
+            // }
 
             usleep(50 * 1000);
 
@@ -3376,7 +3376,7 @@ int MotorDriver::checkECatStationState(){
         return T_ERROR;
     }
 
-    if((lRet = m_selfPointer->getECatSlaveState(6)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
+    if((lRet = m_selfPointer->getECatSlaveState(8)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
         LOG(ERROR) << "Connection lost, EtherCAT slave 6 is not in OP state, current state is: 0x" << std::hex << lRet;
         return T_ERROR;
     }
@@ -3435,14 +3435,14 @@ int MotorDriver::checkMotorState(){
         // LOG(ERROR) << "Error: Maxon motor on arm0, joint 4, error code is 0x: " << std::hex << lRet;
          return T_ERROR;
     }
-    // if((lRet = getErrorCode(MotorType::MAXON, 4, arm_0)) != 0x0){
-    //     // LOG(ERROR) << "Error: Maxon motor on arm0, joint 5, error code is: 0x" << std::hex << lRet;
-    //      return T_ERROR;
-    // }
-    // if((lRet = getErrorCode(MotorType::MAXON, 5, arm_0)) != 0x0){
-    //     // LOG(ERROR) << "Error: Maxon motor on arm0, joint 6, error code is 0x: " << std::hex << lRet;
-    //     return T_ERROR;
-    // }
+    if((lRet = getErrorCode(MotorType::MAXON, 4, arm_0)) != 0x0){
+        // LOG(ERROR) << "Error: Maxon motor on arm0, joint 5, error code is: 0x" << std::hex << lRet;
+         return T_ERROR;
+    }
+    if((lRet = getErrorCode(MotorType::MAXON, 5, arm_0)) != 0x0){
+        // LOG(ERROR) << "Error: Maxon motor on arm0, joint 6, error code is 0x: " << std::hex << lRet;
+        return T_ERROR;
+    }
 
     if((lRet = getErrorCode(MotorType::MOONS, 0, arm_1)) != 0x0){
         // LOG(ERROR) << "Error: Moons motor on arm1, x-direction, error code is: 0x" << std::hex << lRet;
@@ -3476,14 +3476,14 @@ int MotorDriver::checkMotorState(){
         // LOG(ERROR) << "Error: Maxon motor on arm1, joint 4, error code is 0x: " << std::hex << lRet;
         return T_ERROR;
     }
-    // if((lRet = getErrorCode(MotorType::MAXON, 4, arm_1)) != 0x0){
-    //     // LOG(ERROR) << "Error: Maxon motor on arm1, joint 5, error code is: 0x" << std::hex << lRet;
-    //     return T_ERROR;
-    // }
-    // if((lRet = getErrorCode(MotorType::MAXON, 5, arm_1)) != 0x0){
-    //     // LOG(ERROR) << "Error: Maxon motor on arm1, joint 6, error code is 0x: " << std::hex << lRet;
-    //     return T_ERROR;
-    // }
+    if((lRet = getErrorCode(MotorType::MAXON, 4, arm_1)) != 0x0){
+        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 5, error code is: 0x" << std::hex << lRet;
+        return T_ERROR;
+    }
+    if((lRet = getErrorCode(MotorType::MAXON, 5, arm_1)) != 0x0){
+        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 6, error code is 0x: " << std::hex << lRet;
+        return T_ERROR;
+    }
     // LOG(INFO) << "In function checkMotorState, all motors are checked! ";
 
     return T_NOERROR;
@@ -3499,8 +3499,8 @@ void MotorDriver::displayMotorErrCode(){
     LOG(INFO) << "Maxon motor joint 2, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 1, arm_0);
     LOG(INFO) << "Maxon motor joint 3, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 2, arm_0);
     LOG(INFO) << "Maxon motor joint 4, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 3, arm_0);
-    // LOG(INFO) << "Maxon motor joint 5, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 4, arm_0);
-    // LOG(INFO) << "Maxon motor joint 6, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 5, arm_0);
+    LOG(INFO) << "Maxon motor joint 5, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 4, arm_0);
+    LOG(INFO) << "Maxon motor joint 6, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 5, arm_0);
 
     LOG(INFO) << "Moons motor x-direction, error code is: 0x" << std::hex << getErrorCode(MotorType::MOONS, 0, arm_1);
     LOG(INFO) << "Zero Error motor joint 1, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 0, arm_1);
@@ -3510,8 +3510,8 @@ void MotorDriver::displayMotorErrCode(){
     LOG(INFO) << "Maxon motor joint 2, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 1, arm_1);
     LOG(INFO) << "Maxon motor joint 3, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 2, arm_1);
     LOG(INFO) << "Maxon motor joint 4, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 3, arm_1);
-    // LOG(INFO) << "Maxon motor joint 5, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 4, arm_1);
-    // LOG(INFO) << "Maxon motor joint 6, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 5, arm_1);
+    LOG(INFO) << "Maxon motor joint 5, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 4, arm_1);
+    LOG(INFO) << "Maxon motor joint 6, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 5, arm_1);
 }
 
 void MotorDriver::motorDriverThread(std::promise<bool> &promiseCommunication){
@@ -3586,8 +3586,8 @@ void MotorDriver::disableAllMotors()
     setControlWord(MotorType::MAXON, 1, ControlCommand::SHUT_DOWN, arm_0);
     setControlWord(MotorType::MAXON, 2, ControlCommand::SHUT_DOWN, arm_0);
     setControlWord(MotorType::MAXON, 3, ControlCommand::SHUT_DOWN, arm_0);
-    // setControlWord(MotorType::MAXON, 4, ControlCommand::SHUT_DOWN, arm_0);
-    // setControlWord(MotorType::MAXON, 5, ControlCommand::SHUT_DOWN, arm_0);
+    setControlWord(MotorType::MAXON, 4, ControlCommand::SHUT_DOWN, arm_0);
+    setControlWord(MotorType::MAXON, 5, ControlCommand::SHUT_DOWN, arm_0);
 
     setControlWord(MotorType::MOONS, 0, ControlCommand::SHUT_DOWN, arm_1);
     setControlWord(MotorType::ZERO_ERR, 0, ControlCommand::SHUT_DOWN, arm_1);
@@ -3597,8 +3597,8 @@ void MotorDriver::disableAllMotors()
     setControlWord(MotorType::MAXON, 1, ControlCommand::SHUT_DOWN, arm_1);
     setControlWord(MotorType::MAXON, 2, ControlCommand::SHUT_DOWN, arm_1);
     setControlWord(MotorType::MAXON, 3, ControlCommand::SHUT_DOWN, arm_1);
-    // setControlWord(MotorType::MAXON, 4, ControlCommand::SHUT_DOWN, arm_1);
-    // setControlWord(MotorType::MAXON, 5, ControlCommand::SHUT_DOWN, arm_1);
+    setControlWord(MotorType::MAXON, 4, ControlCommand::SHUT_DOWN, arm_1);
+    setControlWord(MotorType::MAXON, 5, ControlCommand::SHUT_DOWN, arm_1);
 
     usleep(1000 * 1000);
 

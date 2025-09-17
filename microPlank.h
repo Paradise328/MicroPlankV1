@@ -48,7 +48,8 @@ public:
                         m_masterConsoleType(MasterConsoleType),
                         m_motorDriverParameter(motorDriverParameter),
                         m_isSystemTerminated(false),
-                        m_audioMap(audioMap)
+                        m_audioMap(audioMap),
+                        m_domainController(new DomainController())
                         {
                            m_forceSensor = new ForceSensor(this);
                            // m_forceSensor->initDevice();
@@ -116,11 +117,9 @@ private:
     MotorDriver*        m_motorDriver = new MotorDriver(m_motorDriverParameter, m_MsgPool);//为一个指针
 
     /* TODO: armNum = 0: Left, armNum = 1: Right */
-    DomainController*    m_domainController_Right;
+    DomainController*    m_domainController;
 
-    DomainController*    m_domainController_Left = new DomainController(0);
-
-    RobotControl        m_robotControl = RobotControl(m_masterConsole, m_motorDriver, m_domainController_Left, m_domainController_Right, m_MsgPool);
+    RobotControl        m_robotControl = RobotControl(m_masterConsole, m_motorDriver, m_domainController, m_MsgPool);
 
     AudioPlay           m_audioPlay = AudioPlay(m_audioMap, m_MsgPool);
 

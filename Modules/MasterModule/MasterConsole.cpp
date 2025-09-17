@@ -1,12 +1,12 @@
  #include "MasterConsole.h"
-// std::ofstream outfile2("filterDataCheck_0805.txt");
+std::ofstream outfile2("filterDataCheck_0805.txt");
 std::chrono::high_resolution_clock::time_point startTime_master;
 
 void MasterConsole::updateConsoleDataThread()
 {
     while(!m_isSystemTerminated && !m_isSystemReset)
     {
-        std::this_thread::sleep_until(startTime_master + std::chrono::milliseconds(2));
+        std::this_thread::sleep_until(startTime_master + std::chrono::milliseconds(5));
         masterConsoleStatusCheck();
         startTime_master = std::chrono::high_resolution_clock::now();
     }
@@ -82,6 +82,7 @@ void MasterConsole::startUpdateConsoleDataThread()
     if(m_MasterConsoleType == MasterConsoleType::DessightMaster)
     {
         LOG(INFO) << "MasterConsoleType: DessightMaster";
+        m_transmitter.startReadingThread();
         m_updateConsoleDataThread = std::thread(&MasterConsole::updateConsoleDataThread, this);
         LOG(INFO) << "MasterConsole Data Update thread ID: " << m_updateConsoleDataThread.get_id();
         m_updateConsoleDataThread.detach();
@@ -133,7 +134,7 @@ void MasterConsole::assembleDataFromUSBAndEthernet()
     {
         auto PNODataAFIIR_Tmp = returnIIRFilteredData(posDataFromViperTmp);
         handlePoseIIR_Tmp.setMyConsoleData(PNODataAFIIR_Tmp);
-        // outfile2<< <<handlePoseIIR_Tmp.handlePoseL_OpenAngle<<" "<<handlePoseIIR_Tmp.handlePoseR_OpenAngle<<"\n";
+        // outfile2 <<posDataFromViperTmp[1][0] << " " << posDataFromViperTmp[1][1] << " " << posDataFromViperTmp[1][2] << " " <<handlePoseIIR_Tmp.handlePoseR_X <<" "<<handlePoseIIR_Tmp.handlePoseR_Y<<" "<<handlePoseIIR_Tmp.handlePoseR_Z<<"\n";
         m_handlePose_Cur.store(handlePoseIIR_Tmp);
     }
     else if (m_FilterCase == static_cast<int>(FilterCase::IIIRFilterOn))

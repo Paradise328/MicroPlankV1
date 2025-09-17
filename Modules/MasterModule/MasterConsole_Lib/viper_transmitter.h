@@ -23,7 +23,7 @@ public:
     explicit Viper_Transmitter():
         m_communicateTemp(0),
         m_isMonitorTerminated(false),
-        m_moveMeanFilter(5)
+        m_moveMeanFilter(10)
         {
             this->type=DEV_VIPER_TRANSMITTER;
             this->Qhash_Cmd_Classify.insert("GETSINGLE",VIPER_TRANSMITTER_GET_SINGLE_DATA);
@@ -42,13 +42,12 @@ public:
 
     bool                    return422Status(){return m_is422Ok;}
     double   m_armAnglePerSide = 30.0;
+    void                    startReadingThread();
 
 private:
-
     void                    initDevice();
     /*开启viper连续发送模式*/
     viper_ui                m_viper;
-    void                    StartContinus();
     void                    Reset_Viper(void);
 
     /*开启主控台串口, 进行422通信等相关操作*/

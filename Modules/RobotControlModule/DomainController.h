@@ -60,19 +60,17 @@ public:
         Calibrated
     };
 
-    DomainController() = delete;
-    DomainController(uint32_t ID = 0);
-    DomainController(QString ip, quint16 port, uint32_t ID = 0);
+    DomainController();
     ~DomainController();
 
     void                                            startThread();
-    void                                            VCMD(QString cmd, int arg1=-1, int arg2=-1, int arg3=-1);
+    void                                            VCMD(QString cmd,uint8_t id, int arg1=-1, int arg2=-1, int arg3=-1);
     void                                            SendTestFrame(void);
-    void                                            StartContinus();
-    void                                            reset();
-    void                                            read_Write_Data();
+    void                                            StartContinus(uint8_t id);
+    void                                            reset(uint8_t id);
+    void                                            read_Write_Data(uint8_t id);
     float                                           Uint8ArrToFloat(uint8_t *arr, unsigned char StartIndex);
-    bool                                            isSelfCheck(){ return this -> m_selfCheckOK;}
+    bool                                            isSelfCheck(){ return (this -> m_selfCheckOK_l&&this -> m_selfCheckOK_r);}
     void                                            openSerialPort(qint32 baud);
     void                                            closeSerialPort();
     int                                             findFrameHead(QByteArray &data);
@@ -82,49 +80,62 @@ public:
     void                                            readHandleOtherData(QByteArray qba);
     bool                                            isDomainControllerConnected();
 
-    std::array<double, 3>                           getForce();
-    std::array<double, 3>                           getForce(double tilt_angle);
-    std::array<double, 3>                           getMomentum();
-    std::array<double, 3>                           getMomentum(double tilt_angle);
+    std::array<double, 3>                           getForce(uint armSide);
+    std::array<double, 3>                           getForce(uint armSide, double tilt_angle);
+    std::array<double, 3>                           getMomentum(uint armSide);
+    std::array<double, 3>                           getMomentum(uint armSide, double tilt_angle);
 
-    bool                                            isForceSensorZeroFound();
-    bool                                            getEnableButton();
-    bool                                            getResetButton();
-    uint8_t                                         getDigitalInput();
-    DomainControllerData                            m_domainControllerData;     /* struct for data read by domain controller */
+    bool                                            isForceSensorZeroFound(uint armSide);
+    bool                                            getEnableButton(uint armSide);
+    bool                                            getResetButton(uint armSide);
+    uint8_t                                         getDigitalInput(uint armSide);
+
+    // DomainControllerData                            m_domainControllerData;     /* struct for data read by domain controller */
+    std::atomic<DomainControllerData>               m_domainControllerData_l;     /* struct for data read by domain controller */
+    std::atomic<DomainControllerData>               m_domainControllerData_r;     /* struct for data read by domain controller */
     void                                            set_Light_Color_Model(LightColor_e color,LightModel_e model);
 
-    int                                             getMagneticScale(){return m_endGimbalMagneticCounter.load();}
+    uint32_t                                             getMagneticScale(uint armSide);
 private:
     uint32_t                                        m_ID = 0;                     /* ID for the domain controller board */
     QSerialPort                                    *m_serial_422_domain_controller = nullptr;
-    bool                                            m_selfCheckOK = false;
     QByteArray                                      m_422ReceiveBuffer;
     QHash<QString,eDomainController_Actions>        Qhash_Cmd_Classify;
     std::atomic<bool>                               isSystemTerminated;
 
-    std::atomic<int>                                m_endGimbalMagneticCounter;
+    bool                                            m_selfCheckOK_l = false;
+    bool                                            m_selfCheckOK_r = false;
 
-    std::array<double, 6>                           m_forceSensorRaw = {0} ;
-    std::array<double, 6>                           m_forceSensorInit = {0};
-    std::deque<std::array<double,6>>                m_forceZeroDetectBuffer;
-    std::array<double, 6>                           m_forceSensorZeroCompensated = {0};
+
+    std::array<double, 6>                           m_forceSensorRaw_l = {0} ;
+    std::array<double, 6>                           m_forceSensorInit_l = {0};
+    std::deque<std::array<double,6>>                m_forceZeroDetectBuffer_l;
+    std::array<double, 6>                           m_forceSensorZeroCompensated_l = {0};
+    std::array<double, 6>                           m_forceSensorRaw_r = {0} ;
+    std::array<double, 6>                           m_forceSensorInit_r = {0};
+    std::deque<std::array<double,6>>                m_forceZeroDetectBuffer_r;
+    std::array<double, 6>                           m_forceSensorZeroCompensated_r = {0};
 
     const double                                    k_forceSensor_sample_rate = 1000.0;
     const double                                    k_forceSensor_cutoff_rate = 20.0;
-    bool                                            m_forceZeroFound = false;
-    const unsigned int                              m_forceZeroWindowSize = 1000;
-    const double                                    m_forceZeroThreshold = 1; // 单位: N 或 Nm，可根据实际调
+    const unsigned int                              k_forceZeroWindowSize = 1000;
+    const double                                    m_forceZeroThreshold = 1.0; // 单位: N 或 Nm，可根据实际调
 
-    std::array<double, 6>                           m_forceSensorIR = {0} ;
-    LowpassFilter1stOrder<std::array<double, 6>>    m_forceSensorFilter_IR;     /* IR for force sensor data */
+    bool                                            m_forceZeroFound_l = false;
+    std::array<double, 6>                           m_forceSensorIR_l = {0};
+    LowpassFilter1stOrder<std::array<double, 6>>    m_forceSensorFilter_IR_l;     /* IR for force sensor data */
+    std::array<double, 6>                           m_forceSensorIIR_l = {0};
+    LowpassFilter2ndOrder<std::array<double, 6>>    m_forceSensorFilter_IIR_l;    /* IIR for force sensor data */
 
-    std::array<double, 6>                           m_forceSensorIIR = {0} ;
-    LowpassFilter2ndOrder<std::array<double, 6>>    m_forceSensorFilter_IIR;    /* IIR for force sensor data */
+    bool                                            m_forceZeroFound_r = false;
+    std::array<double, 6>                           m_forceSensorIR_r = {0};
+    LowpassFilter1stOrder<std::array<double, 6>>    m_forceSensorFilter_IR_r;     /* IR for force sensor data */
+    std::array<double, 6>                           m_forceSensorIIR_r = {0};
+    LowpassFilter2ndOrder<std::array<double, 6>>    m_forceSensorFilter_IIR_r;    /* IIR for force sensor data */
 
     std::atomic<uint8_t>                            m_LightCmd;
 
-    bool                                            findForceSensorZero(std::array<double,6> new_sample);
+    bool                                            findForceSensorZero(std::array<double,6> new_sample,uint armSide);
 };
 
 #endif // DOMAIN_CONTROLlER_H

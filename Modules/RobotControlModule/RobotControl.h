@@ -133,16 +133,10 @@ class RobotControl:public QObject
 
 public:
 
-
-    //    std::array<double, 11>    m_ForcepSpeedLimits = {87381, 13107, 13107, 13107, 13107, 13107, 13107, 1, 87381, 87381, 87381};//单位 位每秒，电机最大速度限制60度每秒，电缸最大速度限制8mm每秒
-    //    std::array<double, 11>    m_SpeedDirection_L = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-    //    std::array<double, 11>    m_kForcepPosition_L = {1456.356, 1638.4, 1638.4, 1638.4, 1638.4, 1638.4, 1638.4, 1, 1456.356, 1456.356, 1456.356};//电机1456.356位每度 电缸1683.4位每毫米
-
-    explicit RobotControl(MasterConsole& masterConsole, MotorDriver* motorDriver, DomainController* domainController_L,DomainController* domainController_R,MessageQueue&  messagePool):
+    explicit RobotControl(MasterConsole& masterConsole, MotorDriver* motorDriver, DomainController* domainController,MessageQueue&  messagePool):
         m_masterConsole(masterConsole),
         m_motorDriver(motorDriver),
-        m_domainController_L(domainController_L),
-        m_domainController_R(domainController_R),
+        m_domainController(domainController),
         m_messagePool(messagePool),
         m_teleOperationdMode(TeleOperationMode::CSV_Mode),
         m_ruckigPlanner_R(0.005),
@@ -185,9 +179,7 @@ private:
 
     Viper_Transmitter*              m_viper_Transmitter;
 
-    DomainController*               m_domainController_L;
-
-    DomainController*               m_domainController_R;
+    DomainController*               m_domainController;
 
     MasterConsoleType               m_masterConsoleType;
 
@@ -219,16 +211,23 @@ private:
 
     //自适应低通滤波参数
 
-    std::array<bool,3> inited_ {false, false, false};
-    std::array<double,3> xhat_   {0.0, 0.0, 0.0};
-    std::array<double,3> vhat_   {0.0, 0.0, 0.0};
-    std::array<double,3> ahat_   {0.0, 0.0, 0.0};
-    std::array<double,3> fc_smooth_   {0.0, 0.0, 0.0};
+    std::array<bool,3> inited_L {false, false, false};
+    std::array<double,3> xhat_L   {0.0, 0.0, 0.0};
+    std::array<double,3> vhat_L   {0.0, 0.0, 0.0};
+    std::array<double,3> ahat_L   {0.0, 0.0, 0.0};
+    std::array<double,3> fc_smooth_L   {0.0, 0.0, 0.0};\
+
+    std::array<bool,3> inited_R {false, false, false};
+    std::array<double,3> xhat_R   {0.0, 0.0, 0.0};
+    std::array<double,3> vhat_R   {0.0, 0.0, 0.0};
+    std::array<double,3> ahat_R   {0.0, 0.0, 0.0};
+    std::array<double,3> fc_smooth_R   {0.0, 0.0, 0.0};
 
     //位移累积（滑动窗口）
-    std::deque<double> dispHist_[3];
+    std::deque<double> dispHist_L[3];
+    std::deque<double> dispHist_R[3];
 
-    double fmin     = 1.2;//1.2;   // 低速/静止截止 [Hz]
+    double fmin     = 1.0;//1.2;   // 低速/静止截止 [Hz]
     double beta     = 2.53;//0.43;  // 速度->截止斜率 [Hz/(单位/秒)]
     double fd       = 18.0;  // 速度通道固定截止 [Hz]
     double dt       = 0.004; // 采样周期（固定 4 ms；若用真实 dt 就每帧更新它）
@@ -239,6 +238,11 @@ private:
     double win_len = 0.5;//位移窗口累计
     double tau_up = 0.05;//fc下降时间常数
     double tau_down = 0.3;//fc上升时间常数
+
+    /*速度補償*/
+
+    std::array<int, MotorNumPerSide> m_EncodeErr_Pre_L;
+    std::array<int, MotorNumPerSide> m_EncodeErr_Pre_R;
 
     /*控制函数*/
     std::thread                     m_calculateControlDataThread;
@@ -349,7 +353,7 @@ private:
     std::atomic<std::array<int, MotorNumPerSide>>           m_MotorTargetVel_L;
     std::atomic<std::array<int, MotorNumPerSide>>           m_MotorTargetVel_R;
 
-    std::array<double,3> OneEuroStep(const std::array<double,3>&raw);
+    std::array<double,3> OneEuroStep(const std::array<double,3>&raw,const char& side);
     /*进入使能时计算初始位置*/
     void                           calculateEndEffectorPosition_init(const HandlePose& handlePoseCur, const std::array<int,MotorNumPerSide>& motorPos_Cur, const char& side);
 
@@ -378,7 +382,7 @@ private:
     void                            zeroErrGoHome(const char& side);
 
     void                            MaxonGoHome(const char& side);
-    void                            MaxonGoHome_4Maxons(const char& side);
+    void                            MaxonGoHome_(const char& side);
 
     void                            changeAngle_L();
     void                            changeAngle_R();
@@ -430,11 +434,11 @@ private:
     std::array<double, MotorNumPerSide>    m_SpeedDirection_R = {1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1};
     std::array<double, MotorNumPerSide>    m_SpeedDirection_L = {1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1};
 
-    std::array<double, MotorNumPerSide>    m_kForcepPosition_R = {4000, 1456.356, 1456.356, 1456.356, 110.8, 4063.76768, 4063.76768, 4063.76768, 4063.76768, 4063.76768, 846.473};
-    std::array<double, MotorNumPerSide>    m_kForcepPosition_small_R = {4000, 1456.356, 1456.356, 1456.356, 110.8 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 846.473};
+    std::array<double, MotorNumPerSide>    m_kForcepPosition_R = {4000, 1456.356, 1456.356, 1456.356, 110.8, 4063.76768, 4063.76768, 4063.76768, 4063.76768, 4063.76768, 4063.76768};
+    std::array<double, MotorNumPerSide>    m_kForcepPosition_small_R = {4000, 1456.356, 1456.356, 1456.356, 110.8 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75};
 
-    std::array<double, MotorNumPerSide>    m_kForcepPosition_L = {4000, 1456.356, 1456.356, 1456.356, 110.8, 4063.76768, 4063.76768, 4063.76768, 4063.76768, 4063.76768, 846.473};
-    std::array<double, MotorNumPerSide>    m_kForcepPosition_small_L = {4000, 1456.356, 1456.356, 1456.356, 110.8 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 846.473};
+    std::array<double, MotorNumPerSide>    m_kForcepPosition_L = {4000, 1456.356, 1456.356, 1456.356, 110.8, 4063.76768, 4063.76768, 4063.76768, 4063.76768, 4063.76768, 4063.76768};
+    std::array<double, MotorNumPerSide>    m_kForcepPosition_small_L = {4000, 1456.356, 1456.356, 1456.356, 110.8 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75, 4063.76768 * 2.75};
 
     double                          m_compRatio_L = 0.765;//Read From Toml
     double                          m_compRatio_R = 0.765;//Read From Toml
@@ -485,6 +489,13 @@ private:
     double m_jointAngle2_velocity_L;
     double m_jointAngle3_velocity_L;
 
+    double m_delt_beta_L;/*LastLoopAngle*/
+    double m_delt_gamma_L;
+    double m_delt_alpha_L;
+    double m_delt_beta_R;/*LastLoopAngle*/
+    double m_delt_gamma_R;
+    double m_delt_alpha_R;
+
     /*保存当前状态*/
     void                        storeCurAsPrev(const HandlePose& handlePoseCur,
                                                const std::array<double, ControlValueNum> controlValueCur_L, const std::array<double, ControlValueNum> controlValueCur_R,
@@ -520,7 +531,7 @@ private:
                                                              const std::array<double, MotorNumPerSide>& targetEncoderPrev,
                                                              const std::array<int, MotorNumPerSide>& targetEncoderCur_int,
                                                              const std::array<int, MotorNumPerSide>& motorEncode,
-                                                             const char& side)const;
+                                                             const char& side);
 
     /*控制循环结束后*/
     void                    storeCurAsPrev(const HandlePose& handlePoseCur, const std::array<double, ControlValueNum> controlValueCur_L,
@@ -530,10 +541,6 @@ private:
                                             const std::array<int, MotorNumPerSide>& motorPositionCur_R,
                                             const std::array<int, MotorNumPerSide>& motorTargetEncoder_R, const int&  enableTagCur_R);
 
-    // int handflag = 0;
-
-    // double m_gamma_Init_R;
-    // double m_gamma_Last_R = 0;
 
     double m_last_roll;
     double m_cur_roll;
@@ -594,11 +601,6 @@ private:
 
     mutable std::array<double, Position_DOF>                m_endEffectorInitJointAngle_R = {0};
     mutable std::array<double, Position_DOF>                m_endEffectorInitJointAngle_L = {0};
-
-    // double m_yawAngle_L = 0;
-    // double m_pitchAngle_L = 0;
-    // double m_yawAngle_R = 0;
-    // double m_pitchAngle_R = 0;
 
     Eigen::Matrix3d rotationMatrixPrev = Eigen::Matrix3d::Identity();
 

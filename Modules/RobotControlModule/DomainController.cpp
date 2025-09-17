@@ -1,17 +1,21 @@
 #include "DomainController.h"
 
-DomainController::DomainController(uint32_t ID):
-    m_forceSensorFilter_IR(m_forceSensorIR, k_forceSensor_sample_rate, k_forceSensor_cutoff_rate),
-    m_forceSensorFilter_IIR(m_forceSensorIIR, k_forceSensor_sample_rate, k_forceSensor_cutoff_rate),
+DomainController::DomainController():
+    m_forceSensorFilter_IR_l(m_forceSensorIR_l, k_forceSensor_sample_rate, k_forceSensor_cutoff_rate),
+    m_forceSensorFilter_IIR_l(m_forceSensorIIR_l, k_forceSensor_sample_rate, k_forceSensor_cutoff_rate),
+    m_forceSensorFilter_IR_r(m_forceSensorIR_r, k_forceSensor_sample_rate, k_forceSensor_cutoff_rate),
+    m_forceSensorFilter_IIR_r(m_forceSensorIIR_r, k_forceSensor_sample_rate, k_forceSensor_cutoff_rate),
     isSystemTerminated(false)/* init lowpassfilter */
 {
-    this -> m_ID = ID;
+    LOG(INFO) << " in default contructor ";
     this -> type = DEV_DOMAINCONTROLLER;
 
     this -> Qhash_Cmd_Classify.insert("READWRITEDATA", DOMAINCONTROLLER_READ_WRITE_DATA);
     this -> Qhash_Cmd_Classify.insert("RESET", DOMAINCONTROLLER_RESET);
+
     m_LightCmd.store(0);
-    set_Light_Color_Model(LightColor_Green,LightModel_Blink);
+
+    set_Light_Color_Model(LightColor_None, LightModel_Off);
     openSerialPort(921600);
 }
 
@@ -19,26 +23,14 @@ void DomainController::startThread()
 {
     QThread *thread = QThread::create([this](){
         while(!isSystemTerminated){
-            read_Write_Data();
-            SteadyDelay(1000);
+            read_Write_Data(1);
+            SteadyDelay(5);
+            read_Write_Data(2);
+            SteadyDelay(5);
         }
     });
     thread->start();
     QObject::connect(thread, &QThread::finished, thread, &QObject::deleteLater);
-}
-
-/* TOCHECK: what is the difference between these two constructors */
-DomainController::DomainController(QString ip, quint16 port, uint32_t ID) : Peripheral_Device(ip, port),
-    m_forceSensorFilter_IR(m_forceSensorIR, k_forceSensor_sample_rate, k_forceSensor_cutoff_rate),
-    m_forceSensorFilter_IIR(m_forceSensorIIR, k_forceSensor_sample_rate, k_forceSensor_cutoff_rate)/* init lowpassfilter */
-{
-    this -> m_ID = ID;
-    this -> type = DEV_DOMAINCONTROLLER;
-
-    this -> Qhash_Cmd_Classify.insert("READWRITEDATA", DOMAINCONTROLLER_READ_WRITE_DATA);
-    this -> Qhash_Cmd_Classify.insert("RESET", DOMAINCONTROLLER_RESET);
-
-    connect(this, &DomainController::NewDataIn, this, &DomainController::readHandleOtherData);
 }
 
 /* the pointer shall be deleted; TODO: apply the destructor somewhere */
@@ -155,7 +147,7 @@ float DomainController::Uint8ArrToFloat(uint8_t *arr, unsigned char StartIndex)
 }
 
 /* TOCHECK: what is VCMD */
-void DomainController::VCMD(QString cmd, int arg1, int arg2, int arg3)
+void DomainController::VCMD(QString cmd, uint8_t id,int arg1, int arg2, int arg3)
 {
     cmd=cmd.toUpper();
     QStringList slist=cmd.split("=");
@@ -194,7 +186,8 @@ void DomainController::VCMD(QString cmd, int arg1, int arg2, int arg3)
     uint8_t framelen=17+payloadsize;
 
     cf.preamble=PREAMBLE;
-    cf.ID=this->GetRandNum();
+    cf.ID= id;//this->GetRandNum();
+   // LOG(INFO) <<  "cf.ID= m_ID: " << cf.ID;
     cf.size=framelen;
     cf.sender=DEV_HOST;
 
@@ -207,9 +200,9 @@ void DomainController::VCMD(QString cmd, int arg1, int arg2, int arg3)
     Send_Frame_By_422(cf);
 }
 
-void DomainController::reset()
+void DomainController::reset(uint8_t id)
 {
-    this -> VCMD("RESET");
+    this -> VCMD("RESET",id);
 }
 
 void DomainController::set_Light_Color_Model(LightColor_e color, LightModel_e model)
@@ -220,50 +213,92 @@ void DomainController::set_Light_Color_Model(LightColor_e color, LightModel_e mo
     m_LightCmd.store(LightCmdTemp);
 }
 
-void DomainController::read_Write_Data()
+void DomainController::read_Write_Data(uint8_t id)
 {
-    this->VCMD("READWRITEDATA",m_LightCmd.load());
+    this->VCMD("READWRITEDATA",id,m_LightCmd.load());
 }
 
-bool DomainController::findForceSensorZero(std::array<double,6> new_sample){
+bool DomainController::findForceSensorZero(std::array<double,6> new_sample,uint armSide){
     /* push new value to zero-point dectect buffer */
-    m_forceZeroDetectBuffer.push_back(new_sample);
+    if(armSide == 0)
+    {
+        m_forceZeroDetectBuffer_l.push_back(new_sample);
 
-    if (m_forceZeroDetectBuffer.size() > m_forceZeroWindowSize){
-        m_forceZeroDetectBuffer.pop_front();
-    }
+        if (m_forceZeroDetectBuffer_l.size() > k_forceZeroWindowSize){
+            m_forceZeroDetectBuffer_l.pop_front();
+        }
 
-    /* judge when window size is enough */
-    if (m_forceZeroDetectBuffer.size() == m_forceZeroWindowSize) {
-        std::array<double,6> minVal = m_forceZeroDetectBuffer[0];
-        std::array<double,6> maxVal = m_forceZeroDetectBuffer[0];
-        std::array<double,6> sumVal = {0};
+        /* judge when window size is enough */
+        if (m_forceZeroDetectBuffer_l.size() == k_forceZeroWindowSize) {
+            std::array<double,6> minVal = m_forceZeroDetectBuffer_l[0];
+            std::array<double,6> maxVal = m_forceZeroDetectBuffer_l[0];
+            std::array<double,6> sumVal = {0};
 
-        for (const auto& sample : m_forceZeroDetectBuffer) {
+            for (const auto& sample : m_forceZeroDetectBuffer_l) {
+                for (int i = 0; i < 6; ++i) {
+                    if (sample[i] < minVal[i]) minVal[i] = sample[i];
+                    if (sample[i] > maxVal[i]) maxVal[i] = sample[i];
+                    sumVal[i] += sample[i];
+                }
+            }
+
+            bool foundStableZero = true;
             for (int i = 0; i < 6; ++i) {
-                if (sample[i] < minVal[i]) minVal[i] = sample[i];
-                if (sample[i] > maxVal[i]) maxVal[i] = sample[i];
-                sumVal[i] += sample[i];
+                if ((maxVal[i] - minVal[i]) > m_forceZeroThreshold) {
+                    foundStableZero = false;
+                    break;
+                }
+            }
+
+            if (foundStableZero) {
+                for (int i = 0; i < 6; ++i)
+                    m_forceSensorInit_l[i] = sumVal[i] / k_forceZeroWindowSize;
+
+                m_forceZeroFound_l = true;
             }
         }
-
-        bool foundStableZero = true;
-        for (int i = 0; i < 6; ++i) {
-            if ((maxVal[i] - minVal[i]) > m_forceZeroThreshold) {
-                foundStableZero = false;
-                break;
-            }
-        }
-
-        if (foundStableZero) {
-            for (int i = 0; i < 6; ++i)
-                m_forceSensorInit[i] = sumVal[i] / m_forceZeroWindowSize;
-
-            m_forceZeroFound = true;
-        }
+        return m_forceZeroFound_l;
     }
 
-    return m_forceZeroFound;
+    if(armSide == 1)
+    {
+        m_forceZeroDetectBuffer_r.push_back(new_sample);
+
+        if (m_forceZeroDetectBuffer_r.size() > k_forceZeroWindowSize){
+            m_forceZeroDetectBuffer_r.pop_front();
+        }
+
+        /* judge when window size is enough */
+        if (m_forceZeroDetectBuffer_r.size() == k_forceZeroWindowSize) {
+            std::array<double,6> minVal = m_forceZeroDetectBuffer_r[0];
+            std::array<double,6> maxVal = m_forceZeroDetectBuffer_r[0];
+            std::array<double,6> sumVal = {0};
+
+            for (const auto& sample : m_forceZeroDetectBuffer_r) {
+                for (int i = 0; i < 6; ++i) {
+                    if (sample[i] < minVal[i]) minVal[i] = sample[i];
+                    if (sample[i] > maxVal[i]) maxVal[i] = sample[i];
+                    sumVal[i] += sample[i];
+                }
+            }
+
+            bool foundStableZero = true;
+            for (int i = 0; i < 6; ++i) {
+                if ((maxVal[i] - minVal[i]) > m_forceZeroThreshold) {
+                    foundStableZero = false;
+                    break;
+                }
+            }
+
+            if (foundStableZero) {
+                for (int i = 0; i < 6; ++i)
+                    m_forceSensorInit_r[i] = sumVal[i] / k_forceZeroWindowSize;
+
+                m_forceZeroFound_r = true;
+            }
+        }
+        return m_forceZeroFound_r;
+    }
 }
 
 void DomainController::readHandleOtherData(QByteArray qba)
@@ -273,62 +308,113 @@ void DomainController::readHandleOtherData(QByteArray qba)
     eDepackReturn edr = this -> Depack_Frame(qba, cftemp);
     if(edr == Depack_SUCCESS)
     {
-        this -> m_selfCheckOK = true;
+
 
         if(cftemp.payload.args[0] == Dev_Sta_OK)
         {
-            /* parse data for magnetic-scale */
-           uint32_t  magneticScale_counter = 0;
-            m_domainControllerData.MagneticScale_Counter=0;
-            m_domainControllerData.MagneticScale_Counter|=cftemp.payload.args[1];
-            m_domainControllerData.MagneticScale_Counter<<=8;
-            m_domainControllerData.MagneticScale_Counter|=cftemp.payload.args[2];
-            m_domainControllerData.MagneticScale_Counter<<=8;
-            m_domainControllerData.MagneticScale_Counter|=cftemp.payload.args[3];
-            m_domainControllerData.MagneticScale_Counter<<=8;
-            m_domainControllerData.MagneticScale_Counter|=cftemp.payload.args[4];
-            uint8_t data1=cftemp.payload.args[1];
-            uint8_t data2=cftemp.payload.args[2];
-            uint8_t data3=cftemp.payload.args[3];
-            uint8_t data4=cftemp.payload.args[4];
+            if(cftemp.ID==1)
+            {
+                this -> m_selfCheckOK_l = true;
+                /* parse data for magnetic-scale */
+                DomainControllerData m_domainControllerData_l_tmp;
+                m_domainControllerData_l_tmp.MagneticScale_Counter=0;
+                m_domainControllerData_l_tmp.MagneticScale_Counter|=cftemp.payload.args[4];
+                m_domainControllerData_l_tmp.MagneticScale_Counter<<=8;
+                m_domainControllerData_l_tmp.MagneticScale_Counter|=cftemp.payload.args[3];
+                m_domainControllerData_l_tmp.MagneticScale_Counter<<=8;
+                m_domainControllerData_l_tmp.MagneticScale_Counter|=cftemp.payload.args[2];
+                m_domainControllerData_l_tmp.MagneticScale_Counter<<=8;
+                m_domainControllerData_l_tmp.MagneticScale_Counter|=cftemp.payload.args[1];
 
-            magneticScale_counter = m_domainControllerData.MagneticScale_Counter;
-            //printf("%x %x %x %x \r\n", data1, data2, data3, data4);
-            //qDebug() << "magneticScale_counter: "  << magneticScale_counter;
-            // LOG(INFO) << "magneticScale_counter: " << std::dec << magneticScale_counter;
-            // m_endGimbalMagneticCounter.store(magneticScale_counter);
-            /* parse data for forceSensor */
-            m_domainControllerData.ForceSensor.ForceSensor_Fx = Uint8ArrToFloat(cftemp.payload.args,5);
-            m_domainControllerData.ForceSensor.ForceSensor_Fy = Uint8ArrToFloat(cftemp.payload.args,9);
-            m_domainControllerData.ForceSensor.ForceSensor_Fz = Uint8ArrToFloat(cftemp.payload.args,13);
-            m_domainControllerData.ForceSensor.ForceSensor_Mx = Uint8ArrToFloat(cftemp.payload.args,17);
-            m_domainControllerData.ForceSensor.ForceSensor_My = Uint8ArrToFloat(cftemp.payload.args,21);
-            m_domainControllerData.ForceSensor.ForceSensor_Mz = Uint8ArrToFloat(cftemp.payload.args,25);
+                /* parse data for forceSensor */
+                m_domainControllerData_l_tmp.ForceSensor.ForceSensor_Fx = Uint8ArrToFloat(cftemp.payload.args, 5);
+                m_domainControllerData_l_tmp.ForceSensor.ForceSensor_Fy = Uint8ArrToFloat(cftemp.payload.args, 9);
+                m_domainControllerData_l_tmp.ForceSensor.ForceSensor_Fz = Uint8ArrToFloat(cftemp.payload.args, 13);
+                m_domainControllerData_l_tmp.ForceSensor.ForceSensor_Mx = Uint8ArrToFloat(cftemp.payload.args, 17);
+                m_domainControllerData_l_tmp.ForceSensor.ForceSensor_My = Uint8ArrToFloat(cftemp.payload.args, 21);
+                m_domainControllerData_l_tmp.ForceSensor.ForceSensor_Mz = Uint8ArrToFloat(cftemp.payload.args, 25);
 
-            m_forceSensorRaw = {m_domainControllerData.ForceSensor.ForceSensor_Fx * 9.8,
-                                m_domainControllerData.ForceSensor.ForceSensor_Fy * 9.8,
-                                m_domainControllerData.ForceSensor.ForceSensor_Fz * 9.8,
-                                m_domainControllerData.ForceSensor.ForceSensor_Mx * 9.8,
-                                m_domainControllerData.ForceSensor.ForceSensor_My * 9.8,
-                                m_domainControllerData.ForceSensor.ForceSensor_Mz * 9.8 };
+                m_forceSensorRaw_l = {m_domainControllerData_l_tmp.ForceSensor.ForceSensor_Fx * 9.8,
+                                    m_domainControllerData_l_tmp.ForceSensor.ForceSensor_Fy * 9.8,
+                                    m_domainControllerData_l_tmp.ForceSensor.ForceSensor_Fz * 9.8,
+                                    m_domainControllerData_l_tmp.ForceSensor.ForceSensor_Mx * 9.8,
+                                    m_domainControllerData_l_tmp.ForceSensor.ForceSensor_My * 9.8,
+                                    m_domainControllerData_l_tmp.ForceSensor.ForceSensor_Mz * 9.8 };
 
-            if (!m_forceZeroFound) {
-                findForceSensorZero(m_forceSensorRaw);
+
+                if (!m_forceZeroFound_l) {
+                    findForceSensorZero(m_forceSensorRaw_l, 1);
+                }
+
+                m_forceSensorZeroCompensated_l = m_forceSensorRaw_l;
+
+                if (m_forceZeroFound_l) {
+                    for (int i = 0; i < 6; ++i)
+                        m_forceSensorZeroCompensated_l[i] -= m_forceSensorInit_l[i];
+                }
+
+                /* feed to filter */
+                m_forceSensorIR_l = m_forceSensorFilter_IR_l.update(m_forceSensorZeroCompensated_l);
+                m_forceSensorIIR_l = m_forceSensorFilter_IIR_l.update(m_forceSensorZeroCompensated_l);
+
+                /* depackage data for digital inputs */
+                m_domainControllerData_l_tmp.DigitalInputs = cftemp.payload.args[29];
+                m_domainControllerData_l.store(m_domainControllerData_l_tmp);
+
             }
 
-            m_forceSensorZeroCompensated = m_forceSensorRaw;
+            if(cftemp.ID==2)
+            {
+                this -> m_selfCheckOK_r = true;
+                /* parse data for magnetic-scale */
+                DomainControllerData m_domainControllerData_r_tmp;
+                m_domainControllerData_r_tmp.MagneticScale_Counter=0;
+                m_domainControllerData_r_tmp.MagneticScale_Counter|=cftemp.payload.args[4];
+                m_domainControllerData_r_tmp.MagneticScale_Counter<<=8;
+                m_domainControllerData_r_tmp.MagneticScale_Counter|=cftemp.payload.args[3];
+                m_domainControllerData_r_tmp.MagneticScale_Counter<<=8;
+                m_domainControllerData_r_tmp.MagneticScale_Counter|=cftemp.payload.args[2];
+                m_domainControllerData_r_tmp.MagneticScale_Counter<<=8;
+                m_domainControllerData_r_tmp.MagneticScale_Counter|=cftemp.payload.args[1];
+                // std::cout << "magneticEncoder: " << magneticScale_counter << std::endl;
 
-            if (m_forceZeroFound) {
-                for (int i = 0; i < 6; ++i)
-                    m_forceSensorZeroCompensated[i] -= m_forceSensorInit[i];
+                /* parse data for forceSensor */
+                m_domainControllerData_r_tmp.ForceSensor.ForceSensor_Fx = Uint8ArrToFloat(cftemp.payload.args, 5);
+                m_domainControllerData_r_tmp.ForceSensor.ForceSensor_Fy = Uint8ArrToFloat(cftemp.payload.args, 9);
+                m_domainControllerData_r_tmp.ForceSensor.ForceSensor_Fz = Uint8ArrToFloat(cftemp.payload.args, 13);
+                m_domainControllerData_r_tmp.ForceSensor.ForceSensor_Mx = Uint8ArrToFloat(cftemp.payload.args, 17);
+                m_domainControllerData_r_tmp.ForceSensor.ForceSensor_My = Uint8ArrToFloat(cftemp.payload.args, 21);
+                m_domainControllerData_r_tmp.ForceSensor.ForceSensor_Mz = Uint8ArrToFloat(cftemp.payload.args, 25);
+
+                m_forceSensorRaw_r = {m_domainControllerData_r_tmp.ForceSensor.ForceSensor_Fx * 9.8,
+                                      m_domainControllerData_r_tmp.ForceSensor.ForceSensor_Fy * 9.8,
+                                      m_domainControllerData_r_tmp.ForceSensor.ForceSensor_Fz * 9.8,
+                                      m_domainControllerData_r_tmp.ForceSensor.ForceSensor_Mx * 9.8,
+                                      m_domainControllerData_r_tmp.ForceSensor.ForceSensor_My * 9.8,
+                                      m_domainControllerData_r_tmp.ForceSensor.ForceSensor_Mz * 9.8 };
+
+
+                if (!m_forceZeroFound_r) {
+                    findForceSensorZero(m_forceSensorRaw_r, 1);
+                }
+
+                m_forceSensorZeroCompensated_r = m_forceSensorRaw_r;
+
+                if (m_forceZeroFound_r) {
+                    for (int i = 0; i < 6; ++i)
+                        m_forceSensorZeroCompensated_r[i] -= m_forceSensorInit_r[i];
+                }
+
+                /* feed to filter */
+                m_forceSensorIR_r = m_forceSensorFilter_IR_r.update(m_forceSensorZeroCompensated_r);
+                m_forceSensorIIR_r = m_forceSensorFilter_IIR_r.update(m_forceSensorZeroCompensated_r);
+
+                /* depackage data for digital inputs */
+                m_domainControllerData_r_tmp.DigitalInputs = cftemp.payload.args[29];
+                m_domainControllerData_r.store(m_domainControllerData_r_tmp);
             }
 
-            /* feed to filter */
-            m_forceSensorIR = m_forceSensorFilter_IR.update(m_forceSensorZeroCompensated);
-            m_forceSensorIIR = m_forceSensorFilter_IIR.update(m_forceSensorZeroCompensated);
-
-            /* depackage data for digital inputs */
-            m_domainControllerData.DigitalInputs = cftemp.payload.args[29];
+            // std::cout << static_cast<int>(m_domainControllerData.DigitalInputs)<< std::endl;
         }
         else if(cftemp.payload.args[0] == Dev_Sta_LEFTHANDLE_ERROR)
         {
@@ -361,17 +447,30 @@ void DomainController::readHandleOtherData(QByteArray qba)
 }
 
 /* if degree input is void, getForce() returns Force value under self coordinate */
-std::array<double,3> DomainController::getForce(){
-    // return {m_forceSensorZeroCompensated[0], m_forceSensorZeroCompensated[1], m_forceSensorZeroCompensated[2]};
-    return {m_forceSensorIIR[0], m_forceSensorIIR[1], m_forceSensorIIR[2]};
+std::array<double,3> DomainController::getForce(uint armSide){
+    if(armSide == 1)
+    {
+        return {m_forceSensorIIR_l[0], m_forceSensorIIR_l[1], m_forceSensorIIR_l[2]};
+    }
+    if(armSide == 2)
+    {
+        return {m_forceSensorIIR_r[0], m_forceSensorIIR_r[1], m_forceSensorIIR_r[2]};
+    }
 }
 
 /* if degree input is void, getMomentum() returns Momentum value under self coordinate */
-std::array<double,3> DomainController::getMomentum(){
-    return {m_forceSensorIIR[3], m_forceSensorIIR[4], m_forceSensorIIR[5]};
+std::array<double,3> DomainController::getMomentum(uint armSide){
+    if(armSide == 1)
+    {
+        return {m_forceSensorIIR_l[3], m_forceSensorIIR_l[4], m_forceSensorIIR_l[5]};
+    }
+    if(armSide == 2)
+    {
+        return {m_forceSensorIIR_r[3], m_forceSensorIIR_r[4], m_forceSensorIIR_r[5]};
+    }
 }
 
-std::array<double,3> DomainController::getForce(double tilt_angle_deg) {
+std::array<double,3> DomainController::getForce(uint armSide, double tilt_angle_deg) {
 
     double install_angle_deg = 90.0; /* around Z axis */
     double total_z_deg = install_angle_deg - tilt_angle_deg; /* around Z axis */
@@ -385,7 +484,7 @@ std::array<double,3> DomainController::getForce(double tilt_angle_deg) {
     Eigen::Matrix3d Ry = Eigen::AngleAxisd(theta_y, Eigen::Vector3d::UnitY()).toRotationMatrix();
     Eigen::Matrix3d R = Rz * Ry;
 
-    std::array<double, 3> force = getForce();
+    std::array<double, 3> force = getForce(1);
     Eigen::Vector3d Force_sensor(force[0], force[1], force[2]);
 
     Eigen::Vector3d Force_world = R.transpose() * Force_sensor;
@@ -393,7 +492,7 @@ std::array<double,3> DomainController::getForce(double tilt_angle_deg) {
     return {static_cast<double>(Force_world.x()), static_cast<double>(Force_world.y()), static_cast<double>(Force_world.z())};
 }
 
-std::array<double,3> DomainController::getMomentum(double tilt_angle_deg){
+std::array<double,3> DomainController::getMomentum(uint armSide, double tilt_angle_deg){
 
     double install_angle_deg = 90.0 ; /* around Z axis */
     double total_z_deg = install_angle_deg - tilt_angle_deg; /* around Z axis */
@@ -407,7 +506,7 @@ std::array<double,3> DomainController::getMomentum(double tilt_angle_deg){
     Eigen::Matrix3d Ry = Eigen::AngleAxisd(theta_y, Eigen::Vector3d::UnitY()).toRotationMatrix();
     Eigen::Matrix3d R = Rz * Ry;
 
-    std::array<double, 3> momentum = getMomentum();
+    std::array<double, 3> momentum = getMomentum(1);
     Eigen::Vector3d Momentum_sensor(momentum[0], momentum[1], momentum[2]);
 
     Eigen::Vector3d Momentum_world = R * Momentum_sensor;
@@ -418,22 +517,50 @@ std::array<double,3> DomainController::getMomentum(double tilt_angle_deg){
 bool DomainController::isDomainControllerConnected(){
     return true;
 }
-bool DomainController::isForceSensorZeroFound(){
-    return m_forceZeroFound;
+bool DomainController::isForceSensorZeroFound(uint armSide){
+    if(armSide == 1)
+    {
+        return m_forceZeroFound_l;
+    }
+    if(armSide == 2)
+    {
+        return m_forceZeroFound_r;
+    }
 }
 
-uint8_t DomainController::getDigitalInput(){
-    return m_domainControllerData.DigitalInputs;
+uint32_t DomainController::getMagneticScale(uint armSide){
+    if(armSide == 1)
+    {
+        return m_domainControllerData_l.load().MagneticScale_Counter;
+    }
+    if(armSide == 2)
+    {
+        return m_domainControllerData_r.load().MagneticScale_Counter;
+    }
+}
+
+uint8_t DomainController::getDigitalInput(uint armside){
+    if(armside == 1)
+        return m_domainControllerData_l.load().DigitalInputs;
+    else if(armside == 2)
+        return m_domainControllerData_r.load().DigitalInputs;
 }
 
 /* TODO: test */
-bool DomainController::getEnableButton(){
-    /* the 0th bit of uint_8 */
-    return (m_domainControllerData.DigitalInputs & 0x01) != 0;
+bool DomainController::getEnableButton(uint armside){
+    if(armside == 1)
+        return (m_domainControllerData_l.load().DigitalInputs & 0x01) != 0;
+    else if(armside == 2)
+        /* the 0th bit of uint_8 */
+        return (m_domainControllerData_r.load().DigitalInputs & 0x01) != 0;
 }
 
 /* TODO: test */
-bool DomainController::getResetButton(){
-    /* the 1st bit of uint_8 */
-    return ((m_domainControllerData.DigitalInputs >> 1) & 0x01) != 0;
+bool DomainController::getResetButton(uint armside){
+    if(armside == 1)
+        return ((m_domainControllerData_l.load().DigitalInputs >> 1) & 0x01) != 0;
+    else if(armside == 2)
+        /* the 0th bit of uint_8 */
+        return ((m_domainControllerData_r.load().DigitalInputs >> 1) & 0x01) != 0;
+
 }

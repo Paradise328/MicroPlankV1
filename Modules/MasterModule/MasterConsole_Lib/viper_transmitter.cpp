@@ -4,7 +4,7 @@ std::ofstream outfile3("openAngle.txt");
 void Viper_Transmitter::initDevice()
 {
 
-    if(openSerialPort(576000) == true)
+    if(openSerialPort(921600) == true)
     {
         LOG(INFO)<<"422 open successful";
         m_is422Ok = true;
@@ -258,9 +258,18 @@ void Viper_Transmitter::Reset_Viper()
     this->VCMD("RESETVIPER");
 }
 
-void Viper_Transmitter::StartContinus()
+
+void Viper_Transmitter::startReadingThread()
 {
-    this->VCMD("STARTCONTINUS");
+    //m_domainController_Left->startThread();
+    QThread *thread = QThread::create([this](){
+        while(1){
+             SteadyDelay(2);
+             VCMD("GETSINGLE");
+        }
+    });
+    thread->start();
+    QObject::connect(thread, &QThread::finished, thread, &QObject::deleteLater);
 }
 
 void Viper_Transmitter::readHandleData(QByteArray qba)
@@ -306,11 +315,16 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
             std::array<int, 2> handle_Key;
             handle_Key[0] = static_cast<int>(Handle_Angle_LEFT);
             handle_Key[1] = static_cast<int>(Handle_Angle_RIGHT);
+
+            // LOG(INFO)<< std::dec << handle_Key[1];
+
             m_moveMeanFilter.add(handle_Key);
             auto handleKey_afterFilter = m_moveMeanFilter.getMean();
-            auto openAngle = calculateOpenAngle(handleKey_afterFilter[0], handleKey_afterFilter[1]);
+            // auto openAngle = calculateOpenAngle(handleKey_afterFilter[0], handleKey_afterFilter[1]);//添加滤波
+            auto openAngle = calculateOpenAngle(handle_Key[0], handle_Key[1]);//无角度滤波
+
             handlePoseTmp = motionMapping(viperDataTmp, openAngle, stepPedal);
-            LOG(INFO)<< "openAngle: " << openAngle[0] << " " << openAngle[1];
+            // LOG(INFO)<< "openAngle: " << openAngle[0] << " " << openAngle[1];
 
         }
         else if(cftemp.payload.args[0]== Dev_Sta_LEFTHANDLE_ERROR)
@@ -375,14 +389,14 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
 
     rotAroundZ_Init_L = Eigen::AngleAxisd(-M_PI / 6, Eigen::Vector3d::UnitZ());
 
-    Eigen::Matrix3d rotMatrix_R = rotAroundX_Init_R * rotAroundY_Init_R * rotAroundZ_R * rotAroundY_R * rotAroundX_R * mappingMatrix;
-    Eigen::Matrix3d rotMatrix_L = rotAroundX_Init_L * rotAroundY_Init_L * rotAroundZ_L * rotAroundY_L * rotAroundX_L * mappingMatrix;
+    Eigen::Matrix3d rotMatrix_R = rotAroundZ_Init_R * rotAroundX_Init_R * rotAroundY_Init_R * rotAroundZ_R * rotAroundY_R * rotAroundX_R * mappingMatrix;
+    Eigen::Matrix3d rotMatrix_L = rotAroundZ_Init_L * rotAroundX_Init_L * rotAroundY_Init_L * rotAroundZ_L * rotAroundY_L * rotAroundX_L * mappingMatrix;
 
 
     Eigen::AngleAxisd axang_R(rotMatrix_R);
     Eigen::Vector3d u_R = axang_R.axis();
     double theta_R = axang_R.angle();
-    double k = 1.2;
+    double k = 1.05;
     double theta_scaled_R = k * theta_R;
     Eigen::AngleAxisd axang_scaled_R(theta_scaled_R, u_R);
     Eigen::Matrix3d R_scaled = axang_scaled_R.toRotationMatrix();
@@ -465,20 +479,20 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
         alpha_R  = -150 * M_PI / 180;
     }
 
-    if(beta_R >  80 * M_PI / 180)
+    if(beta_R >  76 * M_PI / 180)
     {
-        beta_R = 80 * M_PI / 180;
-    }else if(beta_R < -80 * M_PI / 180)
+        beta_R = 76 * M_PI / 180;
+    }else if(beta_R < -76 * M_PI / 180)
     {
-        beta_R = -80 * M_PI / 180;
+        beta_R = -76 * M_PI / 180;
     }
 
-    if(gamma_R > 100 * M_PI / 180)
+    if(gamma_R > 111 * M_PI / 180)
     {
-        gamma_R = 100 * M_PI / 180;
-    }else if(gamma_R < -100 * M_PI / 180)
+        gamma_R = 111 * M_PI / 180;
+    }else if(gamma_R < -111 * M_PI / 180)
     {
-        gamma_R = -100 * M_PI / 180;
+        gamma_R = -111 * M_PI / 180;
     }
 
     if(alpha_L > 150 * M_PI / 180)
@@ -489,20 +503,20 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
         alpha_L = -150 * M_PI / 180;
     }
 
-    if(beta_L > 75 * M_PI / 180)
+    if(beta_L > 76 * M_PI / 180)
     {
-        beta_L = 75 * M_PI / 180;
-    }else if(beta_L < -75 * M_PI / 180)
+        beta_L = 76 * M_PI / 180;
+    }else if(beta_L < -76 * M_PI / 180)
     {
-        beta_L = -75 * M_PI / 180;
+        beta_L = -76 * M_PI / 180;
     }
 
-    if(gamma_L > 100 * M_PI / 180)
+    if(gamma_L > 111 * M_PI / 180)
     {
-        gamma_L = 100 * M_PI / 180;
-    }else if(gamma_L < -100 * M_PI / 180)
+        gamma_L = 111 * M_PI / 180;
+    }else if(gamma_L < -111 * M_PI / 180)
     {
-        gamma_L = -100 * M_PI / 180;
+        gamma_L = -111 * M_PI / 180;
     }
 
     // std::cout << "alpha_L: " << a*180/M_PI << " beta_L: " << beta_L*180/M_PI << " gamma_L: " << gamma_L*180/M_PI << std::endl;
@@ -516,21 +530,21 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
 
     poseDataCurInSlaveFrame.handlePoseL_Roll = alpha_L;
     poseDataCurInSlaveFrame.handlePoseL_Elevation = beta_L;
-    poseDataCurInSlaveFrame.handlePoseL_Arzimuth = gamma_L;//*1.2;
+    poseDataCurInSlaveFrame.handlePoseL_Arzimuth = gamma_L;
 
     Eigen::Vector3d  masterPositionViaSensor_L, masterPositionViaSensor_R;
-    // masterPositionViaSensor_L << -8.0,
-    //                                -3.0,
-    //                                8.0;
-    masterPositionViaSensor_L << -2.0,
-        0,
-        2.0;
-    // masterPositionViaSensor_R << -6.0,
-    //                                -5.0,
-    //                                8.0;
-    masterPositionViaSensor_R << -2.0,
-        0,
-        2.0;
+    masterPositionViaSensor_L << -1.0,
+                                   0.0,
+                                   -7.0;
+    // masterPositionViaSensor_L << -2.0,
+    //     0,
+    //     2.0;
+    masterPositionViaSensor_R << -1.0,
+                                   0.0,
+                                   -7.0;
+    // masterPositionViaSensor_R << -2.0,
+    //     0,
+    //     2.0;
     Eigen::Vector3d  sensorPosition_L, sensorPosition_R;
     sensorPosition_L << viperData[0][0],
                         viperData[0][1],

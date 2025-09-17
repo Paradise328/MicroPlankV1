@@ -264,18 +264,18 @@ struct HandlePose
         handlePoseL_X = PNOData_Cur[0][0];
         handlePoseL_Y = PNOData_Cur[0][1];
         handlePoseL_Z = PNOData_Cur[0][2];
-        // handlePoseL_Arzimuth = PNOData_Cur[0][3];
-        // handlePoseL_Elevation = PNOData_Cur[0][4];
-        // handlePoseL_Roll = PNOData_Cur[0][5];
-        // handlePoseL_OpenAngle = PNOData_Cur[0][6];
+        handlePoseL_Arzimuth = PNOData_Cur[0][3];
+        handlePoseL_Elevation = PNOData_Cur[0][4];
+        handlePoseL_Roll = PNOData_Cur[0][5];
+        handlePoseL_OpenAngle = PNOData_Cur[0][6];
 
         handlePoseR_X = PNOData_Cur[1][0];
         handlePoseR_Y = PNOData_Cur[1][1];
         handlePoseR_Z = PNOData_Cur[1][2];
-        // handlePoseR_Arzimuth = PNOData_Cur[1][3];
-        // handlePoseR_Elevation = PNOData_Cur[1][4];
-        // handlePoseR_Roll = PNOData_Cur[1][5];
-        // handlePoseR_OpenAngle = PNOData_Cur[1][6];
+        handlePoseR_Arzimuth = PNOData_Cur[1][3];
+        handlePoseR_Elevation = PNOData_Cur[1][4];
+        handlePoseR_Roll = PNOData_Cur[1][5];
+        handlePoseR_OpenAngle = PNOData_Cur[1][6];
         
     }
 
@@ -484,6 +484,7 @@ enum class SystemModule
 enum class SystemMode
 {
     BootSelfCheck = 0x00,
+
     PreOperation,
     InOperation_TeleOperation,
     InOperation_Collaboration,
@@ -496,14 +497,24 @@ enum class EndeffectorConfiguration{
     sixMaxons  = 0x02
 };
 
-constexpr int adcValueOpen_L = 36690;
-constexpr int adcValueGrasp_L = 34810;
-constexpr int adcValueClose_L = 33090;
+// constexpr int adcValueOpen_L = 36690;
+// constexpr int adcValueGrasp_L = 34810;
+// constexpr int adcValueClose_L = 33090;
+// constexpr int adcValuePerRevolution_L = 65536;
+
+// constexpr int adcValueOpen_R = 36320;
+// constexpr int adcValueGrasp_R = 33998;
+// constexpr int adcValueClose_R = 32390;
+// constexpr int adcValuePerRevolution_R = 65536;
+
+constexpr int adcValueOpen_L = 35710;
+constexpr int adcValueGrasp_L = 35050;
+constexpr int adcValueClose_L = 33203;
 constexpr int adcValuePerRevolution_L = 65536;
 
-constexpr int adcValueOpen_R = 36320;
-constexpr int adcValueGrasp_R = 33998;
-constexpr int adcValueClose_R = 32390;
+constexpr int adcValueOpen_R = 35920;
+constexpr int adcValueGrasp_R = 33930;
+constexpr int adcValueClose_R = 32480;
 constexpr int adcValuePerRevolution_R = 65536;
 
 constexpr double graspThreshold = 0;

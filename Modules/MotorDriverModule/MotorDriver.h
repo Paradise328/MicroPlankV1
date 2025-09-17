@@ -78,7 +78,7 @@
 #define CONTROLWORD_2      "Control_2"
 #define PROCESSID           1;
 
-constexpr int interpolationTime_maxonMotor = 4;
+constexpr int interpolationTime_maxonMotor = 5;
 constexpr int zeroErr_sizeRecvData = 26;
 constexpr int zeroErr_sizeSendData = 44;
 constexpr int moons_sizeRecvData   = 23;

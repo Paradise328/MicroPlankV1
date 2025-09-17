@@ -34,7 +34,9 @@ public:
                             m_messagePool(messagePool),
                             m_isSystemTerminated(false),
                             m_isSystemReset(false),
-                            m_FilterCase(static_cast<int>(FilterCase::IIRFilterOn))
+
+
+        m_FilterCase(static_cast<int>(FilterCase::IIRFilterOn))
                             {
                                 connect(this, &MasterConsole::DealMsgSignal, this, &MasterConsole::dealWithMsg);//当第一个函数被触发后，就执行第二个函数
                             }
