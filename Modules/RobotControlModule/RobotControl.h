@@ -289,6 +289,7 @@ private:
     void                            setRobotControlMode(const RobotControlMode& tartgetRobotControlMode);
 
     std::atomic<RobotControlMode>   m_curRobotControlMode = RobotControlMode::InitMode;
+    std::atomic<RobotControlMode>   m_prevRobotControlMode = RobotControlMode::Hold;
 
     /* 上电状态 */
     void                            initMotor();
@@ -323,6 +324,9 @@ private:
     std::atomic<bool>               m_flagInCollaboration_EndJoint = false;
     std::atomic<bool>               m_flagInCollaboration_GuidingArm = false;
 
+    uint8_t                         m_domainDigtalPre_L;
+    uint8_t                         m_domainDigtalPre_R;
+
     /*与MotorDriver通信*/
     void                            receiveMotorData();
     /* communicate with domain controller */
@@ -337,12 +341,11 @@ private:
     /*EtherCAT各从站信息*/
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorEncoderCur_R;
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorEncoderCur_L;
-    std::atomic<std::array<int, 3>>           m_endEffectorTarget_L;
-    std::atomic<std::array<int, 3>>           m_endEffectorTarget_R;
+    std::atomic<std::array<int, 3>>                         m_endEffectorTarget_L;
+    std::atomic<std::array<int, 3>>                         m_endEffectorTarget_R;
 
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorOperationMode_L;
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorErrorCode_L;
-    std::atomic<std::array<int, MotorNumPerSide>>           m_motorStatusWord_L;
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorTrq_L;
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorCur_L;
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorFollowingPosErr_L;
@@ -458,6 +461,10 @@ private:
     mutable int                     m_enableTagPrev_R = 4;
     mutable int                     m_enableTagCur_L ;
     mutable int                     m_enableTagCur_R ;
+    mutable int                     m_endJointDragBtnCounter_L;
+    mutable int                     m_endJointDragBtnCounter_R;
+    void                            setEndJointDragEnableStatus(const uint8_t& domainDigitalCur_L, const uint8_t& domainDigitalCur_R);
+    // void                            changeOperationMode(const HandlePose& masterHandlePose_Cur);
 
     mutable int                     m_alignmentNumber_L;
     mutable int                     m_alignmentNumber_R;
@@ -644,6 +651,12 @@ private:
     std::atomic<TorqueSensorData>   m_torqueSensorData_Left;
 
     std::atomic<TorqueSensorData>   m_torqueSensorData_Right;
+
+    /*力拖动*/
+    int                             m_dragButtonPressCur_L = 0;
+    int                             m_dragButtonPressCur_R = 0;
+    int                             m_dragButtonPressPre_L = 0;
+    int                             m_dragButtonPressPre_R = 0;
 
 };
 

@@ -2672,21 +2672,21 @@ void MotorDriver::enableMotor_Homing(const MotorType &type, const int &index, co
             LOG(INFO) << "1: the control word is: " << static_cast<int>(ControlCommand::CLEAR_ERROR) <<  " " << "status word is: 0x" << std::hex << getStatusWord(type, index, armNum);
 
             if(setControlWord(type, index, ControlCommand::SHUT_DOWN, armNum) != T_NOERROR){
-                LOG(ERROR) << "Error: Failed to shut down Moons motor!" ;
+                LOG(ERROR) << "Error: Failed to shut down MAXON motor!" ;
                 break;
             }
             usleep(50 * 1000);
             LOG(INFO) << "2: the control word is: " << static_cast<int>(ControlCommand::SHUT_DOWN) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
             if(setControlWord(type, index, ControlCommand::ENABLE, armNum) != T_NOERROR){
-                LOG(ERROR) << "Error: Failed to enable Moons motor!";
+                LOG(ERROR) << "Error: Failed to enable MAXON motor!";
                 break;
             }
             usleep(50 * 1000);
             LOG(INFO) << "3: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
             if(setControlWord(type, index, ControlCommand::MOTION_START_HOMING, armNum) != T_NOERROR){
-                LOG(ERROR) << "Error: Failed to enable Moons motor!";
+                LOG(ERROR) << "Error: Failed to enable MAXON motor!";
                 break;
             }
             usleep(50 * 1000);

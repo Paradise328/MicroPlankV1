@@ -507,6 +507,11 @@ enum class EndeffectorConfiguration{
 // constexpr int adcValueClose_R = 32390;
 // constexpr int adcValuePerRevolution_R = 65536;
 
+// constexpr int forwardLimit_l = ;
+// constexpr int backwardLimit_l = ;
+// constexpr int forwardLimit_r = ;
+// constexpr int backwardLimit_r = ;
+
 constexpr int adcValueOpen_L = 35710;
 constexpr int adcValueGrasp_L = 35050;
 constexpr int adcValueClose_L = 33203;
@@ -535,6 +540,9 @@ constexpr int enableAction      = 1;//开始使能
 constexpr int keepEnabling      = 2;//保持使能
 constexpr int disableAction     = 3;//解除使能
 constexpr int keepDisabling     = 4;//保持解除
+constexpr int ForceEnable       = 5;
+constexpr int KeepForce         = 6;
+constexpr int ForceDisable      = 7;
 
 constexpr int buttonPress       = 3;
 constexpr int buttonSmallPress  = 6;
