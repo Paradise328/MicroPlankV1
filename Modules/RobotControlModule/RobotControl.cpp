@@ -482,7 +482,7 @@ void RobotControl::teleoperation()
         targetVelocity_R_new = {0};
     }
 
-    // sendMotorData(targetEncoder_R, targetVelocity_R_new, targetEncoder_L, targetVelocity_L_new);
+    sendMotorData(targetEncoder_R, targetVelocity_R_new, targetEncoder_L, targetVelocity_L_new);
     m_motorTargetEncoderPrev_L_new = targetEncoder_L_forVelocity;
     m_motorTargetEncoderPrev_R_new = targetEncoder_R_forVelocity;
     storeCurAsPrev(handlePoseCur, controlValueCur_L, motorEncoderCur_L, targetEncoder_L, enableTagCur_L, controlValueCur_R, motorEncoderCur_R, targetEncoder_R, enableTagCur_R);
@@ -2466,7 +2466,7 @@ void RobotControl::setEndJointDragEnableStatus(const uint8_t& domainDigitalCur_L
         m_dragButtonPressCur_R = 1;
     }
     // LOG(INFO)<<"m_dragButtonPressCur_L: "<<m_dragButtonPressCur_L<<" m_endJointDragBtnCounter_L: "<<m_endJointDragBtnCounter_L;
-    // LOG(INFO)<<"m_dragButtonPressCur_R: "<<m_dragButtonPressCur_R<<" domainDigitalCur_L: "<< static_cast<int>(domainDigitalCur_R) << "  counter: " << m_endJointDragBtnCounter_R;
+    // LOG(INFO)<<"m_dragButtonPressCur_R: "<<m_dragButtonPressCur_R<<" domainDigitalCur_R: "<< static_cast<int>(domainDigitalCur_R) << "  counter: " << m_endJointDragBtnCounter_R;
 
 }
 
@@ -2702,9 +2702,6 @@ int RobotControl::enableCase_KeepPressPedal(const HandlePose& masterHandlePose_C
     auto motorTargetEncoder_L = m_motorEncoderCur_L.load();
     auto motorTargetEncoder_R = m_motorEncoderCur_R.load();
 
-    if(masterHandlePose_Cur.enablePedal == pedalEnable && (m_dragButtonPressCur_R == 1 || m_dragButtonPressCur_L == 1)){
-        return keepDisabling;
-    }
     if(side == 'r')
     {
         if(!isPoseRight(masterHandlePose_Cur, 'r'))
@@ -2723,7 +2720,7 @@ int RobotControl::enableCase_KeepPressPedal(const HandlePose& masterHandlePose_C
         }
         else if(isPoseRight(masterHandlePose_Cur, 'r'))
         {
-            if((m_enableTagPrev_R == disableAction || m_enableTagPrev_R == keepDisabling || m_enableTagPrev_R == ForceDisable)
+            if((m_enableTagPrev_R == disableAction || m_enableTagPrev_R == keepDisabling || m_enableTagPrev_R == ForceDisable) && (m_dragButtonPressCur_R + m_dragButtonPressCur_L == 0)
                 && masterHandlePose_Cur.enablePedal == pedalEnable && isPoseMatch(masterHandlePose_Cur,'r') == true)
             {
                 enableFlag = enableAction;
@@ -2748,7 +2745,6 @@ int RobotControl::enableCase_KeepPressPedal(const HandlePose& masterHandlePose_C
                 enableFlag = keepEnabling;
             }
         }
-        m_enableTagPrev_R = enableFlag;
     }
 
     else if(side == 'l')
@@ -2768,7 +2764,7 @@ int RobotControl::enableCase_KeepPressPedal(const HandlePose& masterHandlePose_C
         }
         else if(isPoseRight(masterHandlePose_Cur, 'l'))
         {
-            if((m_enableTagPrev_L == disableAction || m_enableTagPrev_L == keepDisabling || m_enableTagPrev_L == ForceDisable)
+            if((m_enableTagPrev_L == disableAction || m_enableTagPrev_L == keepDisabling || m_enableTagPrev_L == ForceDisable) && (m_dragButtonPressCur_R + m_dragButtonPressCur_L == 0)
                 && masterHandlePose_Cur.enablePedal == pedalEnable && isPoseMatch(masterHandlePose_Cur,'l') == true)
             {
                 enableFlag = enableAction;
@@ -2796,17 +2792,12 @@ int RobotControl::enableCase_KeepPressPedal(const HandlePose& masterHandlePose_C
     }
 
     /*力模式*/
-
-    // std::cout << "btn: " << m_dragButtonPressCur_R <<
-
-
         if(side == 'r'){
             if(m_dragButtonPressCur_R == 1)
             {
                 if(m_dragButtonPressPre_R == 0 && m_enableTagPrev_R == keepDisabling)
                 {
                     enableFlag = ForceEnable;
-
                 }
                 else if (m_dragButtonPressPre_R == 1 && (m_enableTagPrev_R == ForceEnable || m_enableTagPrev_R == KeepForce))
                 {
@@ -2820,11 +2811,12 @@ int RobotControl::enableCase_KeepPressPedal(const HandlePose& masterHandlePose_C
                     m_motorTargetEncoderLast_R = motorTargetEncoder_R;
                 }
             }
+            m_dragButtonPressPre_R = m_dragButtonPressCur_R;
         }
         else if(side == 'l'){
             if(m_dragButtonPressCur_L == 1)
             {
-                if(m_dragButtonPressPre_L == 0 || m_enableTagPrev_L == keepDisabling)
+                if(m_dragButtonPressPre_L == 0 && m_enableTagPrev_L == keepDisabling)
                 {
                     enableFlag = ForceEnable;
                 }
@@ -2841,9 +2833,10 @@ int RobotControl::enableCase_KeepPressPedal(const HandlePose& masterHandlePose_C
                     m_motorTargetEncoderLast_L = motorTargetEncoder_R;
                 }
             }
+           m_dragButtonPressPre_L = m_dragButtonPressCur_L;
         }
-        m_dragButtonPressPre_R = m_dragButtonPressCur_R;
-        m_dragButtonPressPre_L = m_dragButtonPressCur_L;
+
+
 
     return enableFlag;
 }
