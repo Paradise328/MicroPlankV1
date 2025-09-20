@@ -519,7 +519,7 @@ void RobotControl::teleoperation()
 
             motorEncoderInit_R = motorEncoderCur_R;
 
-            setControlInitHandleMotorPositionAndPose(motorEncoderInit_R, handlePoseCur, 'r');
+            setForceControlInitHandleMotorPosition(motorEncoderInit_R, handlePoseCur, 'r');
         }
 
         controlValueCur_R = motionMapping_R_ForceControl(handlePoseCur);
