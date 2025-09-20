@@ -341,8 +341,8 @@ void RobotControl::teleoperation()
 {
     auto handlePoseCur = m_masterConsole.returnHandlePose();
     auto handlePosePrev = m_handlePosePrev;
-    auto handlePoseInit_R = m_handlePoseInit_R;
-    auto handlePoseInit_L = m_handlePoseInit_L;
+    // auto handlePoseInit_R = m_handlePoseInit_R;
+    // auto handlePoseInit_L = m_handlePoseInit_L;
 
     auto motorEncoderCur_R = m_motorEncoderCur_R.load();
     auto motorEncoderCur_L = m_motorEncoderCur_L.load();
@@ -381,16 +381,17 @@ void RobotControl::teleoperation()
 
     int enableTagCur_L = enableCase_KeepPressPedal(handlePoseCur, 'l');
     int enableTagCur_R = enableCase_KeepPressPedal(handlePoseCur, 'r');
-    LOG(INFO)<<"enableTagCur_L: "<<enableTagCur_L<<" enableTagCur_R: "<<enableTagCur_R;
+    // LOG(INFO)<<"enableTagCur_L: "<<enableTagCur_L<<" enableTagCur_R: "<<enableTagCur_R;
 
     /* Define the Motion Scaling and return Current Speed Index: {1,2,3,4} */
     setNewSpeed(handlePosePrev, handlePoseCur);
 
+    // TODO: do in force drag
     if(enableTagCur_L == enableAction||enableTagCur_L == keepEnabling)
     {
         if(enableTagCur_L == enableAction)
         {
-            handlePoseInit_L = handlePoseCur;
+            // handlePoseInit_L = handlePoseCur;
 
             motorEncoderInit_L = motorEncoderCur_L;
 
@@ -399,13 +400,7 @@ void RobotControl::teleoperation()
             setControlInitHandleMotorPositionAndPose(motorEncoderInit_L, handlePoseCur, 'l');
         }
 
-        if(m_oprationMode == 1){
-              controlValueCur_L = motionMapping_L(handlePoseCur,motorEncoderCur_L);
-        }else{
-              controlValueCur_L = motionMapping_L_ForceControl(handlePoseCur);
-        }
-
-
+        controlValueCur_L = motionMapping_L(handlePoseCur,motorEncoderCur_L);
 
         targetEncoder_L = calculateTargetEncoder(controlValueCur_L, motorEncoderInit_L, 'l');
 
@@ -426,7 +421,7 @@ void RobotControl::teleoperation()
             targetVelocity_L_new = {0};
         }
     }
-    else
+    else if(enableTagCur_L == disableAction || enableTagCur_L == keepDisabling)
     {
         targetEncoder_L = motorEncoderCur_L;
         targetEncoder_L[4] = m_motorTargetEncoderLast_L[4];
@@ -446,7 +441,7 @@ void RobotControl::teleoperation()
     {
         if(enableTagCur_R == enableAction)
         {
-            handlePoseInit_R = handlePoseCur;
+            // handlePoseInit_R = handlePoseCur;
 
             motorEncoderInit_R = motorEncoderCur_R;
 
@@ -458,7 +453,9 @@ void RobotControl::teleoperation()
         controlValueCur_R = motionMapping_R(handlePoseCur,motorEncoderCur_R);
 
         targetEncoder_R = calculateTargetEncoder(controlValueCur_R, motorEncoderInit_R, 'r');
+
         targetEncoder_R_forVelocity = calculateTargetEncoder_new(controlValueCur_R, motorEncoderInit_R, 'r');
+
         targetVelocity_R_new = calculateTargetVelocity_new(targetEncoder_R_forVelocity, targetEncoderPrev_R_new, targetEncoder_R, motorEncoderCur_R, 'r');
 
 
@@ -466,7 +463,7 @@ void RobotControl::teleoperation()
             targetVelocity_R_new = {0};
         }
     }
-    else
+    else if(enableTagCur_R == disableAction || enableTagCur_R == keepDisabling)
     {
         targetEncoder_R = motorEncoderCur_R;
         /*发送给maxon本身的encoder会出现抖动*/
@@ -479,6 +476,65 @@ void RobotControl::teleoperation()
             targetEncoder_R[8] = m_motorTargetEncoderLast_R[8];
             targetEncoder_R[9] = m_motorTargetEncoderLast_R[9];
         // }
+        targetVelocity_R_new = {0};
+    }
+
+    /*力拖动控制*/
+
+    if(enableTagCur_L == ForceEnable || enableTagCur_L == KeepForce)
+    {
+        if(enableTagCur_L == ForceEnable)
+        {
+            // handlePoseInit_L = handlePoseCur;
+
+            motorEncoderInit_L = motorEncoderCur_L;
+
+            setForceControlInitHandleMotorPosition(motorEncoderInit_L, handlePoseCur, 'l');
+        }
+
+        controlValueCur_L = motionMapping_L_ForceControl(handlePoseCur);
+
+        targetEncoder_L = calculateTargetEncoder(controlValueCur_L, motorEncoderInit_L, 'l');
+
+        targetEncoder_L_forVelocity = calculateTargetEncoder_new(controlValueCur_L, motorEncoderInit_L, 'l');
+
+        targetVelocity_L_new = calculateTargetVelocity_new(targetEncoder_L_forVelocity, targetEncoderPrev_L_new, targetEncoder_L, motorEncoderCur_L, 'l');
+
+
+        if(enableTagCur_L == ForceEnable){
+            targetVelocity_L_new = {0};
+        }
+    }
+    else if(enableTagCur_L == ForceDisable)
+    {
+        targetVelocity_L_new = {0};
+    }
+
+    /*拖动右臂*/
+    if(enableTagCur_R == ForceEnable || enableTagCur_R == KeepForce)
+    {
+        if(enableTagCur_R == ForceEnable)
+        {
+            // handlePoseInit_R = handlePoseCur;
+
+            motorEncoderInit_R = motorEncoderCur_R;
+
+            setControlInitHandleMotorPositionAndPose(motorEncoderInit_R, handlePoseCur, 'r');
+        }
+
+        controlValueCur_R = motionMapping_R_ForceControl(handlePoseCur);
+
+        targetEncoder_R = calculateTargetEncoder(controlValueCur_R, motorEncoderInit_R, 'r');
+        targetEncoder_R_forVelocity = calculateTargetEncoder_new(controlValueCur_R, motorEncoderInit_R, 'r');
+        targetVelocity_R_new = calculateTargetVelocity_new(targetEncoder_R_forVelocity, targetEncoderPrev_R_new, targetEncoder_R, motorEncoderCur_R, 'r');
+
+
+        if(enableTagCur_R == ForceEnable){
+            targetVelocity_R_new = {0};
+        }
+    }
+    else if(enableTagCur_R == ForceDisable)
+    {
         targetVelocity_R_new = {0};
     }
 
@@ -577,6 +633,8 @@ void RobotControl::collaboration(){
         targetVelocity_R = {0};
     }
 
+
+
     sendMotorData_4Maxons_ForceControl(targetEncoder_R, targetVelocity_R, targetEncoder_L, targetVelocity_L);
     storeCurAsPrev(handlePoseCur, controlValueCur_L, motorEncoderCur_L, targetEncoder_L, enableTagCur_L, controlValueCur_R, motorEncoderCur_R, targetEncoder_R, enableTagCur_R);
 }
@@ -606,7 +664,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
     /* 计算单边 OpenAngle */
     double openAngle_L = handlePoseCur.handlePoseL_OpenAngle;
     // auto openAngle_L_new = (openAngle_L < 0) ? 0.008 * pow(openAngle_L, 3) : pow(openAngle_L, 3)/600;
-    auto openAngle_L_new = (openAngle_L < 0) ? 0.010 * pow(openAngle_L, 3) : pow(openAngle_L, 3)/600;
+    auto openAngle_L_new = (openAngle_L < 0) ? 0.018 * pow(openAngle_L, 3) : pow(openAngle_L, 3)/600;
 
     /*计算 beta(yaw) */
     double beta_Org_L = m_handlePoseOrg_L.handlePoseL_Arzimuth;
@@ -883,7 +941,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     /* 计算单边 OpenAngle*/
     double openAngle_R = handlePoseCur.handlePoseR_OpenAngle;
     // auto openAngle_R_new = (openAngle_R < 0) ? 0.008 * pow(openAngle_R, 3) : pow(openAngle_R, 3)/600;
-    auto openAngle_R_new = (openAngle_R < 0) ? 0.010 * pow(openAngle_R, 3) : pow(openAngle_R, 3)/600;
+    auto openAngle_R_new = (openAngle_R < 0) ? 0.018 * pow(openAngle_R, 3) : pow(openAngle_R, 3)/600;
 
     /*计算 beta(yaw)*/
     double beta_Org_R = m_handlePoseOrg_R.handlePoseR_Arzimuth;
@@ -2808,7 +2866,10 @@ int RobotControl::enableCase_KeepPressPedal(const HandlePose& masterHandlePose_C
             {
                 if(m_dragButtonPressPre_R == 1 && (m_enableTagPrev_R == KeepForce || m_enableTagPrev_R == ForceEnable)){
                     enableFlag = ForceDisable;
-                    m_motorTargetEncoderLast_R = motorTargetEncoder_R;
+                    for(int i=0; i<4 ; i++){
+                       m_motorTargetEncoderLast_R[i] = motorTargetEncoder_R[i];
+                    }
+
                 }
             }
             m_dragButtonPressPre_R = m_dragButtonPressCur_R;
@@ -2830,7 +2891,9 @@ int RobotControl::enableCase_KeepPressPedal(const HandlePose& masterHandlePose_C
             {
                 if(m_dragButtonPressPre_L == 1 && (m_enableTagPrev_L == KeepForce || m_enableTagPrev_L == ForceEnable)){
                     enableFlag = ForceDisable;
-                    m_motorTargetEncoderLast_L = motorTargetEncoder_R;
+                    for(int i=0; i<4; i++){
+                       m_motorTargetEncoderLast_L[i] = motorTargetEncoder_R[i];
+                    }
                 }
             }
            m_dragButtonPressPre_L = m_dragButtonPressCur_L;
@@ -2986,13 +3049,13 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
         if (handlePoseCur.handlePoseL_Roll * 180 / M_PI < 135 && handlePoseCur.handlePoseL_Roll * 180 / M_PI > -135){//67
         if (handlePoseCur.handlePoseL_Elevation * 180 / M_PI < 75 && handlePoseCur.handlePoseL_Elevation * 180 / M_PI > -75){//67
 
-             if (handlePoseCur.handlePoseL_Arzimuth * 180 / M_PI < 110 && handlePoseCur.handlePoseL_Arzimuth * 180 / M_PI > -110){//87
+             if (handlePoseCur.handlePoseL_Arzimuth * 180 / M_PI < 130 && handlePoseCur.handlePoseL_Arzimuth * 180 / M_PI > -130){//87
 
-                 if((masterHandlePose_Cur.handlePoseL_X > -25) && (masterHandlePose_Cur.handlePoseL_X < 80)){
+                 if((masterHandlePose_Cur.handlePoseL_X > -55) && (masterHandlePose_Cur.handlePoseL_X < 80)){
 
                      if((masterHandlePose_Cur.handlePoseL_Y > -50) && (masterHandlePose_Cur.handlePoseL_Y < 50)){
 
-                         if((masterHandlePose_Cur.handlePoseL_Z > -80) && (masterHandlePose_Cur.handlePoseL_Z < -15)){
+                         if((masterHandlePose_Cur.handlePoseL_Z > -80) && (masterHandlePose_Cur.handlePoseL_Z < -8)){
 
                              // if(((endEffectorTarget_Y_L < -245) && (handlePoseCur.handlePoseL_Y - m_handlePosePrev.handlePoseL_Y) < 0) || (endEffectorTarget_Y_L > -245)){
 
@@ -3026,13 +3089,13 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
         if (handlePoseCur.handlePoseR_Roll * 180 / M_PI < 135 && handlePoseCur.handlePoseR_Roll * 180 / M_PI > -135){//67
         if (handlePoseCur.handlePoseR_Elevation * 180 / M_PI < 75  && handlePoseCur.handlePoseR_Elevation * 180 / M_PI > -75){
 
-             if (handlePoseCur.handlePoseR_Arzimuth * 180 / M_PI < 110 && handlePoseCur.handlePoseR_Arzimuth * 180 / M_PI > -110){
+             if (handlePoseCur.handlePoseR_Arzimuth * 180 / M_PI < 130 && handlePoseCur.handlePoseR_Arzimuth * 180 / M_PI > -130){
 
-                 if((masterHandlePose_Cur.handlePoseR_X > -25) && (masterHandlePose_Cur.handlePoseR_X < 80)){
+                 if((masterHandlePose_Cur.handlePoseR_X > -55) && (masterHandlePose_Cur.handlePoseR_X < 80)){
 
                      if((masterHandlePose_Cur.handlePoseR_Y > -50) && (masterHandlePose_Cur.handlePoseR_Y < 50)){
 
-                         if((masterHandlePose_Cur.handlePoseR_Z > -80) && (masterHandlePose_Cur.handlePoseR_Z < -15)){
+                         if((masterHandlePose_Cur.handlePoseR_Z > -80) && (masterHandlePose_Cur.handlePoseR_Z < -8)){
 
                              // if(((endEffectorTarget_Y_R < 175) && (handlePoseCur.handlePoseR_Y - m_handlePosePrev.handlePoseR_Y) < 0) || (endEffectorTarget_Y_R > 175)){
 
@@ -3135,6 +3198,57 @@ void RobotControl::setControlInitHandleMotorPositionAndPose(const std::array<int
         m_motorEncoderInit_R = motorPositionCur;//需要把右边电机值存储进去
         calculateEndEffectorPosition_init(handlePoseCur, motorPositionCur,'r');
         m_alignmentNumber_R = 0;
+
+        /*Velocity_Kompensation*/
+        m_EncodeErr_Pre_R = {0};
+
+        m_ruckigInputState_R.current_position = {m_endEffectorInitPosition_R[0], m_endEffectorInitPosition_R[1], m_endEffectorInitPosition_R[2]};//m_endEffectorInitPos为初始化时编码器值 xyz
+        m_ruckigInputState_R.current_velocity = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        m_ruckigInputState_R.current_acceleration = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+        /*oneEuroFilter*/
+        inited_R = {false, false, false};
+        xhat_R = {0, 0, 0};
+        vhat_R = {0.0, 0.0, 0.0};
+    }
+}
+
+void RobotControl::setForceControlInitHandleMotorPosition(const std::array<int, MotorNumPerSide>& motorPositionCur, const HandlePose& handlePoseCur, const char& side){
+    if(side == 'l')
+    {
+        m_handlePoseInit_L.handlePoseL_X = handlePoseCur.handlePoseL_X;
+        m_handlePoseInit_L.handlePoseL_Y = handlePoseCur.handlePoseL_Y;
+        m_handlePoseInit_L.handlePoseL_Z = handlePoseCur.handlePoseL_Z;
+
+        for(int i=0; i<4; i++){
+        m_motorEncoderInit_L[i] = motorPositionCur[i];
+        }
+        calculateEndEffectorPosition_init(handlePoseCur, motorPositionCur,'l');
+
+        m_ruckigInputState_L.current_position = {m_endEffectorInitPosition_L[0], m_endEffectorInitPosition_L[1], m_endEffectorInitPosition_L[2]};//m_endEffectorInitPos为初始化时编码器值 xyz
+        m_ruckigInputState_L.current_velocity = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        m_ruckigInputState_L.current_acceleration = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+        /*oneEuroFilter*/
+        inited_L = {false, false, false};
+        xhat_L = {0, 0, 0};
+        vhat_L = {0.0, 0.0, 0.0};
+
+        /*Velocity_Kompensation*/
+        m_EncodeErr_Pre_L = {0};
+
+    }
+    if(side == 'r')
+    {
+        m_handlePoseInit_R.handlePoseR_X = handlePoseCur.handlePoseR_X;
+        m_handlePoseInit_R.handlePoseR_Y = handlePoseCur.handlePoseR_Y;
+        m_handlePoseInit_R.handlePoseR_Z = handlePoseCur.handlePoseR_Z;
+
+        for(int i=0; i<4; i++){
+            m_motorEncoderInit_R[i] = motorPositionCur[i];
+        }
+
+        calculateEndEffectorPosition_init(handlePoseCur, motorPositionCur,'r');
 
         /*Velocity_Kompensation*/
         m_EncodeErr_Pre_R = {0};

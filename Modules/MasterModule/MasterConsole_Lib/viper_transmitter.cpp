@@ -396,7 +396,7 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
     Eigen::AngleAxisd axang_R(rotMatrix_R);
     Eigen::Vector3d u_R = axang_R.axis();
     double theta_R = axang_R.angle();
-    double k = 1.05;
+    double k = 1.1;
     double theta_scaled_R = k * theta_R;
     Eigen::AngleAxisd axang_scaled_R(theta_scaled_R, u_R);
     Eigen::Matrix3d R_scaled = axang_scaled_R.toRotationMatrix();
@@ -487,12 +487,12 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
         beta_R = -76 * M_PI / 180;
     }
 
-    if(gamma_R > 111 * M_PI / 180)
+    if(gamma_R > 120 * M_PI / 180)
     {
-        gamma_R = 111 * M_PI / 180;
-    }else if(gamma_R < -111 * M_PI / 180)
+        gamma_R = 120 * M_PI / 180;
+    }else if(gamma_R < -120 * M_PI / 180)
     {
-        gamma_R = -111 * M_PI / 180;
+        gamma_R = -120 * M_PI / 180;
     }
 
     if(alpha_L > 150 * M_PI / 180)
@@ -511,12 +511,12 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
         beta_L = -76 * M_PI / 180;
     }
 
-    if(gamma_L > 111 * M_PI / 180)
+    if(gamma_L > 120 * M_PI / 180)
     {
-        gamma_L = 111 * M_PI / 180;
-    }else if(gamma_L < -111 * M_PI / 180)
+        gamma_L = 120 * M_PI / 180;
+    }else if(gamma_L < -120 * M_PI / 180)
     {
-        gamma_L = -111 * M_PI / 180;
+        gamma_L = -120 * M_PI / 180;
     }
 
     // std::cout << "alpha_L: " << a*180/M_PI << " beta_L: " << beta_L*180/M_PI << " gamma_L: " << gamma_L*180/M_PI << std::endl;

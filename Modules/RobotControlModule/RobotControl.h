@@ -628,6 +628,7 @@ private:
 
     double                  calculateOverlapValue(const std::array<int, MotorNumPerSide>& motorPosition_Cur, const HandlePose& masterHandlePose_Cur,const char& side) const;
     void                    setControlInitHandleMotorPositionAndPose(const std::array<int, MotorNumPerSide>& motorPositionCur, const HandlePose& handlePoseCur, const char& side);
+    void                    setForceControlInitHandleMotorPosition(const std::array<int, MotorNumPerSide>& motorPositionCur, const HandlePose& handlePoseCur, const char& side);
 
     static Eigen::Matrix3d ToQuaternionRotationMatrix(double q_L0, double q_L1, double q_L2, double q_L3);
     static Eigen::Matrix3d ToEulerRotationMatrix(double Azimuth, double Elevation, double Roll);
