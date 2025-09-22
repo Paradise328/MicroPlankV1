@@ -116,6 +116,7 @@ void MicroPlank::messagePoll()
             case Module_Inner_E::Security:break;
             case Module_Inner_E::MotorDriver:break;
             case Module_Inner_E::RobotControl:break;
+            case Module_Inner_E::AssistDevice_Lifting:break;
             default:continue;
          }
          switch(msg_t.Recver)
@@ -126,6 +127,7 @@ void MicroPlank::messagePoll()
             case Module_Inner_E::Uiinterface:   m_uiInterface.GetAmMsg(msg_t);          break;
             case Module_Inner_E::MotorDriver:   m_motorDriver->GetAmMsg(msg_t);         break;
             case Module_Inner_E::RobotControl:  m_robotControl.GetAmMsg(msg_t);         break;
+            case Module_Inner_E::AssistDevice_Lifting:  m_lifting->GetAmMsg(msg_t);     break;
             case Module_Inner_E::MultipleModules:
                  {
                     m_security.GetAmMsg(msg_t);
@@ -133,6 +135,7 @@ void MicroPlank::messagePoll()
                     m_uiInterface.GetAmMsg(msg_t);
                     m_motorDriver->GetAmMsg(msg_t);
                     m_robotControl.GetAmMsg(msg_t);
+                    m_lifting->GetAmMsg(msg_t);
                     break;
                  }
             default:continue;

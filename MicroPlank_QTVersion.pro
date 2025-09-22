@@ -55,8 +55,8 @@ SOURCES += \
         microPlank.cpp \
         Modules/RobotControlModule/BlasControl/BLA_API.cpp \
         Modules/RobotControlModule/BlasControl/communication.cpp \
-        Modules/RobotControlModule/BlasControl/actuators_controler.cpp
-
+        Modules/RobotControlModule/BlasControl/actuators_controler.cpp \
+        Modules/Lifting/lifting.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -95,7 +95,8 @@ HEADERS += \
     microPlank.h \
     Modules/RobotControlModule/BlasControl/BLA_API.h \
     Modules/RobotControlModule/BlasControl/communication.h \
-    Modules/RobotControlModule/BlasControl/actuators_controler.h
+    Modules/RobotControlModule/BlasControl/actuators_controler.h \
+    Modules/Lifting/lifting.h
 
 
 DISTFILES += \

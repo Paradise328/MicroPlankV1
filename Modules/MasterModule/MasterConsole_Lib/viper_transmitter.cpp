@@ -525,7 +525,7 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
 
     poseDataCurInSlaveFrame.handlePoseR_Roll = alpha_R;
     poseDataCurInSlaveFrame.handlePoseR_Elevation = beta_R;
-    poseDataCurInSlaveFrame.handlePoseR_Arzimuth = gamma_R*1.2;
+    poseDataCurInSlaveFrame.handlePoseR_Arzimuth = gamma_R;
 
 
     poseDataCurInSlaveFrame.handlePoseL_Roll = alpha_L;
@@ -535,13 +535,13 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
     Eigen::Vector3d  masterPositionViaSensor_L, masterPositionViaSensor_R;
     masterPositionViaSensor_L << -1.0,
                                    0.0,
-                                   -7.0;
+                                   -9.0;
     // masterPositionViaSensor_L << -2.0,
     //     0,
     //     2.0;
     masterPositionViaSensor_R << -1.0,
                                    0.0,
-                                   -7.0;
+                                   -9.0;
     // masterPositionViaSensor_R << -2.0,
     //     0,
     //     2.0;
@@ -564,7 +564,6 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
     poseDataCurInSlaveFrame.handlePoseL_X = endPosition_L[0];
     poseDataCurInSlaveFrame.handlePoseL_Y = endPosition_L[1];
     poseDataCurInSlaveFrame.handlePoseL_Z = endPosition_L[2];
-
     // LOG(INFO)<<"a: "<<a*180/M_PI<<" Roll: "<<poseDataCurInSlaveFrame.handlePoseL_Roll * 180 / M_PI<<" pitch: "<<poseDataCurInSlaveFrame.handlePoseL_Elevation* 180 / M_PI<<" YAW: "<<poseDataCurInSlaveFrame.handlePoseL_Arzimuth* 180 / M_PI;
 
     poseDataCurInSlaveFrame.handlePoseR_X = endPosition_R[0];
