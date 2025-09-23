@@ -106,7 +106,6 @@ private:
     bool                                            m_selfCheckOK_l = false;
     bool                                            m_selfCheckOK_r = false;
 
-
     std::array<double, 6>                           m_forceSensorRaw_l = {0} ;
     std::array<double, 6>                           m_forceSensorInit_l = {0};
     std::deque<std::array<double,6>>                m_forceZeroDetectBuffer_l;

@@ -274,6 +274,31 @@ void arrayThreshold(std::array<T, N>& arr, const T& threshold) {
     }
 }
 
+// // functions for rotation
+// Eigen::Matrix3d RotX_deg(double deg){
+//     double rad = deg2rad(deg);
+//     return Eigen::AngleAxisd(rad, Eigen::Vector3d::UnitX()).toRotationMatrix();
+// }
+// Eigen::Matrix3d RotY_deg(double deg){
+//     double rad = deg2rad(deg);
+//     return Eigen::AngleAxisd(rad, Eigen::Vector3d::UnitY()).toRotationMatrix();
+// }
+// Eigen::Matrix3d RotZ_deg(double deg){
+//     double rad = deg2rad(deg);
+//     return Eigen::AngleAxisd(rad, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+// }
+
+// // --------- 3D vector rotation ---------
+// Eigen::Vector3d rotAroundX(const Eigen::Vector3d& v, double angle_deg){
+//     return RotX_deg(angle_deg) * v;
+// }
+// Eigen::Vector3d rotAroundY(const Eigen::Vector3d& v, double angle_deg){
+//     return RotY_deg(angle_deg) * v;
+// }
+// Eigen::Vector3d rotAroundZ(const Eigen::Vector3d& v, double angle_deg){
+//     return RotZ_deg(angle_deg) * v;
+// }
+
 class AverageFilter {
 private:
     std::queue<float> m_que;

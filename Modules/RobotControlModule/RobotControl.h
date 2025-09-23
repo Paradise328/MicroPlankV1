@@ -5,6 +5,7 @@
 #include "../MotorDriverModule/MotorDriver.h"
 #include "../SystemUtilsModule/SystemUtils.h"
 #include "../MathModule/lowpass_filter.h"
+#include "DomainController.h"
 #include "BlasControl/actuators_controler.h"
 #include "BlasControl/BLA_API.h"
 #include "BlasControl/communication.h"
@@ -181,11 +182,16 @@ private:
 
     DomainController*               m_domainController;
 
+    std::array<double,3>            m_forceAccumulationBufferLeft;
+
+    std::array<double,3>            m_forceAccumulationBufferRight;
+
     MasterConsoleType               m_masterConsoleType;
 
     MasterConsole&                  m_masterConsole;
 
     std::atomic<bool>               m_isSystemTerminated;
+
 
     /*消息队列相关函数*/
     MessageQueue                    &m_messagePool;

@@ -222,46 +222,6 @@ bool DomainController::findForceSensorZero(std::array<double,6> new_sample,uint 
     /* push new value to zero-point dectect buffer */
     if(armSide == 0)
     {
-        m_forceZeroDetectBuffer_l.push_back(new_sample);
-
-        if (m_forceZeroDetectBuffer_l.size() > k_forceZeroWindowSize){
-            m_forceZeroDetectBuffer_l.pop_front();
-        }
-
-        /* judge when window size is enough */
-        if (m_forceZeroDetectBuffer_l.size() == k_forceZeroWindowSize) {
-            std::array<double,6> minVal = m_forceZeroDetectBuffer_l[0];
-            std::array<double,6> maxVal = m_forceZeroDetectBuffer_l[0];
-            std::array<double,6> sumVal = {0};
-
-            for (const auto& sample : m_forceZeroDetectBuffer_l) {
-                for (int i = 0; i < 6; ++i) {
-                    if (sample[i] < minVal[i]) minVal[i] = sample[i];
-                    if (sample[i] > maxVal[i]) maxVal[i] = sample[i];
-                    sumVal[i] += sample[i];
-                }
-            }
-
-            bool foundStableZero = true;
-            for (int i = 0; i < 6; ++i) {
-                if ((maxVal[i] - minVal[i]) > m_forceZeroThreshold) {
-                    foundStableZero = false;
-                    break;
-                }
-            }
-
-            if (foundStableZero) {
-                for (int i = 0; i < 6; ++i)
-                    m_forceSensorInit_l[i] = sumVal[i] / k_forceZeroWindowSize;
-
-                m_forceZeroFound_l = true;
-            }
-        }
-        return m_forceZeroFound_l;
-    }
-
-    if(armSide == 1)
-    {
         m_forceZeroDetectBuffer_r.push_back(new_sample);
 
         if (m_forceZeroDetectBuffer_r.size() > k_forceZeroWindowSize){
@@ -298,6 +258,48 @@ bool DomainController::findForceSensorZero(std::array<double,6> new_sample,uint 
             }
         }
         return m_forceZeroFound_r;
+    }
+
+    if(armSide == 1)
+    {
+        m_forceZeroDetectBuffer_l.push_back(new_sample);
+
+        if (m_forceZeroDetectBuffer_l.size() > k_forceZeroWindowSize){
+            m_forceZeroDetectBuffer_l.pop_front();
+        }
+
+
+        /* judge when window size is enough */
+        if (m_forceZeroDetectBuffer_l.size() == k_forceZeroWindowSize) {
+            std::array<double,6> minVal = m_forceZeroDetectBuffer_l[0];
+            std::array<double,6> maxVal = m_forceZeroDetectBuffer_l[0];
+            std::array<double,6> sumVal = {0};
+
+            for (const auto& sample : m_forceZeroDetectBuffer_l) {
+                for (int i = 0; i < 6; ++i) {
+                    if (sample[i] < minVal[i]) minVal[i] = sample[i];
+                    if (sample[i] > maxVal[i]) maxVal[i] = sample[i];
+                    sumVal[i] += sample[i];
+
+                }
+            }
+
+            bool foundStableZero = true;
+            for (int i = 0; i < 6; ++i) {
+                if ((maxVal[i] - minVal[i]) > m_forceZeroThreshold) {
+                    foundStableZero = false;
+                    break;
+                }
+            }
+
+            if (foundStableZero) {
+                for (int i = 0; i < 6; ++i)
+                    m_forceSensorInit_l[i] = sumVal[i] / k_forceZeroWindowSize;
+                m_forceZeroFound_l = true;
+            }
+        }
+
+        return m_forceZeroFound_l;
     }
 }
 
@@ -340,7 +342,6 @@ void DomainController::readHandleOtherData(QByteArray qba)
                                     m_domainControllerData_l_tmp.ForceSensor.ForceSensor_Mx * 9.8,
                                     m_domainControllerData_l_tmp.ForceSensor.ForceSensor_My * 9.8,
                                     m_domainControllerData_l_tmp.ForceSensor.ForceSensor_Mz * 9.8 };
-
 
                 if (!m_forceZeroFound_l) {
                     findForceSensorZero(m_forceSensorRaw_l, 1);
@@ -395,7 +396,7 @@ void DomainController::readHandleOtherData(QByteArray qba)
 
 
                 if (!m_forceZeroFound_r) {
-                    findForceSensorZero(m_forceSensorRaw_r, 1);
+                    findForceSensorZero(m_forceSensorRaw_r, 0);
                 }
 
                 m_forceSensorZeroCompensated_r = m_forceSensorRaw_r;
@@ -452,7 +453,7 @@ std::array<double,3> DomainController::getForce(uint armSide){
     {
         return {m_forceSensorIIR_l[0], m_forceSensorIIR_l[1], m_forceSensorIIR_l[2]};
     }
-    if(armSide == 2)
+    if(armSide == 0)
     {
         return {m_forceSensorIIR_r[0], m_forceSensorIIR_r[1], m_forceSensorIIR_r[2]};
     }
@@ -464,7 +465,7 @@ std::array<double,3> DomainController::getMomentum(uint armSide){
     {
         return {m_forceSensorIIR_l[3], m_forceSensorIIR_l[4], m_forceSensorIIR_l[5]};
     }
-    if(armSide == 2)
+    if(armSide == 0)
     {
         return {m_forceSensorIIR_r[3], m_forceSensorIIR_r[4], m_forceSensorIIR_r[5]};
     }

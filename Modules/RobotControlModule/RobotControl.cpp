@@ -245,14 +245,6 @@ void RobotControl::initiAllData()
 
     /* set ruckig params for trajectory generation */
 
-    // m_ruckigInputState_R.max_velocity = {800000.0, 800000.0, 800000.0};//500000.0
-    // m_ruckigInputState_R.max_acceleration = {30000.0, 30000.0, 30000.0};//15000.0
-    // m_ruckigInputState_R.max_jerk = {8500.0, 8500.0, 8500.0};//8000.0
-
-    // m_ruckigInputState_L.max_velocity = {800000.0, 800000.0, 800000.0};
-    // m_ruckigInputState_L.max_acceleration = {30000.0, 30000.0, 30000.0};
-    // m_ruckigInputState_L.max_jerk = {8500.0, 8500.0, 8500.0};
-
     // m_ruckigInputState_R.max_velocity = {300000.0, 300000.0, 300000.0};//500000.0
     // m_ruckigInputState_R.max_acceleration = {20000.0, 20000.0, 20000.0};//15000.0
     // m_ruckigInputState_R.max_jerk = {5000.0, 5000.0, 5000.0};//8000.0
@@ -395,7 +387,13 @@ void RobotControl::teleoperation()
     m_enableTagCur_L = enableTagCur_L;
     m_enableTagCur_R = enableTagCur_R;
 
-    LOG(INFO)<<"enableTagCur_L: "<<enableTagCur_L<<" enableTagCur_R: "<<enableTagCur_R;
+
+
+    // LOG(INFO)<<"RIGHT: "<<m_domainController->getForce(0)<<" LEFT: "<<m_domainController->getForce(1);
+
+
+
+    // LOG(INFO)<<"enableTagCur_L: "<<enableTagCur_L<<" enableTagCur_R: "<<enableTagCur_R;
 
     /* Define the Motion Scaling and return Current Speed Index: {1,2,3,4} */
     setNewSpeed(handlePosePrev, handlePoseCur);
@@ -1447,13 +1445,13 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L_ForceControl(c
 {
     std::array<double, ControlValueNum> controlValueTmp_L = {0};
 
-    auto positionWorldCurX = handlePoseCur.handlePoseL_X;
-    auto positionWorldCurY = -handlePoseCur.handlePoseL_Y;
-    auto positionWorldCurZ = -handlePoseCur.handlePoseL_Z;
+    // auto positionWorldCurX = handlePoseCur.handlePoseL_X;
+    // auto positionWorldCurY = -handlePoseCur.handlePoseL_Y;
+    // auto positionWorldCurZ = -handlePoseCur.handlePoseL_Z;
 
-    auto positionWorldInitX = m_handlePoseInit_L.handlePoseL_X;
-    auto positionWorldInitY = -m_handlePoseInit_L.handlePoseL_Y;
-    auto positionWorldInitZ = -m_handlePoseInit_L.handlePoseL_Z;
+    // auto positionWorldInitX = m_handlePoseInit_L.handlePoseL_X;
+    // auto positionWorldInitY = -m_handlePoseInit_L.handlePoseL_Y;
+    // auto positionWorldInitZ = -m_handlePoseInit_L.handlePoseL_Z;
 
     /*进入使能时机械臂末端的位置*/
     double endEffectorInit_X_L = m_endEffectorInitPosition_L[0];
@@ -1462,9 +1460,18 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L_ForceControl(c
 
     /*endEffectorDelta为相对于endEffectorInit的位置改变量*/
 
-    double endEffectorDelta_X_L = (positionWorldCurX - positionWorldInitX) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
-    double endEffectorDelta_Y_L = (positionWorldCurY - positionWorldInitY) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
-    double endEffectorDelta_Z_L = (positionWorldCurZ - positionWorldInitZ) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+    // double endEffectorDelta_X_L = (positionWorldCurX - positionWorldInitX) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+    // double endEffectorDelta_Y_L = (positionWorldCurY - positionWorldInitY) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+    // double endEffectorDelta_Z_L = (positionWorldCurZ - positionWorldInitZ) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+
+    m_forceAccumulationBufferRight = {
+        m_forceAccumulationBufferLeft[0] + m_domainController->getForce(1)[0] * 1500.0,
+        m_forceAccumulationBufferLeft[1] + m_domainController->getForce(1)[1] * 1500.0,
+        m_forceAccumulationBufferLeft[2] + m_domainController->getForce(1)[2] * 1500.0};
+
+    double endEffectorDelta_X_L = m_forceAccumulationBufferLeft[0] / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+    double endEffectorDelta_Y_L = m_forceAccumulationBufferLeft[1] / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+    double endEffectorDelta_Z_L = m_forceAccumulationBufferLeft[2] / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
 
     /*路径规划*/
     m_ruckigInputState_L.target_position = {(endEffectorInit_X_L + endEffectorDelta_X_L), (endEffectorInit_Y_L + endEffectorDelta_Y_L), (endEffectorInit_Z_L + endEffectorDelta_Z_L)};
@@ -1518,13 +1525,13 @@ std::array<double, ControlValueNum> RobotControl:: motionMapping_R_ForceControl(
 
 {
     std::array<double, ControlValueNum> controlValueTmp_R = {0};
-    auto positionWorldCurX = handlePoseCur.handlePoseR_X;
-    auto positionWorldCurY = -handlePoseCur.handlePoseR_Y;
-    auto positionWorldCurZ = -handlePoseCur.handlePoseR_Z;
+    // auto positionWorldCurX = handlePoseCur.handlePoseR_X;
+    // auto positionWorldCurY = -handlePoseCur.handlePoseR_Y;
+    // auto positionWorldCurZ = -handlePoseCur.handlePoseR_Z;
 
-    auto positionWorldInitX = m_handlePoseInit_R.handlePoseR_X;
-    auto positionWorldInitY = -m_handlePoseInit_R.handlePoseR_Y;
-    auto positionWorldInitZ = -m_handlePoseInit_R.handlePoseR_Z;
+    // auto positionWorldInitX = m_handlePoseInit_R.handlePoseR_X;
+    // auto positionWorldInitY = -m_handlePoseInit_R.handlePoseR_Y;
+    // auto positionWorldInitZ = -m_handlePoseInit_R.handlePoseR_Z;
 
     /*进入使能时机械臂末端的位置*/
     double endEffectorInit_X_R = m_endEffectorInitPosition_R[0];
@@ -1533,9 +1540,21 @@ std::array<double, ControlValueNum> RobotControl:: motionMapping_R_ForceControl(
 
     /*endEffectorDelta为相对于endEffectorInit的位置改变量*/
 
-    double endEffectorDelta_X_R = (positionWorldCurX - positionWorldInitX) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
-    double endEffectorDelta_Y_R = (positionWorldCurY - positionWorldInitY) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
-    double endEffectorDelta_Z_R = (positionWorldCurZ - positionWorldInitZ) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+    // double endEffectorDelta_X_R = (positionWorldCurX - positionWorldInitX) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+    // double endEffectorDelta_Y_R = (positionWorldCurY - positionWorldInitY) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+    // double endEffectorDelta_Z_R = (positionWorldCurZ - positionWorldInitZ) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+
+
+    //TODO: do motion here
+
+    m_forceAccumulationBufferRight = {
+        m_forceAccumulationBufferRight[0] + m_domainController->getForce(0)[0] * 1500.0,
+        m_forceAccumulationBufferRight[1] + m_domainController->getForce(0)[1] * 1500.0,
+        m_forceAccumulationBufferRight[2] + m_domainController->getForce(0)[2] * 1500.0};
+
+    double endEffectorDelta_X_R = m_forceAccumulationBufferRight[0] / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+    double endEffectorDelta_Y_R = m_forceAccumulationBufferRight[1] / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+    double endEffectorDelta_Z_R = m_forceAccumulationBufferRight[2] / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
 
     /*路径规划*/
     m_ruckigInputState_R.target_position = {(endEffectorInit_X_R + endEffectorDelta_X_R),
@@ -2432,7 +2451,7 @@ void RobotControl::receiveMotorData()
     setEndJointDragEnableStatus(domainDigitalCur_L, domainDigitalCur_R);
     // if((domainDigtalPrev_L == 0 && domainDigitalCur_L == 4) ||(domainDigtalPrev_R == 0 && domainDigitalCur_R == 4) &&)
     // {
-    //     goToCollaboration_EndJoint();
+        // goToCollaboration_EndJoint();
     // }
     // if((domainDigtalPrev_L == 4 && domainDigitalCur_L == 0) ||(domainDigtalPrev_R == 4 && domainDigitalCur_R == 0))
     // {
@@ -3256,6 +3275,7 @@ void RobotControl::setControlInitHandleMotorPositionAndPose(const std::array<int
 void RobotControl::setForceControlInitHandleMotorPosition(const std::array<int, MotorNumPerSide>& motorPositionCur, const HandlePose& handlePoseCur, const char& side){
     if(side == 'l')
     {
+        m_forceAccumulationBufferLeft = {0,0,0};
         m_handlePoseInit_L.handlePoseL_X = handlePoseCur.handlePoseL_X;
         m_handlePoseInit_L.handlePoseL_Y = handlePoseCur.handlePoseL_Y;
         m_handlePoseInit_L.handlePoseL_Z = handlePoseCur.handlePoseL_Z;
@@ -3280,6 +3300,7 @@ void RobotControl::setForceControlInitHandleMotorPosition(const std::array<int, 
     }
     if(side == 'r')
     {
+        m_forceAccumulationBufferRight = {0,0,0};
         m_handlePoseInit_R.handlePoseR_X = handlePoseCur.handlePoseR_X;
         m_handlePoseInit_R.handlePoseR_Y = handlePoseCur.handlePoseR_Y;
         m_handlePoseInit_R.handlePoseR_Z = handlePoseCur.handlePoseR_Z;
