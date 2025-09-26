@@ -244,23 +244,25 @@ void RobotControl::initiAllData()
     m_controlValuePrev_R = {0};
 
     /* set ruckig params for trajectory generation */
+    // if(m_enableTagCur_R == ForceEnable || m_enableTagCur_R == KeepForce || m_enableTagCur_R == ForceDisable){
+        // m_ruckigInputState_R.max_velocity = {100000.0, 100000.0, 100000.0};//500000.0
+        // m_ruckigInputState_R.max_acceleration = {30000.0, 30000.0, 30000.0};//15000.0
+        // m_ruckigInputState_R.max_jerk = {10000.0, 10000.0, 10000.0};//8000.0
 
-    // m_ruckigInputState_R.max_velocity = {300000.0, 300000.0, 300000.0};//500000.0
-    // m_ruckigInputState_R.max_acceleration = {20000.0, 20000.0, 20000.0};//15000.0
-    // m_ruckigInputState_R.max_jerk = {5000.0, 5000.0, 5000.0};//8000.0
+        // m_ruckigInputState_L.max_velocity = {300000.0, 300000.0, 300000.0};
+        // m_ruckigInputState_L.max_acceleration = {20000.0, 20000.0, 20000.0};
+        // m_ruckigInputState_L.max_jerk = {5000.0, 5000.0, 5000.0};
+    // }
 
-    // m_ruckigInputState_L.max_velocity = {300000.0, 300000.0, 300000.0};
-    // m_ruckigInputState_L.max_acceleration = {20000.0, 20000.0, 20000.0};
-    // m_ruckigInputState_L.max_jerk = {5000.0, 5000.0, 5000.0};
+    // if(m_enableTagCur_R == enableAction || m_enableTagCur_R == keepEnabling || m_enableTagCur_R == disableAction || m_enableTagCur_R == keepDisabling){
+        m_ruckigInputState_R.max_velocity = {200000.0, 200000.0, 200000.0};//500000.0
+        m_ruckigInputState_R.max_acceleration = {10000.0, 10000.0, 10000.0};//15000.0
+        m_ruckigInputState_R.max_jerk = {2500.0, 2500.0, 2500.0};//8000.0
 
-
-    m_ruckigInputState_R.max_velocity = {200000.0, 200000.0, 200000.0};//500000.0
-    m_ruckigInputState_R.max_acceleration = {10000.0, 10000.0, 10000.0};//15000.0
-    m_ruckigInputState_R.max_jerk = {2500.0, 2500.0, 2500.0};//8000.0
-
-    m_ruckigInputState_L.max_velocity = {200000.0, 200000.0, 200000.0};
-    m_ruckigInputState_L.max_acceleration = {10000.0, 10000.0, 10000.0};
-    m_ruckigInputState_L.max_jerk = {2500.0, 2500.0, 2500.0};
+        m_ruckigInputState_L.max_velocity = {200000.0, 200000.0, 200000.0};
+        m_ruckigInputState_L.max_acceleration = {10000.0, 10000.0, 10000.0};
+        m_ruckigInputState_L.max_jerk = {2500.0, 2500.0, 2500.0};
+    // }
 
 
     // m_ruckigInputState_R.max_velocity = {200000.0, 200000.0, 200000.0};//500000.0
@@ -374,12 +376,8 @@ void RobotControl::teleoperation()
 
     // LOG(INFO) << "openAngle_L: " << handlePoseCur.handlePoseL_OpenAngle << " x: " << handlePoseCur.handlePoseL_X << " stepPedal: " << handlePoseCur.stepPedal;
 
-    auto motorOperationMode_L = m_motorOperationMode_L.load();
-    auto motorErrorCode_L = m_motorErrorCode_L.load();
-    auto motorStatusWord_L = m_motorStatusWordCur_L.load();
-    auto motorTrq_L = m_motorTrq_L.load();
-    auto motorCur_L = m_motorCur_L.load();
-    auto motorFollowingPosErr_L = m_motorFollowingPosErr_L.load();
+    auto forceValue_R = m_force_L.load();
+    auto forceValue_L = m_force_R.load();
 
     int enableTagCur_L = enableCase_KeepPressPedal(handlePoseCur, 'l');
     int enableTagCur_R = enableCase_KeepPressPedal(handlePoseCur, 'r');
@@ -387,13 +385,7 @@ void RobotControl::teleoperation()
     m_enableTagCur_L = enableTagCur_L;
     m_enableTagCur_R = enableTagCur_R;
 
-
-
-    // LOG(INFO)<<"RIGHT: "<<m_domainController->getForce(0)<<" LEFT: "<<m_domainController->getForce(1);
-
-
-
-    // LOG(INFO)<<"enableTagCur_L: "<<enableTagCur_L<<" enableTagCur_R: "<<enableTagCur_R;
+    LOG(INFO)<<" enableTagCur_L: "<<enableTagCur_L<<" enableTagCur_R: "<<enableTagCur_R;
 
     /* Define the Motion Scaling and return Current Speed Index: {1,2,3,4} */
     setNewSpeed(handlePosePrev, handlePoseCur);
@@ -491,7 +483,7 @@ void RobotControl::teleoperation()
     {
         if(enableTagCur_L == ForceEnable)
         {
-
+LOG(INFO)<<"力拖动已经被激活///////////////////";
             motorEncoderInit_L = motorEncoderCur_L;
 
             setForceControlInitHandleMotorPosition(motorEncoderInit_L, handlePoseCur, 'l');
@@ -504,7 +496,7 @@ void RobotControl::teleoperation()
         targetEncoder_L_forVelocity = calculateTargetEncoder_new(controlValueCur_L, motorEncoderInit_L, 'l');
 
         targetVelocity_L_new = calculateTargetVelocity_new(targetEncoder_L_forVelocity, targetEncoderPrev_L_new, targetEncoder_L, motorEncoderCur_L, 'l');
-        // LOG(INFO)<<std::dec<<"targetEncoder_L[0]: "<<targetEncoder_L[0]<<" targetEncoder_L[1]: "<<targetEncoder_L[1]<<" targetEncoder_L[2]: "<<targetEncoder_L[2]<<" targetEncoder_L[3]: "<<targetEncoder_L[3];
+        LOG(INFO)<<std::dec<<"targetEncoder_L[0]: "<<targetEncoder_L[0]<<" targetEncoder_L[1]: "<<targetEncoder_L[1]<<" targetEncoder_L[2]: "<<targetEncoder_L[2]<<" targetEncoder_L[3]: "<<targetEncoder_L[3];
 
 
         if(enableTagCur_L == ForceEnable){
@@ -795,8 +787,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
         //        LOG(INFO) << "planner Status: " <<std::dec << plannerStatus;
     }
     m_ruckigOutputState_L.pass_to_input(m_ruckigInputState_L);
-    // outfile1 << (endEffectorInit_X_L + endEffectorDelta_X_L) << " " << (endEffectorInit_Y_L + endEffectorDelta_Y_L) << " " << (endEffectorInit_Z_L + endEffectorDelta_Z_L) << " "
-    //          << m_ruckigOutputState_L.new_position[0] << " " << m_ruckigOutputState_L.new_position[1] << " " << m_ruckigOutputState_L.new_position[2] << "\n";
+
     double endEffectorTarget_X_L = m_ruckigOutputState_L.new_position[0];// / m_motionScaling[2]，初始值加上delta值为末端点应该移动到的位置，以此位置解算
     double endEffectorTarget_Y_L = m_ruckigOutputState_L.new_position[1];// / m_motionScaling[0]
     double endEffectorTarget_Z_L = m_ruckigOutputState_L.new_position[2];// / m_motionScaling[0]
@@ -1072,9 +1063,9 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     }
     m_ruckigOutputState_R.pass_to_input(m_ruckigInputState_R);
 
-    double endEffectorTarget_X_R = m_ruckigOutputState_R.new_position[0];// / m_motionScaling[2]，初始值加上delta值为末端点应该移动到的位置，以此位置解算
-    double endEffectorTarget_Y_R = m_ruckigOutputState_R.new_position[1];// / m_motionScaling[0]
-    double endEffectorTarget_Z_R = m_ruckigOutputState_R.new_position[2];// / m_motionScaling[0]
+    double endEffectorTarget_X_R = m_ruckigOutputState_R.new_position[0];
+    double endEffectorTarget_Y_R = m_ruckigOutputState_R.new_position[1];
+    double endEffectorTarget_Z_R = m_ruckigOutputState_R.new_position[2];
 
     /*自适应低通滤波*/
     std::array<double,3> endEffector_R;
@@ -1127,23 +1118,11 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
 
     /*4轴器械*/
     if(m_endeffectorConfiguration == EndeffectorConfiguration::fourMaxons){
-        // controlValueTmp_R[4] = - openAngle_R_new;
-        // controlValueTmp_R[5] = + openAngle_R_new;
-        /*四轴*/
-        // controlValueTmp_R[4] = (delt_beta_R - delt_alpha_R * m_compRatio_R) - openAngle_R_new;
-        // controlValueTmp_R[5] = (delt_beta_R - delt_alpha_R * m_compRatio_R) + openAngle_R_new;
-        // controlValueTmp_R[6] = delt_alpha_R;
-        // controlValueTmp_R[7] = -delt_gamma_R;
-
-        // controlValueTmp_R[8] = 0;
-        // controlValueTmp_R[9] = 0;
-
 
         controlValueTmp_R[6] = (delt_beta_R - delt_alpha_R * m_compRatio_R) - openAngle_R_new;
         controlValueTmp_R[7] = (delt_beta_R - delt_alpha_R * m_compRatio_R) + openAngle_R_new;
         controlValueTmp_R[8] = delt_alpha_R;
         controlValueTmp_R[9] = -delt_gamma_R;
-
         controlValueTmp_R[4] = 0;
         controlValueTmp_R[5] = 0;
     }
@@ -1152,7 +1131,6 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons){
         controlValueTmp_R[9] = -delt_gamma_R;
         controlValueTmp_R[8] = -deltLength_alpha_R_1;
-
         controlValueTmp_R[7] = -deltLength_beta_R_left_1;
         controlValueTmp_R[6] = -deltLength_beta_R_left_2;
         controlValueTmp_R[5] = -deltLength_beta_R_right_1;
@@ -1445,29 +1423,35 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L_ForceControl(c
 {
     std::array<double, ControlValueNum> controlValueTmp_L = {0};
 
-    // auto positionWorldCurX = handlePoseCur.handlePoseL_X;
-    // auto positionWorldCurY = -handlePoseCur.handlePoseL_Y;
-    // auto positionWorldCurZ = -handlePoseCur.handlePoseL_Z;
-
-    // auto positionWorldInitX = m_handlePoseInit_L.handlePoseL_X;
-    // auto positionWorldInitY = -m_handlePoseInit_L.handlePoseL_Y;
-    // auto positionWorldInitZ = -m_handlePoseInit_L.handlePoseL_Z;
-
     /*进入使能时机械臂末端的位置*/
     double endEffectorInit_X_L = m_endEffectorInitPosition_L[0];
     double endEffectorInit_Y_L = m_endEffectorInitPosition_L[1];
     double endEffectorInit_Z_L = m_endEffectorInitPosition_L[2];
 
-    /*endEffectorDelta为相对于endEffectorInit的位置改变量*/
 
-    // double endEffectorDelta_X_L = (positionWorldCurX - positionWorldInitX) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
-    // double endEffectorDelta_Y_L = (positionWorldCurY - positionWorldInitY) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
-    // double endEffectorDelta_Z_L = (positionWorldCurZ - positionWorldInitZ) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+    // auto forceValue = m_domainController->getForce(1,m_armAnglePerSide);
+    auto forceValue = m_force_L.load();
 
-    m_forceAccumulationBufferRight = {
-        m_forceAccumulationBufferLeft[0] + m_domainController->getForce(1)[0] * 1500.0,
-        m_forceAccumulationBufferLeft[1] + m_domainController->getForce(1)[1] * 1500.0,
-        m_forceAccumulationBufferLeft[2] + m_domainController->getForce(1)[2] * 1500.0};
+    for(int i = 0; i < 3; i++){
+        if(forceValue[i] > 4){
+            forceValue[i] = 4;
+        }else if(forceValue[i] < -4){
+            forceValue[i] = -4;
+        }
+    }
+
+    // LOG(INFO)<<"forceValue : "<<forceValue;
+
+    m_forceAccumulationBufferLeft = {
+        m_forceAccumulationBufferLeft[0] + forceValue[0] * 0.025,//* 1500.0
+        m_forceAccumulationBufferLeft[1] + forceValue[1] * 0.025,//* 1500.0
+        m_forceAccumulationBufferLeft[2] + forceValue[2] * 0.025};//* 1500.0
+
+    // m_forceAccumulationBufferLeft = {
+    //     m_forceAccumulationBufferLeft[0] + m_domainController->getForce(1,m_armAnglePerSide)[0] * 0.025,//* 1500.0
+    //     m_forceAccumulationBufferLeft[1] + m_domainController->getForce(1,m_armAnglePerSide)[1] * 0.025,//* 1500.0
+    //     m_forceAccumulationBufferLeft[2] + m_domainController->getForce(1,m_armAnglePerSide)[2] * 0.025};//* 1500.0
+
 
     double endEffectorDelta_X_L = m_forceAccumulationBufferLeft[0] / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
     double endEffectorDelta_Y_L = m_forceAccumulationBufferLeft[1] / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
@@ -1490,6 +1474,9 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L_ForceControl(c
     double endEffectorTarget_X_L = m_ruckigOutputState_L.new_position[0];// / m_motionScaling[2]，初始值加上delta值为末端点应该移动到的位置，以此位置解算
     double endEffectorTarget_Y_L = m_ruckigOutputState_L.new_position[1];// / m_motionScaling[0]
     double endEffectorTarget_Z_L = m_ruckigOutputState_L.new_position[2];// / m_motionScaling[0]
+      // LOG(INFO)<<" endEffectorTarget_Y_L: "<<endEffectorTarget_Y_L<<" endEffectorTarget_Z_L: "<<endEffectorTarget_Z_L;
+
+    // LOG(INFO)<<"endEffectorTarget_Y_L: "<<endEffectorInit_X_L + endEffectorDelta_X_L<<" endEffectorDelta_Y_L: "<<endEffectorDelta_Y_L<<" endEffectorInit_Y_L: "<<endEffectorInit_Y_L;
 
     double jointAngle1_Init_L, jointAngle2_Init_L, jointAngle3_Init_L;
     jointAngle1_Init_L = m_endEffectorInitJointAngle_L[0];
@@ -1525,36 +1512,40 @@ std::array<double, ControlValueNum> RobotControl:: motionMapping_R_ForceControl(
 
 {
     std::array<double, ControlValueNum> controlValueTmp_R = {0};
-    // auto positionWorldCurX = handlePoseCur.handlePoseR_X;
-    // auto positionWorldCurY = -handlePoseCur.handlePoseR_Y;
-    // auto positionWorldCurZ = -handlePoseCur.handlePoseR_Z;
-
-    // auto positionWorldInitX = m_handlePoseInit_R.handlePoseR_X;
-    // auto positionWorldInitY = -m_handlePoseInit_R.handlePoseR_Y;
-    // auto positionWorldInitZ = -m_handlePoseInit_R.handlePoseR_Z;
 
     /*进入使能时机械臂末端的位置*/
     double endEffectorInit_X_R = m_endEffectorInitPosition_R[0];
     double endEffectorInit_Y_R = m_endEffectorInitPosition_R[1];
     double endEffectorInit_Z_R = m_endEffectorInitPosition_R[2];
 
-    /*endEffectorDelta为相对于endEffectorInit的位置改变量*/
+    // auto forceValue = m_domainController->getForce(0,m_armAnglePerSide);
+    auto forceValue = m_force_R.load();
 
-    // double endEffectorDelta_X_R = (positionWorldCurX - positionWorldInitX) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
-    // double endEffectorDelta_Y_R = (positionWorldCurY - positionWorldInitY) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
-    // double endEffectorDelta_Z_R = (positionWorldCurZ - positionWorldInitZ) / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+    for(int i = 0; i < 3; i++){
+        if(forceValue[i] > 4){
+            forceValue[i] = 4;
+        }else if(forceValue[i] < -4){
+            forceValue[i] = -4;
+        }
+    }
 
-
-    //TODO: do motion here
+    // LOG(INFO)<<"forceValue : "<<forceValue;
 
     m_forceAccumulationBufferRight = {
-        m_forceAccumulationBufferRight[0] + m_domainController->getForce(0)[0] * 1500.0,
-        m_forceAccumulationBufferRight[1] + m_domainController->getForce(0)[1] * 1500.0,
-        m_forceAccumulationBufferRight[2] + m_domainController->getForce(0)[2] * 1500.0};
+        m_forceAccumulationBufferRight[0] + forceValue[0] * 0.025,//* 1500.0
+        m_forceAccumulationBufferRight[1] + forceValue[1] * 0.025,//* 1500.0
+        m_forceAccumulationBufferRight[2] + forceValue[2] * 0.025};//* 1500.0
+
+
+    // m_forceAccumulationBufferRight = {
+    //     m_forceAccumulationBufferRight[0] + m_domainController->getForce(0,m_armAnglePerSide)[0] * 0.025,
+    //     m_forceAccumulationBufferRight[1] + m_domainController->getForce(0,m_armAnglePerSide)[1] * 0.025,
+    //     m_forceAccumulationBufferRight[2] + m_domainController->getForce(0,m_armAnglePerSide)[2] * 0.025};
 
     double endEffectorDelta_X_R = m_forceAccumulationBufferRight[0] / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
     double endEffectorDelta_Y_R = m_forceAccumulationBufferRight[1] / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
     double endEffectorDelta_Z_R = m_forceAccumulationBufferRight[2] / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+
 
     /*路径规划*/
     m_ruckigInputState_R.target_position = {(endEffectorInit_X_R + endEffectorDelta_X_R),
@@ -1573,9 +1564,11 @@ std::array<double, ControlValueNum> RobotControl:: motionMapping_R_ForceControl(
     }
     m_ruckigOutputState_R.pass_to_input(m_ruckigInputState_R);
 
-    double endEffectorTarget_X_R = m_ruckigOutputState_R.new_position[0];// / m_motionScaling[2]，初始值加上delta值为末端点应该移动到的位置，以此位置解算
-    double endEffectorTarget_Y_R = m_ruckigOutputState_R.new_position[1];// / m_motionScaling[0]
-    double endEffectorTarget_Z_R = m_ruckigOutputState_R.new_position[2];// / m_motionScaling[0]
+    double endEffectorTarget_X_R = m_ruckigOutputState_R.new_position[0];
+    double endEffectorTarget_Y_R = m_ruckigOutputState_R.new_position[1];
+    double endEffectorTarget_Z_R = m_ruckigOutputState_R.new_position[2];
+
+    // LOG(INFO)<<"endEffectorTarget_Y_R"<<endEffectorTarget_Y_R<<" endEffectorDelta_Y_R: "<<endEffectorDelta_Y_R<<" endEffectorInit_Y_R: "<<endEffectorInit_Y_R;
 
     double jointAngle1_Init_R, jointAngle2_Init_R, jointAngle3_Init_R;
     jointAngle1_Init_R = m_endEffectorInitJointAngle_R[0];
@@ -1624,15 +1617,6 @@ void RobotControl::storeCurAsPrev(const HandlePose& handlePoseCur,
 
     m_motorTargetEncoderPrev_L = motorTargetEncoder_L;
     m_motorTargetEncoderPrev_R = motorTargetEncoder_R;
-
-    // if ((enableTagCur_L == enableAction || enableTagCur_L == keepEnabling) && (m_enableTagPrev_L == disableAction || m_enableTagPrev_L == keepDisabling))
-    // {
-    //     m_handlePoseLastLoop_L.handlePoseL_OpenAngle = handlePoseCur.handlePoseL_OpenAngle;
-    // }
-    // if ((enableTagCur_R == enableAction || enableTagCur_R == keepEnabling) && (m_enableTagPrev_R == disableAction || m_enableTagPrev_R == keepDisabling))
-    // {
-    //     m_handlePoseLastLoop_R.handlePoseR_OpenAngle = handlePoseCur.handlePoseR_OpenAngle;
-    // }
 
     /*出使能时记录当前姿态位置*/
     if (enableTagCur_L == disableAction)
@@ -1953,13 +1937,11 @@ std::array<double, 3> RobotControl::OneEuroStep(const std::array<double, 3>& raw
             xhat_R[i] += a_p * (raw[i] - xhat_R[i]);
 
             out[i] = xhat_R[i];
-
     }
     }
 
     return out;
 }
-
 
 void RobotControl::calculateEndEffectorPosition_init(const HandlePose& handlePoseCur, const std::array<int,MotorNumPerSide>& motorPos_Cur, const char& side)//yu 通过各电机的读数推断端点在坐标系中的位置
 {
@@ -2048,14 +2030,9 @@ std::array<int, MotorNumPerSide> RobotControl::calculateTargetEncoder(const std:
         }
         if(m_endeffectorConfiguration == EndeffectorConfiguration::fourMaxons)
         {
-            /*4轴大电机*/
-            // for(int i = 4; i < 8; i++)
-            // {
-            //     targetEncoder[i] = static_cast<int>(controlValue_Cur[i] * m_encoderPerDegree_R[i - 4]) * 2.75;
-            // }
+
              targetEncoder[4] =0;
              targetEncoder[5] =0;
-
              targetEncoder[9] = static_cast<int>(controlValue_Cur[9] * m_encoderPerDegree_R[3]);
              targetEncoder[8] = static_cast<int>(controlValue_Cur[8] * m_encoderPerDegree_R[2]);
              targetEncoder[7] = static_cast<int>(controlValue_Cur[7] * m_encoderPerDegree_R[1]);
@@ -2435,9 +2412,11 @@ void RobotControl::receiveMotorData()
     auto magneticEncoder_L = m_domainController->getMagneticScale(1);
     auto magneticEncoder_R = m_domainController->getMagneticScale(2);
 
+
+
     /*力*/
-    auto force_l = m_domainController->getForce(1);
-    auto force_r = m_domainController->getForce(2);
+    auto force_l = m_domainController->getForce(1,m_armAnglePerSide);
+    auto force_r = m_domainController->getForce(0,m_armAnglePerSide);
     // std::cout << "force_l: " << force_l[0] << " " << force_l[1]<< " " << force_l[2] << std::endl;
     // std::cout << "force_r: " << force_r[0] << " " << force_r[1]<< " " << force_r[2] << std::endl;
 
@@ -2537,6 +2516,12 @@ void RobotControl::receiveMotorData()
     m_motorCur_L.store(motorCur_L);
     m_motorFollowingPosErr_L.store(motorFollowingPosErr_L);
 
+    m_magneticEncoder_L.store(magneticEncoder_L);
+    m_magneticEncoder_R.store(magneticEncoder_R);
+
+    m_force_L.store(force_l);
+    m_force_R.store(force_r);
+
     m_domainDigtalPre_L = domainDigitalCur_L;
     m_domainDigtalPre_R = domainDigitalCur_R;
 
@@ -2562,6 +2547,7 @@ void RobotControl::setEndJointDragEnableStatus(const uint8_t& domainDigitalCur_L
         m_dragButtonPressCur_R = 0;
     }
 
+    // LOG(INFO)<<"m_endJointDragBtnCounter_L : "<<m_endJointDragBtnCounter_L;
     /*如果按下时间大于100*/
     if(m_endJointDragBtnCounter_L >= 100)
     {
@@ -2573,22 +2559,11 @@ void RobotControl::setEndJointDragEnableStatus(const uint8_t& domainDigitalCur_L
         m_endJointDragBtnCounter_R = 100;
         m_dragButtonPressCur_R = 1;
     }
-    // LOG(INFO)<<"m_dragButtonPressCur_L: "<<m_dragButtonPressCur_L<<" m_endJointDragBtnCounter_L: "<<m_endJointDragBtnCounter_L;
+    // LOG(INFO)<<"m_dragButtonPressCur_L: "<<m_dragButtonPressCur_L<<" m_endJointDragBtnCounter_L: "<<m_endJointDragBtnCounter_L<<" m_dragButtonPressPre_L: "<<m_dragButtonPressPre_L;
     // LOG(INFO)<<"m_dragButtonPressCur_R: "<<m_dragButtonPressCur_R<<" domainDigitalCur_R: "<< static_cast<int>(domainDigitalCur_R) << "  counter: " << m_endJointDragBtnCounter_R;
 
 }
 
-// void RobotControl::changeOperationMode(const HandlePose& masterHandlePose_Cur)
-// {
-//     m_curRobotControlMode.load();
-
-//     if(masterHandlePose_Cur.enablePedal == pedalDisable && (m_endJointDragBtnCounter_L >= 99 || m_endJointDragBtnCounter_R >= 99)){
-//         m_curRobotControlMode.store(RobotControlMode::Collaboration_EndJoint);
-//     }
-//     else{
-//         m_curRobotControlMode.store(RobotControlMode::TeleOperation);
-//     }
-// }
 
 void RobotControl::sendMotorData(const std::array<int, MotorNumPerSide>& targetEncoder_R, const std::array<int, MotorNumPerSide>& targetVel_R,
                                  const std::array<int, MotorNumPerSide>& targetEncoder_L, const std::array<int, MotorNumPerSide>& targetVel_L)
@@ -2900,8 +2875,27 @@ int RobotControl::enableCase_KeepPressPedal(const HandlePose& masterHandlePose_C
     }
 
     /*力模式*/
-        if(side == 'r'){
-            if(m_dragButtonPressCur_R == 1)
+
+    if(side == 'r'){
+
+        if(m_dragButtonPressCur_R == 1)
+        {
+            judgePositonForceControl('r');
+            if(!isForcePositionRight(masterHandlePose_Cur, 'r')){/*不满足力控制条件*/
+                if(m_enableTagPrev_R == ForceDisable || m_enableTagPrev_R == keepDisabling)
+                {
+                    enableFlag = keepDisabling;
+                }
+                if(m_enableTagPrev_R == ForceEnable || m_enableTagPrev_R == KeepForce)
+                {
+                // m_handlePoseLastLoop_L = masterHandlePose_Cur;
+                    enableFlag = ForceDisable;
+                    for(int i=0; i<4 ; i++){
+                    // m_motorTargetEncoderLast_R[i] = motorTargetEncoder_R[i];
+                     }
+                }
+            }
+            else if(isForcePositionRight(masterHandlePose_Cur, 'l'))
             {
                 if(m_dragButtonPressPre_R == 0 && m_enableTagPrev_R == keepDisabling)
                 {
@@ -2912,151 +2906,69 @@ int RobotControl::enableCase_KeepPressPedal(const HandlePose& masterHandlePose_C
                     enableFlag = KeepForce;
                 }
             }
-            else if(m_dragButtonPressCur_R == 0)
-            {
-                if(m_dragButtonPressPre_R == 1 && (m_enableTagPrev_R == KeepForce || m_enableTagPrev_R == ForceEnable)){
+        }
+        else if(m_dragButtonPressCur_R == 0)
+        {
+            if(m_dragButtonPressPre_R == 1 && (m_enableTagPrev_R == KeepForce || m_enableTagPrev_R == ForceEnable)){
+                enableFlag = ForceDisable;
+                for(int i=0; i<4 ; i++){
+                   // m_motorTargetEncoderLast_R[i] = motorTargetEncoder_R[i];
+                }
+
+            }
+        }
+        m_dragButtonPressPre_R = m_dragButtonPressCur_R;
+    }
+
+
+    else if(side == 'l'){
+
+        if(m_dragButtonPressCur_L == 1)
+        {
+            judgePositonForceControl('l');
+            if(!isForcePositionRight(masterHandlePose_Cur, 'l')){/*不满足力控制条件*/
+
+                if(m_enableTagPrev_L == ForceDisable || m_enableTagPrev_L == keepDisabling)
+                {
+                    enableFlag = keepDisabling;
+                }
+                if(m_enableTagPrev_L == ForceEnable || m_enableTagPrev_L == KeepForce)
+                {
                     enableFlag = ForceDisable;
                     for(int i=0; i<4 ; i++){
-                       m_motorTargetEncoderLast_R[i] = motorTargetEncoder_R[i];
+                       m_motorTargetEncoderLast_L[i] = motorTargetEncoder_L[i];
                     }
-
                 }
             }
-            m_dragButtonPressPre_R = m_dragButtonPressCur_R;
-        }
-        else if(side == 'l'){
-            if(m_dragButtonPressCur_L == 1)
+            else if(isForcePositionRight(masterHandlePose_Cur, 'l'))
             {
+
                 if(m_dragButtonPressPre_L == 0 && m_enableTagPrev_L == keepDisabling)
                 {
                     enableFlag = ForceEnable;
                 }
-
                 else if (m_dragButtonPressPre_L == 1 && (m_enableTagPrev_L == ForceEnable || m_enableTagPrev_L == KeepForce))
                 {
                     enableFlag = KeepForce;
                 }
             }
-            else if(m_dragButtonPressCur_L == 0)
-            {
-                if(m_dragButtonPressPre_L == 1 && (m_enableTagPrev_L == KeepForce || m_enableTagPrev_L == ForceEnable)){
-                    enableFlag = ForceDisable;
-                    for(int i=0; i<4; i++){
-                       m_motorTargetEncoderLast_L[i] = motorTargetEncoder_L[i];
-                    }
+        }
+        else if(m_dragButtonPressCur_L == 0)
+        {
+            if(m_dragButtonPressPre_L == 1 && (m_enableTagPrev_L == KeepForce || m_enableTagPrev_L == ForceEnable)){
+                enableFlag = ForceDisable;
+                for(int i=0; i<4; i++){
+                   m_motorTargetEncoderLast_L[i] = motorTargetEncoder_L[i];
                 }
             }
-           m_dragButtonPressPre_L = m_dragButtonPressCur_L;
         }
-
-
+       m_dragButtonPressPre_L = m_dragButtonPressCur_L;
+    }
 
     return enableFlag;
 }
 
-
-
-// int RobotControl::enableCase_KeepPressPedal(const HandlePose& masterHandlePose_Cur, const char& side)//yu 记录离开使能时的位置，以及回到使能时m_alignmentNumber_R=0
-// {
-//     int enableFlag = keepDisabling;
-//     auto motorTargetEncoder_L = m_motorEncoderCur_L.load();
-//     auto motorTargetEncoder_R = m_motorEncoderCur_R.load();
-
-//     if(side == 'r')
-//     {
-//         if(!isPoseRight(masterHandlePose_Cur, 'r'))
-//         {
-//             if(m_enableTagPrev_R == disableAction || m_enableTagPrev_R == keepDisabling)
-//             {
-//                 enableFlag = keepDisabling;
-//             }
-//             if(m_enableTagPrev_R == enableAction || m_enableTagPrev_R == keepEnabling)//pre处于使能状态，此时进入disable
-//             {
-//                 // m_handlePoseLastLoop_R = masterHandlePose_Cur;
-//                 enableFlag = disableAction;
-//                 m_motorTargetEncoderLast_R = motorTargetEncoder_R;
-//                 m_compensation_LastR = m_compensation_CurR;
-//             }
-//         }
-//         else if(isPoseRight(masterHandlePose_Cur, 'r'))
-//         {
-//             if((m_enableTagPrev_R == disableAction || m_enableTagPrev_R == keepDisabling)
-//                 && ((masterHandlePose_Cur.enablePedal == pedalEnable)||(masterHandlePose_Cur.enablePedal == pedalDisable && m_dragButtonPress_R == 1))
-//                 && isPoseMatch(masterHandlePose_Cur,'r') == true)
-//             {
-//                 enableFlag = enableAction;
-//                 m_handlePoseInit_R = masterHandlePose_Cur;
-//             }
-//             else if ((m_enableTagPrev_R == disableAction || m_enableTagPrev_R == keepDisabling) &&
-//                      ((masterHandlePose_Cur.enablePedal == pedalEnable && isPoseMatch(masterHandlePose_Cur,'r') == false)||(masterHandlePose_Cur.enablePedal == pedalDisable && m_dragButtonPress_R == 0)))
-//             {
-//                 enableFlag = keepDisabling;
-//             }
-//             else if ((m_enableTagPrev_R == enableAction || m_enableTagPrev_R == keepEnabling) &&
-//                        ((masterHandlePose_Cur.enablePedal == pedalDisable && m_dragButtonPress_R == 0) || (masterHandlePose_Cur.enablePedal == pedalDisable && m_dragButtonPress_R == 1)))
-//             {
-//                 // m_handlePoseLastLoop_R = masterHandlePose_Cur;
-//                 enableFlag = disableAction;
-//                 m_motorTargetEncoderLast_R = motorTargetEncoder_R;
-//                 m_compensation_LastR = m_compensation_CurR;
-//             }
-//             else if ((m_enableTagPrev_R == enableAction || m_enableTagPrev_R == keepEnabling) &&
-//                        ((m_dragButtonPress_R == 0 && masterHandlePose_Cur.enablePedal == pedalEnable) || (m_dragButtonPress_R == 1 && masterHandlePose_Cur.enablePedal == pedalDisable)))
-//             {
-//                 enableFlag = keepEnabling;
-//             }
-//         }
-//         m_enableTagPrev_R = enableFlag;
-//     }
-
-//     else if(side == 'l')
-//     {
-//         if(!isPoseRight(masterHandlePose_Cur, 'l')){
-//             if(m_enableTagPrev_L == disableAction || m_enableTagPrev_L == keepDisabling)
-//             {
-//                 enableFlag = keepDisabling;
-//             }
-//             if(m_enableTagPrev_L == enableAction || m_enableTagPrev_L == keepEnabling)
-//             {
-//                 // m_handlePoseLastLoop_L = masterHandlePose_Cur;
-//                 enableFlag = disableAction;
-//                 m_motorTargetEncoderLast_L = motorTargetEncoder_L;
-//                 m_compensation_LastL = m_compensation_CurL;
-//             }
-//         }
-//         else if(isPoseRight(masterHandlePose_Cur, 'l'))
-//         {
-//             if((m_enableTagPrev_L == disableAction || m_enableTagPrev_L == keepDisabling)
-//                 && masterHandlePose_Cur.enablePedal == pedalEnable && isPoseMatch(masterHandlePose_Cur,'l') == true)
-//             {
-//                 enableFlag = enableAction;
-//                 m_handlePoseInit_L = masterHandlePose_Cur;
-//             }
-//             else if ((m_enableTagPrev_L == disableAction || m_enableTagPrev_L == keepDisabling) &&
-//                      ((masterHandlePose_Cur.enablePedal == pedalEnable && isPoseMatch(masterHandlePose_Cur,'l') == false)||(masterHandlePose_Cur.enablePedal == pedalDisable)))
-//             {
-//                 enableFlag = keepDisabling;
-//             }
-//             else if ((m_enableTagPrev_L == enableAction || m_enableTagPrev_L == keepEnabling) &&
-//                      masterHandlePose_Cur.enablePedal == pedalDisable)
-//             {
-//                 // m_handlePoseLastLoop_L = masterHandlePose_Cur;
-//                 enableFlag = disableAction;
-//                 m_motorTargetEncoderLast_L = motorTargetEncoder_L;
-//                 m_compensation_LastL = m_compensation_CurL;
-//             }
-//             else if ((m_enableTagPrev_L == enableAction || m_enableTagPrev_L == keepEnabling) &&
-//                      masterHandlePose_Cur.enablePedal == pedalEnable)
-//             {
-//                 enableFlag = keepEnabling;
-//             }
-//         }
-//     }
-//     return enableFlag;
-// }
-
-// Check if the master device is in appropriate work space;
-bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const char& side) const//yu 且要满足flag_openangle等于true时（false为status=3时openangle太小）
+bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const char& side) const
 {
     auto handlePoseCur = m_masterConsole.returnHandlePose();
     // auto handlePoseCurshuru = masterHandlePose_Cur;
@@ -3088,11 +3000,9 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
     double endEffectorTarget_Y_L = endEffectorDelta_Y_L + endEffectorInit_Y_L + m_endArm_3 * sin(-m_armAnglePerSide / 180.0 * M_PI);
     double endEffectorTarget_Z_L = endEffectorDelta_Z_L + endEffectorInit_Z_L - m_endArm_3 * cos(-m_armAnglePerSide / 180.0 * M_PI);
 
-    // LOG(INFO)<<" endEffectorTarget_Y_L: "<<endEffectorTarget_Y_L<<" endEffectorTarget_Z_L: "<<endEffectorTarget_Z_L;
-    // LOG(INFO)<<" endEffectorTarget_Y_R: "<<endEffectorTarget_Y_R<<" endEffectorTarget_Z_R: "<<endEffectorTarget_Z_R;
-    // LOG(INFO)<<"masterHandlePose_Cur.handlePoseR_Y: "<<masterHandlePose_Cur.handlePoseR_Y<<" masterHandlePose_Cur.handlePoseL_X: "<<masterHandlePose_Cur.handlePoseL_X;
+    // LOG(INFO)<<" endEffectorTarget_Y_L: "<<endEffectorTarget_Y_L<<" endEffectorTarget_Z_L: "<<endEffectorTarget_Z_L<<" endEffectorTarget_Y_R: "<<endEffectorTarget_Y_R<<" endEffectorTarget_Z_R: "<<endEffectorTarget_Z_R;
 
-    // if(m_oprationMode == 1){
+    // LOG(INFO)<<" endEffectorTarget_Y_L: "<<endEffectorTarget_Y_L<<" endEffectorInit_Y_L: "<<endEffectorInit_Y_L<<" arm3_y: "<<m_endArm_3 * sin(-m_armAnglePerSide / 180.0 * M_PI)<<" endEffectorTarget_Z_L: "<<endEffectorTarget_Z_L<<" endEffectorInit_Z_L: "<<endEffectorInit_Z_L<<" arm3_Z: "<<- m_endArm_3 * cos(-m_armAnglePerSide / 180.0 * M_PI);
 
      if(side =='l'){
 
@@ -3107,19 +3017,19 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
 
                          if((masterHandlePose_Cur.handlePoseL_Z > -80) && (masterHandlePose_Cur.handlePoseL_Z < -8)){
 
-                             // if(((endEffectorTarget_Y_L < -245) && (handlePoseCur.handlePoseL_Y - m_handlePosePrev.handlePoseL_Y) < 0) || (endEffectorTarget_Y_L > -245)){
+                             if(((endEffectorTarget_Y_L < -226) && (handlePoseCur.handlePoseL_Y - m_handlePosePrev.handlePoseL_Y) < 0) || (endEffectorTarget_Y_L > -226)){
 
-                             //     if(((endEffectorTarget_Y_L > - 175) && (handlePoseCur.handlePoseL_Y - m_handlePosePrev.handlePoseL_Y) > 0) || (endEffectorTarget_Y_L < -175)){
+                                 if(((endEffectorTarget_Y_L > -126) && (handlePoseCur.handlePoseL_Y - m_handlePosePrev.handlePoseL_Y) > 0) || (endEffectorTarget_Y_L < -126)){
 
-                             //         if(((endEffectorTarget_Z_L < -555) && (handlePoseCur.handlePoseL_Z - m_handlePosePrev.handlePoseL_Z) < 0) || (endEffectorTarget_Z_L > -555)){
+                                     if(((endEffectorTarget_Z_L < -580) && (handlePoseCur.handlePoseL_Z - m_handlePosePrev.handlePoseL_Z) < 0) || (endEffectorTarget_Z_L > -580)){
 
-                             //             if(((endEffectorTarget_Z_L > -485) && (handlePoseCur.handlePoseL_Z - m_handlePosePrev.handlePoseL_Z) > 0) || (endEffectorTarget_Z_L < -485)){
+                                         if(((endEffectorTarget_Z_L > -460) && (handlePoseCur.handlePoseL_Z - m_handlePosePrev.handlePoseL_Z) > 0) || (endEffectorTarget_Z_L < -460)){
 
                              return true;
-                             //             }
-                             //         }
-                             //     }
-                             // }
+                                         }
+                                     }
+                                 }
+                             }
 
 
                          }
@@ -3147,19 +3057,19 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
 
                          if((masterHandlePose_Cur.handlePoseR_Z > -80) && (masterHandlePose_Cur.handlePoseR_Z < -8)){
 
-                             // if(((endEffectorTarget_Y_R < 175) && (handlePoseCur.handlePoseR_Y - m_handlePosePrev.handlePoseR_Y) < 0) || (endEffectorTarget_Y_R > 175)){
+                             if(((endEffectorTarget_Y_R < 126) && (handlePoseCur.handlePoseR_Y - m_handlePosePrev.handlePoseR_Y) < 0) || (endEffectorTarget_Y_R > 126)){
 
-                             //     if(((endEffectorTarget_Y_R > 245) && (handlePoseCur.handlePoseR_Y - m_handlePosePrev.handlePoseR_Y) > 0) || (endEffectorTarget_Y_R < 245)){
+                                 if(((endEffectorTarget_Y_R > 226) && (handlePoseCur.handlePoseR_Y - m_handlePosePrev.handlePoseR_Y) > 0) || (endEffectorTarget_Y_R < 226)){
 
-                             //         if(((endEffectorTarget_Z_R < 485) && (handlePoseCur.handlePoseR_Z - m_handlePosePrev.handlePoseR_Z) < 0) || (endEffectorTarget_Z_R > 485)){
+                                     if(((endEffectorTarget_Z_R < -580) && (handlePoseCur.handlePoseR_Z - m_handlePosePrev.handlePoseR_Z) < 0) || (endEffectorTarget_Z_R > -580)){
 
-                             //             if(((endEffectorTarget_Z_R > 555) && (handlePoseCur.handlePoseR_Z - m_handlePosePrev.handlePoseR_Z) > 0) || (endEffectorTarget_Z_R < 555)){
+                                         if(((endEffectorTarget_Z_R > -460) && (handlePoseCur.handlePoseR_Z - m_handlePosePrev.handlePoseR_Z) > 0) || (endEffectorTarget_Z_R < -460)){
 
                                              return true;
-                             //             }
-                             //         }
-                             //     }
-                             // }
+                                         }
+                                     }
+                                 }
+                             }
 
 
                          }
@@ -3174,11 +3084,125 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
      }
     }
 
-    // }
-//     if(m_oprationMode == 2){
-//         return true;
-//     // usleep(2*1000);
-// }
+}
+
+void RobotControl::judgePositonForceControl(const char& side){
+    if(side=='l'){
+
+        // auto forceValue = m_domainController->getForce(1,m_armAnglePerSide);
+        auto forceValue = m_force_L.load();
+
+        for(int i = 0; i < 3; i++){
+            if(forceValue[i] > 4){
+                forceValue[i] = 4;
+            }else if(forceValue[i] < -4){
+                forceValue[i] = -4;
+            }
+        }
+        m_forceAccumulationBufferLeft_judge = {
+            m_forceAccumulationBufferLeft_judge[0] + forceValue[0] * 0.025,//* 1500.0
+            m_forceAccumulationBufferLeft_judge[1] + forceValue[1] * 0.025,//* 1500.0
+            m_forceAccumulationBufferLeft_judge[2] + forceValue[2] * 0.025};//* 1500.0
+    }
+
+    if(side=='r'){
+
+        // auto forceValue = m_domainController->getForce(0,m_armAnglePerSide);
+        auto forceValue = m_force_R.load();
+
+        for(int i = 0; i < 3; i++){
+            if(forceValue[i] > 4){
+                forceValue[i] = 4;
+            }else if(forceValue[i] < -4){
+                forceValue[i] = -4;
+            }
+        }
+        m_forceAccumulationBufferRight_judge = {
+            m_forceAccumulationBufferRight_judge[0] + forceValue[0] * 0.025,//* 1500.0
+            m_forceAccumulationBufferRight_judge[1] + forceValue[1] * 0.025,//* 1500.0
+            m_forceAccumulationBufferRight_judge[2] + forceValue[2] * 0.025};//* 1500.0
+    }
+}
+
+bool RobotControl::isForcePositionRight(const HandlePose& masterHandlePose_Cur, const char& side)//yu 且要满足flag_openangle等于true时（false为status=3时openangle太小）
+{
+    auto handlePoseCur = m_masterConsole.returnHandlePose();
+    auto forceValue_L = m_force_L.load();
+    auto forceValue_R = m_force_R.load();
+    // auto handlePoseCurshuru = masterHandlePose_Cur;
+    // LOG(INFO)<<" PITCH1: "<<handlePoseCurshuru.handlePoseR_Elevation * 180 / M_PI<<"  YAW1: "<<handlePoseCurshuru.handlePoseR_Arzimuth * 180 / M_PI<<"    Roll: "<<handlePoseCurshuru.handlePoseR_Roll * 180 / M_PI;
+
+    /*右手*/
+    double endEffectorInit_X_R = m_endEffectorInitPosition_R[0];
+    double endEffectorInit_Y_R = m_endEffectorInitPosition_R[1];
+    double endEffectorInit_Z_R = m_endEffectorInitPosition_R[2];
+
+    double endEffectorDelta_X_R = m_forceAccumulationBufferRight[0] / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+    double endEffectorDelta_Y_R = m_forceAccumulationBufferRight[1] / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+    double endEffectorDelta_Z_R = m_forceAccumulationBufferRight[2] / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+
+    double endEffectorTarget_X_R = endEffectorDelta_X_R + endEffectorInit_X_R;//X用磁栅尺限位
+    double endEffectorTarget_Y_R = endEffectorDelta_Y_R + endEffectorInit_Y_R + m_endArm_3 * sin(m_armAnglePerSide / 180.0 * M_PI);
+    double endEffectorTarget_Z_R = endEffectorDelta_Z_R + endEffectorInit_Z_R - m_endArm_3 * cos(m_armAnglePerSide / 180.0 * M_PI);
+
+    /*左手*/
+    double endEffectorInit_X_L = m_endEffectorInitPosition_L[0];
+    double endEffectorInit_Y_L = m_endEffectorInitPosition_L[1];
+    double endEffectorInit_Z_L = m_endEffectorInitPosition_L[2];
+
+    double endEffectorDelta_X_L = m_forceAccumulationBufferLeft_judge[0] / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+    double endEffectorDelta_Y_L = m_forceAccumulationBufferLeft_judge[1] / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+    double endEffectorDelta_Z_L = m_forceAccumulationBufferLeft_judge[2] / 0.1 / m_motionScaling[m_speedPedalIndex_Cur];/*unit: mm*/
+
+    double endEffectorTarget_X_L = endEffectorDelta_X_L + endEffectorInit_X_L;//X用磁栅尺限位
+    double endEffectorTarget_Y_L = endEffectorDelta_Y_L + endEffectorInit_Y_L + m_endArm_3 * sin(-m_armAnglePerSide / 180.0 * M_PI);
+    double endEffectorTarget_Z_L = endEffectorDelta_Z_L + endEffectorInit_Z_L - m_endArm_3 * cos(-m_armAnglePerSide / 180.0 * M_PI);
+
+    // LOG(INFO)<<" endEffectorTarget_Y_L: "<<endEffectorTarget_Y_L<<" endEffectorTarget_Z_L: "<<endEffectorTarget_Z_L<<" endEffectorTarget_Y_R: "<<endEffectorTarget_Y_R<<" endEffectorTarget_Z_R: "<<endEffectorTarget_Z_R;
+
+     if(side =='l'){/*y_init:-177 z_init:-520*/
+
+         if(((endEffectorTarget_Y_L < -276) && (forceValue_L[1] > 0)) || (endEffectorTarget_Y_L > -276)){
+             // LOG(INFO)<<"m_domainController->getForce(1,m_armAnglePerSide)[1]: " << m_domainController->getForce(1,m_armAnglePerSide)[1]<< " m_forceAccumulationBufferLeft_judge_PRE[1]: "<< m_forceAccumulationBufferLeft_judge_pre[1];
+
+             if(((endEffectorTarget_Y_L > -56) && (forceValue_L[1] < 0)) || (endEffectorTarget_Y_L < -56)){
+
+                 if(((endEffectorTarget_Z_L < -580) && (forceValue_L[2] > 0)) || (endEffectorTarget_Z_L > -580)){
+
+                     if(((endEffectorTarget_Z_L > -480) && (forceValue_L[2] < 0)) || (endEffectorTarget_Z_L < -480)){
+
+         return true;
+                     }
+                 }
+             }
+         }
+
+        else{
+            return false;
+        }
+     }
+
+     if(side =='r'){
+
+         if(((endEffectorTarget_Y_R < 126) && (forceValue_R[1] > 0)) || (endEffectorTarget_Y_R > 126)){
+
+             if(((endEffectorTarget_Y_R > 276) && (forceValue_R[1] < 0)) || (endEffectorTarget_Y_R < 276)){
+
+                 if(((endEffectorTarget_Z_R < -580) && (forceValue_R[2] > 0)) || (endEffectorTarget_Z_R > -580)){
+
+                     if(((endEffectorTarget_Z_R > -480) && (forceValue_R[2] < 0)) || (endEffectorTarget_Z_R < -480)){
+
+                         return true;
+                     }
+                 }
+             }
+         }
+
+        else{
+            return false;
+        }
+
+     }
 }
 
 bool RobotControl::isPoseMatch(const HandlePose& masterHandlePose_Cur, const char& side) const//yu
@@ -3204,16 +3228,16 @@ bool RobotControl::isPoseMatch(const HandlePose& masterHandlePose_Cur, const cha
     }
   }
 
-  // if(m_oprationMode == 2)
-  // {
-  //      return true;
-  // }
-  // // return true;
-
-// }
-
 void RobotControl::setControlInitHandleMotorPositionAndPose(const std::array<int, MotorNumPerSide>& motorPositionCur, const HandlePose& handlePoseCur, const char& side)//yu
 {
+        m_ruckigInputState_R.max_velocity = {200000.0, 200000.0, 200000.0};//500000.0
+        m_ruckigInputState_R.max_acceleration = {6000.0, 6000.0, 6000.0};//15000.0
+        m_ruckigInputState_R.max_jerk = {2000.0, 2000.0, 2000.0};//8000.0
+
+        m_ruckigInputState_L.max_velocity = {200000.0, 200000.0, 200000.0};
+        m_ruckigInputState_L.max_acceleration = {6000.0, 6000.0, 6000.0};
+        m_ruckigInputState_L.max_jerk = {2000.0, 2000.0, 2000.0};
+
     if(side == 'l')
     {
         m_handlePoseInit_L = handlePoseCur;
@@ -3273,9 +3297,20 @@ void RobotControl::setControlInitHandleMotorPositionAndPose(const std::array<int
 }
 
 void RobotControl::setForceControlInitHandleMotorPosition(const std::array<int, MotorNumPerSide>& motorPositionCur, const HandlePose& handlePoseCur, const char& side){
+
+    m_ruckigInputState_R.max_velocity = {25000.0, 25000.0, 25000.0};//500000.0
+    m_ruckigInputState_R.max_acceleration = {20000.0, 20000.0, 20000.0};//15000.0
+    m_ruckigInputState_R.max_jerk = {10000.0, 10000.0, 10000.0};//8000.0
+
+    m_ruckigInputState_L.max_velocity = {25000.0, 25000.0, 25000.0};
+    m_ruckigInputState_L.max_acceleration = {20000.0, 20000.0, 20000.0};
+    m_ruckigInputState_L.max_jerk = {10000.0, 10000.0, 10000.0};
+
+
     if(side == 'l')
     {
         m_forceAccumulationBufferLeft = {0,0,0};
+        m_forceAccumulationBufferLeft_judge = {0,0,0};
         m_handlePoseInit_L.handlePoseL_X = handlePoseCur.handlePoseL_X;
         m_handlePoseInit_L.handlePoseL_Y = handlePoseCur.handlePoseL_Y;
         m_handlePoseInit_L.handlePoseL_Z = handlePoseCur.handlePoseL_Z;
@@ -3301,6 +3336,7 @@ void RobotControl::setForceControlInitHandleMotorPosition(const std::array<int, 
     if(side == 'r')
     {
         m_forceAccumulationBufferRight = {0,0,0};
+        m_forceAccumulationBufferRight_judge = {0,0,0};
         m_handlePoseInit_R.handlePoseR_X = handlePoseCur.handlePoseR_X;
         m_handlePoseInit_R.handlePoseR_Y = handlePoseCur.handlePoseR_Y;
         m_handlePoseInit_R.handlePoseR_Z = handlePoseCur.handlePoseR_Z;
@@ -3327,12 +3363,44 @@ void RobotControl::setForceControlInitHandleMotorPosition(const std::array<int, 
 
 void RobotControl::endJointGoHome(const char& side)//yu
 {
+
     if(side == 'r')
     {
         std::thread calibration([this](){
             m_motorDriver->operationCSV(MotorType::MOONS, 0, arm_0);
             usleep(50 * 1000);
 
+            long magneticEncoder_Cur_L = static_cast<long>(m_magneticEncoder_L.load()) - static_cast<long>(MagneticEncoder_Init_L);
+            long magneticEncoder_Cur_R = static_cast<long>(m_magneticEncoder_R.load()) - static_cast<long>(MagneticEncoder_Init_R);
+            int target_Moons_L;
+            int target_Moons_R;
+            int MoonsGoZero_L;
+            int MoonsGoZero_R;
+
+            int targetEncode_Moons_L;
+            int targetEncode_Moons_R;
+
+            if(magneticEncoder_Cur_L < magneticEncoder_Cur_R){
+                target_Moons_L = (MagneticEncoder_Min_L - magneticEncoder_Cur_L)/1000;
+                target_Moons_R = (MagneticEncoder_Max_R - magneticEncoder_Cur_R)/1000;
+                MoonsGoZero_L =  30 * 4000;
+                MoonsGoZero_R =  -30 * 4000;
+
+                LOG(INFO)<<"Riht arm is front";
+            }
+            else if(magneticEncoder_Cur_L >= magneticEncoder_Cur_R){
+                target_Moons_L = (MagneticEncoder_Max_L - magneticEncoder_Cur_L)/1000;
+                target_Moons_R = (MagneticEncoder_Min_R - magneticEncoder_Cur_R)/1000;
+                MoonsGoZero_L =  -30 * 4000;
+                MoonsGoZero_R =  30 * 4000;
+
+                LOG(INFO)<<"Left arm is front";
+            }
+
+            targetEncode_Moons_R = 4000 * target_Moons_R;
+            targetEncode_Moons_L = 4000 * target_Moons_L;
+
+/*找编码器归零*/
             m_motorDriver->setTargetPos(MotorType::MOONS, 0, 120000, arm_0);//回复到的相对位置
 
             auto homeStatusTmp = m_motorHomingStatus_R.load();
@@ -3355,6 +3423,15 @@ void RobotControl::endJointGoHome(const char& side)//yu
             LOG(INFO)<<"goToTarget position";
             usleep(1000 * 1000);
 
+
+
+            // m_motorDriver->setTargetPos(MotorType::MOONS, 0, targetEncode_Moons_R, arm_0);/*先走到极值处*/
+            // usleep(50 * 1000);
+            // LOG(INFO)<<"SET MAX/MIN POSION OF RIGHT ARM! ";
+
+
+
+
             m_motorDriver->operationPP(MotorType::MOONS, 0, arm_0);//存在setOperationMode将模式改为PP 并发送targetposition作为相对位置
             usleep(50 * 1000);
 
@@ -3367,16 +3444,37 @@ void RobotControl::endJointGoHome(const char& side)//yu
                 std::bitset<32> statusWordInBinary_zero_1(statusWordTmp[1]);
                 std::bitset<32> statusWordInBinary_zero_2(statusWordTmp[2]);
                 std::bitset<32> statusWordInBinary_zero_3(statusWordTmp[3]);
-                //                    if(statusWordInBinary_jointE[10] == 1 && statusWordInBinary_jointF[10] == 1 && statusWordInBinary_jointG[10] == 1)
-                //                    {
+
                 if(statusWordInBinary_moons_1[10] == 1 && statusWordInBinary_zero_1[10] == 1 && statusWordInBinary_zero_2[10] == 1 && statusWordInBinary_zero_3[10] == 1){//如果状态字第10项为0,就完成了init
-                //     m_moonsCaliFinish_R = 1;
+
+                    LOG(INFO) << "GO MAX/MIN FINISH";
                     SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(UIAction_E::FinishCalibration),"r");//目的为与uiinterface通信，reset button
-                    LOG(INFO) << "FinishCalibration";
                     break;
                 }
                 usleep(5 * 1000);
             }
+
+            usleep(50 * 1000);
+
+            //  m_motorDriver->setTargetPos(MotorType::MOONS, 0, MoonsGoZero_R, arm_0);/*再走到中间位置*/
+            //  LOG(INFO)<<"SET ZERO POSION OF RIGHT ARM! ";
+            // usleep(5 * 1000);
+
+            // m_motorDriver->operationPP(MotorType::MOONS, 0, arm_0);//存在setOperationMode将模式改为PP 并发送targetposition作为相对位置
+            // usleep(50 * 1000);
+
+            // while(true)
+            // {
+            //     auto statusWordTmp = m_motorStatusWordCur_R.load();//当状态字(0x6041)的第10位=1的时候说明状态已经切换，即目标位置到达
+            //     std::bitset<32> statusWordInBinary_moons_1(statusWordTmp[0]);
+            //     if(statusWordInBinary_moons_1[10] == 1){
+            //         LOG(INFO) << "FinishCalibration";
+            //         //     m_moonsCaliFinish_R = 1;
+            //             SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(UIAction_E::FinishCalibration),"r");//目的为与uiinterface通信，reset button
+            //         break;
+            //     }
+            // }
+
         });
         calibration.detach();
         usleep(20 * 1000);
@@ -3387,6 +3485,37 @@ void RobotControl::endJointGoHome(const char& side)//yu
             m_motorDriver->operationCSV(MotorType::MOONS, 0, arm_1);
             usleep(50 * 1000);
 
+            long magneticEncoder_Cur_L = static_cast<long>(m_magneticEncoder_L.load()) - static_cast<long>(MagneticEncoder_Init_L);
+            long magneticEncoder_Cur_R = static_cast<long>(m_magneticEncoder_R.load()) - static_cast<long>(MagneticEncoder_Init_R);
+            int target_Moons_L;
+            int target_Moons_R;
+            int MoonsGoZero_L;
+            int MoonsGoZero_R;
+
+            int targetEncode_Moons_L;
+            int targetEncode_Moons_R;
+
+            if(magneticEncoder_Cur_L < magneticEncoder_Cur_R){
+                target_Moons_L = (MagneticEncoder_Min_L - magneticEncoder_Cur_L)/1000;
+                target_Moons_R = (MagneticEncoder_Max_R - magneticEncoder_Cur_R)/1000;
+                MoonsGoZero_L =  30 * 4000;
+                MoonsGoZero_R =  -30 * 4000;
+
+                LOG(INFO)<<"Riht arm is front";
+            }
+            else if(magneticEncoder_Cur_L >= magneticEncoder_Cur_R){
+                target_Moons_L = (MagneticEncoder_Max_L - magneticEncoder_Cur_L)/1000;
+                target_Moons_R = (MagneticEncoder_Min_R - magneticEncoder_Cur_R)/1000;
+                MoonsGoZero_L =  -30 * 4000;
+                MoonsGoZero_R =  30 * 4000;
+
+                LOG(INFO)<<"Left arm is front";
+            }
+
+            targetEncode_Moons_R = 4000 * target_Moons_R;
+            targetEncode_Moons_L = 4000 * target_Moons_L;
+
+/*找编码器归零*/
             m_motorDriver->setTargetPos(MotorType::MOONS, 0, 120000, arm_1);//回复到的相对位置
 
             auto homeStatusTmpL = m_motorHomingStatus_L.load();
@@ -3410,6 +3539,16 @@ void RobotControl::endJointGoHome(const char& side)//yu
             LOG(INFO)<<"goToTarget position";
             usleep(1000 * 1000);
 
+
+
+
+            // m_motorDriver->setTargetPos(MotorType::MOONS, 0, targetEncode_Moons_L, arm_1);/*先走到极值处*/
+            // usleep(50 * 1000);
+            // LOG(INFO)<<"SET MAX/MIN POSION OF RIGHT ARM! ";
+
+
+
+
             m_motorDriver->operationPP(MotorType::MOONS, 0, arm_1);//存在setOperationMode将模式改为PP 并发送targetposition作为相对位置
             usleep(50 * 1000);
 
@@ -3424,11 +3563,34 @@ void RobotControl::endJointGoHome(const char& side)//yu
                 std::bitset<32> statusWordInBinary_zero_3(statusWordTmp[3]);
                 // LOG(INFO)<<"statusWordInBinary_zero_1[10]: "<<statusWordInBinary_zero_1[10];
                 if(statusWordInBinary_moons_1[10] == 1 && statusWordInBinary_zero_1[10] == 1 && statusWordInBinary_zero_2[10] == 1 && statusWordInBinary_zero_3[10] == 1){//如果状态字第10项为0,就完成了init
-                    m_moonsCaliFinish_L = 1;
+                    LOG(INFO) << "GO MAX/MIN FINISH";
                     SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(UIAction_E::FinishCalibration),"l");//目的为与uiinterface通信，reset button
-                    LOG(INFO) << "FinishCalibration";
                     break;
                 }
+
+
+
+                // usleep(50 * 1000);
+
+                //  m_motorDriver->setTargetPos(MotorType::MOONS, 0, MoonsGoZero_L, arm_1);/*再走到中间位置*/
+                //  LOG(INFO)<<"SET ZERO POSION OF RIGHT ARM! ";
+                // usleep(5 * 1000);
+
+                // m_motorDriver->operationPP(MotorType::MOONS, 0, arm_1);//存在setOperationMode将模式改为PP 并发送targetposition作为相对位置
+                // usleep(50 * 1000);
+
+                // while(true)
+                // {
+                //     auto statusWordTmp = m_motorStatusWordCur_R.load();//当状态字(0x6041)的第10位=1的时候说明状态已经切换，即目标位置到达
+                //     std::bitset<32> statusWordInBinary_moons_1(statusWordTmp[0]);
+                //     if(statusWordInBinary_moons_1[10] == 1){
+                //         m_moonsCaliFinish_L = 1;
+                //         SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(UIAction_E::FinishCalibration),"l");//目的为与uiinterface通信，reset button
+                //         LOG(INFO) << "FinishCalibration";
+                //         break;
+                //     }
+                // }
+
                 usleep(2 * 1000);
             }
         });

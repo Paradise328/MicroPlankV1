@@ -327,6 +327,7 @@ void DomainController::readHandleOtherData(QByteArray qba)
                 m_domainControllerData_l_tmp.MagneticScale_Counter|=cftemp.payload.args[2];
                 m_domainControllerData_l_tmp.MagneticScale_Counter<<=8;
                 m_domainControllerData_l_tmp.MagneticScale_Counter|=cftemp.payload.args[1];
+                // std::cout << "magneticEncoder_L: " << m_domainControllerData_l_tmp.MagneticScale_Counter << std::endl;
 
                 /* parse data for forceSensor */
                 m_domainControllerData_l_tmp.ForceSensor.ForceSensor_Fx = Uint8ArrToFloat(cftemp.payload.args, 5);
@@ -366,6 +367,7 @@ void DomainController::readHandleOtherData(QByteArray qba)
 
             if(cftemp.ID==2)
             {
+
                 this -> m_selfCheckOK_r = true;
                 /* parse data for magnetic-scale */
                 DomainControllerData m_domainControllerData_r_tmp;
@@ -377,7 +379,7 @@ void DomainController::readHandleOtherData(QByteArray qba)
                 m_domainControllerData_r_tmp.MagneticScale_Counter|=cftemp.payload.args[2];
                 m_domainControllerData_r_tmp.MagneticScale_Counter<<=8;
                 m_domainControllerData_r_tmp.MagneticScale_Counter|=cftemp.payload.args[1];
-                // std::cout << "magneticEncoder: " << magneticScale_counter << std::endl;
+                // std::cout << "magneticEncoder_r: " << m_domainControllerData_r_tmp.MagneticScale_Counter << std::endl;
 
                 /* parse data for forceSensor */
                 m_domainControllerData_r_tmp.ForceSensor.ForceSensor_Fx = Uint8ArrToFloat(cftemp.payload.args, 5);
@@ -393,7 +395,6 @@ void DomainController::readHandleOtherData(QByteArray qba)
                                       m_domainControllerData_r_tmp.ForceSensor.ForceSensor_Mx * 9.8,
                                       m_domainControllerData_r_tmp.ForceSensor.ForceSensor_My * 9.8,
                                       m_domainControllerData_r_tmp.ForceSensor.ForceSensor_Mz * 9.8 };
-
 
                 if (!m_forceZeroFound_r) {
                     findForceSensorZero(m_forceSensorRaw_r, 0);
@@ -413,6 +414,9 @@ void DomainController::readHandleOtherData(QByteArray qba)
                 /* depackage data for digital inputs */
                 m_domainControllerData_r_tmp.DigitalInputs = cftemp.payload.args[29];
                 m_domainControllerData_r.store(m_domainControllerData_r_tmp);
+
+
+
             }
 
             // std::cout << static_cast<int>(m_domainControllerData.DigitalInputs)<< std::endl;
@@ -472,25 +476,53 @@ std::array<double,3> DomainController::getMomentum(uint armSide){
 }
 
 std::array<double,3> DomainController::getForce(uint armSide, double tilt_angle_deg) {
+    if(armSide == 0){
 
-    double install_angle_deg = 90.0; /* around Z axis */
-    double total_z_deg = install_angle_deg - tilt_angle_deg; /* around Z axis */
+        double install_angle_deg = -90.0; /* around Z axis */
+        // double total_z_deg = install_angle_deg - tilt_angle_deg; /* around Z axis */
+        double total_z_deg = -tilt_angle_deg; // -30.0; /* around Z axis */
 
-    /* to arc */
-    double theta_z = total_z_deg * M_PI / 180.0; /* around Z axis */
-    double theta_y = 90.0 * M_PI / 180.0;  /* around Y axis */
+        /* to arc */
+        double theta_z = total_z_deg * M_PI / 180.0; /* around Z axis */
+        double theta_y = install_angle_deg * M_PI / 180.0;  /* around Y axis */
 
-    /* rotation matrix */
-    Eigen::Matrix3d Rz = Eigen::AngleAxisd(theta_z, Eigen::Vector3d::UnitZ()).toRotationMatrix();
-    Eigen::Matrix3d Ry = Eigen::AngleAxisd(theta_y, Eigen::Vector3d::UnitY()).toRotationMatrix();
-    Eigen::Matrix3d R = Rz * Ry;
+        /* rotation matrix */
+        Eigen::Matrix3d Rz = Eigen::AngleAxisd(theta_z, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+        Eigen::Matrix3d Ry = Eigen::AngleAxisd(theta_y, Eigen::Vector3d::UnitY()).toRotationMatrix();
+        Eigen::Matrix3d R =  Ry * Rz;
 
-    std::array<double, 3> force = getForce(1);
-    Eigen::Vector3d Force_sensor(force[0], force[1], force[2]);
+        std::array<double, 3> force = getForce(0);
+        Eigen::Vector3d Force_sensor(force[0], force[1], force[2]);
 
-    Eigen::Vector3d Force_world = R.transpose() * Force_sensor;
+        Eigen::Vector3d Force_world = R/*.transpose()*/ * Force_sensor;
+        return {static_cast<double>(Force_world.x()), static_cast<double>(Force_world.y()), static_cast<double>(Force_world.z())};
 
-    return {static_cast<double>(Force_world.x()), static_cast<double>(Force_world.y()), static_cast<double>(Force_world.z())};
+    }
+
+
+    if(armSide == 1){
+
+        double install_angle_deg = -90.0; /* around Z axis */
+        // double total_z_deg = install_angle_deg - tilt_angle_deg; /* around Z axis */
+        double total_z_deg = tilt_angle_deg; // 30.0; /* around Z axis */
+
+        /* to arc */
+        double theta_z = total_z_deg * M_PI / 180.0; /* around Z axis */
+        double theta_y = install_angle_deg * M_PI / 180.0;  /* around Y axis */
+
+        /* rotation matrix */
+        Eigen::Matrix3d Rz = Eigen::AngleAxisd(theta_z, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+        Eigen::Matrix3d Ry = Eigen::AngleAxisd(theta_y, Eigen::Vector3d::UnitY()).toRotationMatrix();
+        Eigen::Matrix3d R =  Ry * Rz;
+
+        std::array<double, 3> force = getForce(1);
+        Eigen::Vector3d Force_sensor(force[0], force[1], force[2]);
+
+        Eigen::Vector3d Force_world = R/*.transpose()*/ * Force_sensor;
+        return {static_cast<double>(Force_world.x()), static_cast<double>(Force_world.y()), static_cast<double>(Force_world.z())};
+
+    }
+
 }
 
 std::array<double,3> DomainController::getMomentum(uint armSide, double tilt_angle_deg){

@@ -186,6 +186,10 @@ private:
 
     std::array<double,3>            m_forceAccumulationBufferRight;
 
+    std::array<double,3>            m_forceAccumulationBufferLeft_judge;
+
+    std::array<double,3>            m_forceAccumulationBufferRight_judge;
+
     MasterConsoleType               m_masterConsoleType;
 
     MasterConsole&                  m_masterConsole;
@@ -362,6 +366,12 @@ private:
     std::atomic<std::array<int, MotorNumPerSide>>           m_MotorTargetVel_L;
     std::atomic<std::array<int, MotorNumPerSide>>           m_MotorTargetVel_R;
 
+    std::atomic<std::array<double,3>>  m_force_L;
+    std::atomic<std::array<double,3>>  m_force_R;
+
+    std::atomic<uint32_t>                       m_magneticEncoder_L;
+    std::atomic<uint32_t>                       m_magneticEncoder_R;
+
     std::array<double,3> OneEuroStep(const std::array<double,3>&raw,const char& side);
     /*进入使能时计算初始位置*/
     void                           calculateEndEffectorPosition_init(const HandlePose& handlePoseCur, const std::array<int,MotorNumPerSide>& motorPos_Cur, const char& side);
@@ -395,6 +405,14 @@ private:
 
     void                            changeAngle_L();
     void                            changeAngle_R();
+
+    int                             MagneticEncoder_Init_L = 13875025;
+    int                             MagneticEncoder_Max_L = 30000;
+    int                             MagneticEncoder_Min_L = -30000;
+
+    int                             MagneticEncoder_Init_R = 9506863;
+    int                             MagneticEncoder_Max_R = 30000;
+    int                             MagneticEncoder_Min_R = -30000;
 
     mutable double                     m_armAnglePerSide = 30.0;
     std::atomic<std::array<int, MotorNumPerSide>>                  m_motorHomingStatus_R;
@@ -462,6 +480,8 @@ private:
     /*使能方式,使能状态判断*/
     int                             enableCase_KeepPressPedal(const HandlePose& masterHandlePose_Cur, const char& side);/*使能方式:踩脚踏*/
     bool                            isPoseRight(const HandlePose& masterHandlePose_Cur, const char& side) const;
+    bool                            isForcePositionRight(const HandlePose& masterHandlePose_Cur, const char& side);
+
     bool                            isPoseMatch(const HandlePose& masterHandlePose_Cur, const char& side) const;
     mutable int                     m_enableTagPrev_L = 4;
     mutable int                     m_enableTagPrev_R = 4;
@@ -635,6 +655,7 @@ private:
     double                  calculateOverlapValue(const std::array<int, MotorNumPerSide>& motorPosition_Cur, const HandlePose& masterHandlePose_Cur,const char& side) const;
     void                    setControlInitHandleMotorPositionAndPose(const std::array<int, MotorNumPerSide>& motorPositionCur, const HandlePose& handlePoseCur, const char& side);
     void                    setForceControlInitHandleMotorPosition(const std::array<int, MotorNumPerSide>& motorPositionCur, const HandlePose& handlePoseCur, const char& side);
+    void                    judgePositonForceControl(const char& side);
 
     static Eigen::Matrix3d ToQuaternionRotationMatrix(double q_L0, double q_L1, double q_L2, double q_L3);
     static Eigen::Matrix3d ToEulerRotationMatrix(double Azimuth, double Elevation, double Roll);

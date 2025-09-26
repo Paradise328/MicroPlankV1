@@ -1210,7 +1210,7 @@ Rectangle {
                 height: parent.height
                 verticalAlignment: Text.AlignTop
                 horizontalAlignment: Text.AlignHCenter
-                text: "20 X"
+                text: "12 X"
                 color: "#48FFFF"
             }
             MouseArea{
@@ -1258,7 +1258,7 @@ Rectangle {
                 height: parent.height
                 verticalAlignment: Text.AlignTop
                 horizontalAlignment: Text.AlignHCenter
-                text: "15 X"
+                text: "10 X"
                 color: "#48FFFF"
             }
             MouseArea{
@@ -1303,7 +1303,7 @@ Rectangle {
                 height: parent.height
                 verticalAlignment: Text.AlignTop
                 horizontalAlignment: Text.AlignHCenter
-                text: "10 X"
+                text: "7 X"
                 color: "#48FFFF"
             }
             MouseArea{
