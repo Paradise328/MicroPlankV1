@@ -153,13 +153,17 @@ void RobotControl::goToHold()
     }
     case static_cast<int>(RobotControlMode::TeleOperation)://通信模式
     {
-        if(m_enableTagPrev_R == 1 || m_enableTagPrev_R == 2){
-            m_handlePoseLastLoop_R = m_masterConsole.returnHandlePose();
+        if(m_enableTagPrev_R == 1 || m_enableTagPrev_R == 2 || m_enableTagPrev_R == 5 || m_enableTagPrev_R == 6){
+            if(m_enableTagPrev_R == 1 || m_enableTagPrev_R == 2){
+                m_handlePoseLastLoop_R = m_masterConsole.returnHandlePose();
+            }
             m_enableTagPrev_R = keepDisabling;
         }
 
-        if(m_enableTagPrev_L == 1 || m_enableTagPrev_L == 2){
-            m_handlePoseLastLoop_L = m_masterConsole.returnHandlePose();
+        if(m_enableTagPrev_L == 1 || m_enableTagPrev_L == 2 || m_enableTagPrev_L == 5 || m_enableTagPrev_L == 6){
+            if(m_enableTagPrev_L == 1 || m_enableTagPrev_L == 2){
+                m_handlePoseLastLoop_L = m_masterConsole.returnHandlePose();
+            }
             m_enableTagPrev_L = keepDisabling;
         }
 
@@ -493,6 +497,25 @@ void RobotControl::goToTeleOperation()
     }
     case static_cast<int>(RobotControlMode::Hold):
     {
+        /*进入手术保存当前初始机械臂位置*/
+        auto motorPositionCur_R = m_motorEncoderCur_R.load();
+        auto motorPositionCur_L = m_motorEncoderCur_L.load();
+
+        long magneticEncoder_Cur_L = static_cast<long>(m_magneticEncoder_L.load()) - static_cast<long>(MagneticEncoder_Init_L);
+        long magneticEncoder_Cur_R = static_cast<long>(m_magneticEncoder_R.load()) - static_cast<long>(MagneticEncoder_Init_R);
+        auto motorEncode_L = m_motorEncoderCur_L.load();
+        auto motorEncode_R = m_motorEncoderCur_R.load();
+
+        m_motorEncodeInit_X_L = motorEncode_L[0] - magneticEncoder_Cur_L * 4;
+        m_motorEncodeInit_X_R = motorEncode_R[0] - magneticEncoder_Cur_R * 4;
+
+        LOG(INFO)<<std::dec<<"motorEncode_R: "<<motorEncode_R[0]<<" m_motorEncodeInit_X_R: "<<m_motorEncodeInit_X_R<<" magneticEncoder_Cur_R: "<<magneticEncoder_Cur_R;
+        LOG(INFO)<<std::dec<<"mag_R: "<<static_cast<long>(m_magneticEncoder_R.load())<<" INIT_R: "<<static_cast<long>(MagneticEncoder_Init_R);
+
+        auto handlePoseCur = m_masterConsole.returnHandlePose();/*只用x轴位置*/
+
+        calculateEndEffectorPosition_init(handlePoseCur, motorPositionCur_L,'l');
+        calculateEndEffectorPosition_init(handlePoseCur, motorPositionCur_R,'r');
 
         m_flagInHold.store(false);
         usleep(10 * 1000);

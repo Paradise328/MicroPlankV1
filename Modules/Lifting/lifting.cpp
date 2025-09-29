@@ -431,7 +431,6 @@ void Lifting::dealWithMsg()
     int counter = 0;
     while(1)
     {
-//        qDebug()<<
         m_MsgGottenRWLock.lockForRead();
         if(m_MsgGottenQueue.isEmpty()==false){
             msg=m_MsgGottenQueue.dequeue();

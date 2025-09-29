@@ -237,15 +237,15 @@ private:
     std::deque<double> dispHist_L[3];
     std::deque<double> dispHist_R[3];
 
-    double fmin     = 1.0;//1.2;   // 低速/静止截止 [Hz]
-    double beta     = 2.53;//0.43;  // 速度->截止斜率 [Hz/(单位/秒)]
+    double fmin     = 0.1;//1.2;   // 低速/静止截止 [Hz]
+    double beta     = 3.53;//0.43;  // 速度->截止斜率 [Hz/(单位/秒)]
     double fd       = 18.0;  // 速度通道固定截止 [Hz]
     double dt       = 0.004; // 采样周期（固定 4 ms；若用真实 dt 就每帧更新它）
     double fc_max   = 40.0;  // f_c 上限（<=0 则不限制）
     double vel_dead = 0.0;   // 速度微小死区（0 关闭）
     double beta_a = 0.2;//加速度权重
-    double beta_d = 0.7;//累积位移权重
-    double win_len = 0.5;//位移窗口累计
+    double beta_d = 0.1;//累积位移权重
+    double win_len = 0.3;//位移窗口累计
     double tau_up = 0.05;//fc下降时间常数
     double tau_down = 0.3;//fc上升时间常数
 
@@ -263,8 +263,6 @@ private:
 
     std::atomic<bool>               m_flagControlThread;
 
-    /* hold = 0, teleopration = 1, collopration = 2*/
-    int                             m_oprationMode = 1;
     /* guiding arm control function and variables */
     GuidingArm                      m_guidingArm;
     std::thread                     m_guidingArmControlThread;
@@ -300,6 +298,9 @@ private:
 
     std::atomic<RobotControlMode>   m_curRobotControlMode = RobotControlMode::InitMode;
     std::atomic<RobotControlMode>   m_prevRobotControlMode = RobotControlMode::Hold;
+
+    /*测试模式： 1主从 2重复定位精度测试 3步进测试 4夹持测试*/
+    int m_oprationMode = 1;
 
     /* 上电状态 */
     void                            initMotor();
@@ -414,6 +415,9 @@ private:
     int                             MagneticEncoder_Max_R = 30000;
     int                             MagneticEncoder_Min_R = -30000;
 
+    int                             m_motorEncodeInit_X_L;/*x轴0位编码器值*/
+    int                             m_motorEncodeInit_X_R;
+
     mutable double                     m_armAnglePerSide = 30.0;
     std::atomic<std::array<int, MotorNumPerSide>>                  m_motorHomingStatus_R;
     std::atomic<std::array<int, MotorNumPerSide>>                  m_motorHomingStatus_L;
@@ -473,6 +477,7 @@ private:
     /*速度档位*/
     void                            setNewSpeed(const HandlePose& handlePosePrev,
                                                 const HandlePose& handlePoseCur);
+    void                            setVoiceCommand();
     mutable int                     m_posScalingIndex_Cur = poseScalingOff;
     mutable int                     m_speedPedalIndex_Cur = pedalSwitchTwo;
     mutable int                     m_speedPedalIndex_Prev = pedalSwitchTwo;
@@ -490,7 +495,6 @@ private:
     mutable int                     m_endJointDragBtnCounter_L;
     mutable int                     m_endJointDragBtnCounter_R;
     void                            setEndJointDragEnableStatus(const uint8_t& domainDigitalCur_L, const uint8_t& domainDigitalCur_R);
-    // void                            changeOperationMode(const HandlePose& masterHandlePose_Cur);
 
     mutable int                     m_alignmentNumber_L;
     mutable int                     m_alignmentNumber_R;
@@ -643,7 +647,7 @@ private:
     std::array<std::array<int,11>, 3> m_motorControl_save_R;
     std::array<std::array<int,11>, 3> m_motorControl_save_L;
 
-    double cableLengths_2(double alpha) const;//11111
+    double cableLengths_2(double alpha) const;
     double cableLengths_3(double q_2, double q_3_pre, double openAngle) const;
     std::array<std::array<int,11>, 3> forwardKinematics_R(const std::array<double, ControlValueNum>& controlValue_Prev, const std::array<double, ControlValueNum>& controlValue_Cur,
                                                            const std::array<int, MotorNumPerSide>& motorPosition_Init, const std::array<int, MotorNumPerSide>& motorPosition_Cur,

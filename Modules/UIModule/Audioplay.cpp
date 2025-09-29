@@ -105,11 +105,11 @@ void AudioPlay::dealWithMsg()
                 if(slist[0] == "speedCur")
                 {
                     auto speed = (slist[1].toInt());
-                    // playMotionScaling(speed);
+                    playMotionScaling(speed);
                 }
                 if(slist[0] == "enableBoth")
                 {
-                    // playEnableStatus(1);
+                    playEnableStatus(1);
                 }
                 break;
             }
@@ -122,7 +122,6 @@ void AudioPlay::dealWithMsg()
             i++;
         }
     }
-
 }
 
 void AudioPlay::GetAmMsg(Message_Inner_T msg)

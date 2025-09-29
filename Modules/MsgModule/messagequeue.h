@@ -129,7 +129,7 @@ enum class _Module_Inner_e
     Audio,
     MultipleModules,
 };
-using Module_Inner_E = enum _Module_Inner_e;//Module_Inner_E是一个枚举类
+using Module_Inner_E = enum _Module_Inner_e;
 
 struct _Message_Inner_t
 {

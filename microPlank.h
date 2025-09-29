@@ -102,6 +102,7 @@ private:
 
     /*开启机器人控制模块线程*/
     void                startRobotControl();
+
     void                startForceSensor();
 
     void                startDomainControllerThread();
@@ -120,7 +121,7 @@ private:
     /* TODO: armNum = 0: Left, armNum = 1: Right */
     DomainController*    m_domainController;
 
-    Lifting*             m_lifting=new Lifting("192.168.42.60",8080,m_MsgPool);
+    Lifting*             m_lifting = new Lifting("192.168.42.60",8080,m_MsgPool);
 
     RobotControl        m_robotControl = RobotControl(m_masterConsole, m_motorDriver, m_domainController, m_MsgPool);
 
