@@ -12,3 +12,6 @@ CompensationRatio = {Type = "DOUBLE",Value = 1.89}
 [Instrument.CZQ.8MM.1]
 EncoderPerDegree = {Type = "DOUBLE", Value = [113.75,182.04,162.00,162.00]}
 CompensationRatio = {Type = "DOUBLE",Value = 1.18}
+[Instrument.CZQ.3MM]
+[Instrument.CZQ.3MM.1]
+EncoderPerDegree = {Type = "DOUBLE", Value = [304.7, 11175.36112, 11175.36112, 11175.36112, 11175.36112, 11175.36112, 11175.36112]}

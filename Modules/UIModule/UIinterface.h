@@ -270,6 +270,7 @@ private:
     QObject                 *m_IO_Image_Level2 = nullptr;
     QObject                 *m_IO_Image_Level3 = nullptr;
     QObject                 *m_IO_Image_Level4 = nullptr;
+    QObject                 *m_IO_Image_Level5 = nullptr;
 
     QObject                 *m_INIT_Image_MasterConsoleStatus = nullptr;
     QObject                 *m_INIT_Image_LiftingStatus = nullptr;

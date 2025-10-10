@@ -147,6 +147,7 @@ public:
         m_guidingArm1stOrder({0}),
         m_guidingArm2ndOrder({0}),
         m_endeffectorConfiguration(EndeffectorConfiguration::fourMaxons),
+        // m_endeffectorConfiguration(EndeffectorConfiguration::sixMaxons),
         m_filter_1storder_guiding(m_guidingArm1stOrder, 250.0, 60.0),
         m_filter_2ndorder_guiding(m_guidingArm2ndOrder, 250.0, 60.0)
     {
@@ -292,7 +293,7 @@ private:
 
     /* 控制模式 */
 
-    EndeffectorConfiguration        m_endeffectorConfiguration = EndeffectorConfiguration::fourMaxons;
+    EndeffectorConfiguration        m_endeffectorConfiguration;// = EndeffectorConfiguration::fourMaxons;
 
     void                            setRobotControlMode(const RobotControlMode& tartgetRobotControlMode);
 
@@ -315,8 +316,6 @@ private:
     void                            goToTeleOperation();
 
     void                            teleoperation();
-
-    void                            collaboration();
 
     std::atomic<bool>               m_flagInTeleoperation = false;
 
@@ -341,7 +340,6 @@ private:
     /*与MotorDriver通信*/
     void                            receiveMotorData();
     /* communicate with domain controller */
-    void                            receiveDomainController();
 
     void                            sendMotorData(const std::array<int, MotorNumPerSide>& targetEncoder_R, const std::array<int, MotorNumPerSide>& targetVel_R,
                                                   const std::array<int, MotorNumPerSide>& targetEncoder_L, const std::array<int, MotorNumPerSide>& targetVel_L);
@@ -432,16 +430,20 @@ private:
     /*从本地文件读取系统参数等*/
     std::string                     m_configFilePath  = "/home/a/Desktop/codes/MikroPlanckV1/Config/EndeffectorData.toml";
     std::string                     m_robotConfigPath = "/home/a/Desktop/codes/MikroPlanckV1/Config/RobotData.toml";
+
     mutable std::string             m_endEffectorLeft   = "CZQ_4MM_1";
     mutable std::string             m_endEffectorRight  = "CZQ_4MM_1";
+
+    // mutable std::string             m_endEffectorLeft   = "CZQ_3MM_1";
+    // mutable std::string             m_endEffectorRight  = "CZQ_3MM_1";
 
     double                          m_initRotAroundY_L, m_initRotAroundX_L;  //Read From Toml
     double                          m_initRotAroundY_R, m_initRotAroundX_R;  //Read From Toml
     double                          m_sourceRotAroundY = -90 * M_PI / 180;  //Read From Toml
     // double                          m_theta = 30 ;
 
-    std::array<int,    4>           m_motionScaling;//Read From Toml
-    std::array<double, 2>           m_EncoderPerDegreeScalingFactor = {1, 1.2};
+    std::array<int,    5>           m_motionScaling;//Read From Toml
+    // std::array<double, 2>           m_EncoderPerDegreeScalingFactor = {1, 1.2};
 
     std::array<double, 4>           m_encoderPerDegree_L;//Read From Toml
     std::array<double, 4>           m_encoderPerDegree_R;//Read From Toml

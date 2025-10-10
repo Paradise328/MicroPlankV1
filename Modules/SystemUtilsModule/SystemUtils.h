@@ -513,12 +513,14 @@ enum class EndeffectorConfiguration{
 // constexpr int backwardLimit_r = ;
 
 constexpr int adcValueOpen_L = 35710;
+// constexpr int adcValueGrasp_L = 34500;
 constexpr int adcValueGrasp_L = 35050;
 constexpr int adcValueClose_L = 33203;
 constexpr int adcValuePerRevolution_L = 65536;
 
 constexpr int adcValueOpen_R = 35920;
 constexpr int adcValueGrasp_R = 33930;
+// constexpr int adcValueGrasp_R = 33380;
 constexpr int adcValueClose_R = 32480;
 constexpr int adcValuePerRevolution_R = 65536;
 
@@ -527,11 +529,12 @@ constexpr double graspThreshold = 0;
 //masterHandleSelfCheck
 constexpr int masterAllOk = 1;
 
-constexpr int pedalSwitchNumber = 4;
+constexpr int pedalSwitchNumber = 5;
 constexpr int pedalSwitchOne = 0;
 constexpr int pedalSwitchTwo = 1;
 constexpr int pedalSwitchThree = 2;
 constexpr int pedalSwitchFour = 3;
+constexpr int pedalSwitchFive = 4;
 
 constexpr int poseScalingOff = 0;
 constexpr int poseScalingOn = 1;

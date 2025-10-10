@@ -1371,6 +1371,52 @@ Rectangle {
             }
         }
 
+        Rectangle{
+            //@disable-check M16
+            objectName: "io_level5"
+            id: io_level
+            width: 100
+            height: 100
+            color: "transparent"
+            state: "unselected"
+            x: 1370
+            y: 145
+            Image {
+                id: io_levelBg5
+                anchors.centerIn: parent;
+                source: "images/btn_level.png"
+            }
+            Text {
+                id: io_levelVal5
+                y: 25
+                font.pixelSize: 30
+                font.bold: true
+                width: parent.width
+                height: parent.height
+                verticalAlignment: Text.AlignTop
+                horizontalAlignment: Text.AlignHCenter
+                text: "5 X"
+                color: "#48FFFF"
+            }
+            MouseArea{
+                anchors.fill: parent;
+                acceptedButtons: Qt.LeftButton;
+            }
+            function setsta(sta)
+            {
+                if(sta === 0)
+                {
+                   io_levelBg5.source="images/btn_level.png"
+                   io_levelVal5.color="#48FFFF"
+                }
+                else if(sta === 1)
+                {
+                    io_levelBg5.source="images/btn_level_hover.png"
+                    io_levelVal5.color="#050C0D"
+                }
+            }
+        }
+
 
         // @disable-check M300
 //       Connections

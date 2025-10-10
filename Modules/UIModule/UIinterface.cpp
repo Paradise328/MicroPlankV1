@@ -78,6 +78,7 @@ void UIinterface::setQMLComponent()
     this->m_IO_Image_Level2 = this->m_Engine.rootObjects().first()->findChild<QObject*>("io_level2");
     this->m_IO_Image_Level3 = this->m_Engine.rootObjects().first()->findChild<QObject*>("io_level3");
     this->m_IO_Image_Level4 = this->m_Engine.rootObjects().first()->findChild<QObject*>("io_level4");
+    this->m_IO_Image_Level5 = this->m_Engine.rootObjects().first()->findChild<QObject*>("io_level5");
 
      this->m_IO_Image_InstrumentAxisA_L_Front = this->m_Engine.rootObjects().first()->findChild<QObject*>("io_picCondition_Axis_A_Front_l");
      this->m_IO_Image_InstrumentAxisB_L_Front = this->m_Engine.rootObjects().first()->findChild<QObject*>("io_picCondition_Axis_B_Front_l");
@@ -514,6 +515,7 @@ void UIinterface::setlevel(int level)
           QMetaObject::invokeMethod(this->m_IO_Image_Level2, "setsta",Q_ARG(QVariant, 0));
            QMetaObject::invokeMethod(this->m_IO_Image_Level3, "setsta",Q_ARG(QVariant, 0));
            QMetaObject::invokeMethod(this->m_IO_Image_Level4, "setsta",Q_ARG(QVariant, 0));
+           QMetaObject::invokeMethod(this->m_IO_Image_Level5, "setsta",Q_ARG(QVariant, 0));
 
         break;
     }
@@ -523,6 +525,7 @@ void UIinterface::setlevel(int level)
           QMetaObject::invokeMethod(this->m_IO_Image_Level2, "setsta",Q_ARG(QVariant, 1));
            QMetaObject::invokeMethod(this->m_IO_Image_Level3, "setsta",Q_ARG(QVariant, 0));
            QMetaObject::invokeMethod(this->m_IO_Image_Level4, "setsta",Q_ARG(QVariant, 0));
+           QMetaObject::invokeMethod(this->m_IO_Image_Level5, "setsta",Q_ARG(QVariant, 0));
 
         break;
     }
@@ -532,6 +535,7 @@ void UIinterface::setlevel(int level)
           QMetaObject::invokeMethod(this->m_IO_Image_Level2, "setsta",Q_ARG(QVariant,0));
            QMetaObject::invokeMethod(this->m_IO_Image_Level3, "setsta",Q_ARG(QVariant, 1));
            QMetaObject::invokeMethod(this->m_IO_Image_Level4, "setsta",Q_ARG(QVariant, 0));
+           QMetaObject::invokeMethod(this->m_IO_Image_Level5, "setsta",Q_ARG(QVariant, 0));
 
         break;
     }
@@ -541,6 +545,17 @@ void UIinterface::setlevel(int level)
           QMetaObject::invokeMethod(this->m_IO_Image_Level2, "setsta",Q_ARG(QVariant,0));
            QMetaObject::invokeMethod(this->m_IO_Image_Level3, "setsta",Q_ARG(QVariant, 0));
            QMetaObject::invokeMethod(this->m_IO_Image_Level4, "setsta",Q_ARG(QVariant, 1));
+           QMetaObject::invokeMethod(this->m_IO_Image_Level5, "setsta",Q_ARG(QVariant, 0));
+
+        break;
+    }
+    case 5:
+    {
+        QMetaObject::invokeMethod(this->m_IO_Image_Level1, "setsta",Q_ARG(QVariant, 0));
+        QMetaObject::invokeMethod(this->m_IO_Image_Level2, "setsta",Q_ARG(QVariant,0));
+        QMetaObject::invokeMethod(this->m_IO_Image_Level3, "setsta",Q_ARG(QVariant, 0));
+        QMetaObject::invokeMethod(this->m_IO_Image_Level4, "setsta",Q_ARG(QVariant, 0));
+        QMetaObject::invokeMethod(this->m_IO_Image_Level5, "setsta",Q_ARG(QVariant, 1));
 
         break;
     }
