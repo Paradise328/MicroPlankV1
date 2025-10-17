@@ -1210,7 +1210,7 @@ Rectangle {
                 height: parent.height
                 verticalAlignment: Text.AlignTop
                 horizontalAlignment: Text.AlignHCenter
-                text: "15 X"
+                text: "20 X"
                 color: "#48FFFF"
             }
             MouseArea{
@@ -1258,7 +1258,7 @@ Rectangle {
                 height: parent.height
                 verticalAlignment: Text.AlignTop
                 horizontalAlignment: Text.AlignHCenter
-                text: "12 X"
+                text: "15 X"
                 color: "#48FFFF"
             }
             MouseArea{
@@ -1303,7 +1303,7 @@ Rectangle {
                 height: parent.height
                 verticalAlignment: Text.AlignTop
                 horizontalAlignment: Text.AlignHCenter
-                text: "10 X"
+                text: "12 X"
                 color: "#48FFFF"
             }
             MouseArea{
@@ -1349,7 +1349,7 @@ Rectangle {
                 height: parent.height
                 verticalAlignment: Text.AlignTop
                 horizontalAlignment: Text.AlignHCenter
-                text: "7 X"
+                text: "10 X"
                 color: "#48FFFF"
             }
             MouseArea{
@@ -1395,7 +1395,7 @@ Rectangle {
                 height: parent.height
                 verticalAlignment: Text.AlignTop
                 horizontalAlignment: Text.AlignHCenter
-                text: "5 X"
+                text: "7 X"
                 color: "#48FFFF"
             }
             MouseArea{

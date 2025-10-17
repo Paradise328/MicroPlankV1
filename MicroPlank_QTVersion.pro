@@ -51,6 +51,7 @@ SOURCES += \
         Modules/UIModule/UIinterface.cpp \
         Modules/PeripheralDeviceModule/CRC16.cpp \
         Modules/PeripheralDeviceModule/peripheral_device.cpp \
+        Modules/light_board/lightboard.cpp \
         main.cpp \
         microPlank.cpp \
         Modules/RobotControlModule/BlasControl/BLA_API.cpp \
@@ -92,6 +93,8 @@ HEADERS += \
     Modules/PeripheralDeviceModule/CRC16.h \
     Modules/PeripheralDeviceModule/CommunicationProtol.h \
     Modules/PeripheralDeviceModule/peripheral_device.h \
+    Modules/light_board/lightBoardDataStruct.h \
+    Modules/light_board/lightboard.h \
     microPlank.h \
     Modules/RobotControlModule/BlasControl/BLA_API.h \
     Modules/RobotControlModule/BlasControl/communication.h \

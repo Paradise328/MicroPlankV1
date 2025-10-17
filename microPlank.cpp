@@ -14,8 +14,6 @@ void MicroPlank::startSystem()
     /* 开启主手线程，并进行对m_isMasterConsoleOk的赋值 */
     startMasterConsole();
 
-    // startForceSensor();
-
     startDomainControllerThread();
 
     /* 开启MotorDriver线程 */
@@ -30,6 +28,15 @@ void MicroPlank::startSystem()
 
     //// m_security.performSystemCheck();
     //// m_security.systemBootSelfCheck();
+
+    // startLightBoard();
+
+   //  while(1)
+   //  {
+   //  m_lightboard->setLightBoardColor(LIGHT_COLOR_GREEN,LIGHT_MODEL_ON);
+   //  m_lightboard->askMyInstrumentStatus();
+   // // delay(100ms)
+   //  }
 
     /* 开启security监控线程 */
     startSecurityModule();
@@ -76,6 +83,21 @@ void MicroPlank::startRobotControl()
     m_robotControl.startMyThreads();
 }
 
+void MicroPlank::startLightBoard()
+{
+    QThread *thread = QThread::create([this](){
+        m_lightboard->setLightBoardColor(LIGHT_COLOR_GREEN,LIGHT_MODEL_ON);
+        while(1)
+        {
+            m_lightboard->askMyInstrumentStatus();
+            SteadyDelay(100);
+        }
+    });
+    thread->start();
+    QObject::connect(thread, &QThread::finished, thread, &QObject::deleteLater);
+
+}
+
 void MicroPlank::startForceSensor()
 {
     LOG(INFO)<<"+++ in start force sensor function";
@@ -86,6 +108,7 @@ void MicroPlank::startDomainControllerThread()
 {
     //m_domainController_Left->startThread();
     QThread *thread = QThread::create([this](){
+        m_domainController->set_Light_Color_Model(m_domainController->LightColor_Green, m_domainController->LightModel_On);
         while(1){
             m_domainController->read_Write_Data(1);
             SteadyDelay(5);

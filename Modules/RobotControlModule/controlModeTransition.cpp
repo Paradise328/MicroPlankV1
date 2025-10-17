@@ -501,17 +501,6 @@ void RobotControl::goToTeleOperation()
         auto motorPositionCur_R = m_motorEncoderCur_R.load();
         auto motorPositionCur_L = m_motorEncoderCur_L.load();
 
-        long magneticEncoder_Cur_L = static_cast<long>(m_magneticEncoder_L.load()) - static_cast<long>(MagneticEncoder_Init_L);
-        long magneticEncoder_Cur_R = static_cast<long>(m_magneticEncoder_R.load()) - static_cast<long>(MagneticEncoder_Init_R);
-        auto motorEncode_L = m_motorEncoderCur_L.load();
-        auto motorEncode_R = m_motorEncoderCur_R.load();
-
-        m_motorEncodeInit_X_L = motorEncode_L[0] - magneticEncoder_Cur_L * 4;
-        m_motorEncodeInit_X_R = motorEncode_R[0] - magneticEncoder_Cur_R * 4;
-
-        LOG(INFO)<<std::dec<<"motorEncode_R: "<<motorEncode_R[0]<<" m_motorEncodeInit_X_R: "<<m_motorEncodeInit_X_R<<" magneticEncoder_Cur_R: "<<magneticEncoder_Cur_R;
-        LOG(INFO)<<std::dec<<"mag_R: "<<static_cast<long>(m_magneticEncoder_R.load())<<" INIT_R: "<<static_cast<long>(MagneticEncoder_Init_R);
-
         auto handlePoseCur = m_masterConsole.returnHandlePose();/*只用x轴位置*/
 
         calculateEndEffectorPosition_init(handlePoseCur, motorPositionCur_L,'l');

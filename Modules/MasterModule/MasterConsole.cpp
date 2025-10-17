@@ -452,11 +452,11 @@ void MasterConsole::dealWithMsg()
 
                     if(i.value() == "30")
                     {
-                        LOG(INFO) << "Instrument Angle : 30";
+                        LOG(INFO) << "Instrument Angle double Side : 15";
                         m_armAnglePerSide = 15;
                     }else if(i.value() ==  "60")
                     {
-                        LOG(INFO) << "Instrument Angle : 60";
+                        LOG(INFO) << "Instrument Angle double Side : 30";
                         m_armAnglePerSide = 30;
                     }
                     break;

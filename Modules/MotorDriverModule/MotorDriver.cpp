@@ -3339,6 +3339,7 @@ int MotorDriver::checkECatStationState(){
     if((lRet = m_selfPointer->getECatSlaveState(0)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP))
     {
         LOG(ERROR) << "Connection lost, EtherCAT slave 1 is not in OP state, current state is: 0x" << std::hex << lRet;
+        m_slaveErr[0] = 1;
     }
 
     if((lRet = m_selfPointer->getECatSlaveState(1)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
@@ -3531,7 +3532,6 @@ void MotorDriver::motorDriverThread(std::promise<bool> &promiseCommunication){
         m_selfPointer->checkMotorState();
 
         if(m_selfPointer->m_flagSDO){
-            // std::lock_guard<std::mutex> lock(m_selfPointer->m_myMutex);
             if (T_NOERROR != (lRet = m_selfPointer->mailboxPacketTransfer())){
                 LOG(ERROR) << "SDO service is offline, connection may be lost." ;
                 // m_isMotorDriverOk.store(false);

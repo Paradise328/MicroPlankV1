@@ -533,13 +533,13 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
     poseDataCurInSlaveFrame.handlePoseL_Arzimuth = gamma_L;
 
     Eigen::Vector3d  masterPositionViaSensor_L, masterPositionViaSensor_R;
-    masterPositionViaSensor_L << -1.0,
+    masterPositionViaSensor_L << -3.0,
                                    0.0,
                                    -9.0;
     // masterPositionViaSensor_L << -2.0,
     //     0,
     //     2.0;
-    masterPositionViaSensor_R << -1.0,
+    masterPositionViaSensor_R << -3.0,
                                    0.0,
                                    -9.0;
     // masterPositionViaSensor_R << -2.0,

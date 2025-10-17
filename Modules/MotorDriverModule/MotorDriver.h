@@ -437,6 +437,8 @@ private:
     int m_abSendDataLengthGuiding;
     uint32_t m_ulWatchdogValue = 0;
 
+    std::array<int, 23> m_slaveErr = {0};
+
     static MotorDriver *m_selfPointer;
     bool m_flagSDO;
     bool *m_jointEnabled = nullptr;

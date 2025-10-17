@@ -35,7 +35,7 @@ Peripheral_Device::Peripheral_Device(QString ip, quint16 port)
 
     //建立一个连接
     QTcpSocket *m_sockettemp = nullptr;
-    m_sockettemp = new QTcpSocket();
+    m_sockettemp = new QTcpSocket(this);
     this->connect(m_sockettemp,&QTcpSocket::readyRead,this,&Peripheral_Device::on_Data_In);
 
     this->connect(m_sockettemp,&QTcpSocket::disconnected,this,&Peripheral_Device::on_Disconnected);
@@ -214,6 +214,7 @@ Send2:
     if(mlen==datalen)
     {
         m_socket->waitForBytesWritten(1000);
+        // qDebug()<<"send success";
         return SEND_SUCCESS;
     }
     else if(mlen == -1)
@@ -261,7 +262,7 @@ void Peripheral_Device::on_Data_In(void)
     if(this->ConnSta!=CONNECTED) return;
     if(m_socket->canReadLine()>0)
     {  
-//        qDebug()<<"datain";
+       // qDebug()<<"datain";
         this->DataRecin+=m_socket->read(100);//用readline速度很慢，运行越久越慢
         int len=this->DataRecin.length();
         if(this->DataRecin.at(len-2)==0x0D)

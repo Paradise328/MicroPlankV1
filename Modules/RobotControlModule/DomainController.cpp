@@ -215,6 +215,7 @@ void DomainController::set_Light_Color_Model(LightColor_e color, LightModel_e mo
 
 void DomainController::read_Write_Data(uint8_t id)
 {
+    // set_Light_Color_Model(LightColor_Green,LightModel_On);
     this->VCMD("READWRITEDATA",id,m_LightCmd.load());
 }
 

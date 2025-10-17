@@ -35,6 +35,7 @@
 #include "Modules/RobotControlModule/RobotControl.h"
 #include "Modules/RobotControlModule/DomainController.h"
 #include "Modules/Lifting/lifting.h"
+#include "Modules/light_board/lightboard.h"
 
 class MicroPlank:public QObject
 {
@@ -50,11 +51,13 @@ public:
                         m_motorDriverParameter(motorDriverParameter),
                         m_isSystemTerminated(false),
                         m_audioMap(audioMap),
-                        m_domainController(new DomainController())
+                        m_domainController(new DomainController()),
+                        m_lightboard(new LightBoard("192.168.42.82",8080,m_MsgPool))
                         {
                            m_forceSensor = new ForceSensor(this);
                            // m_forceSensor->initDevice();
                            connect(&m_uiInterface, &UIinterface::startWholeSystemSignal,this, &MicroPlank::startStarSystemThread);
+                           // connect(this, &MicroPlank::askMyInstrumentStatus, m_lightboard, &LightBoard::askMyInstrumentStatus);
                         }
 
     void        startStarSystemThread();
@@ -62,6 +65,8 @@ public:
 public slots:
 
     void        onSendMeg(Message_Inner_T &msg);
+signals:
+    void askMyInstrumentStatus();
 
 private:
 
@@ -107,6 +112,9 @@ private:
 
     void                startDomainControllerThread();
 
+    /*开启灯板线程*/
+    void                startLightBoard();
+
     /*各模块定义及初始化*/
     MasterConsole       m_masterConsole = MasterConsole(m_masterConsoleType, m_MsgPool);
 
@@ -122,6 +130,9 @@ private:
     DomainController*    m_domainController;
 
     Lifting*             m_lifting = new Lifting("192.168.42.60",8080,m_MsgPool);
+
+
+    LightBoard*          m_lightboard;
 
     RobotControl        m_robotControl = RobotControl(m_masterConsole, m_motorDriver, m_domainController, m_MsgPool);
 

@@ -1,6 +1,6 @@
 [MasterDevice]
 MasterDeviceInitPose = {roty = -120, rotx = 0, rotz = 0}
-MotionScaling = {Number = "4", Default = [15,12,10,7,5]}
+MotionScaling = {Number = "4", Default = [20,15,12,10,7]}
 
 
 [SlaveDevice_Left]

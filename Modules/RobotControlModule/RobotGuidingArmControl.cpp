@@ -109,7 +109,7 @@ void RobotControl::applyGuidingArmForceControl(){
     /* set target torque in order to compensate the friction */
     LOG(INFO)<<"[MODE:DRAG]";
     double target_trq_0 = signDouble(m_guidingArm.m_velocity_1stOrder[0]) * 20.0;
-    double target_trq_1 = signDouble(m_guidingArm.m_velocity_1stOrder[1]) * 15.0;
+    double target_trq_1 = signDouble(m_guidingArm.m_velocity_1stOrder[1]) * 20.0;
     double target_trq_2 = signDouble(m_guidingArm.m_velocity_1stOrder[2]) * 15.0;
 
     tmp1 = signDouble(m_guidingArm.m_velocity_1stOrder[0]);

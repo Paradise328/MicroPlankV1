@@ -54,19 +54,6 @@ constexpr double JointAngleMin60_2_L = -111.677606;
 constexpr double JointAngleMax60_3_L = 35.656273;
 constexpr double JointAngleMin60_3_L = 8.286049;
 
-constexpr double JointAngleMax30_1_R = -7.332655;
-constexpr double JointAngleMin30_1_R = -35.917514;
-constexpr double JointAngleMax30_2_R = 116.17924;
-constexpr double JointAngleMin30_2_R = 111.677606;
-constexpr double JointAngleMax30_3_R = -35.656273;
-constexpr double JointAngleMin30_3_R = -48.54409;
-
-constexpr double JointAngleMax30_1_L = 35.917514;
-constexpr double JointAngleMin30_1_L = 7.332655;
-constexpr double JointAngleMax30_2_L = -111.677606;
-constexpr double JointAngleMin30_2_L = -116.17924;
-constexpr double JointAngleMax30_3_L = 48.54409;
-constexpr double JointAngleMin30_3_L = 35.656273;
 
 //constexpr double MaxonEncoderPerRevolution = 15955.67867;
 constexpr double EncoderPerGrade = 1456.356;
@@ -255,6 +242,8 @@ private:
     std::array<int, MotorNumPerSide> m_EncodeErr_Pre_L;
     std::array<int, MotorNumPerSide> m_EncodeErr_Pre_R;
 
+    std::array<double,4> m_EncodeErr_Int;
+
     /*控制函数*/
     std::thread                     m_calculateControlDataThread;
 
@@ -371,12 +360,12 @@ private:
     std::atomic<uint32_t>                       m_magneticEncoder_L;
     std::atomic<uint32_t>                       m_magneticEncoder_R;
 
-    std::array<double,3> OneEuroStep(const std::array<double,3>&raw,const char& side);
+    std::array<double,3>            OneEuroStep(const std::array<double,3>&raw,const char& side);
     /*进入使能时计算初始位置*/
-    void                           calculateEndEffectorPosition_init(const HandlePose& handlePoseCur, const std::array<int,MotorNumPerSide>& motorPos_Cur, const char& side);
+    void                            calculateEndEffectorPosition_init(const HandlePose& handlePoseCur, const std::array<int,MotorNumPerSide>& motorPos_Cur, const char& side);
 
     /*机械臂实际位置*/
-    std::array<double, 3>             calculateEndEffectorPosition(const std::array<int,MotorNumPerSide>& motorPos_Cur, const char& side);
+    std::array<double, 3>           calculateEndEffectorPosition(const std::array<int,MotorNumPerSide>& motorPos_Cur, const char& side);
 
     /*轨迹规划部分*/
     ruckig::Ruckig<DOF>             m_ruckigPlanner_R;
@@ -413,8 +402,8 @@ private:
     int                             MagneticEncoder_Max_R = 30000;
     int                             MagneticEncoder_Min_R = -30000;
 
-    int                             m_motorEncodeInit_X_L;/*x轴0位编码器值*/
-    int                             m_motorEncodeInit_X_R;
+    int                             m_moonsEncodeZero_L;/*x轴0位编码器值*/
+    int                             m_moonsEncodeZero_R;
 
     mutable double                     m_armAnglePerSide = 30.0;
     std::atomic<std::array<int, MotorNumPerSide>>                  m_motorHomingStatus_R;
@@ -528,6 +517,11 @@ private:
     double m_jointAngle2_velocity_L;
     double m_jointAngle3_velocity_L;
 
+    double m_jointAngle0_velocity_R;
+    double m_jointAngle1_velocity_R;
+    double m_jointAngle2_velocity_R;
+    double m_jointAngle3_velocity_R;
+
     double m_delt_beta_L;/*LastLoopAngle*/
     double m_delt_gamma_L;
     double m_delt_alpha_L;
@@ -583,8 +577,7 @@ private:
 
     double m_last_roll;
     double m_cur_roll;
-    int m_status_R;
-    int m_status_L;
+
 
     std::array<double, 15> m_controlValues_Prev_R{};
     std::array<double, 15> m_controlValues_Prev_L{};
