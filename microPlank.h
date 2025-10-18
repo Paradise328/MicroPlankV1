@@ -36,10 +36,10 @@
 #include "Modules/RobotControlModule/DomainController.h"
 #include "Modules/Lifting/lifting.h"
 #include "Modules/light_board/lightboard.h"
-
+#include "Modules/light_board/LightBoardManagement.h"
 class MicroPlank:public QObject
 {
-
+Q_OBJECT
 public:
     MicroPlank() = delete;
     explicit MicroPlank(QGuiApplication &app,
@@ -51,13 +51,11 @@ public:
                         m_motorDriverParameter(motorDriverParameter),
                         m_isSystemTerminated(false),
                         m_audioMap(audioMap),
-                        m_domainController(new DomainController()),
-                        m_lightboard(new LightBoard("192.168.42.82",8080,m_MsgPool))
+                        m_domainController(new DomainController())
                         {
                            m_forceSensor = new ForceSensor(this);
                            // m_forceSensor->initDevice();
                            connect(&m_uiInterface, &UIinterface::startWholeSystemSignal,this, &MicroPlank::startStarSystemThread);
-                           // connect(this, &MicroPlank::askMyInstrumentStatus, m_lightboard, &LightBoard::askMyInstrumentStatus);
                         }
 
     void        startStarSystemThread();
@@ -132,7 +130,9 @@ private:
     Lifting*             m_lifting = new Lifting("192.168.42.60",8080,m_MsgPool);
 
 
-    LightBoard*          m_lightboard;
+    // LightBoard*          m_lightboard = new LightBoard("192.168.42.82",8080,m_MsgPool);
+
+    // LightBoardManagement   m_LightBoardManagement = LightBoardManagement(m_MsgPool);
 
     RobotControl        m_robotControl = RobotControl(m_masterConsole, m_motorDriver, m_domainController, m_MsgPool);
 

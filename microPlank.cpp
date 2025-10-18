@@ -7,6 +7,11 @@ void MicroPlank::startStarSystemThread()
     startSystemThread.detach();
 }
 
+void MicroPlank::onSendMeg(Message_Inner_T &msg)
+{
+
+}
+
 void MicroPlank::startSystem()
 {
     LOG(INFO) << "start system ";
@@ -85,16 +90,16 @@ void MicroPlank::startRobotControl()
 
 void MicroPlank::startLightBoard()
 {
-    QThread *thread = QThread::create([this](){
-        m_lightboard->setLightBoardColor(LIGHT_COLOR_GREEN,LIGHT_MODEL_ON);
-        while(1)
-        {
-            m_lightboard->askMyInstrumentStatus();
-            SteadyDelay(100);
-        }
-    });
-    thread->start();
-    QObject::connect(thread, &QThread::finished, thread, &QObject::deleteLater);
+    // QThread *thread = QThread::create([this](){
+    //     m_lightboard->setLightBoardColor(LIGHT_COLOR_GREEN,LIGHT_MODEL_ON);
+    //     while(1)
+    //     {
+    //         m_lightboard->askMyInstrumentStatus();
+    //         SteadyDelay(100);
+    //     }
+    // });
+    // thread->start();
+    // QObject::connect(thread, &QThread::finished, thread, &QObject::deleteLater);
 
 }
 
@@ -108,7 +113,6 @@ void MicroPlank::startDomainControllerThread()
 {
     //m_domainController_Left->startThread();
     QThread *thread = QThread::create([this](){
-        m_domainController->set_Light_Color_Model(m_domainController->LightColor_Green, m_domainController->LightModel_On);
         while(1){
             m_domainController->read_Write_Data(1);
             SteadyDelay(5);

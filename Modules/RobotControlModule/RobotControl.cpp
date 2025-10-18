@@ -252,11 +252,11 @@ void RobotControl::initiAllData()
 
     // if(m_enableTagCur_R == enableAction || m_enableTagCur_R == keepEnabling || m_enableTagCur_R == disableAction || m_enableTagCur_R == keepDisabling){
         m_ruckigInputState_R.max_velocity = {200000.0, 200000.0, 200000.0};//500000.0
-        m_ruckigInputState_R.max_acceleration = {10000.0, 10000.0, 10000.0};//15000.0
+        m_ruckigInputState_R.max_acceleration = {8000.0, 8000.0, 8000.0};//15000.0
         m_ruckigInputState_R.max_jerk = {2500.0, 2500.0, 2500.0};//8000.0
 
         m_ruckigInputState_L.max_velocity = {200000.0, 200000.0, 200000.0};
-        m_ruckigInputState_L.max_acceleration = {10000.0, 10000.0, 10000.0};
+        m_ruckigInputState_L.max_acceleration = {8000.0, 8000.0, 8000.0};
         m_ruckigInputState_L.max_jerk = {2500.0, 2500.0, 2500.0};
     // }
 
@@ -415,16 +415,9 @@ void RobotControl::teleoperation()
 
         // LOG(INFO)<<std::dec<<"delt_targetEncoder_L[0]: "<<targetEncoder_L_forVelocity[0] - motorEncoderCur_L[0]<<" delt_targetEncoder_L[1]: "<<targetEncoder_L_forVelocity[1] - motorEncoderCur_L[1]<<" delt_targetEncoder_L[2]: "<<targetEncoder_L_forVelocity[2] - motorEncoderCur_L[2]<<" delt_targetEncoder_L[3]: "<<targetEncoder_L_forVelocity[3] - motorEncoderCur_L[3];
 
-        std::ofstream outfile("p13l.txt",std::ios::app);
+        std::ofstream outfile("J1l.txt",std::ios::app);
         outfile<<targetEncoder_L_forVelocity[0]<<" "<<motorEncoderCur_L[0] <<" "<<targetEncoder_L_forVelocity[1]<<" "<<motorEncoderCur_L[1]<<" "<<targetEncoder_L_forVelocity[2]<<" "<<motorEncoderCur_L[2] <<" "<<targetEncoder_L_forVelocity[3]<<" "<<motorEncoderCur_L[3]<<"\n";
         outfile.close();
-
-        /*jacobi velocity*/
-
-         // targetVelocity_L_new[0] = m_jointAngle0_velocity_L + delt_Encoder[0];
-         // targetVelocity_L_new[1] = m_jointAngle1_velocity_L + delt_Encoder[1];
-         // targetVelocity_L_new[2] = m_jointAngle2_velocity_L + delt_Encoder[2];
-         // targetVelocity_L_new[3] = m_jointAngle3_velocity_L + delt_Encoder[3];
 
         if(enableTagCur_L == enableAction){
             targetVelocity_L_new = {0};
@@ -466,15 +459,9 @@ void RobotControl::teleoperation()
         // LOG(INFO)<<std::dec<<"targetEncoder_R[0]: "<<targetEncoder_R[0]<<" targetEncoder_R[1]: "<<targetEncoder_R[1]<<" targetEncoder_R[2]: "<<targetEncoder_R[2]<<" targetEncoder_R[3]: "<<targetEncoder_R[3];
         // LOG(INFO)<<"targetVelocity_R_new: "<<targetVelocity_R_new;
 
-        std::ofstream outfile("p13r.txt",std::ios::app);
+        std::ofstream outfile("J1r.txt",std::ios::app);
         outfile<<targetEncoder_R_forVelocity[0]<<" "<<motorEncoderCur_R[0] <<" "<<targetEncoder_R_forVelocity[1]<<" "<<motorEncoderCur_R[1]<<" "<<targetEncoder_R_forVelocity[2]<<" "<<motorEncoderCur_R[2] <<" "<<targetEncoder_R_forVelocity[3]<<" "<<motorEncoderCur_R[3]<<"\n";
         outfile.close();
-        /*jacobi velocity*/
-
-          // targetVelocity_R_new[0] = m_jointAngle0_velocity_R + delt_Encoder[0];
-          // targetVelocity_R_new[1] = m_jointAngle1_velocity_R + delt_Encoder[1];
-          // targetVelocity_R_new[2] = m_jointAngle2_velocity_R + delt_Encoder[2];
-          // targetVelocity_R_new[3] = m_jointAngle3_velocity_R + delt_Encoder[3];
 
         if(enableTagCur_R == enableAction){
             targetVelocity_R_new = {0};
@@ -2366,8 +2353,15 @@ std::array<int, MotorNumPerSide> RobotControl::calculateTargetVelocity_new(const
         targetVel[i] = static_cast<int>((targetEncoderCur[i] - targetEncoderPrev[i]) / (0.005));//单位 位每秒 (Viper更新频率为240Hz，for循环的更新频率为400Hz）
     }
 
-    double K_p = 1.3;
-    double K_d = 0.1;
+    /*jacobi velocity*/
+
+      targetVel[0] = m_jointAngle0_velocity_L;
+      targetVel[1] = m_jointAngle1_velocity_L;
+      targetVel[2] = m_jointAngle2_velocity_L;
+      targetVel[3] = m_jointAngle3_velocity_L;
+
+    double K_p = 1.0;
+    double K_d = 0.05;
     double d_t = 0.005;
 
     std::array<int, MotorNumPerSide> delt_Encoder{0};
@@ -2390,9 +2384,15 @@ std::array<int, MotorNumPerSide> RobotControl::calculateTargetVelocity_new(const
         {
             targetVel[i] = static_cast<int>((targetEncoderCur[i] - targetEncoderPrev[i]) / (0.005));//单位 位每秒 (Viper更新频率为240Hz，for循环的更新频率为400Hz）
         }
+        /*jacobi velocity*/
 
-        double K_p = 1.3;
-        double K_d = 0.1;
+          targetVel[0] = m_jointAngle0_velocity_R;
+          targetVel[1] = m_jointAngle1_velocity_R;
+          targetVel[2] = m_jointAngle2_velocity_R;
+          targetVel[3] = m_jointAngle3_velocity_R;
+
+        double K_p = 1.0;
+        double K_d = 0.05;
         double K_i = 0.0;
         double d_t = 0.005;
 
@@ -3228,7 +3228,7 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
 
 
      if(side =='r'){
-         LOG(INFO)<<std::dec<<" moonsRelPosition_R: "<<moonsRelPosition_R;
+         // LOG(INFO)<<std::dec<<" moonsRelPosition_R: "<<moonsRelPosition_R;
 
         if (handlePoseCur.handlePoseR_Roll * 180 / M_PI < 135 && handlePoseCur.handlePoseR_Roll * 180 / M_PI > -135){//67
 
@@ -3321,6 +3321,7 @@ bool RobotControl::isForcePositionRight(const HandlePose& handlePoseCur, const c
 
     auto forceValue_L = m_force_L.load();
     auto forceValue_R = m_force_R.load();
+    LOG(INFO)<<"m_endJointDragBtnCounter_R: "<<m_endJointDragBtnCounter_R<<" m_endJointDragBtnCounter_L:"<<m_endJointDragBtnCounter_L<<"forceValue_L: "<<forceValue_L<<" forceValue_R: "<<forceValue_R;
 
     /*右手*/
     double endEffectorInit_X_R = m_endEffectorInitPosition_R[0];
@@ -3423,13 +3424,73 @@ bool RobotControl::isPoseMatch(const HandlePose& masterHandlePose_Cur, const cha
 
 void RobotControl::setControlInitHandleMotorPositionAndPose(const std::array<int, MotorNumPerSide>& motorPositionCur, const HandlePose& handlePoseCur, const char& side)//yu
 {
-    m_ruckigInputState_R.max_velocity = {200000.0, 200000.0, 200000.0};//500000.0
-    m_ruckigInputState_R.max_acceleration = {8000.0, 8000.0, 8000.0};//15000.0
-    m_ruckigInputState_R.max_jerk = {3000.0, 3000.0, 3000.0};//8000.0
+    // m_ruckigInputState_R.max_velocity = {200000.0, 200000.0, 200000.0};//500000.0
+    // m_ruckigInputState_R.max_acceleration = {10000.0, 12000.0, 14000.0};//15000.0
+    // m_ruckigInputState_R.max_jerk = {3000.0, 4000.0, 5000.0};//8000.0
 
-    m_ruckigInputState_L.max_velocity = {200000.0, 200000.0, 200000.0};
-    m_ruckigInputState_L.max_acceleration = {5000.0, 6000.0, 7000.0};
-    m_ruckigInputState_L.max_jerk = {2000.0, 2000.0, 3000.0};
+    // m_ruckigInputState_L.max_velocity = {200000.0, 200000.0, 200000.0};
+    // m_ruckigInputState_L.max_acceleration = {10000.0, 12000.0, 14000.0};
+    // m_ruckigInputState_L.max_jerk = {3000.0, 4000.0, 5000.0};
+
+
+    switch(m_speedPedalIndex_Cur){
+    case pedalSwitchOne:
+
+        m_ruckigInputState_R.max_velocity = {25000.0, 25000.0, 25000.0};//500000.0
+        m_ruckigInputState_R.max_acceleration = {20000.0, 20000.0, 20000.0};//15000.0
+        m_ruckigInputState_R.max_jerk = {10000.0, 10000.0, 10000.0};//8000.0
+
+        m_ruckigInputState_L.max_velocity = {25000.0, 25000.0, 25000.0};
+        m_ruckigInputState_L.max_acceleration = {20000.0, 20000.0, 20000.0};
+        m_ruckigInputState_L.max_jerk = {10000.0, 10000.0, 10000.0};
+        LOG(INFO)<<"SCALING 20x ";
+
+    case pedalSwitchTwo:
+
+        m_ruckigInputState_R.max_velocity = {35000.0, 35000.0, 35000.0};
+        m_ruckigInputState_R.max_acceleration = {25000.0, 25000.0, 25000.0};
+        m_ruckigInputState_R.max_jerk = {12000.0, 12000.0, 12000.0};
+
+        m_ruckigInputState_L.max_velocity = {35000.0, 35000.0, 35000.0};
+        m_ruckigInputState_L.max_acceleration = {25000.0, 25000.0, 25000.0};
+        m_ruckigInputState_L.max_jerk = {12000.0, 12000.0, 12000.0};
+        LOG(INFO)<<"SCALING 15x ";
+
+    case pedalSwitchThree:
+
+        m_ruckigInputState_R.max_velocity = {35000.0, 35000.0, 35000.0};
+        m_ruckigInputState_R.max_acceleration = {20000.0, 20000.0, 20000.0};
+        m_ruckigInputState_R.max_jerk = {8000.0, 8000.0, 8000.0};
+
+        m_ruckigInputState_L.max_velocity = {35000.0, 35000.0, 35000.0};
+        m_ruckigInputState_L.max_acceleration = {18000.0, 18000.0, 18000.0};
+        m_ruckigInputState_L.max_jerk = {8000.0, 8000.0, 8000.0};
+        LOG(INFO)<<"SCALING 12x ";
+
+    case pedalSwitchFour:
+
+        m_ruckigInputState_R.max_velocity = {25000.0, 25000.0, 25000.0};
+        m_ruckigInputState_R.max_acceleration = {12000.0, 12000.0, 12000.0};
+        m_ruckigInputState_R.max_jerk = {6000.0, 6000.0, 6000.0};
+
+        m_ruckigInputState_L.max_velocity = {25000.0, 25000.0, 25000.0};
+        m_ruckigInputState_L.max_acceleration = {12000.0, 12000.0, 12000.0};
+        m_ruckigInputState_L.max_jerk = {6000.0, 6000.0, 6000.0};
+        LOG(INFO)<<"SCALING 10x ";
+
+    case pedalSwitchFive:
+
+        m_ruckigInputState_R.max_velocity = {25000.0, 25000.0, 25000.0};
+        m_ruckigInputState_R.max_acceleration = {5000.0, 5000.0, 5000.0};
+        m_ruckigInputState_R.max_jerk = {2000.0, 2000.0, 2000.0};
+
+        m_ruckigInputState_L.max_velocity = {25000.0, 25000.0, 25000.0};
+        m_ruckigInputState_L.max_acceleration = {5000.0, 5000.0, 5000.0};
+        m_ruckigInputState_L.max_jerk = {2000.0, 2000.0, 2000.0};
+        LOG(INFO)<<"SCALING 7x ";
+    }
+
+
 
     if(side == 'l')
     {
@@ -3492,13 +3553,62 @@ void RobotControl::setControlInitHandleMotorPositionAndPose(const std::array<int
 
 void RobotControl::setForceControlInitHandleMotorPosition(const std::array<int, MotorNumPerSide>& motorPositionCur, const HandlePose& handlePoseCur, const char& side){
 
-    m_ruckigInputState_R.max_velocity = {25000.0, 25000.0, 25000.0};//500000.0
-    m_ruckigInputState_R.max_acceleration = {20000.0, 20000.0, 20000.0};//15000.0
-    m_ruckigInputState_R.max_jerk = {10000.0, 10000.0, 10000.0};//8000.0
+    switch(m_speedPedalIndex_Cur){
+    case pedalSwitchOne:
 
-    m_ruckigInputState_L.max_velocity = {25000.0, 25000.0, 25000.0};
-    m_ruckigInputState_L.max_acceleration = {20000.0, 20000.0, 20000.0};
-    m_ruckigInputState_L.max_jerk = {10000.0, 10000.0, 10000.0};
+        m_ruckigInputState_R.max_velocity = {25000.0, 25000.0, 25000.0};//500000.0
+        m_ruckigInputState_R.max_acceleration = {20000.0, 20000.0, 20000.0};//15000.0
+        m_ruckigInputState_R.max_jerk = {10000.0, 10000.0, 10000.0};//8000.0
+
+        m_ruckigInputState_L.max_velocity = {25000.0, 25000.0, 25000.0};
+        m_ruckigInputState_L.max_acceleration = {20000.0, 20000.0, 20000.0};
+        m_ruckigInputState_L.max_jerk = {10000.0, 10000.0, 10000.0};
+        LOG(INFO)<<"SCALING 20x ";
+
+    case pedalSwitchTwo:
+
+        m_ruckigInputState_R.max_velocity = {25000.0, 25000.0, 25000.0};//500000.0
+        m_ruckigInputState_R.max_acceleration = {20000.0, 20000.0, 20000.0};//15000.0
+        m_ruckigInputState_R.max_jerk = {8000.0, 8000.0, 8000.0};//8000.0
+
+        m_ruckigInputState_L.max_velocity = {25000.0, 25000.0, 25000.0};
+        m_ruckigInputState_L.max_acceleration = {20000.0, 20000.0, 20000.0};
+        m_ruckigInputState_L.max_jerk = {8000.0, 8000.0, 8000.0};
+        LOG(INFO)<<"SCALING 15x ";
+
+    case pedalSwitchThree:
+
+        m_ruckigInputState_R.max_velocity = {25000.0, 25000.0, 25000.0};//500000.0
+        m_ruckigInputState_R.max_acceleration = {20000.0, 20000.0, 20000.0};//15000.0
+        m_ruckigInputState_R.max_jerk = {8000.0, 8000.0, 8000.0};//8000.0
+
+        m_ruckigInputState_L.max_velocity = {25000.0, 25000.0, 25000.0};
+        m_ruckigInputState_L.max_acceleration = {18000.0, 18000.0, 18000.0};
+        m_ruckigInputState_L.max_jerk = {8000.0, 8000.0, 8000.0};
+        LOG(INFO)<<"SCALING 12x ";
+
+    case pedalSwitchFour:
+
+        m_ruckigInputState_R.max_velocity = {25000.0, 25000.0, 25000.0};//500000.0
+        m_ruckigInputState_R.max_acceleration = {15000.0, 15000.0, 15000.0};//15000.0
+        m_ruckigInputState_R.max_jerk = {8000.0, 8000.0, 8000.0};//8000.0
+
+        m_ruckigInputState_L.max_velocity = {25000.0, 25000.0, 25000.0};
+        m_ruckigInputState_L.max_acceleration = {12000.0, 12000.0, 12000.0};
+        m_ruckigInputState_L.max_jerk = {6000.0, 6000.0, 6000.0};
+        LOG(INFO)<<"SCALING 10x ";
+
+    case pedalSwitchFive:
+
+        m_ruckigInputState_R.max_velocity = {25000.0, 25000.0, 25000.0};//500000.0
+        m_ruckigInputState_R.max_acceleration = {10000.0, 10000.0, 10000.0};//15000.0
+        m_ruckigInputState_R.max_jerk = {4000.0, 4000.0, 4000.0};//8000.0
+
+        m_ruckigInputState_L.max_velocity = {25000.0, 25000.0, 25000.0};
+        m_ruckigInputState_L.max_acceleration = {5000.0, 5000.0, 5000.0};
+        m_ruckigInputState_L.max_jerk = {2000.0, 2000.0, 2000.0};
+        LOG(INFO)<<"SCALING 7x ";
+    }
 
 
     if(side == 'l')
@@ -4008,12 +4118,10 @@ void RobotControl::setNewSpeed(const HandlePose& handlePosePrev, const HandlePos
     // 调用播放提示音函数
     if(m_speedPedalIndex_Cur != m_speedPedalIndex_Prev)
     {
-        LOG(INFO)<<"VOICE fUNCTION START ============================================================================";
         QString argstring;
         argstring.clear();
         argstring.append("speedCur:"+QString::number(m_speedPedalIndex_Cur+1));
         SendInnerMsg(Module_Inner_E::Audio,static_cast<int>(Voice_Action::VOICE_RecvMasterData),argstring);
-        LOG(INFO)<<"VOICE COMMAND SENDED ============================================================================";
     }
 }
 

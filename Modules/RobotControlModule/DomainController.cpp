@@ -14,8 +14,6 @@ DomainController::DomainController():
     this -> Qhash_Cmd_Classify.insert("RESET", DOMAINCONTROLLER_RESET);
 
     m_LightCmd.store(0);
-
-    set_Light_Color_Model(LightColor_None, LightModel_Off);
     openSerialPort(921600);
 }
 
@@ -215,7 +213,6 @@ void DomainController::set_Light_Color_Model(LightColor_e color, LightModel_e mo
 
 void DomainController::read_Write_Data(uint8_t id)
 {
-    // set_Light_Color_Model(LightColor_Green,LightModel_On);
     this->VCMD("READWRITEDATA",id,m_LightCmd.load());
 }
 
@@ -416,8 +413,6 @@ void DomainController::readHandleOtherData(QByteArray qba)
                 m_domainControllerData_r_tmp.DigitalInputs = cftemp.payload.args[29];
                 m_domainControllerData_r.store(m_domainControllerData_r_tmp);
 
-
-
             }
 
             // std::cout << static_cast<int>(m_domainControllerData.DigitalInputs)<< std::endl;
@@ -495,8 +490,10 @@ std::array<double,3> DomainController::getForce(uint armSide, double tilt_angle_
         std::array<double, 3> force = getForce(0);
         Eigen::Vector3d Force_sensor(force[0], force[1], force[2]);
 
-        Eigen::Vector3d Force_world = R/*.transpose()*/ * Force_sensor;
+        Eigen::Vector3d Force_world = R * Force_sensor;
+        // LOG(INFO)<<"Force_world: "<<Force_world;
         return {static_cast<double>(Force_world.x()), static_cast<double>(Force_world.y()), static_cast<double>(Force_world.z())};
+
 
     }
 

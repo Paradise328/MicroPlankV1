@@ -23,6 +23,7 @@ enum class _RobotControlAction_E
     StartEndEffectorMotorHoming,
     SwitchInstrumentAngle,
     MotorOff,
+    Update_EndeffectorData
 };
 using RobotControlAction_E = enum _RobotControlAction_E;
 
@@ -59,16 +60,33 @@ using MotorDriverAction_E = enum _MotorDriverAction_E;
 enum class _AssistDevice_LightBoardManagementAction_E
 {
     BootSelfCheck=0x60,
+    CheckInstrumentInfomation,
+    EndCheckInstrumentInfomation,
+    TurnOffLight
 };
 using AssistDevice_LightBoardManagementAction_E = enum _AssistDevice_LightBoardManagementAction_E;
 
 enum class _UIAction_E
 {
-    RecvMasterData=0x30,
+    /*RecvMasterData=0x30,
     RecvSlaveStatus,
     FinishCalibration,
     RecvSystemBootSta,
+    RecvModuleStatus*/
+
+
+    RecvMasterData=0x30,
+    RecvSlaveStatus,
+    FinishCalibration,
+    RecvInstrumentData,
+    RecvLightBoardInTrolleyData,
+    Emergency,
+    SetFilterCase,
+    SetPosScaling,
+    FinishCalibrationOneSide,
+    RecvSystemBootSta,
     RecvModuleStatus
+
 };
 using UIAction_E = enum _UIAction_E;
 

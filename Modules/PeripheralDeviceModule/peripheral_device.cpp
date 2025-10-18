@@ -449,8 +449,8 @@ bool Peripheral_Device::Change_Usable_Con()
         qWarning()<<"Change_Usable_Con err:"<<e.what();
      }
 
-    ConList.removeAt(0);
     if(ConList.isEmpty())return false;
+    ConList.removeAt(0);
 
     this->m_socket=ConList[0];
     this->m_socketport=this->m_socket->peerPort();

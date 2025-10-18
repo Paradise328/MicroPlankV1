@@ -1,7 +1,7 @@
 #ifndef LIGHTBOARDINTROLLEY_H
 #define LIGHTBOARDINTROLLEY_H
-#include "../../lib/peripheral_device/peripheral_device.h"
-#include "messagequeue.h"
+#include "../PeripheralDeviceModule/peripheral_device.h"
+#include "../MsgModule/messagequeue.h"
 #include <QtConcurrent>
 #include "lightBoardDataStruct.h"
 
