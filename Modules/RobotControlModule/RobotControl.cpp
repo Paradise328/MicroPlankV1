@@ -3605,8 +3605,8 @@ void RobotControl::setForceControlInitHandleMotorPosition(const std::array<int, 
         m_ruckigInputState_R.max_jerk = {4000.0, 4000.0, 4000.0};//8000.0
 
         m_ruckigInputState_L.max_velocity = {25000.0, 25000.0, 25000.0};
-        m_ruckigInputState_L.max_acceleration = {5000.0, 5000.0, 5000.0};
-        m_ruckigInputState_L.max_jerk = {2000.0, 2000.0, 2000.0};
+        m_ruckigInputState_L.max_acceleration = {8000.0, 8000.0, 8000.0};
+        m_ruckigInputState_L.max_jerk = {4000.0, 4000.0, 4000.0};
         LOG(INFO)<<"SCALING 7x ";
     }
 
