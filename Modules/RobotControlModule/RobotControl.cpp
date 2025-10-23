@@ -3566,17 +3566,17 @@ void RobotControl::setForceControlInitHandleMotorPosition(const std::array<int, 
 
         m_ruckigInputState_R.max_velocity = {25000.0, 25000.0, 25000.0};//500000.0
         m_ruckigInputState_R.max_acceleration = {20000.0, 20000.0, 20000.0};//15000.0
-        m_ruckigInputState_R.max_jerk = {8000.0, 8000.0, 8000.0};//8000.0
+        m_ruckigInputState_R.max_jerk = {10000.0, 10000.0, 10000.0};//8000.0
 
         m_ruckigInputState_L.max_velocity = {25000.0, 25000.0, 25000.0};
         m_ruckigInputState_L.max_acceleration = {20000.0, 20000.0, 20000.0};
-        m_ruckigInputState_L.max_jerk = {8000.0, 8000.0, 8000.0};
+        m_ruckigInputState_L.max_jerk = {10000.0, 10000.0, 10000.0};
         LOG(INFO)<<"SCALING 15x ";
 
     case pedalSwitchThree:
 
         m_ruckigInputState_R.max_velocity = {25000.0, 25000.0, 25000.0};//500000.0
-        m_ruckigInputState_R.max_acceleration = {20000.0, 20000.0, 20000.0};//15000.0
+        m_ruckigInputState_R.max_acceleration = {18000.0, 18000.0, 18000.0};//15000.0
         m_ruckigInputState_R.max_jerk = {8000.0, 8000.0, 8000.0};//8000.0
 
         m_ruckigInputState_L.max_velocity = {25000.0, 25000.0, 25000.0};
@@ -3586,24 +3586,24 @@ void RobotControl::setForceControlInitHandleMotorPosition(const std::array<int, 
 
     case pedalSwitchFour:
 
-        m_ruckigInputState_R.max_velocity = {25000.0, 25000.0, 25000.0};//500000.0
-        m_ruckigInputState_R.max_acceleration = {15000.0, 15000.0, 15000.0};//15000.0
+        m_ruckigInputState_R.max_velocity = {30000.0, 30000.0, 30000.0};//500000.0
+        m_ruckigInputState_R.max_acceleration = {12000.0, 12000.0, 12000.0};//15000.0
         m_ruckigInputState_R.max_jerk = {8000.0, 8000.0, 8000.0};//8000.0
 
-        m_ruckigInputState_L.max_velocity = {25000.0, 25000.0, 25000.0};
+        m_ruckigInputState_L.max_velocity = {30000.0, 30000.0, 30000.0};
         m_ruckigInputState_L.max_acceleration = {12000.0, 12000.0, 12000.0};
-        m_ruckigInputState_L.max_jerk = {6000.0, 6000.0, 6000.0};
+        m_ruckigInputState_L.max_jerk = {8000.0, 8000.0, 8000.0};
         LOG(INFO)<<"SCALING 10x ";
 
     case pedalSwitchFive:
 
-        m_ruckigInputState_R.max_velocity = {25000.0, 25000.0, 25000.0};//500000.0
+        m_ruckigInputState_R.max_velocity = {30000.0, 30000.0, 30000.0};//500000.0
         m_ruckigInputState_R.max_acceleration = {10000.0, 10000.0, 10000.0};//15000.0
-        m_ruckigInputState_R.max_jerk = {4000.0, 4000.0, 4000.0};//8000.0
+        m_ruckigInputState_R.max_jerk = {6000.0, 6000.0, 6000.0};//8000.0
 
-        m_ruckigInputState_L.max_velocity = {25000.0, 25000.0, 25000.0};
-        m_ruckigInputState_L.max_acceleration = {8000.0, 8000.0, 8000.0};
-        m_ruckigInputState_L.max_jerk = {4000.0, 4000.0, 4000.0};
+        m_ruckigInputState_L.max_velocity = {30000.0, 30000.0, 30000.0};
+        m_ruckigInputState_L.max_acceleration = {10000.0, 10000.0, 10000.0};
+        m_ruckigInputState_L.max_jerk = {6000.0, 6000.0, 6000.0};
         LOG(INFO)<<"SCALING 7x ";
     }
 

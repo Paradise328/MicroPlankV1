@@ -251,7 +251,7 @@ void Security::systemBootSelfCheck()/*判定状态函数/控制灯板*/
                 }
 
                 case SelfCheckStepEnum::Err:
-                {
+                {LOG(INFO)<<"MASTER ERR";
                     setSystemStatus(SystemWarningStatus::HeavyWarning);
                     SendInnerMsg(Module_Inner_E::MultipleModules,static_cast<int>(MultipleDevAction_E::RecvSystemBootSta),"Err");
                     return; break;

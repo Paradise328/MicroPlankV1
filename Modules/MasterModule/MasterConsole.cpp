@@ -321,8 +321,8 @@ std::array<double,3> MasterConsole::KalmanStep(const std::array<double,3>& raw)
 void MasterConsole::masterConsoleBootSelfCheck()/*检测master状态，实时灯板控制*/
 {
 
-    std::thread masterConsoleStatusCheck([this]
-    {
+    // std::thread masterConsoleStatusCheck([this]
+    // {
         int retryCount = 3;
         while(retryCount > 0)
         {
@@ -351,8 +351,9 @@ void MasterConsole::masterConsoleBootSelfCheck()/*检测master状态，实时灯
 
         }
         SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(MultipleDevAction_E::RecvMasterBootSta),"Err");
-    });
-    masterConsoleStatusCheck.detach();
+        LOG(INFO)<<"SEND ERR!";
+    // });
+    // masterConsoleStatusCheck.detach();
 }
 
 void MasterConsole::masterConsoleStatusCheck()
