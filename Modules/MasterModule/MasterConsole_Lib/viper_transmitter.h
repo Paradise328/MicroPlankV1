@@ -43,9 +43,9 @@ public:
     bool                    return422Status(){return m_is422Ok;}
     double   m_armAnglePerSide = 30.0;
     void                    startReadingThread();
-
-private:
     void                    initDevice();
+private:
+
     /*开启viper连续发送模式*/
     viper_ui                m_viper;
     void                    Reset_Viper(void);

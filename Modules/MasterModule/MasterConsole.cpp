@@ -318,7 +318,7 @@ std::array<double,3> MasterConsole::KalmanStep(const std::array<double,3>& raw)
     return out;
 }
 
-void MasterConsole::masterConsoleBootSelfCheck()
+void MasterConsole::masterConsoleBootSelfCheck()/*检测master状态，实时灯板控制*/
 {
 
     std::thread masterConsoleStatusCheck([this]
@@ -327,19 +327,19 @@ void MasterConsole::masterConsoleBootSelfCheck()
         while(retryCount > 0)
         {
             printf("retryCount: %d\n", retryCount);
-            if(m_MasterConsoleType == MasterConsoleType::Omega)
+            if(m_MasterConsoleType == MasterConsoleType::DessightMaster)
             {
-                if(m_omega.returnOmegaStatus() == true)
+                if(m_transmitter.return422Status() == true)
                 {
                     SendInnerMsg(Module_Inner_E::MultipleModules,static_cast<int>(MultipleDevAction_E::RecvMasterBootSta),"Ok");
                     return;
                 }
-                else if(m_omega.returnOmegaStatus() == false)
+                else if(m_transmitter.return422Status() == true == false)
                 {
                     std::this_thread::sleep_for(std::chrono::seconds(5));
                     if(retryCount > 0)
                     {
-                        m_omega.initDevice();
+                        m_transmitter.initDevice();
                         LOG(INFO)<<"Try to restart Omega, count " << 4 - retryCount;
                     }
                     retryCount --;
@@ -363,6 +363,7 @@ void MasterConsole::masterConsoleStatusCheck()
             bool is422Ok = m_transmitter.return422Status();
             assembleDataFromUSBAndEthernet();
             m_isMasterConsoleOk.store(is422Ok);
+            // LOG(INFO)<<"MASTER 422Ok: "<<is422Ok;
             break;
         }
         default:

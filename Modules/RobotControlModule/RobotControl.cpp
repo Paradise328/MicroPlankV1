@@ -415,9 +415,9 @@ void RobotControl::teleoperation()
 
         // LOG(INFO)<<std::dec<<"delt_targetEncoder_L[0]: "<<targetEncoder_L_forVelocity[0] - motorEncoderCur_L[0]<<" delt_targetEncoder_L[1]: "<<targetEncoder_L_forVelocity[1] - motorEncoderCur_L[1]<<" delt_targetEncoder_L[2]: "<<targetEncoder_L_forVelocity[2] - motorEncoderCur_L[2]<<" delt_targetEncoder_L[3]: "<<targetEncoder_L_forVelocity[3] - motorEncoderCur_L[3];
 
-        std::ofstream outfile("J1l.txt",std::ios::app);
-        outfile<<targetEncoder_L_forVelocity[0]<<" "<<motorEncoderCur_L[0] <<" "<<targetEncoder_L_forVelocity[1]<<" "<<motorEncoderCur_L[1]<<" "<<targetEncoder_L_forVelocity[2]<<" "<<motorEncoderCur_L[2] <<" "<<targetEncoder_L_forVelocity[3]<<" "<<motorEncoderCur_L[3]<<"\n";
-        outfile.close();
+        // std::ofstream outfile("J1l.txt",std::ios::app);
+        // outfile<<targetEncoder_L_forVelocity[0]<<" "<<motorEncoderCur_L[0] <<" "<<targetEncoder_L_forVelocity[1]<<" "<<motorEncoderCur_L[1]<<" "<<targetEncoder_L_forVelocity[2]<<" "<<motorEncoderCur_L[2] <<" "<<targetEncoder_L_forVelocity[3]<<" "<<motorEncoderCur_L[3]<<"\n";
+        // outfile.close();
 
         if(enableTagCur_L == enableAction){
             targetVelocity_L_new = {0};
@@ -459,9 +459,9 @@ void RobotControl::teleoperation()
         // LOG(INFO)<<std::dec<<"targetEncoder_R[0]: "<<targetEncoder_R[0]<<" targetEncoder_R[1]: "<<targetEncoder_R[1]<<" targetEncoder_R[2]: "<<targetEncoder_R[2]<<" targetEncoder_R[3]: "<<targetEncoder_R[3];
         // LOG(INFO)<<"targetVelocity_R_new: "<<targetVelocity_R_new;
 
-        std::ofstream outfile("J1r.txt",std::ios::app);
-        outfile<<targetEncoder_R_forVelocity[0]<<" "<<motorEncoderCur_R[0] <<" "<<targetEncoder_R_forVelocity[1]<<" "<<motorEncoderCur_R[1]<<" "<<targetEncoder_R_forVelocity[2]<<" "<<motorEncoderCur_R[2] <<" "<<targetEncoder_R_forVelocity[3]<<" "<<motorEncoderCur_R[3]<<"\n";
-        outfile.close();
+        // std::ofstream outfile("J1r.txt",std::ios::app);
+        // outfile<<targetEncoder_R_forVelocity[0]<<" "<<motorEncoderCur_R[0] <<" "<<targetEncoder_R_forVelocity[1]<<" "<<motorEncoderCur_R[1]<<" "<<targetEncoder_R_forVelocity[2]<<" "<<motorEncoderCur_R[2] <<" "<<targetEncoder_R_forVelocity[3]<<" "<<motorEncoderCur_R[3]<<"\n";
+        // outfile.close();
 
         if(enableTagCur_R == enableAction){
             targetVelocity_R_new = {0};
@@ -3437,41 +3437,41 @@ void RobotControl::setControlInitHandleMotorPositionAndPose(const std::array<int
     case pedalSwitchOne:
 
         m_ruckigInputState_R.max_velocity = {25000.0, 25000.0, 25000.0};//500000.0
-        m_ruckigInputState_R.max_acceleration = {20000.0, 20000.0, 20000.0};//15000.0
-        m_ruckigInputState_R.max_jerk = {10000.0, 10000.0, 10000.0};//8000.0
+        m_ruckigInputState_R.max_acceleration = {25000.0, 25000.0, 25000.0};//15000.0
+        m_ruckigInputState_R.max_jerk = {15000.0, 15000.0, 15000.0};//8000.0
 
         m_ruckigInputState_L.max_velocity = {25000.0, 25000.0, 25000.0};
-        m_ruckigInputState_L.max_acceleration = {20000.0, 20000.0, 20000.0};
-        m_ruckigInputState_L.max_jerk = {10000.0, 10000.0, 10000.0};
+        m_ruckigInputState_L.max_acceleration = {25000.0, 25000.0, 25000.0};
+        m_ruckigInputState_L.max_jerk = {15000.0, 15000.0, 15000.0};
         LOG(INFO)<<"SCALING 20x ";
 
     case pedalSwitchTwo:
 
         m_ruckigInputState_R.max_velocity = {35000.0, 35000.0, 35000.0};
         m_ruckigInputState_R.max_acceleration = {25000.0, 25000.0, 25000.0};
-        m_ruckigInputState_R.max_jerk = {12000.0, 12000.0, 12000.0};
+        m_ruckigInputState_R.max_jerk = {15000.0, 15000.0, 15000.0};
 
         m_ruckigInputState_L.max_velocity = {35000.0, 35000.0, 35000.0};
         m_ruckigInputState_L.max_acceleration = {25000.0, 25000.0, 25000.0};
-        m_ruckigInputState_L.max_jerk = {12000.0, 12000.0, 12000.0};
+        m_ruckigInputState_L.max_jerk = {15000.0, 15000.0, 15000.0};
         LOG(INFO)<<"SCALING 15x ";
 
     case pedalSwitchThree:
 
         m_ruckigInputState_R.max_velocity = {35000.0, 35000.0, 35000.0};
-        m_ruckigInputState_R.max_acceleration = {20000.0, 20000.0, 20000.0};
-        m_ruckigInputState_R.max_jerk = {8000.0, 8000.0, 8000.0};
+        m_ruckigInputState_R.max_acceleration = {22000.0, 22000.0, 22000.0};
+        m_ruckigInputState_R.max_jerk = {12000.0, 12000.0, 12000.0};
 
         m_ruckigInputState_L.max_velocity = {35000.0, 35000.0, 35000.0};
-        m_ruckigInputState_L.max_acceleration = {18000.0, 18000.0, 18000.0};
-        m_ruckigInputState_L.max_jerk = {8000.0, 8000.0, 8000.0};
+        m_ruckigInputState_L.max_acceleration = {22000.0, 22000.0, 22000.0};
+        m_ruckigInputState_L.max_jerk = {12000.0, 12000.0, 12000.0};
         LOG(INFO)<<"SCALING 12x ";
 
     case pedalSwitchFour:
 
         m_ruckigInputState_R.max_velocity = {25000.0, 25000.0, 25000.0};
-        m_ruckigInputState_R.max_acceleration = {12000.0, 12000.0, 12000.0};
-        m_ruckigInputState_R.max_jerk = {6000.0, 6000.0, 6000.0};
+        m_ruckigInputState_R.max_acceleration = {18000.0, 18000.0, 18000.0};
+        m_ruckigInputState_R.max_jerk = {10000.0, 10000.0, 10000.0};
 
         m_ruckigInputState_L.max_velocity = {25000.0, 25000.0, 25000.0};
         m_ruckigInputState_L.max_acceleration = {12000.0, 12000.0, 12000.0};

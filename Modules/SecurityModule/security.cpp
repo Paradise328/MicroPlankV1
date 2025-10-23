@@ -35,7 +35,7 @@ void Security::systemMonitor(MasterConsole& masterConsole, MotorDriver* motorDri
 
         auto systemModuleStatus_Prev = m_systemModuleStatus.load();
 
-        auto masterConsoleStatus_Cur = masterConsole.returnMasterConsoleStatus();
+        auto masterConsoleStatus_Cur = masterConsole.returnMasterConsoleStatus();/*422ok*/
         auto etherCATCommunicationStatus_Cur = motorDriver->returnMotorDriverStatus();
 
 
@@ -56,7 +56,7 @@ void Security::systemMonitor(MasterConsole& masterConsole, MotorDriver* motorDri
                     }
                     if(etherCATCommunicationStatus_Prev == false && etherCATCommunicationStatus_Cur == true)
                     {
-                        LOG(INFO) << "Master Console Successfully Connected! ";
+                        LOG(INFO) << "etherCATCommunication Successfully Connected! ";
                         SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvBootSelfCheckStatus),"EtherCAT:Ok");
                     }
                     break;
@@ -223,14 +223,14 @@ void Security::shutDownSystem()
 
 void Security::systemBootSelfCheck()
 {
-//    selfCheckStep.store(SelfCheckStepEnum::MasterConsole_Checking);
+   // selfCheckStep.store(SelfCheckStepEnum::MasterConsole_Checking);
     selfCheckStep.store(SelfCheckStepEnum::AllOK);
 
     std::thread systemBootSelfCheckThread([this]
     {
         while(flagSelfCheck)
         {
-            auto selfCheckStepTemp = selfCheckStep.load();
+            auto selfCheckStepTemp = selfCheckStep.load();/*selfCheckStep通过Msg与外界的类关联*/
             switch (selfCheckStepTemp)
             {
                 case SelfCheckStepEnum::MasterConsole_Checking:
@@ -243,7 +243,7 @@ void Security::systemBootSelfCheck()
                 case SelfCheckStepEnum::AllOK:
                 {
                     SendInnerMsg(Module_Inner_E::Uiinterface,static_cast<int>(UIAction_E::RecvSystemBootSta),"Ok");
-                    setSystemStatus(SystemWarningStatus::Normal);
+                    setSystemStatus(SystemWarningStatus::Normal);/*SystemWarningStatus与warning状态（灯板）相关*/
                     return;
                 }
 

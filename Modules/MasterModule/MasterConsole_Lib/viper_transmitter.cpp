@@ -106,6 +106,7 @@ void Viper_Transmitter::On422DataIn(void)
             {
                 QByteArray datatemp=Data422Recvin.left(86);
                 readHandleData(datatemp);
+                m_communicateTemp.fetch_add(1);
             }
             Data422Recvin.remove(0,86);
             len=this->Data422Recvin.length();
@@ -330,14 +331,17 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
         else if(cftemp.payload.args[0]== Dev_Sta_LEFTHANDLE_ERROR)
         {
             std::cout <<"LEFTHANDLE_ERROR!" << std::endl;
+            m_communicateReserve = 1;
         }
         else if(cftemp.payload.args[0]==Dev_Sta_RIGHTHANDLE_ERROR)
         {
             std::cout <<"RIGHTHANDLE_ERROR!" << std::endl;
+            m_communicateReserve = 2;
         }
         else if(cftemp.payload.args[0]==(Dev_Sta_LEFTHANDLE_ERROR+Dev_Sta_RIGHTHANDLE_ERROR))
         {
             std::cout<<"ALLHANDLE_ERROR!" << std::endl;
+            m_communicateReserve = 3;
         }
         m_handlePoseData.store(handlePoseTmp);
         qba.clear();
@@ -691,9 +695,10 @@ void Viper_Transmitter::statusMonitor()
     while(!m_isMonitorTerminated)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        if(m_communicateTemp == m_communicateReserve)
+        if(m_communicateTemp == m_communicateReserve)/*判断通讯数据是否累加*/
         {
             m_is422Ok = false;
+            // LOG(INFO)<<" m_is422Ok: "<<m_is422Ok;
         }
         else{
             m_is422Ok = true;

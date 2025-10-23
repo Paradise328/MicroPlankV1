@@ -17,7 +17,7 @@ void MicroPlank::startSystem()
     LOG(INFO) << "start system ";
 
     /* 开启主手线程，并进行对m_isMasterConsoleOk的赋值 */
-    startMasterConsole();
+    startMasterConsole();//存储422ok（通信是否成功）以及组合主手数据
 
     startDomainControllerThread();
 
@@ -32,7 +32,7 @@ void MicroPlank::startSystem()
     startRobotControl();
 
     //// m_security.performSystemCheck();
-    //// m_security.systemBootSelfCheck();
+    m_security.systemBootSelfCheck();
 
     // startLightBoard();
 
@@ -44,7 +44,7 @@ void MicroPlank::startSystem()
    //  }
 
     /* 开启security监控线程 */
-    startSecurityModule();
+    startSecurityModule();//开机自检，主要与ui交互
 }
 
 void MicroPlank::startMasterConsole()
