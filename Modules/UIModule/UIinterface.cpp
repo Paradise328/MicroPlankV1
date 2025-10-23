@@ -1095,7 +1095,6 @@ void UIinterface::dealWithMsg()//与robotcontrol部分通信
                         }
                         break;
                     }
-                    // case static_cast<int>(MultipleDevAction_E::RecvMasterBootSta):
                     case static_cast<int>(SecurityAction_E::RecvBootSelfCheckStatus):
                     {
                         if(i.value() == "Master:Ok")

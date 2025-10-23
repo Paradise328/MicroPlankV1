@@ -262,7 +262,6 @@ void Viper_Transmitter::Reset_Viper()
 
 void Viper_Transmitter::startReadingThread()
 {
-    //m_domainController_Left->startThread();
     QThread *thread = QThread::create([this](){
         while(1){
              SteadyDelay(2);

@@ -25,7 +25,7 @@ void Security::performSystemCheck(MasterConsole& masterConsole, RobotControl& ro
 
 }
 
-void Security::systemMonitor(MasterConsole& masterConsole, MotorDriver* motorDriver)
+void Security::systemMonitor(MasterConsole& masterConsole, MotorDriver* motorDriver)/*与ui相关*/
 {
     SendInnerMsg(Module_Inner_E::Uiinterface,static_cast<int>(UIAction_E::RecvSystemBootSta),"Ok");
 
@@ -221,30 +221,33 @@ void Security::shutDownSystem()
     shutDownSystemThread.detach();
 }
 
-void Security::systemBootSelfCheck()
+void Security::systemBootSelfCheck()/*判定状态函数/控制灯板*/
 {
-   // selfCheckStep.store(SelfCheckStepEnum::MasterConsole_Checking);
-    selfCheckStep.store(SelfCheckStepEnum::AllOK);
+   selfCheckStep.store(SelfCheckStepEnum::MasterConsole_Checking);
+    // selfCheckStep.store(SelfCheckStepEnum::AllOK);
 
     std::thread systemBootSelfCheckThread([this]
     {
+       LOG(INFO)<<"flagSelfCheck: "<<flagSelfCheck;
         while(flagSelfCheck)
         {
             auto selfCheckStepTemp = selfCheckStep.load();/*selfCheckStep通过Msg与外界的类关联*/
             switch (selfCheckStepTemp)
             {
                 case SelfCheckStepEnum::MasterConsole_Checking:
-                {
+                {LOG(INFO)<<"MasterConsole_Checking";
                     SendInnerMsg(Module_Inner_E::MasterConsole,static_cast<int>(MasterConsoleAction_E::BootSelfCheck),"");
                     selfCheckStep.store(SelfCheckStepEnum::Respons_Waiting);
                     break;
                 }
 
                 case SelfCheckStepEnum::AllOK:
-                {
+                {LOG(INFO)<<"ALL OK";
                     SendInnerMsg(Module_Inner_E::Uiinterface,static_cast<int>(UIAction_E::RecvSystemBootSta),"Ok");
+                    SendInnerMsg(Module_Inner_E::MasterConsole,static_cast<int>(MasterConsoleAction_E::BootSelfCheck),"");
                     setSystemStatus(SystemWarningStatus::Normal);/*SystemWarningStatus与warning状态（灯板）相关*/
-                    return;
+                    // return;
+                    break;
                 }
 
                 case SelfCheckStepEnum::Err:
@@ -335,17 +338,18 @@ void Security::dealWithMsg()
 
                 case static_cast<int>(MultipleDevAction_E::RecvMasterBootSta):
                 {
-                    if(msg.Sender == Module_Inner_E::MasterConsole)
-                    {
+                    // if(msg.Sender == Module_Inner_E::MasterConsole)
+                    // {
                         if(i.value() == "Ok")
                         {
                             setSelfCheckStep(SelfCheckStepEnum::AllOK);
+                            LOG(INFO)<<"MASTER ALL OK!";
 
                         }else{
                             setSelfCheckStep(SelfCheckStepEnum::Err);
                             SendInnerMsg(Module_Inner_E::MultipleModules, static_cast<int>(MultipleDevAction_E::RecvSystemBootSta),"Err");
                         }
-                    }
+                    // }
                     break;
                 }
                 case static_cast<int>(SecurityAction_E::RecvMotorDriverShutDown):

@@ -2736,7 +2736,6 @@ void RobotControl::setEndJointDragEnableStatus(const uint8_t& domainDigitalCur_L
 void RobotControl::sendMotorData(const std::array<int, MotorNumPerSide>& targetEncoder_R, const std::array<int, MotorNumPerSide>& targetVel_R,
                                  const std::array<int, MotorNumPerSide>& targetEncoder_L, const std::array<int, MotorNumPerSide>& targetVel_L)
 {
-    // std::this_thread::sleep_until(startTime + std::chrono::milliseconds(5));
     std::lock_guard(m_motorDriver->m_cyclicMutex);
 
     m_motorDriver->setTargetVel(MotorType::MOONS, 0, targetVel_R[0], arm_0);
@@ -2767,13 +2766,12 @@ void RobotControl::sendMotorData(const std::array<int, MotorNumPerSide>& targetE
         m_motorDriver->setTargetPos(MotorType::MAXON, 5, targetEncoder_L[9], arm_1);
     }
 
-    // startTime = std::chrono::high_resolution_clock::now();
 }
 
 void RobotControl::sendMotorData_4Maxons_ForceControl(const std::array<int, MotorNumPerSide>& targetEncoder_R, const std::array<int, MotorNumPerSide>& targetVel_R,
                                  const std::array<int, MotorNumPerSide>& targetEncoder_L, const std::array<int, MotorNumPerSide>& targetVel_L)
 {
-    std::this_thread::sleep_until(startTime + std::chrono::milliseconds(5));
+
     m_motorDriver->setTargetVel(MotorType::MOONS, 0, targetVel_R[0], arm_0);
     m_motorDriver->setTargetVel(MotorType::ZERO_ERR, 0, targetVel_R[1], arm_0);
     m_motorDriver->setTargetVel(MotorType::ZERO_ERR, 1, targetVel_R[2], arm_0);
@@ -2783,8 +2781,7 @@ void RobotControl::sendMotorData_4Maxons_ForceControl(const std::array<int, Moto
     m_motorDriver->setTargetVel(MotorType::ZERO_ERR, 0, targetVel_L[1], arm_1);
     m_motorDriver->setTargetVel(MotorType::ZERO_ERR, 1, targetVel_L[2], arm_1);
     m_motorDriver->setTargetVel(MotorType::ZERO_ERR, 2, targetVel_L[3], arm_1);
-\
-    startTime = std::chrono::high_resolution_clock::now();
+
 }
 
 void RobotControl::sendMotorData_Teleop(const std::array<int, MotorNumPerSide>& targetEncoderCur_R, const std::array<int, MotorNumPerSide>& targetVelCur_R,

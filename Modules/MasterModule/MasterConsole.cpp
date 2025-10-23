@@ -326,21 +326,23 @@ void MasterConsole::masterConsoleBootSelfCheck()/*检测master状态，实时灯
         int retryCount = 3;
         while(retryCount > 0)
         {
+            LOG(INFO)<<"422 STATUS: "<<m_isMasterConsoleOk.load();
             printf("retryCount: %d\n", retryCount);
             if(m_MasterConsoleType == MasterConsoleType::DessightMaster)
             {
-                if(m_transmitter.return422Status() == true)
+                if(m_isMasterConsoleOk.load() == true)
                 {
                     SendInnerMsg(Module_Inner_E::MultipleModules,static_cast<int>(MultipleDevAction_E::RecvMasterBootSta),"Ok");
+                    LOG(INFO)<<"MASTER CHECK OK!";
                     return;
                 }
-                else if(m_transmitter.return422Status() == true == false)
+                else if(m_isMasterConsoleOk.load() == false)
                 {
                     std::this_thread::sleep_for(std::chrono::seconds(5));
                     if(retryCount > 0)
                     {
                         m_transmitter.initDevice();
-                        LOG(INFO)<<"Try to restart Omega, count " << 4 - retryCount;
+                        LOG(INFO)<<"Try to restart VIPER, count " << 4 - retryCount;
                     }
                     retryCount --;
                 }
@@ -439,7 +441,8 @@ void MasterConsole::dealWithMsg()
                 }
                 case static_cast<int>(MasterConsoleAction_E::BootSelfCheck):
                 {
-                    masterConsoleStatusCheck();
+                    // masterConsoleStatusCheck();
+                    masterConsoleBootSelfCheck();
                     break;
                 }
                 case static_cast<int>(MasterConsoleAction_E::MasterShutDown):
