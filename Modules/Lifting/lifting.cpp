@@ -546,6 +546,7 @@ void Lifting::BootSelfCheck()
         do{
             this->SelfCheck();
             SteadyDelay(2000);
+            // LOG(INFO)<<"IsSelfCheckOk: "<<this->IsSelfCheckOk();
             if(this->IsSelfCheckOk())
             {
                 SendInnerMsg(Module_Inner_E::MultipleModules,static_cast<int>(MultipleDevAction_E::RecvLiftingBootSta),"Ok");

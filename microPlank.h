@@ -132,7 +132,7 @@ private:
 
     // LightBoard*          m_lightboard = new LightBoard("192.168.42.82",8080,m_MsgPool);
 
-    // LightBoardManagement   m_LightBoardManagement = LightBoardManagement(m_MsgPool);
+    LightBoardManagement   m_LightBoardManagement = LightBoardManagement(m_MsgPool);
 
     RobotControl        m_robotControl = RobotControl(m_masterConsole, m_motorDriver, m_domainController, m_MsgPool);
 

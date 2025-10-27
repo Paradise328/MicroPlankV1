@@ -555,9 +555,6 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
 
     if (m_alignmentNumber_L < 100) { m_alignmentNumber_L++; }
 
-    auto mag_L = m_magneticEncoder_L.load();
-    // LOG(INFO)<<std::dec<<" mag_l: "<<mag_L;
-
     /* alpha(pitch) */
     double alpha_Org_L = m_handlePoseOrg_L.handlePoseL_Elevation;
     double alpha_Init_L = m_handlePoseInit_L.handlePoseL_Elevation;
@@ -577,7 +574,8 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
     /* 计算单边 OpenAngle */
     double openAngle_L = handlePoseCur.handlePoseL_OpenAngle;
     // auto openAngle_L_new = (openAngle_L < 0) ? 0.008 * pow(openAngle_L, 3) : pow(openAngle_L, 3)/600;
-    auto openAngle_L_new = (openAngle_L < 0) ? 0.018 * pow(openAngle_L, 3) : pow(openAngle_L, 3)/600;
+    // auto openAngle_L_new = (openAngle_L < 0) ? 0.018 * pow(openAngle_L, 3) : pow(openAngle_L, 3)/600;
+    auto openAngle_L_new = calculateNewOpenangle(openAngle_L);
 
     /*计算 beta(yaw) */
     double beta_Org_L = m_handlePoseOrg_L.handlePoseL_Arzimuth;
@@ -1327,9 +1325,6 @@ std::array<double, ControlValueNum> RobotControl::test_motionMapping_L(const Han
 
 
 
-
-
-
     controlValueTmp_L[0] = endEffectorTarget_X_L - endEffectorInit_X_L; //(handpose_cur-handpose_init) 单位为 mm
     controlValueTmp_L[1] = (jointAngle1_target_L - jointAngle1_Init_L) * 180 / M_PI;//输出为各关节角度
     controlValueTmp_L[2] = (jointAngle2_target_L - jointAngle2_Init_L) * 180 / M_PI;
@@ -1795,6 +1790,21 @@ std::array<double, ControlValueNum> RobotControl:: motionMapping_R_ForceControl(
     controlValueTmp_R[3] = jointAngle3_target_R * 180 / M_PI;
 
     return controlValueTmp_R;
+}
+
+double RobotControl::calculateNewOpenangle(double masterOpenangle){
+    double newOpenangle;
+    if(masterOpenangle < -3){
+        // newOpenangle = masterOpenangle * 0.9286 + 1.286;/*-8*/
+        // newOpenangle = masterOpenangle * 1.2143 + 2.1428;/*-10*/
+        newOpenangle = masterOpenangle * 1.5 + 3;/*-12*/
+    }else if(masterOpenangle >= -3 && masterOpenangle< 7){
+        newOpenangle = 0.5 * masterOpenangle;
+    }else if(masterOpenangle >= 7){
+        newOpenangle =  masterOpenangle * 1.269 - 5.3846;
+    }
+
+    return newOpenangle;
 }
 
 void RobotControl::storeCurAsPrev(const HandlePose& handlePoseCur,
@@ -3197,7 +3207,7 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
 
                                      if(((endEffectorTarget_Z_L < -580) && (handlePoseCur.handlePoseL_Z - m_handlePosePrev.handlePoseL_Z) < 0) || (endEffectorTarget_Z_L >= -580)){
 
-                                         if(((endEffectorTarget_Z_L > -440) && (handlePoseCur.handlePoseL_Z - m_handlePosePrev.handlePoseL_Z) > 0) || (endEffectorTarget_Z_L <= -440)){
+                                         if(((endEffectorTarget_Z_L > -400) && (handlePoseCur.handlePoseL_Z - m_handlePosePrev.handlePoseL_Z) > 0) || (endEffectorTarget_Z_L <= -400)){
 
                                              // if(((moonsRelPosition_L < -30) && (handlePoseCur.handlePoseL_X - m_handlePosePrev.handlePoseL_X) > 0) || (moonsRelPosition_L >= -30)){
 
@@ -3245,7 +3255,7 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
 
                                      if(((endEffectorTarget_Z_R < -580) && (handlePoseCur.handlePoseR_Z - m_handlePosePrev.handlePoseR_Z) < 0) || (endEffectorTarget_Z_R >= -580)){
 
-                                         if(((endEffectorTarget_Z_R > -440) && (handlePoseCur.handlePoseR_Z - m_handlePosePrev.handlePoseR_Z) > 0) || (endEffectorTarget_Z_R <= -440)){
+                                         if(((endEffectorTarget_Z_R > -400) && (handlePoseCur.handlePoseR_Z - m_handlePosePrev.handlePoseR_Z) > 0) || (endEffectorTarget_Z_R <= -400)){
 
                                              // if(((moonsRelPosition_R < -30) && (handlePoseCur.handlePoseR_X - m_handlePosePrev.handlePoseR_X) > 0) || (moonsRelPosition_R >= -30)){
 

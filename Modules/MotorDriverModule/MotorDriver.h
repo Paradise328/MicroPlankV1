@@ -319,6 +319,8 @@ public:
     std::array<int, 8> getDigitalInputs(const MotorType& type, const int& index, const int& armNum);
     int32_t getFollowingPosErr(const MotorType& type, const int& index, const int& armNum);
 
+    // bool getMotorDriverStatus();
+
     /* write data to m_abSendData, which belongs to RxPDO, return 1 if succeed, else return 0 */
     int setControlWord(const MotorType& type, const int& index, const ControlCommand& cmd, const int& armNum);
     int setOperationMode(const MotorType& type, const int& index, const OperationMode& mode, const int& armNum);

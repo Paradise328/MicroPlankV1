@@ -22,7 +22,7 @@ private:
     MessageQueue& m_messagePool;
     LightBoard m_LightBoardOnBeam = LightBoard("192.168.42.82",8080,m_messagePool);
     // LightBoardInTrolley m_LightBoardInTrolley = LightBoardInTrolley("192.168.42.82",8080,m_messagePool);
-    DomainController*  m_domainController = new DomainController();
+    // DomainController*  m_domainController = new DomainController();
     QThread m_BootSelfCheckThread;
     QQueue<Message_Inner_T> m_MsgGottenQueue;
     QReadWriteLock  m_MsgGottenRWLock;

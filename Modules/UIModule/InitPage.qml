@@ -12,14 +12,14 @@ Item {
     height: parent.height
 
     property int textLeftRowOffset: -250
-    property int textRightRowOffset: 280
+    property int textRightRowOffset: 310
 
     property int textFirstColOffset: 50
     property int textSecondColOffset: 100
     property int textThirdColOffset: 150
 
     property int imageLeftRowOffset:textLeftRowOffset-230
-    property int imageRightRowOffset:textRightRowOffset-280
+    property int imageRightRowOffset:textRightRowOffset-297
 
     property int imageFirstColOffset: textFirstColOffset
     property int imageSecondColOffset: textSecondColOffset
@@ -139,7 +139,7 @@ Item {
             //@disable-check M16
             objectName: "init_leftfinialsta"
             id: init_leftfinialsta
-            y: 809
+            y: 809 //809
             width: 61
             height: 53
             anchors.verticalCenter: parent.verticalCenter
@@ -205,7 +205,7 @@ Item {
         //@disable-check M16
         objectName: "init_ContinuousBtn"
         id:init_ContinuousBtn
-        y: 1000
+        y: 900
         anchors.horizontalCenter: parent.horizontalCenter
         font.pixelSize: 34
         anchors.horizontalCenterOffset: 0 // 设置字体大小
@@ -413,7 +413,7 @@ Item {
               }
               onClicked: {
                   docPwd.text = ''
-                  newLogin.close()
+                  init_newLogin.close()
               }
           }
       }
@@ -452,7 +452,7 @@ Item {
         color: "#18fefe"
         text: "升降柱检查中"
         horizontalAlignment: Text.AlignLeft
-        verticalAlignment: Text.verticalCenter
+        verticalAlignment: Text.AlignVCenter
         anchors.verticalCenter: parent.verticalCenter
         //anchors.left: parent.left
         anchors.leftMargin: 760
@@ -472,9 +472,9 @@ Item {
         id: init_txt_armcheck
         y: 574
         color: "#18fefe"
-        text: "支撑臂检查中"
+        text: "     Ethercat检查中"
         horizontalAlignment: Text.AlignLeft
-        verticalAlignment: Text.verticalCenter
+        verticalAlignment: Text.AlignVCenter
         anchors.verticalCenter: parent.verticalCenter
         //anchors.left: parent.left
         font.letterSpacing: 20
@@ -486,25 +486,25 @@ Item {
         font.bold: true
         font.family: "Microsoft YaHei UI"
 
-        Image {
-            id: image2
-            x: 1029
-            y: 617
-            width: 61
-            height: 53
-            source: "qrc:/qtquickplugin/images/template_image.png"
-            fillMode: Image.PreserveAspectFit
-        }
+        // Image {
+        //     id: image2
+        //     x: 1029
+        //     y: 617
+        //     width: 61
+        //     height: 53
+        //     source: "qrc:/qtquickplugin/images/template_image.png"
+        //     fillMode: Image.PreserveAspectFit
+        // }
 
-        Image {
-            id: image3
-            x: 1037
-            y: 612
-            width: 61
-            height: 53
-            source: "qrc:/qtquickplugin/images/template_image.png"
-            fillMode: Image.PreserveAspectFit
-        }
+        // Image {
+        //     id: image3
+        //     x: 1037
+        //     y: 612
+        //     width: 61
+        //     height: 53
+        //     source: "qrc:/qtquickplugin/images/template_image.png"
+        //     fillMode: Image.PreserveAspectFit
+        // }
     }
 
         //左侧末端信息检查
@@ -516,7 +516,7 @@ Item {
             color: "#18fefe"
             text: "左执行末端检查中"
             horizontalAlignment: Text.AlignLeft
-            verticalAlignment: Text.verticalCenter
+            verticalAlignment: Text.AlignVCenter
             anchors.verticalCenter: parent.verticalCenter
             //anchors.left: parent.left
             font.letterSpacing: 20

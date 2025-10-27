@@ -246,7 +246,6 @@ void LightBoardManagement::dealWithMsg()
             {
                 case static_cast<int>(MultipleDevAction_E::RecvSystemWarning)://RecvLightBoardIoState:
                 {
-
                 if(i.value()=="Normal")
                 {
                     m_LightBoardOnBeam.setLightBoardColor(LIGHT_COLOR_GREEN, LIGHT_MODEL_ON);
@@ -267,7 +266,7 @@ void LightBoardManagement::dealWithMsg()
                 }
                 else if(i.value()=="HeavyWarning")
                 {
-                    m_LightBoardOnBeam.setLightBoardColor(LIGHT_COLOR_RED, LIGHT_MODEL_BLINK);
+                    m_LightBoardOnBeam.setLightBoardColor(LIGHT_COLOR_RED, LIGHT_MODEL_ON);
                     // m_LightBoardInTrolley.LCMD("LSC=red");
                     // m_LightBoardInTrolley.LCMD("LSM=blink");
                 }

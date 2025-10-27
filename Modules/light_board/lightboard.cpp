@@ -207,13 +207,12 @@ void LightBoard::LCMD(QString cmd,eFinalSide Finalside,int arg2,int arg3,int arg
 void LightBoard::CommTimeoutTimer_Handle()
 {
     this->on_Disconnected();
-    qDebug()<<"CommTimeoutTimer  Timerout!!!";
+    LOG(INFO) << "light board CommTimeoutTimer Timerout!!!";
 
 }
 
 void LightBoard::DataIn(QByteArray data)
 {
-    static bool Comm_Start=false;
     static uint8_t IOValdatOld=0;
     uint8_t IOValdat=0;
     FinalDataRead_t FDRTemp;
@@ -227,22 +226,20 @@ void LightBoard::DataIn(QByteArray data)
     eDepackReturn edr=this->Depack_Frame(data,cftemp);
     if(edr==Depack_SUCCESS)
     {
-
         QString argBufString="";
         if(cftemp.payload.type==CMD_UPLOAD_DATA)
         {
-            if(Comm_Start==false){
-                m_CommTimeOutTimer.setSingleShot(true);
-                connect(&m_CommTimeOutTimer,&QTimer::timeout,this,&LightBoard::CommTimeoutTimer_Handle);
-                m_CommTimeOutTimer.start(500);
-                 Comm_Start=true;
-                 qDebug()<<"CommTimeoutTimer  start";
-            }
-            else{
-                m_CommTimeOutTimer.stop();
-                m_CommTimeOutTimer.start(500);
-//                qDebug()<<"CommTimeoutTimer  reset";
-            }
+//             if(Comm_Start==false){
+//                 m_CommTimeOutTimer.setSingleShot(true);
+//                 connect(&m_CommTimeOutTimer,&QTimer::timeout,this,&LightBoard::CommTimeoutTimer_Handle);
+//                 m_CommTimeOutTimer.start(500);
+//                  Comm_Start=true;
+//             }
+//             else{
+//                 m_CommTimeOutTimer.stop();
+//                 m_CommTimeOutTimer.start(500);
+// //                qDebug()<<"CommTimeoutTimer  reset";
+//             }
             /*switch (cftemp.payload.args[0])
             {
                 case FinalAllInformation:argBufString+="FAI:";break;

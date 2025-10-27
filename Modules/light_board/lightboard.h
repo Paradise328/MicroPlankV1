@@ -115,6 +115,7 @@ private:
     int     m_UpdateCounter_L = 0;
     int     m_UpdateCounter_R = 0;
     QTimer  m_CommTimeOutTimer;
+    bool Comm_Start=false;
 
 signals:
     void IOValUpdate(uint8_t IOVal);

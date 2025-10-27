@@ -166,6 +166,7 @@ void MicroPlank::messagePoll()
                     m_robotControl.GetAmMsg(msg_t);
                     m_lifting->GetAmMsg(msg_t);
                     m_audioPlay.GetAmMsg(msg_t);
+                    m_LightBoardManagement.GetAmMsg(msg_t);
                     break;
                  }
             default:continue;

@@ -873,6 +873,12 @@ int32_t MotorDriver::getFollowingPosErr(const MotorType& type, const int& index,
     }
 }
 
+// bool MotorDriver::getMotorDriverStatus()
+// {
+//     bool motordriverStatus = m_isMotorDriverOk.load();
+//     return motordriverStatus;
+// }
+
 int MotorDriver::setControlWord(const MotorType& type, const int& index, const ControlCommand& cmd, const int& armNum){
     if(m_config[static_cast<int>(type)].RxPDO.variables.count(CONTROLWORD) > 0){
         const auto& variable = m_config[static_cast<int>(type)].RxPDO.variables[CONTROLWORD];
@@ -3517,24 +3523,26 @@ void MotorDriver::displayMotorErrCode(){
 
 void MotorDriver::motorDriverThread(std::promise<bool> &promiseCommunication){
     auto lRet = m_selfPointer->motorDriverInit();
+
     if(lRet != CIFX_NO_ERROR){
         LOG(ERROR) << "cifX driver cannot be initialized, hence, motor driver thread cannot be started.";
         m_selfPointer->m_threadTerminated.store(true, std::memory_order_release);
         return;
     }
 
+    m_selfPointer->m_isMotorDriverOk.store(true);
     while(!m_selfPointer->m_threadTerminated){
 
         if(m_selfPointer->checkECatStationState() != T_NOERROR){
+            m_selfPointer->m_isMotorDriverOk.store(false);
             break;
         }
-
         m_selfPointer->checkMotorState();
 
         if(m_selfPointer->m_flagSDO){
             if (T_NOERROR != (lRet = m_selfPointer->mailboxPacketTransfer())){
                 LOG(ERROR) << "SDO service is offline, connection may be lost." ;
-                // m_isMotorDriverOk.store(false);
+                m_selfPointer->m_isMotorDriverOk.store(false);
                 break;
             }
             m_selfPointer->m_flagSDO = false;
@@ -3543,11 +3551,11 @@ void MotorDriver::motorDriverThread(std::promise<bool> &promiseCommunication){
 
         if (T_NOERROR != (lRet = m_selfPointer->cyclicDataTransfer())){
             LOG(ERROR) << "PDO service is offline, connection may be lost." ;
-            // m_isMotorDriverOk.store(false);
+            m_selfPointer->m_isMotorDriverOk.store(false);
             break;
         }
     }
-
+    m_selfPointer->SendInnerMsg(Module_Inner_E::MultipleModules, static_cast<int>(MultipleDevAction_E::RecvSystemWarning),"HeavyWarning");
     m_selfPointer->displayMotorErrCode();
     m_selfPointer->motorDriverExit();
     m_selfPointer->m_threadTerminated.store(true, std::memory_order_release);
@@ -3707,6 +3715,7 @@ void MotorDriver::dealWithMsg()
         }
     }
 }
+
 
  MotorDriver* MotorDriver::getInstance(const MotorDriverParameter motorDriverParameter, MessageQueue&  messagePool){
      if(m_selfPointer == nullptr){

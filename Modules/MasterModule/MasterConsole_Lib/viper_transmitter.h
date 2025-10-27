@@ -37,6 +37,9 @@ public:
             m_rotMatrixPrev_R << 1,0,0,
                             0,1,0,
                             0,0,1;
+            // m_serial_422 = new QSerialPort();
+            // connect(m_serial_422, &QSerialPort::readyRead, this, &Viper_Transmitter::On422DataIn);
+            // connect(m_serial_422, &QSerialPort::errorOccurred, this, &Viper_Transmitter::viperOccurred);
             }
     HandlePose              returnHandlePose(){return m_handlePoseData.load();}
 
@@ -57,6 +60,7 @@ private:
     QHash<QString,eViper_Transmitter_Actions> Qhash_Cmd_Classify;
     bool                    openSerialPort(qint32 baud);
     void                    closeSerialPort();
+    void                    viperOccurred(QSerialPort::SerialPortError error);
     void                    DataIn(QByteArray data);
     void                    On422DataIn(void);
     eSendReturn             Send_Frame_By_422(COMMU_FRAME cftemp);

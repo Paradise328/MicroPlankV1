@@ -326,14 +326,14 @@ void MasterConsole::masterConsoleBootSelfCheck()/*检测master状态，实时灯
         int retryCount = 3;
         while(retryCount > 0)
         {
-            LOG(INFO)<<"422 STATUS: "<<m_isMasterConsoleOk.load();
-            printf("retryCount: %d\n", retryCount);
+            // LOG(INFO)<<"422 STATUS: "<<m_isMasterConsoleOk.load();
+            // printf("retryCount: %d\n", retryCount);
             if(m_MasterConsoleType == MasterConsoleType::DessightMaster)
             {
                 if(m_isMasterConsoleOk.load() == true)
                 {
                     SendInnerMsg(Module_Inner_E::MultipleModules,static_cast<int>(MultipleDevAction_E::RecvMasterBootSta),"Ok");
-                    LOG(INFO)<<"MASTER CHECK OK!";
+
                     return;
                 }
                 else if(m_isMasterConsoleOk.load() == false)

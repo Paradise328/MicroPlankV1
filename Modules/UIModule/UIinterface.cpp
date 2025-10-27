@@ -1059,15 +1059,27 @@ void UIinterface::dealWithMsg()//与robotcontrol部分通信
                         }
                         break;
                     }
-                    case static_cast<int>(MultipleDevAction_E::RecvHorizontalArmBootSta):
+                    // case static_cast<int>(MultipleDevAction_E::RecvHorizontalArmBootSta):
+                    // {
+                    //     if(i.value()=="Ok")
+                    //     {
+                    //         SetArmStaimage(2);
+                    //         SetArmcheckString("  支撑臂连接成功");
+                    //     }else{
+                    //         SetArmStaimage(0);
+                    //         SetArmcheckString("  支撑臂连接失败");
+                    //     }
+                    //     break;
+                    // }
+                    case static_cast<int>(SecurityAction_E::RecvEthercatStatus):
                     {
-                        if(i.value()=="Ok")
+                        if(i.value()=="EtherCAT:Ok")
                         {
                             SetArmStaimage(2);
-                            SetArmcheckString("  支撑臂连接成功");
+                            SetArmcheckString("       Ethercat连接成功");
                         }else{
                             SetArmStaimage(0);
-                            SetArmcheckString("  支撑臂连接失败");
+                            SetArmcheckString("       Ethercat连接失败");
                         }
                         break;
                     }

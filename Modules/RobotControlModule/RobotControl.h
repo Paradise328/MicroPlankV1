@@ -490,6 +490,9 @@ private:
     mutable int                     m_alignmentNumber_L;
     mutable int                     m_alignmentNumber_R;
 
+    /*器械夹持角度计算*/
+    double calculateNewOpenangle(double masterOpenangle);
+
     /*控制中所需计算部分*/
     std::atomic<HandlePose>         m_handlePose_Cur;
     mutable HandlePose              m_handlePosePrev;
@@ -656,8 +659,6 @@ private:
     void                    setForceControlInitHandleMotorPosition(const std::array<int, MotorNumPerSide>& motorPositionCur, const HandlePose& handlePoseCur, const char& side);
     void                    judgePositonForceControl(const char& side);
 
-    static Eigen::Matrix3d ToQuaternionRotationMatrix(double q_L0, double q_L1, double q_L2, double q_L3);
-    static Eigen::Matrix3d ToEulerRotationMatrix(double Azimuth, double Elevation, double Roll);
 
     /*Maxon电机*/
     std::array<int,6> m_maxonInit;

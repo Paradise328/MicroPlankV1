@@ -451,7 +451,7 @@ bool Peripheral_Device::Change_Usable_Con()
 
     if(ConList.isEmpty())return false;
     ConList.removeAt(0);
-
+    if(ConList.isEmpty())return false;
     this->m_socket=ConList[0];
     this->m_socketport=this->m_socket->peerPort();
 
@@ -568,7 +568,7 @@ void Peripheral_Device::on_Disconnected(void)
     qDebug() << "DisConnected！！！";
     this->ConnSta = DISCONNECTED;
     if(this->m_socketport!=0)
-    qDebug() << "lose:this->m_socketport=" << this->m_socketport;
+    qDebug() << "lose:this->m_socketport=" << this->m_socketport<<" this->ip="<<this->Ip;
     this->ReconnPortList.append(this->m_socketport);
     if(this-> Change_Usable_Con() == false)
     {

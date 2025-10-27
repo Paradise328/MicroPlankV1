@@ -7,7 +7,6 @@ void Viper_Transmitter::initDevice()
     if(openSerialPort(921600) == true)
     {
         LOG(INFO)<<"422 open successful";
-        m_is422Ok = true;
     }else
     {
         LOG(ERROR)<<"422 open fail";
@@ -15,15 +14,13 @@ void Viper_Transmitter::initDevice()
 
     usleep(5 * 1000);
 
-    m_statusMonitor = std::thread(&Viper_Transmitter::statusMonitor, this);
-    m_statusMonitor.detach();
+    // m_statusMonitor = std::thread(&Viper_Transmitter::statusMonitor, this);
+    // m_statusMonitor.detach();
 }
 
 bool Viper_Transmitter::openSerialPort(qint32 baud)
 {
-
     system("sudo rm -f /var/lock/LCK..tty*");
-
     m_serial_422 = new QSerialPort();
     QString name = "/dev/ttyXR0";
     m_serial_422->setPortName(name);
@@ -35,7 +32,9 @@ bool Viper_Transmitter::openSerialPort(qint32 baud)
     if (m_serial_422->open(QIODevice::ReadWrite))
     {
         connect(m_serial_422, &QSerialPort::readyRead, this, &Viper_Transmitter::On422DataIn);
-        LOG(INFO)<<"Connect Successful";
+        // connect(m_serial_422, &QSerialPort::errorOccurred, this, &Viper_Transmitter::viperOccurred);
+        LOG(INFO)<<"viper Connect Successful";
+        m_is422Ok = true;
         return true;
     }else
     {
@@ -47,6 +46,21 @@ bool Viper_Transmitter::openSerialPort(qint32 baud)
 void Viper_Transmitter::closeSerialPort()
 {
     m_serial_422->close();
+}
+
+void Viper_Transmitter::viperOccurred(QSerialPort::SerialPortError error)
+{
+    LOG(INFO)<<"viper 422 error"<< error;
+    switch(error){
+        case QSerialPort::SerialPortError::DeviceNotFoundError:
+        case QSerialPort::SerialPortError::OpenError:
+            m_is422Ok = false;
+            initDevice();
+            break;
+        default:
+            LOG(INFO)<<"viper 422 error"<< error;
+            break;
+    }
 }
 
 int Viper_Transmitter::findFrameHead(QByteArray &data)
@@ -84,7 +98,7 @@ void Viper_Transmitter::On422DataIn(void)
 {
     if(m_serial_422->canReadLine())
     {
-
+        m_is422Ok = true;
         Data422Recvin+=m_serial_422->readAll();
         int len=this->Data422Recvin.length();
         int headindex=findFrameHead(Data422Recvin);

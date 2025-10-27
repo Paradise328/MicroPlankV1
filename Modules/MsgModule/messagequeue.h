@@ -107,6 +107,7 @@ enum class _SecurityAction_E
     RecvMotorDriverShutDown,
     RecvMasterConsoleShutDown,
     PowerOff,
+    RecvEthercatStatus,
 };
 using SecurityAction_E = enum _SecurityAction_E;
 

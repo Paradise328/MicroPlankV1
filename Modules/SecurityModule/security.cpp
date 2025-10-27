@@ -37,6 +37,7 @@ void Security::systemMonitor(MasterConsole& masterConsole, MotorDriver* motorDri
 
         auto masterConsoleStatus_Cur = masterConsole.returnMasterConsoleStatus();/*422ok*/
         auto etherCATCommunicationStatus_Cur = motorDriver->returnMotorDriverStatus();
+        // LOG(INFO)<<"etherCATCommunicationStatus_Cur: "<<etherCATCommunicationStatus_Cur;
 
 
         auto masterConsoleStatus_Prev = systemModuleStatus_Prev[0];
@@ -53,11 +54,12 @@ void Security::systemMonitor(MasterConsole& masterConsole, MotorDriver* motorDri
                     {
                         LOG(INFO) << "Master Console Successfully Connected! ";
                         SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvBootSelfCheckStatus),"Master:Ok");
+                        SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(MultipleDevAction_E::RecvLiftingBootSta),"Ok");
                     }
                     if(etherCATCommunicationStatus_Prev == false && etherCATCommunicationStatus_Cur == true)
                     {
                         LOG(INFO) << "etherCATCommunication Successfully Connected! ";
-                        SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvBootSelfCheckStatus),"EtherCAT:Ok");
+                        SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvEthercatStatus),"EtherCAT:Ok");
                     }
                     break;
                 }
@@ -235,18 +237,19 @@ void Security::systemBootSelfCheck()/*判定状态函数/控制灯板*/
             switch (selfCheckStepTemp)
             {
                 case SelfCheckStepEnum::MasterConsole_Checking:
-                {LOG(INFO)<<"MasterConsole_Checking";
+                {
                     SendInnerMsg(Module_Inner_E::MasterConsole,static_cast<int>(MasterConsoleAction_E::BootSelfCheck),"");
+                    SendInnerMsg(Module_Inner_E::AssistDevice_Lifting,static_cast<int>( _AssistDevice_LiftingAction_E::BootSelfCheck),"");
                     selfCheckStep.store(SelfCheckStepEnum::Respons_Waiting);
                     break;
                 }
 
                 case SelfCheckStepEnum::AllOK:
-                {LOG(INFO)<<"ALL OK";
+                {
                     SendInnerMsg(Module_Inner_E::Uiinterface,static_cast<int>(UIAction_E::RecvSystemBootSta),"Ok");
                     SendInnerMsg(Module_Inner_E::MasterConsole,static_cast<int>(MasterConsoleAction_E::BootSelfCheck),"");
                     setSystemStatus(SystemWarningStatus::Normal);/*SystemWarningStatus与warning状态（灯板）相关*/
-                    // return;
+                    return;
                     break;
                 }
 
@@ -343,7 +346,7 @@ void Security::dealWithMsg()
                         if(i.value() == "Ok")
                         {
                             setSelfCheckStep(SelfCheckStepEnum::AllOK);
-                            LOG(INFO)<<"MASTER ALL OK!";
+                            // LOG(INFO)<<"MASTER ALL OK!";
 
                         }else{
                             setSelfCheckStep(SelfCheckStepEnum::Err);
