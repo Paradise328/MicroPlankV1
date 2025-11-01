@@ -52,13 +52,13 @@ void Security::systemMonitor(MasterConsole& masterConsole, MotorDriver* motorDri
                 {
                     if(masterConsoleStatus_Prev == false && masterConsoleStatus_Cur == true)
                     {
-                        LOG(INFO) << "Master Console Successfully Connected! ";
+                        // LOG(INFO) << "Master Console Successfully Connected! ";
                         SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvBootSelfCheckStatus),"Master:Ok");
                         SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(MultipleDevAction_E::RecvLiftingBootSta),"Ok");
                     }
                     if(etherCATCommunicationStatus_Prev == false && etherCATCommunicationStatus_Cur == true)
                     {
-                        LOG(INFO) << "etherCATCommunication Successfully Connected! ";
+                        // LOG(INFO) << "etherCATCommunication Successfully Connected! ";
                         SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(SecurityAction_E::RecvEthercatStatus),"EtherCAT:Ok");
                     }
                     break;
@@ -230,7 +230,7 @@ void Security::systemBootSelfCheck()/*判定状态函数/控制灯板*/
 
     std::thread systemBootSelfCheckThread([this]
     {
-       LOG(INFO)<<"flagSelfCheck: "<<flagSelfCheck;
+       // LOG(INFO)<<"flagSelfCheck: "<<flagSelfCheck;
         while(flagSelfCheck)
         {
             auto selfCheckStepTemp = selfCheckStep.load();/*selfCheckStep通过Msg与外界的类关联*/
@@ -317,7 +317,7 @@ void Security::dealWithMsg()
                     {
                         if(i.value() == "Ok")
                         {
-                            setSelfCheckStep(SelfCheckStepEnum::AssistArm_Checking);
+                            // setSelfCheckStep(SelfCheckStepEnum::AssistArm_Checking);
                         }else{
                             setSelfCheckStep(SelfCheckStepEnum::Err);
                         }
@@ -346,7 +346,7 @@ void Security::dealWithMsg()
                         if(i.value() == "Ok")
                         {
                             setSelfCheckStep(SelfCheckStepEnum::AllOK);
-                            // LOG(INFO)<<"MASTER ALL OK!";
+                            LOG(INFO)<<"MASTER ALL OK!";
 
                         }else{
                             setSelfCheckStep(SelfCheckStepEnum::Err);
