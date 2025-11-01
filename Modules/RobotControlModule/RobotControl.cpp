@@ -3467,7 +3467,7 @@ void RobotControl::setControlInitHandleMotorPositionAndPose(const std::array<int
         m_ruckigInputState_R.max_acceleration = {22000.0, 22000.0, 22000.0};
         m_ruckigInputState_R.max_jerk = {12000.0, 12000.0, 12000.0};
 
-        m_ruckigInputState_L.max_velocity = {65000.0, 65000.0, 65000.0};
+        m_ruckigInputState_L.max_velocity = {55000.0, 55000.0, 55000.0};
         m_ruckigInputState_L.max_acceleration = {22000.0, 22000.0, 22000.0};
         m_ruckigInputState_L.max_jerk = {12000.0, 12000.0, 12000.0};
         LOG(INFO)<<"SCALING 12x ";
@@ -3960,8 +3960,8 @@ void RobotControl::zeroErrGoHome(const char& side)
             //                   JointEncoderPerRevolution / 2 + static_cast<int>(120.0839 * EncoderPerGrade),
             //                   JointEncoderPerRevolution / 2 + static_cast<int>(22.1344 * EncoderPerGrade)};
         targetPosition = {JointEncoderPerRevolution / 2 + static_cast<int>(62.0 * EncoderPerGrade),
-                          JointEncoderPerRevolution / 2 + static_cast<int>(124.83 * EncoderPerGrade),
-                          JointEncoderPerRevolution / 2 + static_cast<int>(32.83 * EncoderPerGrade)};
+                          JointEncoderPerRevolution / 2 + static_cast<int>(126.0 * EncoderPerGrade),
+                          JointEncoderPerRevolution / 2 + static_cast<int>(34.0 * EncoderPerGrade)};
 
         for(int i = 0; i < 3; i ++)
         {
@@ -4029,8 +4029,8 @@ void RobotControl::zeroErrGoHome(const char& side)
             //                   JointEncoderPerRevolution / 2 - static_cast<int>(120.0839 * EncoderPerGrade),
             //                   JointEncoderPerRevolution / 2 - static_cast<int>(22.1344* EncoderPerGrade)};
         targetPosition = {JointEncoderPerRevolution / 2 - static_cast<int>(62.0 * EncoderPerGrade),
-                          JointEncoderPerRevolution / 2 - static_cast<int>(124.83 * EncoderPerGrade),
-                          JointEncoderPerRevolution / 2 - static_cast<int>(32.83* EncoderPerGrade)};
+                          JointEncoderPerRevolution / 2 - static_cast<int>(126.0 * EncoderPerGrade),
+                          JointEncoderPerRevolution / 2 - static_cast<int>(34.0* EncoderPerGrade)};
 
         for(int i = 0; i < 3; i ++)
         {
