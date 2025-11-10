@@ -359,6 +359,7 @@ void DomainController::readHandleOtherData(QByteArray qba)
 
                 /* depackage data for digital inputs */
                 m_domainControllerData_l_tmp.DigitalInputs = cftemp.payload.args[29];
+                // LOG(INFO) << "digital inputs L " << static_cast<uint>(cftemp.payload.args[29]);
                 m_domainControllerData_l.store(m_domainControllerData_l_tmp);
 
             }
@@ -411,12 +412,13 @@ void DomainController::readHandleOtherData(QByteArray qba)
 
                 /* depackage data for digital inputs */
                 m_domainControllerData_r_tmp.DigitalInputs = cftemp.payload.args[29];
+                // LOG(INFO) << "digital inputs R " << static_cast<uint>(cftemp.payload.args[29]);
                 m_domainControllerData_r.store(m_domainControllerData_r_tmp);
 
             }
 
-            // std::cout << static_cast<int>(m_domainControllerData.DigitalInputs)<< std::endl;
         }
+
         else if(cftemp.payload.args[0] == Dev_Sta_LEFTHANDLE_ERROR)
         {
             //qDebug()<<"LEFTHANDLE_ERROR!";

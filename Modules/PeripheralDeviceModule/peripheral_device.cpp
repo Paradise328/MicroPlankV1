@@ -55,6 +55,8 @@ Peripheral_Device::Peripheral_Device(QString ip, quint16 port)
         this->m_socket = ConList[0];
         this->m_socketport = this->m_socket->peerPort();
         this->ConnSta = CONNECTED;
+    }else{
+        LOG(INFO)<<"open error ip:"<<ip.toStdString();
     }
 
     //冗余的连接用定时器来做
@@ -118,7 +120,7 @@ void Peripheral_Device::ReconnTimer_Callback(void)
     }
     if(porttemp<this->Port)porttemp=this->Port;
 
-     qDebug()<<"reconnect port:"<<porttemp;
+     qDebug()<<"reconnect ip:"<<this->Ip<<" port:"<<porttemp;
 
     QTcpSocket *m_sockettemp=nullptr;
     m_sockettemp=new QTcpSocket();

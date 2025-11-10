@@ -417,7 +417,7 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
     Eigen::AngleAxisd axang_R(rotMatrix_R);
     Eigen::Vector3d u_R = axang_R.axis();
     double theta_R = axang_R.angle();
-    double k = 1.15;
+    double k = 1.12;
     double theta_scaled_R = k * theta_R;
     Eigen::AngleAxisd axang_scaled_R(theta_scaled_R, u_R);
     Eigen::Matrix3d R_scaled = axang_scaled_R.toRotationMatrix();

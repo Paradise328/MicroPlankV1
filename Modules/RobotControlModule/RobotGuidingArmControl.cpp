@@ -8,9 +8,11 @@ void RobotControl::startGuidingArmControlThread()
 }
 
 /* control loop of guiding arm */
-void RobotControl::guidingArmControl(){
+void RobotControl::guidingArmControl(){/*没被调用*/
     while(true){
         updateGuidingArmMotion();
+
+        updownMotion();
 
         updateGuidingArmState();
 
@@ -108,8 +110,8 @@ void RobotControl::applyGuidingArmForceControl(){
     /* apply PT update in this function */
     /* set target torque in order to compensate the friction */
     LOG(INFO)<<"[MODE:DRAG]";
-    double target_trq_0 = signDouble(m_guidingArm.m_velocity_1stOrder[0]) * 20.0;
-    double target_trq_1 = signDouble(m_guidingArm.m_velocity_1stOrder[1]) * 20.0;
+    double target_trq_0 = signDouble(m_guidingArm.m_velocity_1stOrder[0]) * 45.0;
+    double target_trq_1 = signDouble(m_guidingArm.m_velocity_1stOrder[1]) * 30.0;
     double target_trq_2 = signDouble(m_guidingArm.m_velocity_1stOrder[2]) * 15.0;
 
     tmp1 = signDouble(m_guidingArm.m_velocity_1stOrder[0]);
@@ -187,8 +189,18 @@ double RobotControl::signDouble(double target){
 
 void RobotControl::updateGuidingArmMotion(){
     std::array<int, 6>  digitalInputGuiding = m_digitalInputGuiding.load();
+    int digitalInput_r = static_cast<uint>(m_domainController->m_domainControllerData_r.load().DigitalInputs);
+    int digitalInput_l = static_cast<uint>(m_domainController->m_domainControllerData_l.load().DigitalInputs);
 
-    m_guidingArm.m_guidingArmEnableBtnPressed = static_cast<bool>(digitalInputGuiding[4]);
+    if(digitalInput_r == 0x10 || digitalInput_l == 0x10){
+
+        m_guidingArm.m_guidingArmEnableBtnPressed = true;
+    }
+    else{
+        m_guidingArm.m_guidingArmEnableBtnPressed = false;
+    }
+
+    // m_guidingArm.m_guidingArmEnableBtnPressed = static_cast<bool>(digitalInputGuiding[4]);
     m_guidingArm.m_isGuidingArmStable = judgeGuidingArmStable();
 
     m_guidingArm.m_actualCurrent0 = m_motorDriver->getActualCur(MotorType::ZERO_ERR, 0, arm_guiding);
@@ -209,6 +221,111 @@ void RobotControl::updateGuidingArmMotion(){
     };
     m_guidingArm.m_velocity_1stOrder = m_filter_1storder_guiding.update(m_guidingArm.m_velocity);
     m_guidingArm.m_velocity_2ndOrder = m_filter_2ndorder_guiding.update(m_guidingArm.m_velocity);
+}
+
+void RobotControl::updownMotion()
+{
+
+    int digitalInput_r = static_cast<uint>(m_domainController->m_domainControllerData_r.load().DigitalInputs);
+    int digitalInput_l = static_cast<uint>(m_domainController->m_domainControllerData_l.load().DigitalInputs);
+    int flag = 4;/* 1 up, 2 down, 3 tobrake,4 brake, 5 toup 6 todown*/
+
+    /*left up*/
+    if(static_cast<int>(digitalInput_l) == 0x20)
+    {
+        m_upMotionBtnCounter_L++;
+    }else if(static_cast<int>(digitalInput_l) != 0x20)
+    {
+        m_upMotionBtnCounter_L = 0;
+        m_upButtonPressCur_L = 0;
+    }
+
+    if(m_upMotionBtnCounter_L >= 20)
+    {
+        m_upMotionBtnCounter_L = 20;
+        m_upButtonPressCur_L = 1;
+    }
+
+    /*left down*/
+    if(static_cast<int>(digitalInput_l) == 0x40)
+    {
+        m_downMotionBtnCounter_L++;
+    }else if(static_cast<int>(digitalInput_l) != 0x40)
+    {
+        m_downMotionBtnCounter_L = 0;
+        m_downButtonPressCur_L = 0;
+    }
+
+    if(m_downMotionBtnCounter_L >= 20)
+    {
+        m_downMotionBtnCounter_L = 20;
+        m_downButtonPressCur_L = 1;
+    }
+
+    /*right up*/
+    if(static_cast<int>(digitalInput_r) == 0x20)
+    {
+        m_upMotionBtnCounter_R++;
+    }else if(static_cast<int>(digitalInput_r) != 0x20)
+    {
+        m_upMotionBtnCounter_R = 0;
+        m_upButtonPressCur_R = 0;
+    }
+
+    if(m_upMotionBtnCounter_R >= 20)
+    {
+        m_upMotionBtnCounter_R = 20;
+        m_upButtonPressCur_R = 1;
+    }
+
+    /*right down*/
+    if(static_cast<int>(digitalInput_r) == 0x40)
+    {
+        m_downMotionBtnCounter_R++;
+    }else if(static_cast<int>(digitalInput_r) != 0x40)
+    {
+        m_downMotionBtnCounter_R = 0;
+        m_downButtonPressCur_R = 0;
+    }
+
+    if(m_downMotionBtnCounter_R >= 20)
+    {
+        m_downMotionBtnCounter_R = 20;
+        m_downButtonPressCur_R = 1;
+    }
+
+    if(m_upButtonPressCur_R == 1 || m_upButtonPressCur_L == 1){/*up*/
+        flag = 1;
+    }else if(m_downButtonPressCur_R == 1 || m_downButtonPressCur_L == 1){/*down*/
+        flag = 2;
+    }else{
+        flag = 4;
+    }
+
+    if((m_liftingFlag_pre  == 1 || m_liftingFlag_pre  == 2 || m_liftingFlag_pre  == 5 || m_liftingFlag_pre  == 6) && (flag == 4)){
+        flag = 3;
+    }
+
+    if((m_liftingFlag_pre  == 4) && (flag == 1)){
+        flag = 5;
+    }
+
+    if((m_liftingFlag_pre  == 4) && (flag == 2)){
+        flag = 6;
+    }
+    // LOG(INFO)<<"flag: "<<flag;
+
+    if(flag == 5){
+        SendInnerMsg(Module_Inner_E::AssistDevice_Lifting,static_cast<int>(AssistDevice_LiftingAction_E::LiftingUp),"Fast");
+        // LOG(INFO)<<"1111111111111111111111111111111111";
+    }else if(flag == 6){
+        SendInnerMsg(Module_Inner_E::AssistDevice_Lifting,static_cast<int>(AssistDevice_LiftingAction_E::LiftingDown),"Fast");
+        // LOG(INFO)<<"33333333333333333333333333333333333333";
+    }else if(flag == 3){
+        SendInnerMsg(Module_Inner_E::AssistDevice_Lifting,static_cast<int>(AssistDevice_LiftingAction_E::LiftingBrake),"");
+        // LOG(INFO)<<"4444444444444444444444444444444444444";
+    }
+    m_liftingFlag_pre = flag;
 }
 
 void RobotControl::guidingArmPrinting(){

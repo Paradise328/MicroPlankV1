@@ -494,7 +494,7 @@ enum class SystemMode
 
 enum class EndeffectorConfiguration{
     fourMaxons = 0x01,
-    sixMaxons  = 0x02
+    sixMaxons  = 0x02,
 };
 
 // constexpr int adcValueOpen_L = 36690;

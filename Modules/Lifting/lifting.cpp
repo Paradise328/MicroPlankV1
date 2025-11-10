@@ -187,7 +187,9 @@ void Lifting::LCMD(QString cmd,int arg1,int arg2,int arg3)
     if(arg1!=-1)cf.payload.args[j]=(uint8_t)arg1;j++;
     if(arg2!=-1)cf.payload.args[j]=(uint8_t)arg2;j++;
     if(arg3!=-1)cf.payload.args[j]=(uint8_t)arg3;j++;
-
+    // QByteArray DataQBA;
+    // this->Packet_Frame(DataQBA,cf);
+    // qDebug()<<"lifting"<< DataQBA.toHex();
     Send_Frame(cf);
 }
 
@@ -217,7 +219,7 @@ void Lifting::FootSupportSendTimer_Callback(void)
         this->LCMD("FS=BRAKE");
         return;
     }
-     qDebug()<<"FootSupportSendTimer_Callback";
+     // qDebug()<<"FootSupportSendTimer_Callback";
     switch(FootSupportSta)
     {
         case Lifting_STOP:this->FootSupportSendTimer->stop();this->LCMD("FS=BRAKE");break;
@@ -236,23 +238,26 @@ void Lifting::LiftingUp(eLiftingSpeed spd)
         return;
     }
     this->LiftingSpeed=spd;
-    switch(LiftingSta)
-    {
-        case Lifting_STOP:
-                    this->LiftingSta=Lifting_GOING_UP;
-                    this->SendTimer->start(100);
-                    this->LCMD("MN=UP",this->LiftingSpeed);
-                    break;
-        case Lifting_GOING_UP:this->SendTimer->start(100);break;
-        case Lifting_GOING_DOWN:
-                    this->LiftingSta=Lifting_GOING_UP;
-                    this->SendTimer->stop();
-                    this->LCMD("MN=BRAKE");
-                    this->SendTimer->start(100);
-                    this->LCMD("MN=UP",this->LiftingSpeed);
-                    break;
-        default:break;
-    }
+    this->LiftingSta=Lifting_GOING_UP;
+    this->SendTimer->start(100);
+    this->LCMD("MN=UP",this->LiftingSpeed);
+    // switch(LiftingSta)
+    // {
+    //     case Lifting_STOP:
+    //                 this->LiftingSta=Lifting_GOING_UP;
+    //                 this->SendTimer->start(100);
+    //                 this->LCMD("MN=UP",this->LiftingSpeed);
+    //                 break;
+    //     case Lifting_GOING_UP:this->SendTimer->start(100);break;
+    //     case Lifting_GOING_DOWN:
+    //                 this->LiftingSta=Lifting_GOING_UP;
+    //                 this->SendTimer->stop();
+    //                 this->LCMD("MN=BRAKE");
+    //                 this->SendTimer->start(100);
+    //                 this->LCMD("MN=UP",this->LiftingSpeed);
+    //                 break;
+    //     default:break;
+    // }
 }
 
 void Lifting::LiftingDown(eLiftingSpeed spd)
@@ -265,23 +270,26 @@ void Lifting::LiftingDown(eLiftingSpeed spd)
     }
 
     this->LiftingSpeed=spd;
-    switch(LiftingSta)
-    {
-        case Lifting_STOP:
-                    this->LiftingSta=Lifting_GOING_DOWN;
-                    this->SendTimer->start(100);
-                    this->LCMD("MN=DOWN",this->LiftingSpeed);
-                    break;
-        case Lifting_GOING_DOWN:this->SendTimer->start(100);break;
-        case Lifting_GOING_UP:
-                    this->LiftingSta=Lifting_GOING_DOWN;
-                    this->SendTimer->stop();
-                    this->LCMD("MN=BRAKE");
-                    this->SendTimer->start(100);
-                    this->LCMD("MN=DOWN",this->LiftingSpeed);
-                    break;
-        default:break;
-    }
+    this->LiftingSta=Lifting_GOING_DOWN;
+    this->SendTimer->start(100);
+    this->LCMD("MN=DOWN",this->LiftingSpeed);
+    // switch(LiftingSta)
+    // {
+    //     case Lifting_STOP:
+    //                 this->LiftingSta=Lifting_GOING_DOWN;
+    //                 this->SendTimer->start(100);
+    //                 this->LCMD("MN=DOWN",this->LiftingSpeed);
+    //                 break;
+    //     case Lifting_GOING_DOWN:this->SendTimer->start(100);break;
+    //     case Lifting_GOING_UP:
+    //                 this->LiftingSta=Lifting_GOING_DOWN;
+    //                 this->SendTimer->stop();
+    //                 this->LCMD("MN=BRAKE");
+    //                 this->SendTimer->start(100);
+    //                 this->LCMD("MN=DOWN",this->LiftingSpeed);
+    //                 break;
+    //     default:break;
+    // }
 }
 
 void Lifting::LiftingBrake(void)

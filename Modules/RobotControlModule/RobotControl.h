@@ -261,6 +261,7 @@ private:
     LowpassFilter1stOrder<std::array<double,3>>    m_filter_1storder_guiding;
     LowpassFilter2ndOrder<std::array<double,3>>    m_filter_2ndorder_guiding;
     void                            updateGuidingArmMotion();
+    void                            updownMotion();
     void                            updateGuidingArmState();
     bool                            judgeGuidingArmStable();
     void                            startGuidingArmControlThread();
@@ -283,6 +284,9 @@ private:
     /* 控制模式 */
 
     EndeffectorConfiguration        m_endeffectorConfiguration;// = EndeffectorConfiguration::fourMaxons;
+
+    EndeffectorConfiguration        m_endeffectorConfiguration_L;
+    EndeffectorConfiguration        m_endeffectorConfiguration_R;
 
     void                            setRobotControlMode(const RobotControlMode& tartgetRobotControlMode);
 
@@ -685,6 +689,20 @@ private:
     int                             m_dragButtonPressCur_R = 0;
     int                             m_dragButtonPressPre_L = 0;
     int                             m_dragButtonPressPre_R = 0;
+
+    /*升降柱*/
+    int                             m_liftingFlag_pre = 4;
+
+    int                             m_upMotionBtnCounter_L;
+    int                             m_upButtonPressCur_L = 0;
+    int                             m_downMotionBtnCounter_L;
+    int                             m_downButtonPressCur_L = 0;
+
+    int                             m_upMotionBtnCounter_R;
+    int                             m_upButtonPressCur_R = 0;
+    int                             m_downMotionBtnCounter_R;
+    int                             m_downButtonPressCur_R = 0;
+
 
 };
 
