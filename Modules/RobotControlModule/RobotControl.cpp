@@ -1649,7 +1649,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L_ForceControl(c
         }else if(forceValue[i] < -4){
             forceValue[i] = -4;
         }
-                LOG(INFO)<<"forceValue_L "<< i <<" : "<<forceValue[i];
+                // LOG(INFO)<<"forceValue_L "<< i <<" : "<<forceValue[i];
     }
 
     m_forceAccumulationBufferLeft = {
@@ -2386,12 +2386,12 @@ std::array<int, MotorNumPerSide> RobotControl::calculateTargetVelocity_new(const
       targetVel[2] = m_jointAngle2_velocity_L;
       targetVel[3] = m_jointAngle3_velocity_L;
 
-    // double K_p = 1.0;
-    // double K_d = 0.05;
-    // double d_t = 0.005;
-    double K_p = 1.0;
-    double K_d = 0.03;
+    double K_p;
+    double K_d;
     double d_t = 0.005;
+
+    K_p = m_Kp_L;
+    K_d = m_Kd_L;
 
     std::array<int, MotorNumPerSide> delt_Encoder{0};
     std::array<int, MotorNumPerSide> EncodeErr_Cur {0};
@@ -2420,9 +2420,12 @@ std::array<int, MotorNumPerSide> RobotControl::calculateTargetVelocity_new(const
           targetVel[2] = m_jointAngle2_velocity_R;
           targetVel[3] = m_jointAngle3_velocity_R;
 
-        double K_p = 1.0;
-        double K_d = 0.03;
+        double K_p;
+        double K_d;
         double d_t = 0.005;
+
+        K_p = m_Kp_R;
+        K_d = m_Kd_R;
 
         std::array<int, MotorNumPerSide> delt_Encoder{0};
         std::array<int, MotorNumPerSide> EncodeErr_Cur {0};
@@ -3208,7 +3211,7 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
 
                  if((masterHandlePose_Cur.handlePoseL_X > -55) && (masterHandlePose_Cur.handlePoseL_X < 80)){
 
-                     if((masterHandlePose_Cur.handlePoseL_Y > -50) && (masterHandlePose_Cur.handlePoseL_Y < 50)){
+                     if((masterHandlePose_Cur.handlePoseL_Y > -60) && (masterHandlePose_Cur.handlePoseL_Y < 60)){
 
                          if((masterHandlePose_Cur.handlePoseL_Z > -80) && (masterHandlePose_Cur.handlePoseL_Z < -8)){
 
@@ -3220,12 +3223,14 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
 
                                          if(((endEffectorTarget_Z_L > -400) && (handlePoseCur.handlePoseL_Z - m_handlePosePrev.handlePoseL_Z) > 0) || (endEffectorTarget_Z_L <= -400)){
 
-                                             // if(((moonsRelPosition_L < -30) && (handlePoseCur.handlePoseL_X - m_handlePosePrev.handlePoseL_X) > 0) || (moonsRelPosition_L >= -30)){
+                                             if(((moonsRelPosition_L < -30) && (handlePoseCur.handlePoseL_X - m_handlePosePrev.handlePoseL_X) > 0) || (moonsRelPosition_L >= -30)){
 
-                                             //     if(((moonsRelPosition_L > 30) && (handlePoseCur.handlePoseL_X - m_handlePosePrev.handlePoseL_X) < 0) || (moonsRelPosition_L <= 30)){
-                                                    return true;
-                                             //     }
-                                             // }
+                                                 if(((moonsRelPosition_L > 30) && (handlePoseCur.handlePoseL_X - m_handlePosePrev.handlePoseL_X) < 0) || (moonsRelPosition_L <= 30)){
+
+                                                     return true;
+
+                                                 }
+                                             }
                                          }
                                      }
                                  }
@@ -3247,7 +3252,6 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
 
      if(side =='r'){
          // LOG(INFO)<<std::dec<<" moonsRelPosition_R---------------------------------------------------------------------------------: "<<moonsRelPosition_R;
-return true;
         if (handlePoseCur.handlePoseR_Roll * 180 / M_PI < 143 && handlePoseCur.handlePoseR_Roll * 180 / M_PI > -143){//67
 
         if (handlePoseCur.handlePoseR_Elevation * 180 / M_PI < 75  && handlePoseCur.handlePoseR_Elevation * 180 / M_PI > -75){
@@ -3256,7 +3260,7 @@ return true;
 
                  if((masterHandlePose_Cur.handlePoseR_X > -55) && (masterHandlePose_Cur.handlePoseR_X < 80)){
 
-                     if((masterHandlePose_Cur.handlePoseR_Y > -50) && (masterHandlePose_Cur.handlePoseR_Y < 50)){
+                     if((masterHandlePose_Cur.handlePoseR_Y > -60) && (masterHandlePose_Cur.handlePoseR_Y < 60)){
 
                          if((masterHandlePose_Cur.handlePoseR_Z > -80) && (masterHandlePose_Cur.handlePoseR_Z < -8)){
 
@@ -3268,13 +3272,13 @@ return true;
 
                                          if(((endEffectorTarget_Z_R > -400) && (handlePoseCur.handlePoseR_Z - m_handlePosePrev.handlePoseR_Z) > 0) || (endEffectorTarget_Z_R <= -400)){
 
-                                             // if(((moonsRelPosition_R < -30) && (handlePoseCur.handlePoseR_X - m_handlePosePrev.handlePoseR_X) > 0) || (moonsRelPosition_R >= -30)){
+                                             if(((moonsRelPosition_R < -30) && (handlePoseCur.handlePoseR_X - m_handlePosePrev.handlePoseR_X) > 0) || (moonsRelPosition_R >= -30)){
 
-                                             //     if(((moonsRelPosition_R > 30) && (handlePoseCur.handlePoseR_X - m_handlePosePrev.handlePoseR_X) < 0) || (moonsRelPosition_R <= 30)){
+                                                 if(((moonsRelPosition_R > 30) && (handlePoseCur.handlePoseR_X - m_handlePosePrev.handlePoseR_X) < 0) || (moonsRelPosition_R <= 30)){
 
                                                     return true;
-                                             //     }
-                                             // }
+                                                 }
+                                             }
                                          }
                                      }
                                  }
@@ -3442,124 +3446,76 @@ bool RobotControl::isPoseMatch(const HandlePose& masterHandlePose_Cur, const cha
 
 void RobotControl::setControlInitHandleMotorPositionAndPose(const std::array<int, MotorNumPerSide>& motorPositionCur, const HandlePose& handlePoseCur, const char& side)//yu
 {
-    // m_ruckigInputState_R.max_velocity = {200000.0, 200000.0, 200000.0};//500000.0
-    // m_ruckigInputState_R.max_acceleration = {10000.0, 12000.0, 14000.0};//15000.0
-    // m_ruckigInputState_R.max_jerk = {3000.0, 4000.0, 5000.0};//8000.0
-
-    // m_ruckigInputState_L.max_velocity = {200000.0, 200000.0, 200000.0};
-    // m_ruckigInputState_L.max_acceleration = {10000.0, 12000.0, 14000.0};
-    // m_ruckigInputState_L.max_jerk = {3000.0, 4000.0, 5000.0};
-
 
     switch(m_speedPedalIndex_Cur){
-    // case pedalSwitchOne:
 
-    //     m_ruckigInputState_R.max_velocity = {45000.0, 45000.0, 45000.0};//500000.0
-    //     m_ruckigInputState_R.max_acceleration = {25000.0, 25000.0, 25000.0};//15000.0
-    //     m_ruckigInputState_R.max_jerk = {15000.0, 15000.0, 15000.0};//8000.0
-
-    //     m_ruckigInputState_L.max_velocity = {45000.0, 45000.0, 45000.0};
-    //     m_ruckigInputState_L.max_acceleration = {25000.0, 25000.0, 25000.0};
-    //     m_ruckigInputState_L.max_jerk = {15000.0, 15000.0, 15000.0};
-    //     LOG(INFO)<<"SCALING 20x ";
-
-    // case pedalSwitchTwo:
-
-    //     m_ruckigInputState_R.max_velocity = {45000.0, 45000.0, 45000.0};
-    //     m_ruckigInputState_R.max_acceleration = {20000.0, 20000.0, 20000.0};
-    //     m_ruckigInputState_R.max_jerk = {12000.0, 12000.0, 12000.0};
-
-    //     m_ruckigInputState_L.max_velocity = {45000.0, 45000.0, 45000.0};
-    //     m_ruckigInputState_L.max_acceleration = {20000.0, 20000.0, 20000.0};
-    //     m_ruckigInputState_L.max_jerk = {12000.0, 12000.0, 12000.0};
-    //     LOG(INFO)<<"SCALING 15x ";
-
-    // case pedalSwitchThree:
-
-    //     m_ruckigInputState_R.max_velocity = {55000.0, 55000.0, 55000.0};
-    //     m_ruckigInputState_R.max_acceleration = {14000.0, 14000.0, 14000.0};
-    //     m_ruckigInputState_R.max_jerk = {8000.0, 8000.0, 8000.0};
-
-    //     m_ruckigInputState_L.max_velocity = {55000.0, 55000.0, 55000.0};
-    //     m_ruckigInputState_L.max_acceleration = {14000.0, 14000.0, 14000.0};
-    //     m_ruckigInputState_L.max_jerk = {8000.0, 8000.0, 8000.0};
-    //     LOG(INFO)<<"SCALING 12x ";
-
-    // case pedalSwitchFour:
-
-    //     m_ruckigInputState_R.max_velocity = {55000.0, 55000.0, 55000.0};
-    //     m_ruckigInputState_R.max_acceleration = {12000.0, 12000.0, 12000.0};
-    //     m_ruckigInputState_R.max_jerk = {6000.0, 6000.0, 6000.0};
-
-    //     m_ruckigInputState_L.max_velocity = {55000.0, 55000.0, 55000.0};
-    //     m_ruckigInputState_L.max_acceleration = {12000.0, 12000.0, 12000.0};
-    //     m_ruckigInputState_L.max_jerk = {6000.0, 6000.0, 6000.0};
-    //     LOG(INFO)<<"SCALING 10x ";
-
-    // case pedalSwitchFive:
-
-    //     m_ruckigInputState_R.max_velocity = {65000.0, 65000.0, 65000.0};
-    //     m_ruckigInputState_R.max_acceleration = {10000.0, 10000.0, 10000.0};
-    //     m_ruckigInputState_R.max_jerk = {5000.0, 5000.0, 5000.0};
-
-    //     m_ruckigInputState_L.max_velocity = {65000.0, 65000.0, 65000.0};
-    //     m_ruckigInputState_L.max_acceleration = {10000.0, 10000.0, 10000.0};
-    //     m_ruckigInputState_L.max_jerk = {5000.0, 5000.0, 5000.0};
-    //     LOG(INFO)<<"SCALING 7x ";
     case pedalSwitchOne:
 
         m_ruckigInputState_R.max_velocity = {45000.0, 45000.0, 45000.0};//500000.0
-        m_ruckigInputState_R.max_acceleration = {25000.0, 25000.0, 25000.0};//15000.0
-        m_ruckigInputState_R.max_jerk = {15000.0, 15000.0, 15000.0};//8000.0
-
-        m_ruckigInputState_L.max_velocity = {45000.0, 45000.0, 45000.0};
-        m_ruckigInputState_L.max_acceleration = {25000.0, 25000.0, 25000.0};
-        m_ruckigInputState_L.max_jerk = {15000.0, 15000.0, 15000.0};
-        LOG(INFO)<<"SCALING 20x ";
-
-    case pedalSwitchTwo:
-
-        m_ruckigInputState_R.max_velocity = {40000.0, 40000.0, 40000.0};
-        m_ruckigInputState_R.max_acceleration = {15000.0, 15000.0, 15000.0};
-        m_ruckigInputState_R.max_jerk = {10000.0, 10000.0, 10000.0};
-
-        m_ruckigInputState_L.max_velocity = {40000.0, 40000.0, 40000.0};
-        m_ruckigInputState_L.max_acceleration = {15000.0, 15000.0, 15000.0};
-        m_ruckigInputState_L.max_jerk = {10000.0, 10000.0, 10000.0};
-        LOG(INFO)<<"SCALING 15x ";
-
-    case pedalSwitchThree:
-
-        m_ruckigInputState_R.max_velocity = {45000.0, 45000.0, 45000.0};
-        m_ruckigInputState_R.max_acceleration = {12000.0, 12000.0, 12000.0};
-        m_ruckigInputState_R.max_jerk = {6000.0, 6000.0, 6000.0};
+        m_ruckigInputState_R.max_acceleration = {12000.0, 12000.0, 12000.0};//15000.0
+        m_ruckigInputState_R.max_jerk = {8000.0, 8000.0, 8000.0};//8000.0
 
         m_ruckigInputState_L.max_velocity = {45000.0, 45000.0, 45000.0};
         m_ruckigInputState_L.max_acceleration = {12000.0, 12000.0, 12000.0};
+        m_ruckigInputState_L.max_jerk = {8000.0, 8000.0, 8000.0};
+        LOG(INFO)<<"SCALING 20x ";
+        break;
+
+    case pedalSwitchTwo:
+
+        m_ruckigInputState_R.max_velocity = {50000.0, 50000.0, 50000.0};
+        m_ruckigInputState_R.max_acceleration = {10000.0, 10000.0, 10000.0};
+        m_ruckigInputState_R.max_jerk = {6000.0, 6000.0, 6000.0};
+
+        m_ruckigInputState_L.max_velocity = {50000.0, 50000.0, 50000.0};
+        m_ruckigInputState_L.max_acceleration = {10000.0, 10000.0, 10000.0};
         m_ruckigInputState_L.max_jerk = {6000.0, 6000.0, 6000.0};
+        LOG(INFO)<<"SCALING 15x ";
+        break;
+
+    case pedalSwitchThree:
+
+        m_ruckigInputState_R.max_velocity = {55000.0, 55000.0, 55000.0};
+        m_ruckigInputState_R.max_acceleration = {7000.0, 7000.0, 7000.0};
+        m_ruckigInputState_R.max_jerk = {5000.0, 5000.0, 5000.0};
+
+        m_ruckigInputState_L.max_velocity = {55000.0, 55000.0, 55000.0};
+        m_ruckigInputState_L.max_acceleration = {7000.0, 7000.0, 7000.0};
+        m_ruckigInputState_L.max_jerk = {5000.0, 5000.0, 5000.0};
         LOG(INFO)<<"SCALING 12x ";
+        break;
 
     case pedalSwitchFour:
 
-        m_ruckigInputState_R.max_velocity = {55000.0, 55000.0, 55000.0};
-        m_ruckigInputState_R.max_acceleration = {10000.0, 10000.0, 10000.0};
-        m_ruckigInputState_R.max_jerk = {4000.0, 4000.0, 4000.0};
+        m_ruckigInputState_R.max_velocity = {58000.0, 58000.0, 58000.0};
+        m_ruckigInputState_R.max_acceleration = {6500.0, 6500.0, 6500.0};
+        m_ruckigInputState_R.max_jerk = {3500.0, 3500.0, 3500.0};
 
-        m_ruckigInputState_L.max_velocity = {55000.0, 55000.0, 55000.0};
-        m_ruckigInputState_L.max_acceleration = {10000.0, 10000.0, 10000.0};
-        m_ruckigInputState_L.max_jerk = {4000.0, 4000.0, 4000.0};
+        m_ruckigInputState_L.max_velocity = {58000.0, 58000.0, 58000.0};
+        m_ruckigInputState_L.max_acceleration = {6500.0, 6500.0, 6500.0};
+        m_ruckigInputState_L.max_jerk = {3500.0, 3500.0, 3500.0};
+
         LOG(INFO)<<"SCALING 10x ";
+        break;
 
     case pedalSwitchFive:
 
-        m_ruckigInputState_R.max_velocity = {65000.0, 65000.0, 65000.0};
-        m_ruckigInputState_R.max_acceleration = {7000.0, 7000.0, 7000.0};
-        m_ruckigInputState_R.max_jerk = {3000.0, 3000.0, 3000.0};
+        m_ruckigInputState_R.max_velocity = {75000.0, 75000.0, 75000.0};
+        m_ruckigInputState_R.max_acceleration = {6500.0, 6500.0, 6500.0};
+        m_ruckigInputState_R.max_jerk = {3500.0, 3500.0, 3500.0};
 
-        m_ruckigInputState_L.max_velocity = {65000.0, 65000.0, 65000.0};
-        m_ruckigInputState_L.max_acceleration = {7000.0, 7000.0, 7000.0};
-        m_ruckigInputState_L.max_jerk = {3000.0, 3000.0, 3000.0};
+        m_ruckigInputState_L.max_velocity = {75000.0, 75000.0, 75000.0};
+        m_ruckigInputState_L.max_acceleration = {6500.0, 6500.0, 6500.0};
+        m_ruckigInputState_L.max_jerk = {3500.0, 3500.0, 3500.0};
+
+        m_Kp_L = 0.7;
+        m_Kp_R = 0.5;
+
+        m_Kd_R = 0.02;
+        m_Kd_L = 0.01;
+
         LOG(INFO)<<"SCALING 7x ";
+        break;
     }
 
 
@@ -3636,6 +3592,7 @@ void RobotControl::setForceControlInitHandleMotorPosition(const std::array<int, 
         m_ruckigInputState_L.max_acceleration = {20000.0, 20000.0, 20000.0};
         m_ruckigInputState_L.max_jerk = {10000.0, 10000.0, 10000.0};
         LOG(INFO)<<"SCALING 20x ";
+        break;
 
     case pedalSwitchTwo:
 
@@ -3647,6 +3604,7 @@ void RobotControl::setForceControlInitHandleMotorPosition(const std::array<int, 
         m_ruckigInputState_L.max_acceleration = {20000.0, 20000.0, 20000.0};
         m_ruckigInputState_L.max_jerk = {10000.0, 10000.0, 10000.0};
         LOG(INFO)<<"SCALING 15x ";
+        break;
 
     case pedalSwitchThree:
 
@@ -3658,6 +3616,7 @@ void RobotControl::setForceControlInitHandleMotorPosition(const std::array<int, 
         m_ruckigInputState_L.max_acceleration = {18000.0, 20000.0, 20000.0};
         m_ruckigInputState_L.max_jerk = {8000.0, 10000.0, 10000.0};
         LOG(INFO)<<"SCALING 12x ";
+        break;
 
     case pedalSwitchFour:
 
@@ -3669,6 +3628,7 @@ void RobotControl::setForceControlInitHandleMotorPosition(const std::array<int, 
         m_ruckigInputState_L.max_acceleration = {15000.0, 18000.0, 18000.0};
         m_ruckigInputState_L.max_jerk = {8000.0, 10000.0, 10000.0};
         LOG(INFO)<<"SCALING 10x ";
+        break;
 
     case pedalSwitchFive:
 
@@ -3680,6 +3640,7 @@ void RobotControl::setForceControlInitHandleMotorPosition(const std::array<int, 
         m_ruckigInputState_L.max_acceleration = {10000.0, 10000.0, 10000.0};
         m_ruckigInputState_L.max_jerk = {6000.0, 6000.0, 6000.0};
         LOG(INFO)<<"SCALING 7x ";
+        break;
     }
 
 
@@ -4026,9 +3987,9 @@ void RobotControl::zeroErrGoHome(const char& side)
             // targetPosition = {JointEncoderPerRevolution / 2 + static_cast<int>(67.9495 * EncoderPerGrade),
             //                   JointEncoderPerRevolution / 2 + static_cast<int>(120.0839 * EncoderPerGrade),
             //                   JointEncoderPerRevolution / 2 + static_cast<int>(22.1344 * EncoderPerGrade)};
-        targetPosition = {JointEncoderPerRevolution / 2 + static_cast<int>(62.0 * EncoderPerGrade),
-                          JointEncoderPerRevolution / 2 + static_cast<int>(126.0 * EncoderPerGrade),
-                          JointEncoderPerRevolution / 2 + static_cast<int>(34.0 * EncoderPerGrade)};
+        targetPosition = {JointEncoderPerRevolution / 2 + static_cast<int>(60.0 * EncoderPerGrade),
+                          JointEncoderPerRevolution / 2 + static_cast<int>(128.0 * EncoderPerGrade),
+                          JointEncoderPerRevolution / 2 + static_cast<int>(38.0 * EncoderPerGrade)};
 
         for(int i = 0; i < 3; i ++)
         {
@@ -4095,9 +4056,9 @@ void RobotControl::zeroErrGoHome(const char& side)
             // targetPosition = {JointEncoderPerRevolution / 2 - static_cast<int>(67.9495 * EncoderPerGrade),
             //                   JointEncoderPerRevolution / 2 - static_cast<int>(120.0839 * EncoderPerGrade),
             //                   JointEncoderPerRevolution / 2 - static_cast<int>(22.1344* EncoderPerGrade)};
-        targetPosition = {JointEncoderPerRevolution / 2 - static_cast<int>(62.0 * EncoderPerGrade),
-                          JointEncoderPerRevolution / 2 - static_cast<int>(126.0 * EncoderPerGrade),
-                          JointEncoderPerRevolution / 2 - static_cast<int>(34.0* EncoderPerGrade)};
+        targetPosition = {JointEncoderPerRevolution / 2 - static_cast<int>(60.0 * EncoderPerGrade),
+                          JointEncoderPerRevolution / 2 - static_cast<int>(128.0 * EncoderPerGrade),
+                          JointEncoderPerRevolution / 2 - static_cast<int>(38.0* EncoderPerGrade)};
 
         for(int i = 0; i < 3; i ++)
         {
@@ -4246,7 +4207,7 @@ void RobotControl::MaxonGoHome(const char& side)//yu
                     homeStatusTmp[9] == false)
                 {
                     m_maxonCaliFinish_R = 1;
-                    // SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(UIAction_E::FinishCalibration),"r");
+                    SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(UIAction_E::FinishCalibration),"r");
                     LOG(INFO) << "Finish homing of endeffector motor Right!";
                     break;
                 }
@@ -4482,6 +4443,8 @@ void RobotControl::changeAngle_L(){
             m_motorDriver->setTargetVel(MotorType::ZERO_ERR, 1, targetVel_2, arm_1);
             m_motorDriver->setTargetVel(MotorType::ZERO_ERR, 2, targetVel_3, arm_1);
 
+            // m_domainController->m_forceZeroFound_l = false;
+
             // motorEncoderData_L[1] = m_motorDriver->getActualPos(MotorType::ZERO_ERR, 0, arm_1);
             // motorEncoderData_L[2] = m_motorDriver->getActualPos(MotorType::ZERO_ERR, 1, arm_1);
             // motorEncoderData_L[3] = m_motorDriver->getActualPos(MotorType::ZERO_ERR, 2, arm_1);
@@ -4578,6 +4541,8 @@ void RobotControl::changeAngle_R(){
         m_motorDriver->setTargetVel(MotorType::ZERO_ERR, 0, targetVel_1, arm_0);
         m_motorDriver->setTargetVel(MotorType::ZERO_ERR, 1, targetVel_2, arm_0);
         m_motorDriver->setTargetVel(MotorType::ZERO_ERR, 2, targetVel_3, arm_0);
+
+        // m_domainController->m_forceZeroFound_r = false;
 
         // motorEncoderData_R[1] = m_motorDriver->getActualPos(MotorType::ZERO_ERR, 0, arm_0);
         // motorEncoderData_R[2] = m_motorDriver->getActualPos(MotorType::ZERO_ERR, 1, arm_0);

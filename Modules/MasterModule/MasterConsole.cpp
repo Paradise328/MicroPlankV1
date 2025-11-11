@@ -139,11 +139,12 @@ void MasterConsole::assembleDataFromUSBAndEthernet()
     }
     else if (m_FilterCase == static_cast<int>(FilterCase::IIIRFilterOn))
     {
-        auto PNODataAFIIIR_Tmp = returnIIIRFilteredData(posDataFromViperTmp);
-        handlePoseIIIR_Tmp.setMyConsoleData(PNODataAFIIIR_Tmp);
-        // std::cout << posDataFromViperTmp[0][0] << " " << posDataFromViperTmp[0][1] << " "<< posDataFromViperTmp[0][2]  << "\n";
-        // std::cout << PNODataAFIIIR_Tmp[0][0] << " " << PNODataAFIIIR_Tmp[0][1] << " "<< PNODataAFIIIR_Tmp[0][2]  << "\n";
-        m_handlePose_Cur.store(handlePoseIIIR_Tmp);
+        // auto PNODataAFIIIR_Tmp = returnIIIRFilteredData(posDataFromViperTmp);
+        // handlePoseIIIR_Tmp.setMyConsoleData(PNODataAFIIIR_Tmp);
+        // m_handlePose_Cur.store(handlePoseIIIR_Tmp);
+        auto PNODataAFIIR_Tmp = returnIIRFilteredData(posDataFromViperTmp);
+        handlePoseIIR_Tmp.setMyConsoleData(PNODataAFIIR_Tmp);
+        m_handlePose_Cur.store(handlePoseIIR_Tmp);
     }
 
 }
@@ -457,11 +458,11 @@ void MasterConsole::dealWithMsg()
 
                     if(i.value() == "30")
                     {
-                        LOG(INFO) << "Instrument Angle double Side : 15";
+                        LOG(INFO) << "Instrument Angle per Side : 15";
                         m_armAnglePerSide = 15;
                     }else if(i.value() ==  "60")
                     {
-                        LOG(INFO) << "Instrument Angle double Side : 30";
+                        LOG(INFO) << "Instrument Angle per Side : 30";
                         m_armAnglePerSide = 30;
                     }
                     break;

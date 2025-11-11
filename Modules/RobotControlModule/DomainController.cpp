@@ -222,7 +222,7 @@ bool DomainController::findForceSensorZero(std::array<double,6> new_sample,uint 
     {
         m_forceZeroDetectBuffer_r.push_back(new_sample);
 
-        if (m_forceZeroDetectBuffer_r.size() > k_forceZeroWindowSize){
+        if (m_forceZeroDetectBuffer_r.size() > k_forceZeroWindowSize) {
             m_forceZeroDetectBuffer_r.pop_front();
         }
 
@@ -255,6 +255,7 @@ bool DomainController::findForceSensorZero(std::array<double,6> new_sample,uint 
                 m_forceZeroFound_r = true;
             }
         }
+         // LOG(INFO)<<"m_forceZeroFound_r: "<<m_forceZeroFound_r;
         return m_forceZeroFound_r;
     }
 
@@ -296,6 +297,7 @@ bool DomainController::findForceSensorZero(std::array<double,6> new_sample,uint 
                 m_forceZeroFound_l = true;
             }
         }
+        // LOG(INFO)<<"m_forceZeroFound_l: "<<m_forceZeroFound_l;
 
         return m_forceZeroFound_l;
     }
@@ -308,7 +310,6 @@ void DomainController::readHandleOtherData(QByteArray qba)
     eDepackReturn edr = this -> Depack_Frame(qba, cftemp);
     if(edr == Depack_SUCCESS)
     {
-
 
         if(cftemp.payload.args[0] == Dev_Sta_OK)
         {

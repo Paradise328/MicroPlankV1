@@ -228,7 +228,7 @@ private:
     double fmin     = 0.1;//1.2;   // 低速/静止截止 [Hz]
     double beta     = 3.53;//0.43;  // 速度->截止斜率 [Hz/(单位/秒)]
     double fd       = 18.0;  // 速度通道固定截止 [Hz]
-    double dt       = 0.004; // 采样周期（固定 4 ms；若用真实 dt 就每帧更新它）
+    double dt       = 0.005; // 采样周期（固定 4 ms；若用真实 dt 就每帧更新它）
     double fc_max   = 40.0;  // f_c 上限（<=0 则不限制）
     double vel_dead = 0.0;   // 速度微小死区（0 关闭）
     double beta_a = 0.2;//加速度权重
@@ -243,6 +243,12 @@ private:
     std::array<int, MotorNumPerSide> m_EncodeErr_Pre_R;
 
     std::array<double,4> m_EncodeErr_Int;
+
+    double m_Kp_L = 1.5;
+    double m_Kp_R = 2.5;
+
+    double m_Kd_L = 0.1;
+    double m_Kd_R = 0.05;
 
     /*控制函数*/
     std::thread                     m_calculateControlDataThread;

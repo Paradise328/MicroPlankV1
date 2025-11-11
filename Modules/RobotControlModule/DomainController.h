@@ -96,6 +96,10 @@ public:
     void                                            set_Light_Color_Model(LightColor_e color,LightModel_e model);
 
     uint32_t                                             getMagneticScale(uint armSide);
+
+    bool                                            m_forceZeroFound_r = false;
+    bool                                            m_forceZeroFound_l = false;
+
 private:
     uint32_t                                        m_ID = 0;                     /* ID for the domain controller board */
     QSerialPort                                    *m_serial_422_domain_controller = nullptr;
@@ -120,13 +124,12 @@ private:
     const unsigned int                              k_forceZeroWindowSize = 1000;
     const double                                    m_forceZeroThreshold = 1.0; // 单位: N 或 Nm，可根据实际调
 
-    bool                                            m_forceZeroFound_l = false;
+
     std::array<double, 6>                           m_forceSensorIR_l = {0};
     LowpassFilter1stOrder<std::array<double, 6>>    m_forceSensorFilter_IR_l;     /* IR for force sensor data */
     std::array<double, 6>                           m_forceSensorIIR_l = {0};
     LowpassFilter2ndOrder<std::array<double, 6>>    m_forceSensorFilter_IIR_l;    /* IIR for force sensor data */
 
-    bool                                            m_forceZeroFound_r = false;
     std::array<double, 6>                           m_forceSensorIR_r = {0};
     LowpassFilter1stOrder<std::array<double, 6>>    m_forceSensorFilter_IR_r;     /* IR for force sensor data */
     std::array<double, 6>                           m_forceSensorIIR_r = {0};
