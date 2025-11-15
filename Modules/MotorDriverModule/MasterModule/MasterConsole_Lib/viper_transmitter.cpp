@@ -278,7 +278,7 @@ void Viper_Transmitter::startReadingThread()
 {
     QThread *thread = QThread::create([this](){
         while(1){
-             SteadyDelay(3);
+             SteadyDelay(2);
              VCMD("GETSINGLE");
         }
     });
@@ -378,7 +378,6 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
     double Elevation_Cur_L  = viperData[0][4] *  M_PI / 180;
     double Roll_Cur_L       = viperData[0][5] *  M_PI / 180;
 
-    LOG(INFO)<<"viperData[0][3]: "<<viperData[0][3];
 
     //Define the Euler rotation Matrix
     Eigen::Matrix3d rotAroundZ_R, rotAroundY_R, rotAroundX_R;
@@ -420,7 +419,7 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
     Eigen::AngleAxisd axang_R(rotMatrix_R);
     Eigen::Vector3d u_R = axang_R.axis();
     double theta_R = axang_R.angle();
-    double k = 1.11;
+    double k = 1.12;
     double theta_scaled_R = k * theta_R;
     Eigen::AngleAxisd axang_scaled_R(theta_scaled_R, u_R);
     Eigen::Matrix3d R_scaled = axang_scaled_R.toRotationMatrix();
@@ -508,14 +507,6 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
     masterPositionViaSensor_R << -2.8,
                                    0.0,
                                    -9.0;
-
-    // masterPositionViaSensor_L << -0.0,
-    //     0.0,
-    //     -0.0;
-
-    // masterPositionViaSensor_R << -0.0,
-    //     0.0,
-    //     -0.0;
 
     Eigen::Vector3d  sensorPosition_L, sensorPosition_R;
     sensorPosition_L << viperData[0][0],

@@ -133,10 +133,8 @@ public:
         m_isSystemTerminated(false),
         m_guidingArm1stOrder({0}),
         m_guidingArm2ndOrder({0}),
-        // m_endeffectorConfiguration(EndeffectorConfiguration::fourMaxons),
+        m_endeffectorConfiguration(EndeffectorConfiguration::fourMaxons),
         // m_endeffectorConfiguration(EndeffectorConfiguration::sixMaxons),
-        m_endeffectorConfiguration_L(EndeffectorConfiguration::fourMaxons),
-        m_endeffectorConfiguration_R(EndeffectorConfiguration::fourMaxons),
         m_filter_1storder_guiding(m_guidingArm1stOrder, 250.0, 60.0),
         m_filter_2ndorder_guiding(m_guidingArm2ndOrder, 250.0, 60.0)
     {
@@ -503,7 +501,7 @@ private:
     mutable int                     m_alignmentNumber_R;
 
     /*器械夹持角度计算*/
-    double calculateNewOpenangle(double masterOpenangle, const char& side);
+    double calculateNewOpenangle(double masterOpenangle);
 
     /*控制中所需计算部分*/
     std::atomic<HandlePose>         m_handlePose_Cur;

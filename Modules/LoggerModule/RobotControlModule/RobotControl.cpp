@@ -156,13 +156,13 @@ void RobotControl::loadEndeffectorConfig()
                         std::vector<double> encoderPerDegreeL;
                         encoderPerDegreeL.clear();
 
-                        if(m_endeffectorConfiguration_L == EndeffectorConfiguration::fourMaxons){
+                        if(m_endeffectorConfiguration == EndeffectorConfiguration::fourMaxons){
                             for(auto& element : Arr_Tmp) {encoderPerDegreeL.push_back(static_cast<double>(*(element.as_floating_point())));}
                             for(int i = 0; i < encoderPerDegreeL.size();i++){m_encoderPerDegree_L[i] = encoderPerDegreeL[i];}
                             LOG(INFO) << "Load EncoderPerDegree Left: " << m_encoderPerDegree_L[0] << " " << m_encoderPerDegree_L[1] << " " << m_encoderPerDegree_L[2] << " " << m_encoderPerDegree_L[3];
                         }
 
-                        if(m_endeffectorConfiguration_L == EndeffectorConfiguration::sixMaxons){
+                        if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons){
                             for(auto& element : Arr_Tmp) {encoderPerDegreeL.push_back(static_cast<double>(*(element.as_floating_point())));}
                             for(int i = 0; i < encoderPerDegreeL.size();i++){m_encoderPerDegree_L[i] = encoderPerDegreeL[i];}
                             LOG(INFO) << "Load EncoderPerDegree Left: " << m_encoderPerDegree_L[0] << " " << m_encoderPerDegree_L[1] << " " << m_encoderPerDegree_L[2] << " " << m_encoderPerDegree_L[3]<< " " << m_encoderPerDegree_L[4] << " " << m_encoderPerDegree_L[5];
@@ -194,13 +194,13 @@ void RobotControl::loadEndeffectorConfig()
                         std::vector<double> encoderPerDegreeR;
                         encoderPerDegreeR.clear();
 
-                        if(m_endeffectorConfiguration_R == EndeffectorConfiguration::sixMaxons){
+                        if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons){
                             for(auto& element : Arr_Tmp) {encoderPerDegreeR.push_back(static_cast<double>(*(element.as_floating_point())));}
                             for(int i = 0; i < encoderPerDegreeR.size();i++){m_encoderPerDegree_R[i] = encoderPerDegreeR[i];}
                             LOG(INFO) << "Load EncoderPerDegree Left: " << m_encoderPerDegree_R[0] << " " << m_encoderPerDegree_R[1] << " " << m_encoderPerDegree_R[2] << " " << m_encoderPerDegree_R[3]<< " " << m_encoderPerDegree_R[4] << " " << m_encoderPerDegree_R[5];
                         }
 
-                        if(m_endeffectorConfiguration_R == EndeffectorConfiguration::fourMaxons){
+                        if(m_endeffectorConfiguration == EndeffectorConfiguration::fourMaxons){
                             for(auto& element : Arr_Tmp) {encoderPerDegreeR.push_back(static_cast<double>(*(element.as_floating_point())));}
                             for(int i = 0; i < encoderPerDegreeR.size();i++){m_encoderPerDegree_R[i] = encoderPerDegreeR[i];}
                             LOG(INFO) << "Load EncoderPerDegree Right: " << m_encoderPerDegree_R[0] << " " << m_encoderPerDegree_R[1] << " " << m_encoderPerDegree_R[2] << " " << m_encoderPerDegree_R[3];
@@ -568,7 +568,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
     // openAngle_L_new = (openAngle_L < 0) ? 0.018 * pow(openAngle_L, 3) : pow(openAngle_L, 3)/600;
     // }
     // else if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons){
-    openAngle_L_new = calculateNewOpenangle(openAngle_L,'l');
+    openAngle_L_new = calculateNewOpenangle(openAngle_L);
     // }
 
     /*计算 beta(yaw) */
@@ -779,7 +779,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
     controlValueTmp_L[3] = jointAngle3_target_L * 180 / M_PI;
 
     /*4轴器械*/
-    if(m_endeffectorConfiguration_L == EndeffectorConfiguration::fourMaxons){
+    if(m_endeffectorConfiguration == EndeffectorConfiguration::fourMaxons){
 
         controlValueTmp_L[6] = (delt_beta_L - delt_alpha_L * m_compRatio_L) - openAngle_L_new;
         controlValueTmp_L[7] = (delt_beta_L - delt_alpha_L * m_compRatio_L) + openAngle_L_new;
@@ -791,7 +791,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_L(const HandlePo
     }
 
     /*6轴器械*/
-    if(m_endeffectorConfiguration_L == EndeffectorConfiguration::sixMaxons){
+    if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons){
         controlValueTmp_L[9] = -delt_gamma_L;
         controlValueTmp_L[8] = deltLength_alpha_L_1;
 
@@ -838,7 +838,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     // openAngle_R_new = (openAngle_R < 0) ? 0.018 * pow(openAngle_R, 3) : pow(openAngle_R, 3)/600;
     // }
     // else if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons){
-    openAngle_R_new = calculateNewOpenangle(openAngle_R,'r');
+    openAngle_R_new = calculateNewOpenangle(openAngle_R);
     // }
     /*计算 beta(yaw)*/
     double beta_Org_R = m_handlePoseOrg_R.handlePoseR_Arzimuth;
@@ -1035,7 +1035,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     controlValueTmp_R[3] = jointAngle3_target_R * 180 / M_PI;
 
     /*4轴器械*/
-    if(m_endeffectorConfiguration_R == EndeffectorConfiguration::fourMaxons){
+    if(m_endeffectorConfiguration == EndeffectorConfiguration::fourMaxons){
 
         controlValueTmp_R[6] = (delt_beta_R - delt_alpha_R * m_compRatio_R) - openAngle_R_new;
         controlValueTmp_R[7] = (delt_beta_R - delt_alpha_R * m_compRatio_R) + openAngle_R_new;
@@ -1047,7 +1047,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     }
 
     /*6轴器械*/
-    if(m_endeffectorConfiguration_R == EndeffectorConfiguration::sixMaxons){
+    if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons){
         controlValueTmp_R[9] = -delt_gamma_R;
         controlValueTmp_R[8] = deltLength_alpha_R_1;
         controlValueTmp_R[7] = -deltLength_beta_R_left_1;
@@ -1326,7 +1326,7 @@ std::array<double, ControlValueNum> RobotControl::test_motionMapping_L(const Han
     controlValueTmp_L[3] = jointAngle3_target_L * 180 / M_PI;
 
     /*4轴器械*/
-    if(m_endeffectorConfiguration_L == EndeffectorConfiguration::fourMaxons){
+    if(m_endeffectorConfiguration == EndeffectorConfiguration::fourMaxons){
         controlValueTmp_L[4] = (delt_beta_L - delt_alpha_L * m_compRatio_L) - openAngle_L_new;
         controlValueTmp_L[5] = (delt_beta_L - delt_alpha_L * m_compRatio_L) + openAngle_L_new;
         controlValueTmp_L[6] = delt_alpha_L;
@@ -1337,7 +1337,7 @@ std::array<double, ControlValueNum> RobotControl::test_motionMapping_L(const Han
     }
 
     /*6轴器械*/
-    if(m_endeffectorConfiguration_L == EndeffectorConfiguration::sixMaxons){
+    if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons){
         controlValueTmp_L[9] = -delt_gamma_L;
         controlValueTmp_L[8] = deltLength_alpha_L_1;
 
@@ -1603,7 +1603,7 @@ std::array<double, ControlValueNum> RobotControl::test_motionMapping_R(const Han
     controlValueTmp_R[3] = jointAngle3_target_R * 180 / M_PI;
 
     /*4轴器械*/
-    if(m_endeffectorConfiguration_R == EndeffectorConfiguration::fourMaxons){
+    if(m_endeffectorConfiguration == EndeffectorConfiguration::fourMaxons){
         controlValueTmp_R[4] = (delt_beta_R - delt_alpha_R * m_compRatio_R) - openAngle_R_new;
         controlValueTmp_R[5] = (delt_beta_R - delt_alpha_R * m_compRatio_R) + openAngle_R_new;
         controlValueTmp_R[6] = delt_alpha_R;
@@ -1614,7 +1614,7 @@ std::array<double, ControlValueNum> RobotControl::test_motionMapping_R(const Han
     }
 
     /*6轴器械*/
-    if(m_endeffectorConfiguration_R == EndeffectorConfiguration::sixMaxons){
+    if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons){
         controlValueTmp_R[9] = -delt_gamma_R;
         controlValueTmp_R[8] = -deltLength_alpha_R_1;
 
@@ -1791,11 +1791,9 @@ std::array<double, ControlValueNum> RobotControl:: motionMapping_R_ForceControl(
     return controlValueTmp_R;
 }
 
-double RobotControl::calculateNewOpenangle(double masterOpenangle, const char& side){
+double RobotControl::calculateNewOpenangle(double masterOpenangle){
     double newOpenangle;
-
-    if(side == 'l'){
-    if(m_endeffectorConfiguration_L == EndeffectorConfiguration::fourMaxons){
+    if(m_endeffectorConfiguration == EndeffectorConfiguration::fourMaxons){
     if(masterOpenangle < -3){
         // newOpenangle = masterOpenangle * 0.9286 + 1.286;/*-8*/
         // newOpenangle = masterOpenangle * 1.2143 + 2.1428;/*-10*/
@@ -1808,7 +1806,7 @@ double RobotControl::calculateNewOpenangle(double masterOpenangle, const char& s
     }
     }
 
-    if(m_endeffectorConfiguration_L == EndeffectorConfiguration::sixMaxons){
+    if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons){
     if(masterOpenangle < -3){
         // newOpenangle = masterOpenangle * 3.14286 + 2.1429;/*25*/
         newOpenangle = masterOpenangle * 3.8575 + 8.5714;/*30*/
@@ -1816,33 +1814,6 @@ double RobotControl::calculateNewOpenangle(double masterOpenangle, const char& s
         newOpenangle = 1.0 * masterOpenangle;
     }else if(masterOpenangle >= 7){
         newOpenangle =  masterOpenangle * 1.6429 - 4.5;
-    }
-    }
-    }
-
-    if(side == 'r'){
-    if(m_endeffectorConfiguration_R == EndeffectorConfiguration::fourMaxons){
-    if(masterOpenangle < -3){
-        // newOpenangle = masterOpenangle * 0.9286 + 1.286;/*-8*/
-        // newOpenangle = masterOpenangle * 1.2143 + 2.1428;/*-10*/
-        newOpenangle = masterOpenangle * 1.5 + 3;/*-12*/
-    }else if(masterOpenangle >= -3 && masterOpenangle< 7){
-        newOpenangle = 0.5 * masterOpenangle;
-    }else if(masterOpenangle >= 7){
-        // newOpenangle =  masterOpenangle * 1.269 - 5.3846;
-        newOpenangle =  masterOpenangle * masterOpenangle * 0.0592 - 0.2988 * masterOpenangle + 2.6908;
-    }
-    }
-
-    if(m_endeffectorConfiguration_R == EndeffectorConfiguration::sixMaxons){
-    if(masterOpenangle < -3){
-        // newOpenangle = masterOpenangle * 3.14286 + 2.1429;/*25*/
-        newOpenangle = masterOpenangle * 3.8575 + 8.5714;/*30*/
-    }else if(masterOpenangle >= -3 && masterOpenangle< 7){
-        newOpenangle = 1.0 * masterOpenangle;
-    }else if(masterOpenangle >= 7){
-        newOpenangle =  masterOpenangle * 1.6429 - 4.5;
-    }
     }
     }
 
@@ -2269,14 +2240,14 @@ std::array<int, MotorNumPerSide> RobotControl::calculateTargetEncoder(const std:
         {
             targetEncoder[i] = static_cast<int>(motorPosition_Init[i] + m_SpeedDirection_R[i] * controlValue_Cur[i] / 360 * JointEncoderPerRevolution);
         }
-        if(m_endeffectorConfiguration_R == EndeffectorConfiguration::sixMaxons)
+        if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons)
         {
             for(int i = 4; i < 10; i++)
             {
                 targetEncoder[i] = static_cast<int>(controlValue_Cur[i] * m_kForcepPosition_small_R[13 - i]);
             }
         }
-        if(m_endeffectorConfiguration_R == EndeffectorConfiguration::fourMaxons)
+        if(m_endeffectorConfiguration == EndeffectorConfiguration::fourMaxons)
         {
 
              targetEncoder[4] = 0;
@@ -2294,14 +2265,14 @@ std::array<int, MotorNumPerSide> RobotControl::calculateTargetEncoder(const std:
         {
             targetEncoder[i] = static_cast<int>(motorPosition_Init[i] + m_SpeedDirection_L[i] * controlValue_Cur[i] / 360 * JointEncoderPerRevolution);
         }
-        if(m_endeffectorConfiguration_L == EndeffectorConfiguration::sixMaxons)
+        if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons)
         {
             for(int i = 4; i < 10; i++)
             {
                 targetEncoder[i] = static_cast<int>(controlValue_Cur[i] * m_kForcepPosition_small_L[13 - i]);
             }
         }
-        if(m_endeffectorConfiguration_L == EndeffectorConfiguration::fourMaxons)
+        if(m_endeffectorConfiguration == EndeffectorConfiguration::fourMaxons)
         {
 
             targetEncoder[4] =0;
@@ -2345,14 +2316,14 @@ std::array<double, MotorNumPerSide> RobotControl::calculateTargetEncoder_new(con
         {
             targetEncoder[i] = (motorPosition_Init[i] + m_SpeedDirection_R[i] * controlValue_Cur[i] / 360.0 * JointEncoderPerRevolution);
         }
-        if(m_endeffectorConfiguration_R == EndeffectorConfiguration::sixMaxons)
+        if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons)
         {
             for(int i = 4; i < 10; i++)
             {
                 targetEncoder[i] = (controlValue_Cur[i] * m_kForcepPosition_small_R[13 - i]);
             }
         }
-        if(m_endeffectorConfiguration_R == EndeffectorConfiguration::fourMaxons)
+        if(m_endeffectorConfiguration == EndeffectorConfiguration::fourMaxons)
         {
             for(int i = 4; i < 8; i++)
             {
@@ -2372,14 +2343,14 @@ std::array<double, MotorNumPerSide> RobotControl::calculateTargetEncoder_new(con
             double rounded = round(targetEncoder[i] * 1000.0) / 1000.0;
             targetEncoder[i] = rounded;
         }
-        if(m_endeffectorConfiguration_L == EndeffectorConfiguration::sixMaxons)
+        if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons)
         {
             for(int i = 4; i < 10; i++)
             {
                 targetEncoder[i] = controlValue_Cur[i] * m_kForcepPosition_small_L[13 - i];
             }
         }
-        if(m_endeffectorConfiguration_L == EndeffectorConfiguration::fourMaxons)
+        if(m_endeffectorConfiguration == EndeffectorConfiguration::fourMaxons)
         {
             for(int i = 4; i < 8; i++)
             {
@@ -2485,9 +2456,11 @@ void RobotControl::receiveMotorData()
     motorEncoderData_R[5] = m_motorDriver->getActualPos(MotorType::MAXON, 1, arm_0);
     motorEncoderData_R[6] = m_motorDriver->getActualPos(MotorType::MAXON, 2, arm_0);
     motorEncoderData_R[7] = m_motorDriver->getActualPos(MotorType::MAXON, 3, arm_0);
+    // if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons)
+    // {
         motorEncoderData_R[8] = m_motorDriver->getActualPos(MotorType::MAXON, 4, arm_0);
         motorEncoderData_R[9] = m_motorDriver->getActualPos(MotorType::MAXON, 5, arm_0);
-
+    // }
 
     motorEncoderData_L[0] = m_motorDriver->getActualPos(MotorType::MOONS, 0, arm_1);
     motorEncoderData_L[1] = m_motorDriver->getActualPos(MotorType::ZERO_ERR, 0, arm_1);
@@ -2497,9 +2470,11 @@ void RobotControl::receiveMotorData()
     motorEncoderData_L[5] = m_motorDriver->getActualPos(MotorType::MAXON, 1, arm_1);
     motorEncoderData_L[6] = m_motorDriver->getActualPos(MotorType::MAXON, 2, arm_1);
     motorEncoderData_L[7] = m_motorDriver->getActualPos(MotorType::MAXON, 3, arm_1);
+    // if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons)
+    // {
         motorEncoderData_L[8] = m_motorDriver->getActualPos(MotorType::MAXON, 4, arm_1);
         motorEncoderData_L[9] = m_motorDriver->getActualPos(MotorType::MAXON, 5, arm_1);
-
+    // }
 
     motorEncoderData_Guiding[0] = m_motorDriver->getActualPos(MotorType::ZERO_ERR, 0, arm_guiding);
     motorEncoderData_Guiding[1] = m_motorDriver->getActualPos(MotorType::ZERO_ERR, 1, arm_guiding);
@@ -2517,9 +2492,11 @@ void RobotControl::receiveMotorData()
     motorErrorCode_R[5] = m_motorDriver->getErrorCode(MotorType::MAXON, 1, arm_0);
     motorErrorCode_R[6] = m_motorDriver->getErrorCode(MotorType::MAXON, 2, arm_0);
     motorErrorCode_R[7] = m_motorDriver->getErrorCode(MotorType::MAXON, 3, arm_0);
+    // if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons)
+    // {
         motorErrorCode_R[8] = m_motorDriver->getErrorCode(MotorType::MAXON, 4, arm_0);
         motorErrorCode_R[9] = m_motorDriver->getErrorCode(MotorType::MAXON, 5, arm_0);
-
+    // }
 
     motorErrorCode_L[0] = m_motorDriver->getErrorCode(MotorType::MOONS, 0, arm_1);
     motorErrorCode_L[1] = m_motorDriver->getErrorCode(MotorType::ZERO_ERR, 0, arm_1);
@@ -2529,9 +2506,11 @@ void RobotControl::receiveMotorData()
     motorErrorCode_L[5] = m_motorDriver->getErrorCode(MotorType::MAXON, 1, arm_1);
     motorErrorCode_L[6] = m_motorDriver->getErrorCode(MotorType::MAXON, 2, arm_1);
     motorErrorCode_L[7] = m_motorDriver->getErrorCode(MotorType::MAXON, 3, arm_1);
+    // if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons)
+    // {
         motorErrorCode_L[8] = m_motorDriver->getErrorCode(MotorType::MAXON, 4, arm_1);
         motorErrorCode_L[9] = m_motorDriver->getErrorCode(MotorType::MAXON, 5, arm_1);
-
+    // }
 
     motorErrorCode_Guiding[0] = m_motorDriver->getErrorCode(MotorType::ZERO_ERR, 0, arm_guiding);
     motorErrorCode_Guiding[1] = m_motorDriver->getErrorCode(MotorType::ZERO_ERR, 1, arm_guiding);
@@ -2549,9 +2528,11 @@ void RobotControl::receiveMotorData()
     motorStatusWord_R[5] = m_motorDriver->getStatusWord(MotorType::MAXON, 1, arm_0);
     motorStatusWord_R[6] = m_motorDriver->getStatusWord(MotorType::MAXON, 2, arm_0);
     motorStatusWord_R[7] = m_motorDriver->getStatusWord(MotorType::MAXON, 3, arm_0);
+    // if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons)
+    // {
         motorStatusWord_R[8] = m_motorDriver->getStatusWord(MotorType::MAXON, 4, arm_0);
         motorStatusWord_R[9] = m_motorDriver->getStatusWord(MotorType::MAXON, 5, arm_0);
-
+    // }
 
     motorStatusWord_L[0] = m_motorDriver->getStatusWord(MotorType::MOONS, 0, arm_1);
     motorStatusWord_L[1] = m_motorDriver->getStatusWord(MotorType::ZERO_ERR, 0, arm_1);
@@ -2561,9 +2542,11 @@ void RobotControl::receiveMotorData()
     motorStatusWord_L[5] = m_motorDriver->getStatusWord(MotorType::MAXON, 1, arm_1);
     motorStatusWord_L[6] = m_motorDriver->getStatusWord(MotorType::MAXON, 2, arm_1);
     motorStatusWord_L[7] = m_motorDriver->getStatusWord(MotorType::MAXON, 3, arm_1);
+    // if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons)
+    // {
         motorStatusWord_L[8] = m_motorDriver->getStatusWord(MotorType::MAXON, 4, arm_1);
         motorStatusWord_L[9] = m_motorDriver->getStatusWord(MotorType::MAXON, 5, arm_1);
-
+    // }
 
     std::array<int, MotorNumPerSide> motorVelocity_Guiding = {0};
     motorVelocity_Guiding[0] =  m_motorDriver->getActualVel(MotorType::ZERO_ERR, 0, arm_0);
@@ -2582,9 +2565,11 @@ void RobotControl::receiveMotorData()
     motorOperationMode_R[5] =  m_motorDriver->getOperationMode(MotorType::MAXON, 1, arm_0);
     motorOperationMode_R[6] =  m_motorDriver->getOperationMode(MotorType::MAXON, 2, arm_0);
     motorOperationMode_R[7] =  m_motorDriver->getOperationMode(MotorType::MAXON, 3, arm_0);
+    // if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons)
+    // {
         motorOperationMode_R[6] =  m_motorDriver->getOperationMode(MotorType::MAXON, 4, arm_0);
         motorOperationMode_R[7] =  m_motorDriver->getOperationMode(MotorType::MAXON, 5, arm_0);
-
+    // }
 
     motorOperationMode_L[0] =  m_motorDriver->getOperationMode(MotorType::MOONS, 0, arm_1);
     motorOperationMode_L[1] =  m_motorDriver->getOperationMode(MotorType::ZERO_ERR, 0, arm_1);
@@ -2594,9 +2579,11 @@ void RobotControl::receiveMotorData()
     motorOperationMode_L[5] =  m_motorDriver->getOperationMode(MotorType::MAXON, 1, arm_1);
     motorOperationMode_L[6] =  m_motorDriver->getOperationMode(MotorType::MAXON, 2, arm_1);
     motorOperationMode_L[7] =  m_motorDriver->getOperationMode(MotorType::MAXON, 3, arm_1);
+    // if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons)
+    // {
         motorOperationMode_L[6] =  m_motorDriver->getOperationMode(MotorType::MAXON, 4, arm_1);
         motorOperationMode_L[7] =  m_motorDriver->getOperationMode(MotorType::MAXON, 5, arm_1);
-
+    // }
     motorOperationMode_Guiding[0] = m_motorDriver->getOperationMode(MotorType::ZERO_ERR, 0, arm_1);
     motorOperationMode_Guiding[1] = m_motorDriver->getOperationMode(MotorType::ZERO_ERR, 1, arm_1);
     motorOperationMode_Guiding[2] = m_motorDriver->getOperationMode(MotorType::ZERO_ERR, 2, arm_1);
@@ -2618,9 +2605,11 @@ void RobotControl::receiveMotorData()
     motorInputs_R[5] = m_motorDriver->getDigitalInputs(MotorType::MAXON, 1, arm_0)[2];
     motorInputs_R[6] = m_motorDriver->getDigitalInputs(MotorType::MAXON, 2, arm_0)[2];
     motorInputs_R[7] = m_motorDriver->getDigitalInputs(MotorType::MAXON, 3, arm_0)[2];
+    // if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons)
+    // {
         motorInputs_R[8] = m_motorDriver->getDigitalInputs(MotorType::MAXON, 4, arm_0)[2];
         motorInputs_R[9] = m_motorDriver->getDigitalInputs(MotorType::MAXON, 5, arm_0)[2];
-
+    // }
     motorInputs_L[0] = m_motorDriver->getDigitalInputs(MotorType::MOONS, 0, arm_1)[6];
     motorInputs_L[4] = m_motorDriver->getDigitalInputs(MotorType::MAXON, 0, arm_1)[2];
     motorInputs_L[5] = m_motorDriver->getDigitalInputs(MotorType::MAXON, 1, arm_1)[2];
@@ -4656,8 +4645,11 @@ void RobotControl::MaxonGoHome_(const char& side)//yu
             m_motorDriver->operationHOME(MotorType::MAXON, 2, arm_1);
             m_motorDriver->operationHOME(MotorType::MAXON, 3, arm_1);
 
+            // if(m_endeffectorConfiguration == EndeffectorConfiguration::sixMaxons)
+            // {
             m_motorDriver->operationHOME(MotorType::MAXON, 4, arm_1);
             m_motorDriver->operationHOME(MotorType::MAXON, 5, arm_1);
+            // }
 
             LOG(INFO) << "Start left Maxon homing! ";
             while(true)
