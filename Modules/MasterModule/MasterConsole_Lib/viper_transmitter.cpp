@@ -378,7 +378,7 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
     double Elevation_Cur_L  = viperData[0][4] *  M_PI / 180;
     double Roll_Cur_L       = viperData[0][5] *  M_PI / 180;
 
-    LOG(INFO)<<"viperData[0][3]: "<<viperData[0][3];
+    // LOG(INFO)<<"viperData[0][3]: "<<viperData[0][3];
 
     //Define the Euler rotation Matrix
     Eigen::Matrix3d rotAroundZ_R, rotAroundY_R, rotAroundX_R;

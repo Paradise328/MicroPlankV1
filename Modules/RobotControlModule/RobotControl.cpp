@@ -435,7 +435,11 @@ void RobotControl::teleoperation()
             setControlInitHandleMotorPositionAndPose(motorEncoderInit_R, handlePoseCur, 'r');
         }
 
+        if(m_oprationMode == 1){
+
         controlValueCur_R = motionMapping_R(handlePoseCur,motorEncoderCur_R);
+
+        }
 
         targetEncoder_R = calculateTargetEncoder(controlValueCur_R, motorEncoderInit_R, 'r');
 
@@ -1144,8 +1148,8 @@ std::array<double, ControlValueNum> RobotControl::test_motionMapping_L(const Han
  /*重复定位精度运动测试*/
 
     if(m_oprationMode == 2){
-    int test_step = 1000;
-    double length = 10;//边长
+    int test_step = 2900;
+    double length = 60;//边长
 
     Eigen::Vector3d Point_0 = {0, 0, 0};
     Eigen::Vector3d Point_1 = {-0.5 * length, 0.5 * length, -0.5 * length};
@@ -1234,12 +1238,12 @@ std::array<double, ControlValueNum> RobotControl::test_motionMapping_L(const Han
 
     // LOG(INFO) << "X_L: " << X_L << " Y_L: "<<Y_L<<" Z_L: "<<Z_L;
 
-    // std::ofstream outfile("viper.txt",std::ios::app);
-    // outfile<<X_L<<" "<<Y_L<<" "<<Z_L<< "\n";
-    //  if(test_index == 6){
-    //     outfile<<" =========================================================================== "<<"\n";
-    //  }
-    // outfile.close();
+    std::ofstream outfile("viper60.txt",std::ios::app);
+    outfile<<X_L<<" "<<Y_L<<" "<<Z_L<< "\n";
+     if(test_index == 6){
+        outfile<<" =========================================================================== "<<"\n";
+     }
+    outfile.close();
     }
 
 
@@ -1796,6 +1800,9 @@ double RobotControl::calculateNewOpenangle(double masterOpenangle, const char& s
 
     if(side == 'l'){
     if(m_endeffectorConfiguration_L == EndeffectorConfiguration::fourMaxons){
+
+        newOpenangle = (masterOpenangle < 0) ? 0.018 * pow(masterOpenangle, 3) : pow(masterOpenangle, 3)/600;
+
     if(masterOpenangle < -3){
         // newOpenangle = masterOpenangle * 0.9286 + 1.286;/*-8*/
         // newOpenangle = masterOpenangle * 1.2143 + 2.1428;/*-10*/
@@ -1822,6 +1829,9 @@ double RobotControl::calculateNewOpenangle(double masterOpenangle, const char& s
 
     if(side == 'r'){
     if(m_endeffectorConfiguration_R == EndeffectorConfiguration::fourMaxons){
+
+        // newOpenangle = (masterOpenangle < 0) ? 0.018 * pow(masterOpenangle, 3) : pow(masterOpenangle, 3)/600;
+
     if(masterOpenangle < -3){
         // newOpenangle = masterOpenangle * 0.9286 + 1.286;/*-8*/
         // newOpenangle = masterOpenangle * 1.2143 + 2.1428;/*-10*/
@@ -2222,6 +2232,7 @@ void RobotControl::calculateEndEffectorPosition_init(const HandlePose& handlePos
         m_endEffectorInitPosition_L[0] = handlePoseCur.handlePoseL_X;
         m_endEffectorInitPosition_L[1] = m_endArm_1 * sin(m_endEffectorInitJointAngle_L[0]) + m_endArm_2 * sin(m_endEffectorInitJointAngle_L[0] + m_endEffectorInitJointAngle_L[1]);// +m_endArm_3 * sin(jointAngle1_Init_R + jointAngle2_Init_R + jointAngle3_Init_R)
         m_endEffectorInitPosition_L[2] = - m_endArm_1 * cos(m_endEffectorInitJointAngle_L[0]) - m_endArm_2 * cos(m_endEffectorInitJointAngle_L[0] + m_endEffectorInitJointAngle_L[1]);// -m_endArm_3 * sin(jointAngle1_Init_R + jointAngle2_Init_R + jointAngle3_Init_R)
+    // LOG(INFO)<<"Y1: "<<m_endArm_1 * sin(m_endEffectorInitJointAngle_L[0])<<" Y2: "<<m_endArm_2 * sin(m_endEffectorInitJointAngle_L[0] + m_endEffectorInitJointAngle_L[1])<<" Z1: "<<- m_endArm_1 * cos(m_endEffectorInitJointAngle_L[0])<<" Z2: "<<- m_endArm_2 * cos(m_endEffectorInitJointAngle_L[0] + m_endEffectorInitJointAngle_L[1]);
     }
 }
 std::array<double, 3> RobotControl::calculateEndEffectorPosition(const std::array<int,MotorNumPerSide>& motorPos_Cur, const char& side)//yu 通过各电机的读数推断端点在坐标系中的位置
@@ -3224,11 +3235,11 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
 
                          if((masterHandlePose_Cur.handlePoseL_Z > -80) && (masterHandlePose_Cur.handlePoseL_Z < -8)){
 
-                             if(((endEffectorTarget_Y_L < -246) && (handlePoseCur.handlePoseL_Y - m_handlePosePrev.handlePoseL_Y) < 0) || (endEffectorTarget_Y_L >= -246)){/*Viper与机械臂坐标系yz轴相反*/
+                             if(((endEffectorTarget_Y_L < -255) && (handlePoseCur.handlePoseL_Y - m_handlePosePrev.handlePoseL_Y) < 0) || (endEffectorTarget_Y_L >= -255)){/*Viper与机械臂坐标系yz轴相反*/
 
-                                 if(((endEffectorTarget_Y_L > -106) && (handlePoseCur.handlePoseL_Y - m_handlePosePrev.handlePoseL_Y) > 0) || (endEffectorTarget_Y_L <= -106)){
+                                 if(((endEffectorTarget_Y_L > -175) && (handlePoseCur.handlePoseL_Y - m_handlePosePrev.handlePoseL_Y) > 0) || (endEffectorTarget_Y_L <= -175)){
 
-                                     if(((endEffectorTarget_Z_L < -580) && (handlePoseCur.handlePoseL_Z - m_handlePosePrev.handlePoseL_Z) < 0) || (endEffectorTarget_Z_L >= -580)){
+                                     if(((endEffectorTarget_Z_L < -520) && (handlePoseCur.handlePoseL_Z - m_handlePosePrev.handlePoseL_Z) < 0) || (endEffectorTarget_Z_L >= -520)){
 
                                          if(((endEffectorTarget_Z_L > -400) && (handlePoseCur.handlePoseL_Z - m_handlePosePrev.handlePoseL_Z) > 0) || (endEffectorTarget_Z_L <= -400)){
 
@@ -3273,11 +3284,11 @@ bool RobotControl::isPoseRight(const HandlePose& masterHandlePose_Cur, const cha
 
                          if((masterHandlePose_Cur.handlePoseR_Z > -80) && (masterHandlePose_Cur.handlePoseR_Z < -8)){
 
-                             if(((endEffectorTarget_Y_R < 126) && (handlePoseCur.handlePoseR_Y - m_handlePosePrev.handlePoseR_Y) < 0) || (endEffectorTarget_Y_R >= 126)){
+                             if(((endEffectorTarget_Y_R < 175) && (handlePoseCur.handlePoseR_Y - m_handlePosePrev.handlePoseR_Y) < 0) || (endEffectorTarget_Y_R >= 175)){
 
-                                 if(((endEffectorTarget_Y_R > 256) && (handlePoseCur.handlePoseR_Y - m_handlePosePrev.handlePoseR_Y) > 0) || (endEffectorTarget_Y_R <= 256)){
+                                 if(((endEffectorTarget_Y_R > 255) && (handlePoseCur.handlePoseR_Y - m_handlePosePrev.handlePoseR_Y) > 0) || (endEffectorTarget_Y_R <= 255)){
 
-                                     if(((endEffectorTarget_Z_R < -580) && (handlePoseCur.handlePoseR_Z - m_handlePosePrev.handlePoseR_Z) < 0) || (endEffectorTarget_Z_R >= -580)){
+                                     if(((endEffectorTarget_Z_R < -520) && (handlePoseCur.handlePoseR_Z - m_handlePosePrev.handlePoseR_Z) < 0) || (endEffectorTarget_Z_R >= -520)){
 
                                          if(((endEffectorTarget_Z_R > -400) && (handlePoseCur.handlePoseR_Z - m_handlePosePrev.handlePoseR_Z) > 0) || (endEffectorTarget_Z_R <= -400)){
 
@@ -3996,9 +4007,9 @@ void RobotControl::zeroErrGoHome(const char& side)
             // targetPosition = {JointEncoderPerRevolution / 2 + static_cast<int>(67.9495 * EncoderPerGrade),
             //                   JointEncoderPerRevolution / 2 + static_cast<int>(120.0839 * EncoderPerGrade),
             //                   JointEncoderPerRevolution / 2 + static_cast<int>(22.1344 * EncoderPerGrade)};
-        targetPosition = {JointEncoderPerRevolution / 2 + static_cast<int>(60.0 * EncoderPerGrade),
-                          JointEncoderPerRevolution / 2 + static_cast<int>(128.0 * EncoderPerGrade),
-                          JointEncoderPerRevolution / 2 + static_cast<int>(38.0 * EncoderPerGrade)};
+        targetPosition = {JointEncoderPerRevolution / 2 + static_cast<int>(59.0 * EncoderPerGrade),
+                          JointEncoderPerRevolution / 2 + static_cast<int>(126.0 * EncoderPerGrade),
+                          JointEncoderPerRevolution / 2 + static_cast<int>(37.0 * EncoderPerGrade)};
 
         for(int i = 0; i < 3; i ++)
         {
@@ -4065,9 +4076,9 @@ void RobotControl::zeroErrGoHome(const char& side)
             // targetPosition = {JointEncoderPerRevolution / 2 - static_cast<int>(67.9495 * EncoderPerGrade),
             //                   JointEncoderPerRevolution / 2 - static_cast<int>(120.0839 * EncoderPerGrade),
             //                   JointEncoderPerRevolution / 2 - static_cast<int>(22.1344* EncoderPerGrade)};
-        targetPosition = {JointEncoderPerRevolution / 2 - static_cast<int>(60.0 * EncoderPerGrade),
-                          JointEncoderPerRevolution / 2 - static_cast<int>(128.0 * EncoderPerGrade),
-                          JointEncoderPerRevolution / 2 - static_cast<int>(38.0* EncoderPerGrade)};
+        targetPosition = {JointEncoderPerRevolution / 2 - static_cast<int>(59.0 * EncoderPerGrade),
+                          JointEncoderPerRevolution / 2 - static_cast<int>(126.0 * EncoderPerGrade),
+                          JointEncoderPerRevolution / 2 - static_cast<int>(37.0* EncoderPerGrade)};
 
         for(int i = 0; i < 3; i ++)
         {

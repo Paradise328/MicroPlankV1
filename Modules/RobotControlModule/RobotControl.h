@@ -246,7 +246,7 @@ private:
 
     std::array<double,4> m_EncodeErr_Int;
 
-    double m_Kp_L = 1.5;
+    double m_Kp_L = 2.5;
     double m_Kp_R = 2.5;
 
     double m_Kd_L = 0.1;
@@ -605,7 +605,7 @@ private:
 
     double                          m_endArm_1 = 150;
     double                          m_endArm_2 = 180;
-    double                          m_endArm_3 = 349.66;//单位mm
+    double                          m_endArm_3 = 355.8;//349.66;//单位mm
 
     /*以下为重复定位测试修改的部分*/
     int test_index;
