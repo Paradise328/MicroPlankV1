@@ -1,42 +1,6 @@
 #include "RobotControl.h"
 std::ofstream outfile("output.txt");
 double tmp1,tmp2,tmp3,tmp4,tmp5,tmp6;
-void RobotControl::startGuidingArmControlThread()
-{
-    m_guidingArmControlThread = std::thread(&RobotControl::guidingArmControl, this);
-    m_guidingArmControlThread.detach();
-}
-
-/* control loop of guiding arm */
-void RobotControl::guidingArmControl(){/*没被调用*/
-    while(true){
-        updateGuidingArmMotion();
-
-        updownMotion();
-
-        updateGuidingArmState();
-
-        switch(m_guidingArm.m_guidingArmCurrentState){
-            case GuidingArmState::HOLD:
-                applyGuidingArmVelocityControl();
-                break;
-            case GuidingArmState::DAMPING:
-                applyGuidingArmDampingControl();
-                break;
-            case GuidingArmState::DRAG:
-                applyGuidingArmForceControl();
-                break;
-        }
-
-        /* print guiding Arm Motion Values to Screen */
-        // guidingArmPrinting();
-
-        /* Log Arm info to a file */
-        // guidingArmLogging();
-
-        usleep(4 * 1000);
-    }
-}
 
 bool RobotControl::judgeGuidingArmStable(){
     return true;
@@ -110,9 +74,9 @@ void RobotControl::applyGuidingArmForceControl(){
     /* apply PT update in this function */
     /* set target torque in order to compensate the friction */
     LOG(INFO)<<"[MODE:DRAG]";
-    double target_trq_0 = signDouble(m_guidingArm.m_velocity_1stOrder[0]) * 45.0;
-    double target_trq_1 = signDouble(m_guidingArm.m_velocity_1stOrder[1]) * 30.0;
-    double target_trq_2 = signDouble(m_guidingArm.m_velocity_1stOrder[2]) * 15.0;
+    double target_trq_0 = signDouble(m_guidingArm.m_velocity_1stOrder[0]) * 85.0;
+    double target_trq_1 = signDouble(m_guidingArm.m_velocity_1stOrder[1]) * 52.0;
+    double target_trq_2 = signDouble(m_guidingArm.m_velocity_1stOrder[2]) * 24.0;
 
     tmp1 = signDouble(m_guidingArm.m_velocity_1stOrder[0]);
     tmp2 = signDouble(m_guidingArm.m_velocity_1stOrder[1]);
@@ -219,6 +183,12 @@ void RobotControl::updateGuidingArmMotion(){
         static_cast<double>(m_motorDriver->getActualVel(MotorType::ZERO_ERR, 1, arm_guiding)),
         static_cast<double>(m_motorDriver->getActualVel(MotorType::ZERO_ERR, 2, arm_guiding))
     };
+
+    for(int i = 0; i<3; i++){
+        if(m_guidingArm.m_velocity[i] < 150){
+            m_guidingArm.m_velocity[i] = 0;
+        }
+    }
     m_guidingArm.m_velocity_1stOrder = m_filter_1storder_guiding.update(m_guidingArm.m_velocity);
     m_guidingArm.m_velocity_2ndOrder = m_filter_2ndorder_guiding.update(m_guidingArm.m_velocity);
 }
@@ -317,13 +287,10 @@ void RobotControl::updownMotion()
 
     if(flag == 5){
         SendInnerMsg(Module_Inner_E::AssistDevice_Lifting,static_cast<int>(AssistDevice_LiftingAction_E::LiftingUp),"Fast");
-        // LOG(INFO)<<"1111111111111111111111111111111111";
     }else if(flag == 6){
         SendInnerMsg(Module_Inner_E::AssistDevice_Lifting,static_cast<int>(AssistDevice_LiftingAction_E::LiftingDown),"Fast");
-        // LOG(INFO)<<"33333333333333333333333333333333333333";
     }else if(flag == 3){
         SendInnerMsg(Module_Inner_E::AssistDevice_Lifting,static_cast<int>(AssistDevice_LiftingAction_E::LiftingBrake),"");
-        // LOG(INFO)<<"4444444444444444444444444444444444444";
     }
     m_liftingFlag_pre = flag;
 }

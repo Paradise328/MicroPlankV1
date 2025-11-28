@@ -31,7 +31,7 @@ void MicroPlank::startSystem()
     /* 开启robotControl线程 */
     startRobotControl();
 
-    //// m_security.performSystemCheck();
+    // m_security.performSystemCheck();
     m_security.systemBootSelfCheck();
 
     // startLightBoard();

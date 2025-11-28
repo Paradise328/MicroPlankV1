@@ -628,6 +628,70 @@ Rectangle {
                }
            }
 
+        //左侧云台归零按钮
+          Button {
+              objectName: "po_btnTransport"
+              id: po_btnTransport
+              y: 230
+              x: 185
+              width: 250
+              height: 53
+              font.pixelSize: 28
+              anchors.bottomMargin: 0
+
+              contentItem: Text {
+                  id: po_btnTransport_Text
+                  text: qsTr("机械臂至运输位置")
+                  font.pixelSize: 28
+                  opacity: 1.0
+                  color: "#48FFFF"
+                  horizontalAlignment: Text.AlignHCenter
+                  verticalAlignment: Text.AlignVCenter
+                  elide: Text.ElideRight
+              }
+            // 设置按钮背景
+              background: Rectangle {
+                  id: po_btnTransport_Background
+                  implicitWidth: 250
+                  implicitHeight: 56
+                  opacity: 0.25
+                  color: "#003033"//#7f7f7f
+                  border.color: "#2CDFE8"
+                  border.width: 2
+                  radius:10
+              }
+              function setsta(sta)
+              {
+                  switch(sta)
+                  {
+                      case 0x00:
+                      {
+                          po_btnTransport_Text.color = "#7f7f7f"
+                          po_btnTransport_Background.border.color = "#7f7f7f"
+                          po_btnTransport_Background.color = "#7f7f7f"
+                          break;
+                      }
+                      case 0x01:
+                      {
+                          po_btnTransport_Text.text = qsTr("机械臂至运输位置")
+                          po_btnTransport_Text.color = "#48FFFF"
+                          po_btnTransport_Background.color = "#003033"
+                          po_btnTransport_Background.border.color = "#2CDFE8"
+                          break;
+                      }
+                      case 0x02:
+                      {
+                          po_btnTransport_Text.text = qsTr("机械臂复位中")
+                          po_btnTransport_Text.color = "#FFFFFF"
+                          po_btnTransport_Background.color = "#48FFFF"
+                          po_btnTransport_Background.border.color = "#2CDFE8"
+                          break;
+                      }
+                      default:break;
+                  }
+              }
+          }
+
           //左侧云台归零按钮
             Button {
                 //@disable-check M16

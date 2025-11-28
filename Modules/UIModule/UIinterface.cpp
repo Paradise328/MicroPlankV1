@@ -58,6 +58,8 @@ void UIinterface::setQMLComponent()
   //  this->m_Button_ReleaseInstrument = this->m_Engine.rootObjects().first()->findChild<QObject*>("btnReleaseInstrument");
  //   this->m_Button_InstrumentInstalled = this->m_Engine.rootObjects().first()->findChild<QObject*>("btnInstrumentInstalled");
 
+    this->m_PO_Button_Transport = this->m_Engine.rootObjects().first()->findChild<QObject*>("po_btnTransport");
+
     this->m_PO_Button_CaliGimbal_L = this->m_Engine.rootObjects().first()->findChild<QObject*>("po_btnCaliGimbalL"); //存储一个指向 QML 中按钮对象的指针， 保存从 QML 中找到的按钮
     this->m_PO_Button_CaliGimbal_R = this->m_Engine.rootObjects().first()->findChild<QObject*>("po_btnCaliGimbalR");
     this->m_PO_Button_CaliInstrument_L = this->m_Engine.rootObjects().first()->findChild<QObject*>("po_btnCaliInstrumentL");
@@ -120,6 +122,8 @@ void UIinterface::setConnections()
 
     connect(this->m_PO_Button_RobotArmEnable,SIGNAL(clicked()),this,SLOT(onRobotArmEnable_Clicked()));//进入csp模式
    // connect(this->m_Button_RobotArmDisable,SIGNAL(clicked()),this,SLOT(onRobotArmDisable_Clicked()));
+
+    connect(this->m_PO_Button_Transport,SIGNAL(clicked()),this,SLOT(onButton_Transport_Clicked()));//进入运输模式
     connect(this->m_PO_Button_CaliGimbal_L,SIGNAL(clicked()),this,SLOT(onButton_CaliGimbalL_Clicked()));//左侧云台归零
     connect(this->m_PO_Button_CaliGimbal_R,SIGNAL(clicked()),this,SLOT(onButton_CaliGimbalR_Clicked()));//clicked()是接收到的信号，SLOT是一个槽函数，定义了信号被触发时的具体处理逻辑。
     connect(this->m_PO_Button_CaliInstrument_L,SIGNAL(clicked()),this,SLOT(onButton_CaliInstrumentL_Clicked()));//左侧器械归零
@@ -315,10 +319,25 @@ void UIinterface::SetRightfinialcheckString(QString s)
     }
 }
 
+void UIinterface::onButton_Transport_Clicked()//点击左云台归零
+{
+    LOG(INFO)<<"Gimbal calibration button has been clicked: Gimbal calibration left";
+    if((m_GimbalCalibrationFlag_L + m_GimbalCalibrationFlag_R + m_InstrumentCalibrationFlag_L + m_InstrumentCalibrationFlag_R + m_GimbalCalibrationFlag_L + m_TransportFlag) == 0)
+    {
+        SetButtonSta(this->m_PO_Button_Transport,UI_Button_Highlight);
+        SetButtonSta(this->m_PO_Button_CaliGimbal_L,UI_Button_Gray);
+        SetButtonSta(this->m_PO_Button_CaliGimbal_R,UI_Button_Gray);
+        SetButtonSta(this->m_PO_Button_CaliInstrument_L,UI_Button_Gray);
+        SetButtonSta(this->m_PO_Button_CaliInstrument_R,UI_Button_Gray);
+        SendInnerMsg(Module_Inner_E::RobotControl,static_cast<int>(RobotControlAction_E::StartEndJointTransportHoming),"");
+        m_TransportFlag = 1;
+    }
+}
+
 void UIinterface::onButton_CaliGimbalL_Clicked()//点击左云台归零
 {
     LOG(INFO)<<"Gimbal calibration button has been clicked: Gimbal calibration left";
-    if((m_GimbalCalibrationFlag_L + m_GimbalCalibrationFlag_R + m_InstrumentCalibrationFlag_L + m_InstrumentCalibrationFlag_R) == 0)
+    if((m_GimbalCalibrationFlag_L + m_GimbalCalibrationFlag_R + m_InstrumentCalibrationFlag_L + m_InstrumentCalibrationFlag_R + m_TransportFlag) == 0)
     {
         SetButtonSta(this->m_PO_Button_CaliGimbal_L,UI_Button_Highlight);
         SetButtonSta(this->m_PO_Button_CaliGimbal_R,UI_Button_Gray);
@@ -332,7 +351,7 @@ void UIinterface::onButton_CaliGimbalL_Clicked()//点击左云台归零
 void UIinterface::onButton_CaliGimbalR_Clicked()//点击右云台归零
 {
     LOG(INFO)<<"Gimbal calibration button has been clicked: Gimbal calibration right";
-    if((m_GimbalCalibrationFlag_L + m_GimbalCalibrationFlag_R + m_InstrumentCalibrationFlag_L + m_InstrumentCalibrationFlag_R) == 0)
+    if((m_GimbalCalibrationFlag_L + m_GimbalCalibrationFlag_R + m_InstrumentCalibrationFlag_L + m_InstrumentCalibrationFlag_R + m_TransportFlag) == 0)
     {
         SetButtonSta(this->m_PO_Button_CaliGimbal_L,UI_Button_Gray);
         SetButtonSta(this->m_PO_Button_CaliGimbal_R,UI_Button_Highlight);
@@ -346,7 +365,7 @@ void UIinterface::onButton_CaliGimbalR_Clicked()//点击右云台归零
 void UIinterface::onButton_CaliInstrumentL_Clicked()//点击器械归零
 {
     printf("instrument CaliInstrument L\n");
-    if((m_GimbalCalibrationFlag_L + m_GimbalCalibrationFlag_R + m_InstrumentCalibrationFlag_L + m_InstrumentCalibrationFlag_R) == 0)//如果其他按钮都没有被按下
+    if((m_GimbalCalibrationFlag_L + m_GimbalCalibrationFlag_R + m_InstrumentCalibrationFlag_L + m_InstrumentCalibrationFlag_R + m_TransportFlag) == 0)//如果其他按钮都没有被按下
     {
         SetButtonSta(this->m_PO_Button_CaliGimbal_L,UI_Button_Gray);
         SetButtonSta(this->m_PO_Button_CaliGimbal_R,UI_Button_Gray);
@@ -360,7 +379,7 @@ void UIinterface::onButton_CaliInstrumentL_Clicked()//点击器械归零
 void UIinterface::onButton_CaliInstrumentR_Clicked()
 {
     printf("instrument CaliInstrument R\n");
-    if((m_GimbalCalibrationFlag_L + m_GimbalCalibrationFlag_R + m_InstrumentCalibrationFlag_L + m_InstrumentCalibrationFlag_R) == 0)
+    if((m_GimbalCalibrationFlag_L + m_GimbalCalibrationFlag_R + m_InstrumentCalibrationFlag_L + m_InstrumentCalibrationFlag_R + m_TransportFlag) == 0)
     {
         SetButtonSta(this->m_PO_Button_CaliGimbal_L,UI_Button_Gray);
         SetButtonSta(this->m_PO_Button_CaliGimbal_R,UI_Button_Gray);
@@ -378,6 +397,9 @@ void UIinterface::resetButton_Calibration()
     m_GimbalCalibrationFlag_R = 0;
     m_InstrumentCalibrationFlag_L = 0;
     m_InstrumentCalibrationFlag_R = 0;
+    m_TransportFlag = 0;
+
+    SetButtonSta(this->m_PO_Button_Transport,UI_Button_Default);
     SetButtonSta(this->m_PO_Button_CaliGimbal_L,UI_Button_Default);
     SetButtonSta(this->m_PO_Button_CaliGimbal_R,UI_Button_Default);
     SetButtonSta(this->m_PO_Button_CaliInstrument_L,UI_Button_Default);

@@ -19,6 +19,7 @@ enum class _RobotControlAction_E
     GoToInstrumentArmCollaboration,
     GoToTestOperation,
     GoToHoldOnMode,
+    StartEndJointTransportHoming,
     StartEndJointMotorHoming,
     StartEndEffectorMotorHoming,
     SwitchInstrumentAngle,

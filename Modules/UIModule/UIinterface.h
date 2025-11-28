@@ -144,6 +144,7 @@ public Q_SLOTS:
 //    void onRobotArmDisable_Clicked();
     void onButton_InstrumentInstalled_Clicked();
     void onButton_ReleaseInstrument_Clicked();
+    void onButton_Transport_Clicked();
     void onButton_CaliGimbalL_Clicked();
     void onButton_CaliGimbalR_Clicked();
     void onButton_CaliInstrumentL_Clicked();
@@ -187,6 +188,8 @@ private:
     mutable int             m_InstrumentCalibrationFlag_L = 0;
     mutable int             m_InstrumentCalibrationFlag_R = 0;
 
+    mutable int             m_TransportFlag = 0;
+
     mutable int             m_systemMode;
 
 //    MasterConsole           *m_MasterConsole = nullptr;
@@ -217,6 +220,7 @@ private:
     QObject                 *m_PO_Button_Slowdown = nullptr;
 //    QObject                 *m_Button_ReleaseInstrument = nullptr;
 //    QObject                 *m_Button_InstrumentInstalled = nullptr;
+    QObject                 *m_PO_Button_Transport = nullptr;
     QObject                 *m_PO_Button_CaliGimbal_L = nullptr;
     QObject                 *m_PO_Button_CaliGimbal_R = nullptr;
     QObject                 *m_PO_Button_CaliInstrument_L = nullptr;

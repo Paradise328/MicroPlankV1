@@ -246,10 +246,10 @@ private:
 
     std::array<double,4> m_EncodeErr_Int;
 
-    double m_Kp_L = 2.5;
-    double m_Kp_R = 2.5;
+    double m_Kp_L = 4.2;
+    double m_Kp_R = 4.2;//由于右手抖动明显，所以右手补偿小
 
-    double m_Kd_L = 0.1;
+    double m_Kd_L = 0.05;
     double m_Kd_R = 0.05;
 
     /*控制函数*/
@@ -317,6 +317,8 @@ private:
     void                            goToTeleOperation();
 
     void                            teleoperation();
+
+    void                            maxonGoHome_tel();
 
     std::atomic<bool>               m_flagInTeleoperation = false;
 
@@ -399,6 +401,7 @@ private:
     /*复位功能*/
     void                            endJointGoHome(const char& side);
     void                            zeroErrGoHome(const char& side);
+    void                            TransportGoHome();
 
     void                            MaxonGoHome(const char& side);
     void                            MaxonGoHome_(const char& side);
@@ -432,7 +435,7 @@ private:
     std::string                     m_configFilePath  = "/home/a/Desktop/codes/MikroPlanckV1/Config/EndeffectorData.toml";
     std::string                     m_robotConfigPath = "/home/a/Desktop/codes/MikroPlanckV1/Config/RobotData.toml";
 
-    mutable std::string             m_endEffectorLeft   = "CZQ_4MM_1";
+    mutable std::string             m_endEffectorLeft   = "CZQ_4MM_1"; //在函數loadEndeffectorConfig()中改變器械的參數
     mutable std::string             m_endEffectorRight  = "CZQ_4MM_1";
 
     // mutable std::string             m_endEffectorLeft   = "CZQ_3MM_1";
@@ -448,6 +451,10 @@ private:
 
     std::array<double, 4>           m_encoderPerDegree_L;//Read From Toml
     std::array<double, 4>           m_encoderPerDegree_R;//Read From Toml
+
+    std::array<double, 6>           m_encoderPerDegree_6maxon_L;//Read From Toml
+    std::array<double, 6>           m_encoderPerDegree_6maxon_R;//Read From Toml
+
     std::array<int, 3>              m_encoderPerMM_L = {0};//Read From Toml
     std::array<int, 3>              m_encoderPerMM_R = {0};//Read From Toml
 
@@ -495,9 +502,15 @@ private:
     mutable int                     m_enableTagPrev_R = 4;
     mutable int                     m_enableTagCur_L ;
     mutable int                     m_enableTagCur_R ;
+
     mutable int                     m_endJointDragBtnCounter_L;
     mutable int                     m_endJointDragBtnCounter_R;
+
+    mutable int                     m_maxonBtnCounter_L;
+    mutable int                     m_maxonBtnCounter_R;
+
     void                            setEndJointDragEnableStatus(const uint8_t& domainDigitalCur_L, const uint8_t& domainDigitalCur_R);
+    void                            setEndEffectorData(const uint8_t& domainDigitalCur_L, const uint8_t& domainDigitalCur_R);
 
     mutable int                     m_alignmentNumber_L;
     mutable int                     m_alignmentNumber_R;
@@ -571,7 +584,7 @@ private:
                                                                         const std::array<int, MotorNumPerSide>& targetEncoderPrev,
                                                                         const char& side)const;
 
-    std::array<double, MotorNumPerSide>            calculateTargetEncoder_new(const std::array<double, ControlValueNum>& controlValue_Cur,
+    std::array<double, MotorNumPerSide>            calculateTargetEncoder_forVelocity(const std::array<double, ControlValueNum>& controlValue_Cur,
                                                             const std::array<int, MotorNumPerSide>& motorPosition_Init,
                                                             const char& side)const;
 
@@ -697,6 +710,12 @@ private:
     int                             m_dragButtonPressCur_R = 0;
     int                             m_dragButtonPressPre_L = 0;
     int                             m_dragButtonPressPre_R = 0;
+
+    /*器械复位按钮*/
+    int                             m_maxonPressCur_L = 0;
+    int                             m_maxonPressCur_R = 0;
+    int                             m_maxonPressPre_L = 0;
+    int                             m_maxonPressPre_R = 0;
 
     /*升降柱*/
     int                             m_liftingFlag_pre = 4;

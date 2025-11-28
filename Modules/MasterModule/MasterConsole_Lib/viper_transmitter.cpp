@@ -34,7 +34,7 @@ bool Viper_Transmitter::openSerialPort(qint32 baud)
         connect(m_serial_422, &QSerialPort::readyRead, this, &Viper_Transmitter::On422DataIn);
         // connect(m_serial_422, &QSerialPort::errorOccurred, this, &Viper_Transmitter::viperOccurred);
         LOG(INFO)<<"viper Connect Successful";
-        m_is422Ok = true;
+        // m_is422Ok = true;
         return true;
     }else
     {
@@ -98,7 +98,7 @@ void Viper_Transmitter::On422DataIn(void)
 {
     if(m_serial_422->canReadLine())
     {
-        m_is422Ok = true;
+        // m_is422Ok = true;
         Data422Recvin+=m_serial_422->readAll();
         int len=this->Data422Recvin.length();
         int headindex=findFrameHead(Data422Recvin);
@@ -120,6 +120,7 @@ void Viper_Transmitter::On422DataIn(void)
             {
                 QByteArray datatemp=Data422Recvin.left(86);
                 readHandleData(datatemp);
+                m_is422Ok = true;
                 m_communicateTemp.fetch_add(1);
             }
             Data422Recvin.remove(0,86);
@@ -178,6 +179,7 @@ eSendReturn Viper_Transmitter::Send_Frame_By_422(COMMU_FRAME cftemp)
 {
     QByteArray DataQBA;
     this->Packet_Frame(DataQBA,cftemp);
+    //LOG(INFO)<< DataQBA.toHex().toStdString();
     m_serial_422->write(DataQBA.data(),DataQBA.length());
     return SEND_SUCCESS;
 }
@@ -287,7 +289,7 @@ void Viper_Transmitter::startReadingThread()
 }
 
 void Viper_Transmitter::readHandleData(QByteArray qba)
-{
+{   
     COMMU_FRAME cftemp;
 
     uint16_t Handle_Angle_LEFT = 0;
@@ -296,7 +298,7 @@ void Viper_Transmitter::readHandleData(QByteArray qba)
     uint16_t Handle_Key_RIGHT = 0;
 
     HandlePose handlePoseTmp, handlePoseCur;
-    // qDebug()<<"viper readhandledata"<<qba.toHex();
+    //LOG(INFO)<< qba.toHex().toStdString();
     eDepackReturn edr = this->Depack_Frame(qba,cftemp);
 
     if(edr == Depack_SUCCESS)
@@ -487,7 +489,7 @@ HandlePose Viper_Transmitter::motionMapping(const std::array<std::array<double,v
         gamma_L = -125 * M_PI / 180;
     }
 
-    // std::cout << "alpha_L: " << a*180/M_PI << " beta_L: " << beta_L*180/M_PI << " gamma_L: " << gamma_L*180/M_PI << std::endl;
+    // std::cout <<" beta_L: " << beta_L*180/M_PI << " gamma_L: " << gamma_L*180/M_PI << std::endl;
 
     HandlePose poseDataCurInSlaveFrame;
 
