@@ -25,17 +25,17 @@ int main(int argc, char *argv[])
 
     MotorDriverParameter motorDriverParameter;
 
-    motorDriverParameter.guidingJointMotorNum = 3;           /* number of motor to control the arm */
-    motorDriverParameter.armNum = 2;
-    motorDriverParameter.endGimbalMotorNum = 2;              /* total number of motor to control end-effector gimbal */
+    motorDriverParameter.guidingJointMotorNum = 0;           /* number of motor to control the arm */
+    motorDriverParameter.armNum = 1;
+    motorDriverParameter.endGimbalMotorNum = 1;              /* total number of motor to control end-effector gimbal */
     motorDriverParameter.endGimbalMotorNumPerArm = 1;        /* number of motor to control end-effector gimbal on each arm */
-    motorDriverParameter.endJointMotorNum = 6;               /* total number of motor to control end-effector joint ，2个机械臂 zero err 数量*/
-    motorDriverParameter.endJointMotorNumPerArm = 3;         /* number of motor to control end-effector joint on each arm 2个机械臂 Maxon 数量*/
-    motorDriverParameter.endInstrumentMotorNum = 12;//8          /* total number of motor to control end-effector instruments 8*/
+    motorDriverParameter.endJointMotorNum = 0;               /* total number of motor to control end-effector joint ，2个机械臂 zero err 数量*/
+    motorDriverParameter.endJointMotorNumPerArm = 0;         /* number of motor to control end-effector joint on each arm 2个机械臂 Maxon 数量*/
+    motorDriverParameter.endInstrumentMotorNum = 6;//8          /* total number of motor to control end-effector instruments 8*/
     motorDriverParameter.endInstrumentMotorNumPerArm = 6;//4    /* number of motor to control end-effector instruments on each arm*/
-    motorDriverParameter.motorNumPerArm = 10;//8                /* 8 for 4 Motors*/
-    motorDriverParameter.slaveNum = 23;//19                      /* total number of ethercat slaves*/
-    motorDriverParameter.motorNum = 23;//19                      /* total number of ethercat slaves*/
+    motorDriverParameter.motorNumPerArm = 7;//8                /* 8 for 4 Motors*/
+    motorDriverParameter.slaveNum = 7;//19                      /* total number of ethercat slaves*/
+    motorDriverParameter.motorNum = 7;//19                      /* total number of ethercat slaves*/
 
     motorDriverParameter.forceSensorNumPerArm = 0;
 

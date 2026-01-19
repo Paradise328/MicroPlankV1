@@ -7,6 +7,7 @@ QT += testlib
 QT += multimedia
 QT += serialport
 
+
 CONFIG -= app_bundle
 CONFIG += c++17 console
 #CONFIG +=resources_big
@@ -33,6 +34,7 @@ LIBS += -lruckig                    # 链接 Ruckig 库
 
 SOURCES += \
         Modules/ForceSensorModule/ForceSensor.cpp \
+        Modules/ForceSensorModule/PressureSensor.cpp \
         Modules/LoggerModule/easylogging++.cc \
         Modules/MasterModule/MasterConsole.cpp \
         Modules/MasterModule/MasterConsole_Lib/viper_transmitter.cpp \
@@ -68,6 +70,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     Modules/ForceSensorModule/ForceSensor.h \
+    Modules/ForceSensorModule/PressureSensor.h \
     Modules/LoggerModule/easylogging++.h \
     Modules/MasterModule/MasterConsole.h \
     Modules/MasterModule/MasterConsole_Lib/viper_transmitter.h \
@@ -198,3 +201,7 @@ else:unix: LIBS += -L$$PWD/../../install_packages/force_dimension_driver/sdk-3.1
 
 INCLUDEPATH += $$PWD/''
 DEPENDPATH += $$PWD/''
+
+CONFIG += link_pkgconfig
+PKGCONFIG += opencv4
+LIBS += -lmodbus

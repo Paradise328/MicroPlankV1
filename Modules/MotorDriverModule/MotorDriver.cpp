@@ -213,6 +213,8 @@ uint16_t MotorDriver::getErrorCode(const MotorType& type, const int& index, cons
 
 uint16_t MotorDriver::getStatusWord(const MotorType& type, const int& index, const int& armNum){
 
+
+
     if(m_config[static_cast<int>(type)].TxPDO.variables.count(STATUSWORD) > 0){
         const auto& variable = m_config[static_cast<int>(type)].TxPDO.variables[STATUSWORD];
         switch(type){
@@ -307,6 +309,7 @@ int16_t MotorDriver::getOperationMode(const MotorType& type, const int& index,co
                                                                  + endJointMotor_sizeRecvData * m_endJointMotorNumPerArm
                                                                  + endInstrumentMotor_sizeRecvData * index
                                                                  + variable.offset]);
+
                 return operationMode;
             }
             default:{
@@ -2119,6 +2122,7 @@ int MotorDriver::cyclicDataTransfer(){
 
     std::lock_guard<std::mutex> lock(m_selfPointer->m_cyclicMutex);
 
+
     int lRet;
     lRet = xChannelWatchdog(m_hChannel, CIFX_WATCHDOG_START, &m_ulWatchdogValue);
 
@@ -2736,7 +2740,7 @@ void MotorDriver::operationCSP(const MotorType& type, const int& index, const in
 
             if (setMaxPosErr(type, index, SDO_COMMAND::MAX_POS_ERR, armNum) != T_NOERROR){
                 LOG(ERROR) << " Failed to set SDO 0x6065: Max Position Error for Moons motor!" ;
-                break;
+                // break;
             }
             usleep(20 * 1000);
 
@@ -3336,172 +3340,174 @@ void MotorDriver::operationHOME(const MotorType& type, const int& index, const i
 }
 
 int MotorDriver::checkECatStationState(){
+
+
     int lRet;
     if((lRet = m_selfPointer->getECatMasterState()) != static_cast<int>(MasterState::ECM_IF_STATE_OP)){
         LOG(ERROR) << "Connection lost, EtherCAT master is not in OP state, current state is: 0x" << std::hex << lRet;
         return T_ERROR;
     }
 
-    if((lRet = m_selfPointer->getECatSlaveState(0)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP))
-    {
-        LOG(ERROR) << "Connection lost, EtherCAT slave 1 is not in OP state, current state is: 0x" << std::hex << lRet;
-        m_slaveErr[0] = 1;
-    }
+    // if((lRet = m_selfPointer->getECatSlaveState(0)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP))
+    // {
+    //     LOG(ERROR) << "Connection lost, EtherCAT slave 1 is not in OP state, current state is: 0x" << std::hex << lRet;
+    //     m_slaveErr[0] = 1;
+    // }
 
-    if((lRet = m_selfPointer->getECatSlaveState(1)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
-        LOG(ERROR) << "Connection lost, EtherCAT slave 2 is not in OP state, current state is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
+    // if((lRet = m_selfPointer->getECatSlaveState(1)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
+    //     LOG(ERROR) << "Connection lost, EtherCAT slave 2 is not in OP state, current state is: 0x" << std::hex << lRet;
+    //     return T_ERROR;
+    // }
 
-    if((lRet = m_selfPointer->getECatSlaveState(2)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
-        LOG(ERROR) << "Connection lost, EtherCAT slave 3 is not in OP state, current state is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
+    // if((lRet = m_selfPointer->getECatSlaveState(2)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
+    //     LOG(ERROR) << "Connection lost, EtherCAT slave 3 is not in OP state, current state is: 0x" << std::hex << lRet;
+    //     return T_ERROR;
+    // }
 
-    if((lRet = m_selfPointer->getECatSlaveState(3)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
-        LOG(ERROR) << "Connection lost, EtherCAT slave 4 is not in OP state, current state is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
+    // if((lRet = m_selfPointer->getECatSlaveState(3)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
+    //     LOG(ERROR) << "Connection lost, EtherCAT slave 4 is not in OP state, current state is: 0x" << std::hex << lRet;
+    //     return T_ERROR;
+    // }
 
-    if((lRet = m_selfPointer->getECatSlaveState(4)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
-        LOG(ERROR) << "Connection lost, EtherCAT slave 5 is not in OP state, current state is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
+    // if((lRet = m_selfPointer->getECatSlaveState(4)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
+    //     LOG(ERROR) << "Connection lost, EtherCAT slave 5 is not in OP state, current state is: 0x" << std::hex << lRet;
+    //     return T_ERROR;
+    // }
 
-    if((lRet = m_selfPointer->getECatSlaveState(5)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
-        LOG(ERROR) << "Connection lost, EtherCAT slave 6 is not in OP state, current state is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
+    // if((lRet = m_selfPointer->getECatSlaveState(5)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
+    //     LOG(ERROR) << "Connection lost, EtherCAT slave 6 is not in OP state, current state is: 0x" << std::hex << lRet;
+    //     return T_ERROR;
+    // }
 
-    if((lRet = m_selfPointer->getECatSlaveState(6)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
-        LOG(ERROR) << "Connection lost, EtherCAT slave 7 is not in OP state, current state is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
-    return T_NOERROR;
-    if((lRet = m_selfPointer->getECatSlaveState(7)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
-        LOG(ERROR) << "Connection lost, EtherCAT slave 5 is not in OP state, current state is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
+//    if((lRet = m_selfPointer->getECatSlaveState(6)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
+//        LOG(ERROR) << "Connection lost, EtherCAT slave 7 is not in OP state, current state is: 0x" << std::hex << lRet;
+//        return T_ERROR;
+//    }
+//    return T_NOERROR;
+//    if((lRet = m_selfPointer->getECatSlaveState(7)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
+//        LOG(ERROR) << "Connection lost, EtherCAT slave 5 is not in OP state, current state is: 0x" << std::hex << lRet;
+//        return T_ERROR;
+//    }
 
-    if((lRet = m_selfPointer->getECatSlaveState(8)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
-        LOG(ERROR) << "Connection lost, EtherCAT slave 6 is not in OP state, current state is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
+//    if((lRet = m_selfPointer->getECatSlaveState(8)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
+//        LOG(ERROR) << "Connection lost, EtherCAT slave 6 is not in OP state, current state is: 0x" << std::hex << lRet;
+//        return T_ERROR;
+//    }
 
-    if((lRet = m_selfPointer->getECatSlaveState(9)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
-        LOG(ERROR) << "Connection lost, EtherCAT slave 7 is not in OP state, current state is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
+//    if((lRet = m_selfPointer->getECatSlaveState(9)) != static_cast<int>(SlaveState::ECM_IF_STATE_OP)){
+//        LOG(ERROR) << "Connection lost, EtherCAT slave 7 is not in OP state, current state is: 0x" << std::hex << lRet;
+//        return T_ERROR;
+//    }
 }
 
 int MotorDriver::checkMotorState(){
     int lRet;
 
-    if((lRet = getErrorCode(MotorType::ZERO_ERR, 0, arm_guiding)) != 0x0){
-        // LOG(ERROR) << "Error: Zero Error motor on arm_guiding, joint 1, error code is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::ZERO_ERR, 1, arm_guiding)) != 0x0){
-        // LOG(ERROR) << "Error: Zero Error motor on arm_guiding, joint 2, error code is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::ZERO_ERR, 2, arm_guiding)) != 0x0){
-        // LOG(ERROR) << "Error: Zero Error motor on arm_guiding, joint 3, error code is 0x: " << std::hex << lRet;
-        return T_ERROR;
-    }
+//    if((lRet = getErrorCode(MotorType::ZERO_ERR, 0, arm_guiding)) != 0x0){
+//        // LOG(ERROR) << "Error: Zero Error motor on arm_guiding, joint 1, error code is: 0x" << std::hex << lRet;
+//        return T_ERROR;
+//    }
+//    if((lRet = getErrorCode(MotorType::ZERO_ERR, 1, arm_guiding)) != 0x0){
+//        // LOG(ERROR) << "Error: Zero Error motor on arm_guiding, joint 2, error code is: 0x" << std::hex << lRet;
+//        return T_ERROR;
+//    }
+//    if((lRet = getErrorCode(MotorType::ZERO_ERR, 2, arm_guiding)) != 0x0){
+//        // LOG(ERROR) << "Error: Zero Error motor on arm_guiding, joint 3, error code is 0x: " << std::hex << lRet;
+//        return T_ERROR;
+//    }
 
-    if((lRet = getErrorCode(MotorType::MOONS, 0, arm_0)) != 0x0){
-        // LOG(ERROR) << "Error: Moons motor on arm0, x-direction, error code is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::ZERO_ERR, 0, arm_0)) != 0x0){
-        LOG(ERROR) << "Error: Zero Error motor on arm0, joint 1, error code is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::ZERO_ERR, 1, arm_0)) != 0x0){
-        // LOG(ERROR) << "Error: Zero Error motor on arm0, joint 2, error code is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::ZERO_ERR, 2, arm_0)) != 0x0){
-        // LOG(ERROR) << "Error: Zero Error motor on arm0, joint 3, error code is 0x: " << std::hex << lRet;
-        return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::MAXON, 0, arm_0)) != 0x0){
-        // LOG(ERROR) << "Error: Maxon motor on arm0, joint 1, error code is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::MAXON, 1, arm_0)) != 0x0){
-        // LOG(ERROR) << "Error: Maxon motor on arm0, joint 2, error code is 0x: " << std::hex << lRet;
-        return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::MAXON, 2, arm_0)) != 0x0){
-        // LOG(ERROR) << "Error: Maxon motor on arm0, joint 3, error code is: 0x" << std::hex << lRet;
-         return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::MAXON, 3, arm_0)) != 0x0){
-        // LOG(ERROR) << "Error: Maxon motor on arm0, joint 4, error code is 0x: " << std::hex << lRet;
-         return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::MAXON, 4, arm_0)) != 0x0){
-        // LOG(ERROR) << "Error: Maxon motor on arm0, joint 5, error code is: 0x" << std::hex << lRet;
-         return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::MAXON, 5, arm_0)) != 0x0){
-        // LOG(ERROR) << "Error: Maxon motor on arm0, joint 6, error code is 0x: " << std::hex << lRet;
-        return T_ERROR;
-    }
+//    if((lRet = getErrorCode(MotorType::MOONS, 0, arm_0)) != 0x0){
+//        // LOG(ERROR) << "Error: Moons motor on arm0, x-direction, error code is: 0x" << std::hex << lRet;
+//        return T_ERROR;
+//    }
+//    if((lRet = getErrorCode(MotorType::ZERO_ERR, 0, arm_0)) != 0x0){
+//        LOG(ERROR) << "Error: Zero Error motor on arm0, joint 1, error code is: 0x" << std::hex << lRet;
+//        return T_ERROR;
+//    }
+//    if((lRet = getErrorCode(MotorType::ZERO_ERR, 1, arm_0)) != 0x0){
+//        // LOG(ERROR) << "Error: Zero Error motor on arm0, joint 2, error code is: 0x" << std::hex << lRet;
+//        return T_ERROR;
+//    }
+//    if((lRet = getErrorCode(MotorType::ZERO_ERR, 2, arm_0)) != 0x0){
+//        // LOG(ERROR) << "Error: Zero Error motor on arm0, joint 3, error code is 0x: " << std::hex << lRet;
+//        return T_ERROR;
+//    }
+    // if((lRet = getErrorCode(MotorType::MAXON, 0, arm_0)) != 0x0){
+    //     // LOG(ERROR) << "Error: Maxon motor on arm0, joint 1, error code is: 0x" << std::hex << lRet;
+    //     return T_ERROR;
+    // }
+    // if((lRet = getErrorCode(MotorType::MAXON, 1, arm_0)) != 0x0){
+    //     // LOG(ERROR) << "Error: Maxon motor on arm0, joint 2, error code is 0x: " << std::hex << lRet;
+    //     return T_ERROR;
+    // }
+    // if((lRet = getErrorCode(MotorType::MAXON, 2, arm_0)) != 0x0){
+    //     // LOG(ERROR) << "Error: Maxon motor on arm0, joint 3, error code is: 0x" << std::hex << lRet;
+    //      return T_ERROR;
+    // }
+    // if((lRet = getErrorCode(MotorType::MAXON, 3, arm_0)) != 0x0){
+    //     // LOG(ERROR) << "Error: Maxon motor on arm0, joint 4, error code is 0x: " << std::hex << lRet;
+    //      return T_ERROR;
+    // }
+    // if((lRet = getErrorCode(MotorType::MAXON, 4, arm_0)) != 0x0){
+    //     // LOG(ERROR) << "Error: Maxon motor on arm0, joint 5, error code is: 0x" << std::hex << lRet;
+    //      return T_ERROR;
+    // }
+    // if((lRet = getErrorCode(MotorType::MAXON, 5, arm_0)) != 0x0){
+    //     // LOG(ERROR) << "Error: Maxon motor on arm0, joint 6, error code is 0x: " << std::hex << lRet;
+    //     return T_ERROR;
+    // }
 
-    if((lRet = getErrorCode(MotorType::MOONS, 0, arm_1)) != 0x0){
-        // LOG(ERROR) << "Error: Moons motor on arm1, x-direction, error code is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::ZERO_ERR, 0, arm_1)) != 0x0){
-        // LOG(ERROR) << "Error: Zero Error motor on arm1, joint 1, error code is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::ZERO_ERR, 1, arm_1)) != 0x0){
-        // LOG(ERROR) << "Error: Zero Error motor on arm1, joint 2, error code is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::ZERO_ERR, 2, arm_1)) != 0x0){
-        // LOG(ERROR) << "Error: Zero Error motor on arm1, joint 3, error code is 0x: " << std::hex << lRet;
-        return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::MAXON, 0, arm_1)) != 0x0){
-        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 1, error code is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::MAXON, 1, arm_1)) != 0x0){
-        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 2, error code is 0x: " << std::hex << lRet;
-        return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::MAXON, 2, arm_1)) != 0x0){
-        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 3, error code is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::MAXON, 3, arm_1)) != 0x0){
-        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 4, error code is 0x: " << std::hex << lRet;
-        return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::MAXON, 4, arm_1)) != 0x0){
-        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 5, error code is: 0x" << std::hex << lRet;
-        return T_ERROR;
-    }
-    if((lRet = getErrorCode(MotorType::MAXON, 5, arm_1)) != 0x0){
-        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 6, error code is 0x: " << std::hex << lRet;
-        return T_ERROR;
-    }
-    // LOG(INFO) << "In function checkMotorState, all motors are checked! ";
+//    if((lRet = getErrorCode(MotorType::MOONS, 0, arm_1)) != 0x0){
+//        // LOG(ERROR) << "Error: Moons motor on arm1, x-direction, error code is: 0x" << std::hex << lRet;
+//        return T_ERROR;
+//    }
+//    if((lRet = getErrorCode(MotorType::ZERO_ERR, 0, arm_1)) != 0x0){
+//        // LOG(ERROR) << "Error: Zero Error motor on arm1, joint 1, error code is: 0x" << std::hex << lRet;
+//        return T_ERROR;
+//    }
+//    if((lRet = getErrorCode(MotorType::ZERO_ERR, 1, arm_1)) != 0x0){
+//        // LOG(ERROR) << "Error: Zero Error motor on arm1, joint 2, error code is: 0x" << std::hex << lRet;
+//        return T_ERROR;
+//    }
+//    if((lRet = getErrorCode(MotorType::ZERO_ERR, 2, arm_1)) != 0x0){
+//        // LOG(ERROR) << "Error: Zero Error motor on arm1, joint 3, error code is 0x: " << std::hex << lRet;
+//        return T_ERROR;
+//    }
+//    if((lRet = getErrorCode(MotorType::MAXON, 0, arm_1)) != 0x0){
+//        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 1, error code is: 0x" << std::hex << lRet;
+//        return T_ERROR;
+//    }
+//    if((lRet = getErrorCode(MotorType::MAXON, 1, arm_1)) != 0x0){
+//        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 2, error code is 0x: " << std::hex << lRet;
+//        return T_ERROR;
+//    }
+//    if((lRet = getErrorCode(MotorType::MAXON, 2, arm_1)) != 0x0){
+//        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 3, error code is: 0x" << std::hex << lRet;
+//        return T_ERROR;
+//    }
+//    if((lRet = getErrorCode(MotorType::MAXON, 3, arm_1)) != 0x0){
+//        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 4, error code is 0x: " << std::hex << lRet;
+//        return T_ERROR;
+//    }
+//    if((lRet = getErrorCode(MotorType::MAXON, 4, arm_1)) != 0x0){
+//        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 5, error code is: 0x" << std::hex << lRet;
+//        return T_ERROR;
+//    }
+//    if((lRet = getErrorCode(MotorType::MAXON, 5, arm_1)) != 0x0){
+//        // LOG(ERROR) << "Error: Maxon motor on arm1, joint 6, error code is 0x: " << std::hex << lRet;
+//        return T_ERROR;
+//    }
+//    // LOG(INFO) << "In function checkMotorState, all motors are checked! ";
 
     return T_NOERROR;
 
 }
 
 void MotorDriver::displayMotorErrCode(){
-    LOG(INFO) << "Moons motor x-direction, error code is: 0x" << std::hex << getErrorCode(MotorType::MOONS, 0, arm_0);
-    LOG(INFO) << "Zero Error motor joint 1, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 0, arm_0);
-    LOG(INFO) << "Zero Error motor joint 2, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 1, arm_0);
-    LOG(INFO) << "Zero Error motor joint 3, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 2, arm_0);
+   LOG(INFO) << "Moons motor x-direction, error code is: 0x" << std::hex << getErrorCode(MotorType::MOONS, 0, arm_0);
+//    LOG(INFO) << "Zero Error motor joint 1, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 0, arm_0);
+//    LOG(INFO) << "Zero Error motor joint 2, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 1, arm_0);
+//    LOG(INFO) << "Zero Error motor joint 3, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 2, arm_0);
     LOG(INFO) << "Maxon motor joint 1, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 0, arm_0);
     LOG(INFO) << "Maxon motor joint 2, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 1, arm_0);
     LOG(INFO) << "Maxon motor joint 3, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 2, arm_0);
@@ -3509,16 +3515,16 @@ void MotorDriver::displayMotorErrCode(){
     LOG(INFO) << "Maxon motor joint 5, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 4, arm_0);
     LOG(INFO) << "Maxon motor joint 6, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 5, arm_0);
 
-    LOG(INFO) << "Moons motor x-direction, error code is: 0x" << std::hex << getErrorCode(MotorType::MOONS, 0, arm_1);
-    LOG(INFO) << "Zero Error motor joint 1, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 0, arm_1);
-    LOG(INFO) << "Zero Error motor joint 2, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 1, arm_1);
-    LOG(INFO) << "Zero Error motor joint 3, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 2, arm_1);
-    LOG(INFO) << "Maxon motor joint 1, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 0, arm_1);
-    LOG(INFO) << "Maxon motor joint 2, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 1, arm_1);
-    LOG(INFO) << "Maxon motor joint 3, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 2, arm_1);
-    LOG(INFO) << "Maxon motor joint 4, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 3, arm_1);
-    LOG(INFO) << "Maxon motor joint 5, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 4, arm_1);
-    LOG(INFO) << "Maxon motor joint 6, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 5, arm_1);
+//    LOG(INFO) << "Moons motor x-direction, error code is: 0x" << std::hex << getErrorCode(MotorType::MOONS, 0, arm_1);
+//    LOG(INFO) << "Zero Error motor joint 1, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 0, arm_1);
+//    LOG(INFO) << "Zero Error motor joint 2, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 1, arm_1);
+//    LOG(INFO) << "Zero Error motor joint 3, error code is: 0x" << std::hex << getErrorCode(MotorType::ZERO_ERR, 2, arm_1);
+//    LOG(INFO) << "Maxon motor joint 1, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 0, arm_1);
+//    LOG(INFO) << "Maxon motor joint 2, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 1, arm_1);
+//    LOG(INFO) << "Maxon motor joint 3, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 2, arm_1);
+//    LOG(INFO) << "Maxon motor joint 4, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 3, arm_1);
+//    LOG(INFO) << "Maxon motor joint 5, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 4, arm_1);
+//    LOG(INFO) << "Maxon motor joint 6, error code is: 0x" << std::hex << getErrorCode(MotorType::MAXON, 5, arm_1);
 }
 
 void MotorDriver::motorDriverThread(std::promise<bool> &promiseCommunication){
@@ -3531,12 +3537,13 @@ void MotorDriver::motorDriverThread(std::promise<bool> &promiseCommunication){
     }
 
     m_selfPointer->m_isMotorDriverOk.store(true);
+
     while(!m_selfPointer->m_threadTerminated){
 
-        if(m_selfPointer->checkECatStationState() != T_NOERROR){
-            m_selfPointer->m_isMotorDriverOk.store(false);
-            break;
-        }
+        // if(m_selfPointer->checkECatStationState() != T_NOERROR){
+        //     m_selfPointer->m_isMotorDriverOk.store(false);
+        //     break;
+        // }
         m_selfPointer->checkMotorState();
 
         if(m_selfPointer->m_flagSDO){
@@ -3582,14 +3589,14 @@ void MotorDriver::motorDriverExit(){
 
 void MotorDriver::disableAllMotors()
 {
-    setControlWord(MotorType::ZERO_ERR, 0, ControlCommand::SHUT_DOWN, arm_guiding);
-    setControlWord(MotorType::ZERO_ERR, 1, ControlCommand::SHUT_DOWN, arm_guiding);
-    setControlWord(MotorType::ZERO_ERR, 2, ControlCommand::SHUT_DOWN, arm_guiding);
+//    setControlWord(MotorType::ZERO_ERR, 0, ControlCommand::SHUT_DOWN, arm_guiding);
+//    setControlWord(MotorType::ZERO_ERR, 1, ControlCommand::SHUT_DOWN, arm_guiding);
+//    setControlWord(MotorType::ZERO_ERR, 2, ControlCommand::SHUT_DOWN, arm_guiding);
 
-    setControlWord(MotorType::MOONS, 0, ControlCommand::SHUT_DOWN, arm_0);
-    setControlWord(MotorType::ZERO_ERR, 0, ControlCommand::SHUT_DOWN, arm_0);
-    setControlWord(MotorType::ZERO_ERR, 1, ControlCommand::SHUT_DOWN, arm_0);
-    setControlWord(MotorType::ZERO_ERR, 2, ControlCommand::SHUT_DOWN, arm_0);
+   setControlWord(MotorType::MOONS, 0, ControlCommand::SHUT_DOWN, arm_0);
+//    setControlWord(MotorType::ZERO_ERR, 0, ControlCommand::SHUT_DOWN, arm_0);
+//    setControlWord(MotorType::ZERO_ERR, 1, ControlCommand::SHUT_DOWN, arm_0);
+//    setControlWord(MotorType::ZERO_ERR, 2, ControlCommand::SHUT_DOWN, arm_0);
     setControlWord(MotorType::MAXON, 0, ControlCommand::SHUT_DOWN, arm_0);
     setControlWord(MotorType::MAXON, 1, ControlCommand::SHUT_DOWN, arm_0);
     setControlWord(MotorType::MAXON, 2, ControlCommand::SHUT_DOWN, arm_0);
@@ -3597,16 +3604,16 @@ void MotorDriver::disableAllMotors()
     setControlWord(MotorType::MAXON, 4, ControlCommand::SHUT_DOWN, arm_0);
     setControlWord(MotorType::MAXON, 5, ControlCommand::SHUT_DOWN, arm_0);
 
-    setControlWord(MotorType::MOONS, 0, ControlCommand::SHUT_DOWN, arm_1);
-    setControlWord(MotorType::ZERO_ERR, 0, ControlCommand::SHUT_DOWN, arm_1);
-    setControlWord(MotorType::ZERO_ERR, 1, ControlCommand::SHUT_DOWN, arm_1);
-    setControlWord(MotorType::ZERO_ERR, 2, ControlCommand::SHUT_DOWN, arm_1);
-    setControlWord(MotorType::MAXON, 0, ControlCommand::SHUT_DOWN, arm_1);
-    setControlWord(MotorType::MAXON, 1, ControlCommand::SHUT_DOWN, arm_1);
-    setControlWord(MotorType::MAXON, 2, ControlCommand::SHUT_DOWN, arm_1);
-    setControlWord(MotorType::MAXON, 3, ControlCommand::SHUT_DOWN, arm_1);
-    setControlWord(MotorType::MAXON, 4, ControlCommand::SHUT_DOWN, arm_1);
-    setControlWord(MotorType::MAXON, 5, ControlCommand::SHUT_DOWN, arm_1);
+//    setControlWord(MotorType::MOONS, 0, ControlCommand::SHUT_DOWN, arm_1);
+//    setControlWord(MotorType::ZERO_ERR, 0, ControlCommand::SHUT_DOWN, arm_1);
+//    setControlWord(MotorType::ZERO_ERR, 1, ControlCommand::SHUT_DOWN, arm_1);
+//    setControlWord(MotorType::ZERO_ERR, 2, ControlCommand::SHUT_DOWN, arm_1);
+//    setControlWord(MotorType::MAXON, 0, ControlCommand::SHUT_DOWN, arm_1);
+//    setControlWord(MotorType::MAXON, 1, ControlCommand::SHUT_DOWN, arm_1);
+//    setControlWord(MotorType::MAXON, 2, ControlCommand::SHUT_DOWN, arm_1);
+//    setControlWord(MotorType::MAXON, 3, ControlCommand::SHUT_DOWN, arm_1);
+//    setControlWord(MotorType::MAXON, 4, ControlCommand::SHUT_DOWN, arm_1);
+//    setControlWord(MotorType::MAXON, 5, ControlCommand::SHUT_DOWN, arm_1);
 
     usleep(1000 * 1000);
 

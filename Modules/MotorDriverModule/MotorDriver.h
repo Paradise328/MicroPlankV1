@@ -319,8 +319,6 @@ public:
     std::array<int, 8> getDigitalInputs(const MotorType& type, const int& index, const int& armNum);
     int32_t getFollowingPosErr(const MotorType& type, const int& index, const int& armNum);
 
-    // bool getMotorDriverStatus();
-
     /* write data to m_abSendData, which belongs to RxPDO, return 1 if succeed, else return 0 */
     int setControlWord(const MotorType& type, const int& index, const ControlCommand& cmd, const int& armNum);
     int setOperationMode(const MotorType& type, const int& index, const OperationMode& mode, const int& armNum);
@@ -411,8 +409,8 @@ private:
     CIFX_PACKET m_tRecvPkt = {{0}};
     int           m_abSendDataByteNum;
     int           m_abRecvDataByteNum;
-    unsigned char m_abSendData[1024] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON : 9 * 44 + 2 * 27 + 35 * 4*/
-    unsigned char m_abRecvData[1024] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON : 9 * 26 + 2 * 23 + 29 * 4*/
+    unsigned char m_abSendData[500] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON : 9 * 44 + 2 * 27 + 35 * 4*/
+    unsigned char m_abRecvData[500] = {0}; /* with full topology: 9*ZE+2*MOONS+12*MAXON : 9 * 26 + 2 * 23 + 29 * 4*/
     std::string m_mappingPath = "/home/a/Desktop/codes/MikroPlanckV1/Config/PDO_mapping.toml";
     PDOConfig m_config[5] = {};
     struct CIFX_LINUX_INIT m_init;

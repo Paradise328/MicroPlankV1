@@ -53,7 +53,7 @@ public:
                         m_audioMap(audioMap),
                         m_domainController(new DomainController())
                         {
-                           m_forceSensor = new ForceSensor(this);
+//                           m_forceSensor = new ForceSensor(this);
                            // m_forceSensor->initDevice();
                            connect(&m_uiInterface, &UIinterface::startWholeSystemSignal,this, &MicroPlank::startStarSystemThread);
                         }

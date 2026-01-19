@@ -98,7 +98,7 @@ void Peripheral_Device::ConnTimer_Callback(void)
         if(this->ConnSta == DISCONNECTED )
         {
             this->m_socket = m_sockettemp;
-            qDebug()<<"this->m_socket=m_sockettemp;";
+            // qDebug()<<"this->m_socket=m_sockettemp;";
         }
         this->ConnSta = CONNECTED;
     }
@@ -119,8 +119,6 @@ void Peripheral_Device::ReconnTimer_Callback(void)
         porttemp=this->Port;
     }
     if(porttemp<this->Port)porttemp=this->Port;
-
-     qDebug()<<"reconnect ip:"<<this->Ip<<" port:"<<porttemp;
 
     QTcpSocket *m_sockettemp=nullptr;
     m_sockettemp=new QTcpSocket();
@@ -145,7 +143,7 @@ void Peripheral_Device::ReconnTimer_Callback(void)
       if(this->ConnSta==DISCONNECTED )
       {
           this->m_socket=m_sockettemp;
-          qDebug()<<"this->m_socket=m_sockettemp;";
+          // qDebug()<<"this->m_socket=m_sockettemp;";
       }
       this->ConnSta = CONNECTED;
     }
@@ -177,7 +175,8 @@ Send1:
     else if(mlen==-1)
     {
         if(this->Change_Usable_Con())goto Send1;
-        else{qDebug()<<"Send 1 All Connection Lost";
+        else{
+            // qDebug()<<"Send 1 All Connection Lost";
             this->ReconnTimer->start(1500);
             return SEND_ERROR;/*或者加异常处理代码*/
         }
@@ -187,12 +186,13 @@ Send1:
     else if(mlen<datalen)
     {
         if(this->Change_Usable_Con())goto Send1;
-        else{qDebug()<<"Send 2 All Connection Lost";
+        else{
+            // qDebug()<<"Send 2 All Connection Lost";
             this->ReconnTimer->start(1500);
             return SEND_ERROR;/*或者加异常处理代码*/
         }
         m_socket->waitForBytesWritten(1000);
-        qDebug()<<"send abort,mlen="<<mlen;
+        // qDebug()<<"send abort,mlen="<<mlen;
 //        return SEND_ERROR;
     }
     return SEND_ERROR;
@@ -223,7 +223,7 @@ Send2:
     {
         if(this->Change_Usable_Con())goto Send2;
         else{
-            qDebug()<<"Send 3 All Connection Lost";
+            // qDebug()<<"Send 3 All Connection Lost";
             this->ReconnTimer->start(1500);
             return SEND_ERROR;/* 或者加异常处理代码 */
         }
@@ -232,7 +232,8 @@ Send2:
     else if(mlen < datalen)
     {
         if(this->Change_Usable_Con())goto Send2;
-        else{qDebug()<<"Send 4 All Connection Lost";
+        else{
+            // qDebug()<<"Send 4 All Connection Lost";
             this->ReconnTimer->start(1500);
             return SEND_ERROR;/*或者加异常处理代码*/
         }
@@ -441,7 +442,6 @@ eSendReturn Peripheral_Device::Send_Frame(COMMU_FRAME cftemp,uint8_t ReSendTimes
 bool Peripheral_Device::Change_Usable_Con()
 {
      this->ConnSta = DISCONNECTED;
-     qDebug()<<"Switch Connect!!!";
      try
      {
        this->m_socket->deleteLater();
@@ -567,15 +567,15 @@ void Peripheral_Device::on_Connected(void)
   */
 void Peripheral_Device::on_Disconnected(void)
 {
-    qDebug() << "DisConnected！！！";
+    // qDebug() << "DisConnected！！！";
     this->ConnSta = DISCONNECTED;
     if(this->m_socketport!=0)
-    qDebug() << "lose:this->m_socketport=" << this->m_socketport<<" this->ip="<<this->Ip;
+    // qDebug() << "lose:this->m_socketport=" << this->m_socketport<<" this->ip="<<this->Ip;
     this->ReconnPortList.append(this->m_socketport);
     if(this-> Change_Usable_Con() == false)
     {
         this->ConnSta = DISCONNECTED;
-       qDebug()<<"All Connection Lost"<<this->Ip;
+       // qDebug()<<"All Connection Lost"<<this->Ip;
         /*或者加异常处理代码*/
     }
     else

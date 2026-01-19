@@ -376,7 +376,7 @@ void UIinterface::onButton_CaliInstrumentL_Clicked()//点击器械归零
     }
 }
 
-void UIinterface::onButton_CaliInstrumentR_Clicked()
+void UIinterface::onButton_CaliInstrumentR_Clicked()//右侧器械归零
 {
     printf("instrument CaliInstrument R\n");
     if((m_GimbalCalibrationFlag_L + m_GimbalCalibrationFlag_R + m_InstrumentCalibrationFlag_L + m_InstrumentCalibrationFlag_R + m_TransportFlag) == 0)

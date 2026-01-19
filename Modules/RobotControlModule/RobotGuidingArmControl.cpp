@@ -74,9 +74,9 @@ void RobotControl::applyGuidingArmForceControl(){
     /* apply PT update in this function */
     /* set target torque in order to compensate the friction */
     LOG(INFO)<<"[MODE:DRAG]";
-    double target_trq_0 = signDouble(m_guidingArm.m_velocity_1stOrder[0]) * 85.0;
-    double target_trq_1 = signDouble(m_guidingArm.m_velocity_1stOrder[1]) * 52.0;
-    double target_trq_2 = signDouble(m_guidingArm.m_velocity_1stOrder[2]) * 24.0;
+    double target_trq_0 = signDouble(m_guidingArm.m_velocity_1stOrder[0]) * 110.0;
+    double target_trq_1 = signDouble(m_guidingArm.m_velocity_1stOrder[1]) * 80.0;
+    double target_trq_2 = signDouble(m_guidingArm.m_velocity_1stOrder[2]) * 30.0;
 
     tmp1 = signDouble(m_guidingArm.m_velocity_1stOrder[0]);
     tmp2 = signDouble(m_guidingArm.m_velocity_1stOrder[1]);
@@ -152,7 +152,7 @@ double RobotControl::signDouble(double target){
 }
 
 void RobotControl::updateGuidingArmMotion(){
-    std::array<int, 6>  digitalInputGuiding = m_digitalInputGuiding.load();
+    std::array<int, 7>  digitalInputGuiding = m_digitalInputGuiding.load();
     int digitalInput_r = static_cast<uint>(m_domainController->m_domainControllerData_r.load().DigitalInputs);
     int digitalInput_l = static_cast<uint>(m_domainController->m_domainControllerData_l.load().DigitalInputs);
 
@@ -185,7 +185,7 @@ void RobotControl::updateGuidingArmMotion(){
     };
 
     for(int i = 0; i<3; i++){
-        if(m_guidingArm.m_velocity[i] < 150){
+        if(m_guidingArm.m_velocity[i] < 50){
             m_guidingArm.m_velocity[i] = 0;
         }
     }

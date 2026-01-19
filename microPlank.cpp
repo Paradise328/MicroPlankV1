@@ -16,40 +16,27 @@ void MicroPlank::startSystem()
 {
     LOG(INFO) << "start system ";
 
-    /* 开启主手线程，并进行对m_isMasterConsoleOk的赋值 */
-    startMasterConsole();//存储422ok（通信是否成功）以及组合主手数据
+//    startMasterConsole();
 
-    startDomainControllerThread();
+//    startDomainControllerThread();
 
-    /* 开启MotorDriver线程 */
     initMotorDriver();
 
     std::this_thread::sleep_for(std::chrono::seconds(20));
 
     startMsgThread();
 
-    /* 开启robotControl线程 */
     startRobotControl();
 
     // m_security.performSystemCheck();
-    m_security.systemBootSelfCheck();
+//    m_security.systemBootSelfCheck();
 
-    // startLightBoard();
-
-   //  while(1)
-   //  {
-   //  m_lightboard->setLightBoardColor(LIGHT_COLOR_GREEN,LIGHT_MODEL_ON);
-   //  m_lightboard->askMyInstrumentStatus();
-   // // delay(100ms)
-   //  }
-
-    /* 开启security监控线程 */
-    startSecurityModule();//开机自检，主要与ui交互
+//    startSecurityModule();
 }
 
 void MicroPlank::startMasterConsole()
 {
-    m_masterConsole.startUpdateConsoleDataThread();
+//    m_masterConsole.startUpdateConsoleDataThread();
 }
 
 void MicroPlank::startSecurityModule()

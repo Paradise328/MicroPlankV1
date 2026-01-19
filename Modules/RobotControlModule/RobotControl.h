@@ -5,6 +5,7 @@
 #include "../MotorDriverModule/MotorDriver.h"
 #include "../SystemUtilsModule/SystemUtils.h"
 #include "../MathModule/lowpass_filter.h"
+#include "../ForceSensorModule/PressureSensor.h"
 #include "DomainController.h"
 #include "BlasControl/actuators_controler.h"
 #include "BlasControl/BLA_API.h"
@@ -15,12 +16,19 @@
 #include <boost/statechart/simple_state.hpp>
 #include <boost/msm/back/state_machine.hpp>
 #include <boost/msm/front/state_machine_def.hpp>
+#include <atomic>
 #include <iostream>
 #include <iostream>
 #include <math.h>
+#include <opencv2/core.hpp>
+#include <opencv2/videoio.hpp>     // 负责 VideoCapture
+#include <opencv2/imgcodecs.hpp>   // 负责 imwrite
+#include <opencv2/highgui.hpp>     // 可选，如果需要 imshow
+#include <opencv2/imgproc.hpp>     // 可选，如果需要 resize/cvtColor
 #include <vector>
 #include <string>
 #include <fstream>
+#include <future>
 #include <algorithm>
 #include <cmath>
 #include <ruckig/ruckig.hpp>
@@ -133,10 +141,12 @@ public:
         m_isSystemTerminated(false),
         m_guidingArm1stOrder({0}),
         m_guidingArm2ndOrder({0}),
-        // m_endeffectorConfiguration(EndeffectorConfiguration::fourMaxons),
-        // m_endeffectorConfiguration(EndeffectorConfiguration::sixMaxons),
+        m_endeffectorConfiguration(EndeffectorConfiguration::fourMaxons),
         m_endeffectorConfiguration_L(EndeffectorConfiguration::fourMaxons),
         m_endeffectorConfiguration_R(EndeffectorConfiguration::fourMaxons),
+        // m_endeffectorConfiguration(EndeffectorConfiguration::sixMaxons),
+        // m_endeffectorConfiguration_L(EndeffectorConfiguration::sixMaxons),
+        // m_endeffectorConfiguration_R(EndeffectorConfiguration::sixMaxons),
         m_filter_1storder_guiding(m_guidingArm1stOrder, 250.0, 60.0),
         m_filter_2ndorder_guiding(m_guidingArm2ndOrder, 250.0, 60.0)
     {
@@ -146,7 +156,7 @@ public:
 
         connect(this, &RobotControl::DealMsgSignal, this, &RobotControl::dealWithMsg);
 
-        openTorqueSensor();
+        // openTorqueSensor();
     }
 
     void                            GetAmMsg(Message_Inner_T msg);
@@ -154,6 +164,10 @@ public:
     MotorDriver*                    getMyMotorDriver(){return m_motorDriver;}
 
     void                            startMyThreads();
+
+    void                            startMotionLoop(int loops);
+
+    void                            startMotionByTime(double second);
 
 
     void                            setMyMotorDriver(MotorDriver* motorDriver){m_motorDriver = motorDriver;}
@@ -179,12 +193,27 @@ private:
     std::array<double,3>            m_forceAccumulationBufferLeft_judge;
 
     std::array<double,3>            m_forceAccumulationBufferRight_judge;
+    std::mutex                      m_dataMutex; // 专门保护数据的锁
+    std::array<int, MotorNumPerSide> m_shared_MotorEncoderCur_R; // 共享的当前位置
+    std::array<int, MotorNumPerSide> m_shared_TargetEncoder_R;   // 共享的目标位置
+    std::array<int, MotorNumPerSide> m_calculatedTarget_R;
+    std::atomic<bool>               m_suspendCommunication{false};
 
     MasterConsoleType               m_masterConsoleType;
 
     MasterConsole&                  m_masterConsole;
 
     std::atomic<bool>               m_isSystemTerminated;
+    int                             m_safetyStartupCounter;
+    cv::VideoCapture                m_camera;
+    cv::VideoWriter                 m_videoWriter;
+    std::atomic<bool>               m_isRecording;
+    std::thread                     m_videoThread;
+    std::atomic<bool>               m_isTakingPhoto;
+    std::atomic<int>                m_moonsActualCurrent = {0}; // 【新增】存储鸣志的实时电流
+    int32_t                         m_moonsHomeOffsetPulses = 0; // 初始化为0
+    const int COLLISION_CURRENT_THRESHOLD = 1000;// 【新增】碰撞电流阈值 (需要根据实际情况调试) 假设单位是 mA 或者 0.1% 额定电流。先设一个保护值，测出来正常运动是多少后再调整。
+
 
 
     /*消息队列相关函数*/
@@ -200,7 +229,22 @@ private:
 
     void                            dealWithMsg();
 
+    void                            runCommunication();
+
     /*初始化数据*/
+    PressureSensor* m_pressureSensor;
+    void                            initCamera();
+
+    void                            takePhotoTask(std::string stepName,double angle);// 【后台】实际执行拍照的函数
+
+    void                            triggerPhoto(std::string stepName,double angle);// 【前台】触发拍照的接口
+
+    // void                            videoTask();      // 后台一直跑的录像循环函数
+
+    // void                            startRecording(); // 开始录像
+
+    // void                            stopRecording();  // 停止录像
+
     void                            readMyInitData();
 
     void                            loadEndeffectorConfig();
@@ -252,7 +296,10 @@ private:
     double m_Kd_L = 0.05;
     double m_Kd_R = 0.05;
 
-    /*控制函数*/
+
+
+    // 通讯线程的开关
+    std::atomic<bool> m_flagCommThread{false};
     std::thread                     m_calculateControlDataThread;
 
     void                            startControlThread();
@@ -288,10 +335,14 @@ private:
     void                            applyGuidingArmForceControl();
     void                            applyGuidingArmDampingControl();
     void                            applyGuidingArmVelocityControl();
-
+    double                          limitDelta(double delta,double maxDelta);
+    bool                            reachTarget(double currentRoll, double currentPitch, double currentYaw,double currentDisp,
+                     double targetRoll, double targetPitch, double targetYaw,double m_moonsTargetDisp);
     /* 控制模式 */
 
     EndeffectorConfiguration        m_endeffectorConfiguration;// = EndeffectorConfiguration::fourMaxons;
+    double                          m_moonsTargetDisp = 0.0;
+    const double                    MOONS_ENCODER_PER_UNIT = 10000.0;
 
     EndeffectorConfiguration        m_endeffectorConfiguration_L;
     EndeffectorConfiguration        m_endeffectorConfiguration_R;
@@ -320,6 +371,8 @@ private:
 
     void                            maxonGoHome_tel();
 
+    void                            targetPose(HandlePose& handlePosePrev);
+
     std::atomic<bool>               m_flagInTeleoperation = false;
 
     void                            sendMotorData_Teleop(const std::array<int, MotorNumPerSide>& targetEncoderCur_R, const std::array<int, MotorNumPerSide>& targetVelCur_R,
@@ -344,8 +397,7 @@ private:
     void                            receiveMotorData();
     /* communicate with domain controller */
 
-    void                            sendMotorData(const std::array<int, MotorNumPerSide>& targetEncoder_R, const std::array<int, MotorNumPerSide>& targetVel_R,
-                                                  const std::array<int, MotorNumPerSide>& targetEncoder_L, const std::array<int, MotorNumPerSide>& targetVel_L);
+    void                            sendMotorData(const std::array<int, MotorNumPerSide>& targetEncoder_R);
 
     void                            sendMotorData_4Maxons_ForceControl(const std::array<int, MotorNumPerSide>& targetEncoder_R, const std::array<int, MotorNumPerSide>& targetVel_R,
                                const std::array<int, MotorNumPerSide>& targetEncoder_L, const std::array<int, MotorNumPerSide>& targetVel_L);
@@ -356,15 +408,16 @@ private:
     std::atomic<std::array<int, 3>>                         m_endEffectorTarget_L;
     std::atomic<std::array<int, 3>>                         m_endEffectorTarget_R;
 
-    std::atomic<std::array<int, MotorNumPerSide>>           m_motorOperationMode_L;
+    std::atomic<std::array<int, MotorNumPerSide>>           m_motorOperationMode_R;
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorErrorCode_L;
+    std::atomic<std::array<int, MotorNumPerSide>>           m_motorErrorCode_R;
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorTrq_L;
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorCur_L;
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorFollowingPosErr_L;
 
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorStatusWordCur_R;
     std::atomic<std::array<int, MotorNumPerSide>>           m_motorStatusWordCur_L;
-    std::atomic<std::array<int, 6>>                         m_digitalInputGuiding;
+    std::atomic<std::array<int, 7>>                         m_digitalInputGuiding;
     std::atomic<std::array<int, MotorNumPerSide>>           m_MotorTargetVel_L;
     std::atomic<std::array<int, MotorNumPerSide>>           m_MotorTargetVel_R;
 
@@ -398,16 +451,8 @@ private:
 
     ruckig::Trajectory<DOF>         m_ruckigPlannedTrajectory_L;
 
-    /*复位功能*/
-    void                            endJointGoHome(const char& side);
-    void                            zeroErrGoHome(const char& side);
-    void                            TransportGoHome();
-
     void                            MaxonGoHome(const char& side);
     void                            MaxonGoHome_(const char& side);
-
-    void                            changeAngle_L();
-    void                            changeAngle_R();
 
     int                             MagneticEncoder_Init_L = 13875025;
     int                             MagneticEncoder_Max_L = 30000;
@@ -435,11 +480,11 @@ private:
     std::string                     m_configFilePath  = "/home/a/Desktop/codes/MikroPlanckV1/Config/EndeffectorData.toml";
     std::string                     m_robotConfigPath = "/home/a/Desktop/codes/MikroPlanckV1/Config/RobotData.toml";
 
-    mutable std::string             m_endEffectorLeft   = "CZQ_4MM_1"; //在函數loadEndeffectorConfig()中改變器械的參數
-    mutable std::string             m_endEffectorRight  = "CZQ_4MM_1";
+    // mutable std::string             m_endEffectorLeft   = "CZQ_4MM_1"; //在函數loadEndeffectorConfig()中改變器械的參數
+    // mutable std::string             m_endEffectorRight  = "CZQ_4MM_1";
 
-    // mutable std::string             m_endEffectorLeft   = "CZQ_3MM_1";
-    // mutable std::string             m_endEffectorRight  = "CZQ_3MM_1";
+    mutable std::string             m_endEffectorLeft   = "CZQ_3MM_1";
+    mutable std::string             m_endEffectorRight  = "CZQ_3MM_1";
 
     double                          m_initRotAroundY_L, m_initRotAroundX_L;  //Read From Toml
     double                          m_initRotAroundY_R, m_initRotAroundX_R;  //Read From Toml
@@ -501,7 +546,7 @@ private:
     mutable int                     m_enableTagPrev_L = 4;
     mutable int                     m_enableTagPrev_R = 4;
     mutable int                     m_enableTagCur_L ;
-    mutable int                     m_enableTagCur_R ;
+    mutable int                     m_enableTagCur_R = enableAction ;
 
     mutable int                     m_endJointDragBtnCounter_L;
     mutable int                     m_endJointDragBtnCounter_R;
@@ -513,10 +558,30 @@ private:
     void                            setEndEffectorData(const uint8_t& domainDigitalCur_L, const uint8_t& domainDigitalCur_R);
 
     mutable int                     m_alignmentNumber_L;
-    mutable int                     m_alignmentNumber_R;
+    mutable int                     m_alignmentNumber_R = 0;
+
+    double m_TargetRollAngle = 0.0;
+    double m_TargetPitchAngle = 0.0;
+    double m_TargetYawAngle = 0.0;
+
+    double m_TargetRollAngle_pre = 0.0;
+    double m_TargetPitchAngle_pre = 0.0;
+    double m_TargetYawAngle_pre = 0.0;
+
+        // ========= 动作循环 / 时间控制相关变量 =========
+    int  m_totalLoops  = 0;        // 循环次数模式：目标循环数
+    int  m_currentLoop = 0;        // 已完成的循环次数
+    bool m_isLooping   = false;    // 是否正在执行动作序列
+    double m_targetDurationSec =0.0;
+    bool   m_useTimeLimit     = false;   // true=按时间停止, false=按循环停止
+    double m_totalDurationSec = 0.0;     // 时间模式：总运行秒数
+    std::chrono::steady_clock::time_point m_motionStartTime;
+    bool   m_resetRequested   = false;   // 下次 targetPose 重置状态机
+    // ===============================================
+
 
     /*器械夹持角度计算*/
-    double calculateNewOpenangle(double masterOpenangle, const char& side);
+    double calculateNewOpenangle(double masterOpenangle);
 
     /*控制中所需计算部分*/
     std::atomic<HandlePose>         m_handlePose_Cur;
@@ -595,9 +660,7 @@ private:
                                                              const char& side);
 
     /*控制循环结束后*/
-    void                    storeCurAsPrev(const HandlePose& handlePoseCur, const std::array<double, ControlValueNum> controlValueCur_L,
-                                            const std::array<int, MotorNumPerSide>& motorPositionCur_L,
-                                            const std::array<int, MotorNumPerSide>& motorTargetEncoder_L, const int&  enableTagCur_L,
+    void                    storeCurAsPrev(const HandlePose& handlePoseCur,
                                             const std::array<double, ControlValueNum> controlValueCur_R,
                                             const std::array<int, MotorNumPerSide>& motorPositionCur_R,
                                             const std::array<int, MotorNumPerSide>& motorTargetEncoder_R, const int&  enableTagCur_R);
@@ -730,7 +793,7 @@ private:
     int                             m_downMotionBtnCounter_R;
     int                             m_downButtonPressCur_R = 0;
 
-
 };
+
 
 #endif // ROBOTCONTROL_H
