@@ -205,9 +205,25 @@ void RobotControl::initiAllData()
     m_handlePoseLastLoop_L.initOrg_L();
     m_handlePoseLastLoop_R.initOrg_R();
     m_isLooping=false;
-    m_pressureSensor = new PressureSensor();
-    // /dev/ttyUSB0 压力传感器串口
-    m_pressureSensor->initDevice("/dev/ttyUSB0", 115200);
+
+    // m_pressureSensor = new PressureSensor();
+    // // /dev/ttyUSB0 压力传感器串口
+    // m_pressureSensor->initDevice("/dev/ttyUSB0", 9600);
+    // m_pressureSensor->setScaleFactor(100.0f);
+    if (m_pressureSensor == nullptr) {
+        m_pressureSensor = new PressureSensor();
+        // 初始化并连接 (这里传什么波特率都不重要了，因为底层已经锁死9600)
+        bool ret = m_pressureSensor->initDevice("/dev/ttyUSB0", 9600);
+
+        if(ret) {
+            m_pressureSensor->setScaleFactor(100.0f);
+            LOG(INFO) << "压力传感器初始化成功";
+        } else {
+            LOG(ERROR) << "压力传感器初始化失败 (可能是端口被占用)";
+        }
+    } else {
+        LOG(INFO) << "压力传感器已存在，跳过重新初始化 (保持连接)";
+    }
 
     Eigen::Matrix3d MasterRotationMatrix;
 
@@ -354,7 +370,6 @@ void RobotControl::teleoperation()
     auto motorEncoderCur_R = m_motorEncoderCur_R.load();
 
     auto motorEncoderInit_R = m_motorEncoderInit_R;
-
 
     std::array<int, MotorNumPerSide>   targetEncoder_R = {0};
 
@@ -608,7 +623,6 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
 
     // LOG(INFO) << "targetPose is running in Thread ID: " << std::this_thread::get_id();
     static int actionStep = 0;           // 动作步骤 0~14
-    static bool actionComplete = false;  // 动作完成标志
     static int setCounter = 1;
 
     static double lastRawTargetYaw = 0.0;
@@ -618,12 +632,15 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
 
     // 【新增 2】定义碰撞触发阈值 (单位取决于传感器校准，假设是 N 或 kg)
     // 请根据实际情况调整这个值！如果太灵敏就改大，太迟钝就改小
-    const double PRESSURE_COLLISION_THRESHOLD = 0.5;
+    const double PRESSURE_COLLISION_THRESHOLD = 0.1;
+
+
+    static std::string s_currentCsvPath = "";
 
     // 如果刚刚调用了 startMotionLoop / startMotionDuration，可以用这个标志重置状态机
     if (m_resetRequested) {
         actionStep     = 0;
-        actionComplete = false;
+        setCounter     = 1;
         lastRawTargetYaw = 0.0;
         m_moonsTargetDisp = 0.0;
         m_TargetRollAngle_pre  = 0.0;
@@ -635,11 +652,28 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         m_handlePoseLastLoop_R.handlePoseR_OpenAngle = 0.0;
         if (m_pressureSensor && m_pressureSensor->isConnected()) {
             // 读取当前值作为零点
-            s_pressureZeroOffset = m_pressureSensor->getLatestPressure();
+             m_pressureSensor->getLatestPressure();
             LOG(INFO) << "⚖️ 压力传感器已归零 (Tare). 零点基准值: " << s_pressureZeroOffset;
         } else {
             s_pressureZeroOffset = 0.0;
             LOG(WARNING) << "⚠️ 压力传感器未连接，无法归零，基准值设为 0";
+        }
+
+        //生成文件夹，记录压力趋势
+        auto now = std::chrono::system_clock::now();
+        std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+        std::stringstream ss;
+        // 文件名带时间戳，防止覆盖： /home/a/Desktop/TestPhotos/CycleData_17023123.csv
+        ss << "/home/a/Desktop/TestPhotos/PressureData_" << now_c << ".csv";
+        s_currentCsvPath = ss.str();
+
+        std::ofstream outfile(s_currentCsvPath);
+        if (outfile.is_open()) {
+            outfile << "Cycle,Pressure(Net)\n"; // 写入表头：循环次数, 净压力
+            outfile.close();
+            LOG(INFO) << "📄 数据文件已创建: " << s_currentCsvPath;
+        } else {
+            LOG(ERROR) << "❌ 无法创建文件，请检查路径！";
         }
         m_resetRequested = false;
     }
@@ -650,10 +684,13 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
     double currentYaw   = m_TargetYawAngle_pre   * 180.0 / M_PI;
     auto encoderData = m_motorEncoderCur_R.load();
     int32_t moonsEncoderVal = encoderData[10];
-    // double currentDisp  = 0.0;
+    // if (m_pressureSensor && m_pressureSensor->isConnected()) {
+    // double currentRawPressure = 0.0;
+    // currentRawPressure = m_pressureSensor->getLatestPressure();
+    // LOG(INFO)<<"當前壓力值"<<currentRawPressure;
+    // }
+
     double currentDisp = static_cast<double>(moonsEncoderVal) / 10000.0;
-    static int logCounter = 0;
-    if(logCounter++ % 100 == 0) LOG(INFO) << "Moons Cur: " << currentDisp;
 
     double RollAngle;
     double PitchAngle;
@@ -689,6 +726,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             targetYaw   = 0.0;
             targetDisp = 0.0;
             LOG(INFO)<<"进入循环";
+
 
             if (reachTarget(currentRoll, currentPitch, currentYaw, currentDisp,
                             targetRoll, targetPitch, targetYaw, targetDisp)) {
@@ -801,14 +839,16 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 9: // 动作4：左右钳头开合30度，拍照
             targetRoll  = 0.0;
             targetPitch = 0.0;
-            rawTargetYaw = 30.0; // 【名义目标】可随机输入
+            targetYaw = 30.0; // 【名义目标】可随机输入
             targetDisp = 0.0;
             // 【动态判断逻辑】
-            if (rawTargetYaw > lastRawTargetYaw) {
-                targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-            } else {
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
-            }
+            // if (rawTargetYaw > lastRawTargetYaw) {
+            //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            // } else if(rawTargetYaw < lastRawTargetYaw){
+            //     targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            // }else{
+            //     targetYaw = rawTargetYaw;
+            // }
              LOG(INFO)<<"进入循环9";
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                              targetRoll, targetPitch, targetYaw,targetDisp)) {
@@ -823,14 +863,16 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 10://新动作5 继续张开45度，拍照
             targetRoll  = 0.0;
             targetPitch = 0.0;
-            rawTargetYaw = 45.0; // 【名义目标】
+            targetYaw = 45.0; // 【名义目标】
             targetDisp = 0.0;
             // 【动态判断逻辑】
-            if (rawTargetYaw > lastRawTargetYaw) {
-                targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-            } else {
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
-            }
+            // if (rawTargetYaw > lastRawTargetYaw) {
+            //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            // } else if(rawTargetYaw < lastRawTargetYaw){
+            //     targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            // }else{
+            //     targetYaw = rawTargetYaw;
+            // }
             LOG(INFO)<<"进入循环10";
                 if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)){
@@ -845,14 +887,16 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 11://新动作 回到30度，拍照
             targetRoll  = 0.0;
             targetPitch = 0.0;
-            rawTargetYaw = 30.0; // 【名义目标】
+            targetYaw = 30.0; // 【名义目标】
             targetDisp = 0.0;
             // 【动态判断逻辑】
-            if (rawTargetYaw > lastRawTargetYaw) {
-                targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-            } else {
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
-            }
+            // if (rawTargetYaw > lastRawTargetYaw) {
+            //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            // } else if(rawTargetYaw < lastRawTargetYaw){
+            //     targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            // }else{
+            //     targetYaw = rawTargetYaw;
+            // }
             LOG(INFO)<<"进入循环11";
                 if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)){
@@ -867,14 +911,16 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 12://新动作 回到20度，拍照
             targetRoll  = 0.0;
             targetPitch = 0.0;
-            rawTargetYaw = 20.0; // 【名义目标】
+            targetYaw = 20.0; // 【名义目标】
             targetDisp = 0.0;
             // 【动态判断逻辑】
-            if (rawTargetYaw > lastRawTargetYaw) {
-                targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-            } else {
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
-            }
+            // if (rawTargetYaw > lastRawTargetYaw) {
+            //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            // } else if(rawTargetYaw < lastRawTargetYaw){
+            //     targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            // }else{
+            //     targetYaw = rawTargetYaw;
+            // }
             LOG(INFO)<<"进入循环12";
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)){
@@ -889,14 +935,16 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 13://新动作 回到10度，拍照
             targetRoll  = 0.0;
             targetPitch = 0.0;
-            rawTargetYaw = 10.0; // 【名义目标】
+            targetYaw = 10.0; // 【名义目标】
             targetDisp = 0.0;
             // 【动态判断逻辑】
-            if (rawTargetYaw > lastRawTargetYaw) {
-                targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-            } else {
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
-            }
+            // if (rawTargetYaw > lastRawTargetYaw) {
+            //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            // } else if(rawTargetYaw < lastRawTargetYaw){
+            //     targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            // }else{
+            //     targetYaw = rawTargetYaw;
+            // }
             LOG(INFO)<<"进入循环13";
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)){
@@ -911,14 +959,16 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 14:
             targetRoll = 0.0;
             targetPitch = 0.0;
-            rawTargetYaw = 45.0;
+            targetYaw = 45.0;
             targetDisp = 0.0;
 
-            if(rawTargetYaw > lastRawTargetYaw) {
-                targetYaw = lastRawTargetYaw + 5.0;
-            }else{
-                targetYaw = rawTargetYaw - 5.0;
-            }
+            // if (rawTargetYaw > lastRawTargetYaw) {
+            //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            // } else if(rawTargetYaw < lastRawTargetYaw){
+            //     targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            // }else{
+            //     targetYaw = rawTargetYaw;
+            // }
             LOG(INFO)<<"进入循环14";
             if(reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)){
@@ -931,22 +981,37 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         {
             targetRoll = 0.0;
             targetPitch = 0.0;
-            rawTargetYaw = 45.0; // 保持角度
+            targetYaw = 45.0; // 保持角度
             targetDisp = 10.0;
+
+
+            // // --- 角度逻辑 ---
+            // if (rawTargetYaw > lastRawTargetYaw) {
+            //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            // } else if(rawTargetYaw < lastRawTargetYaw){
+            //     targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            // }else{
+            //     targetYaw = rawTargetYaw;
+            // }
+
 
             // 1. 获取当前实时压力
             double currentRawPressure = 0.0;
-            if (m_pressureSensor && m_pressureSensor->isConnected()) {
-                currentRawPressure = m_pressureSensor->getLatestPressure();
-            }
+            // if (m_pressureSensor && m_pressureSensor->isConnected()) {
+             currentRawPressure = m_pressureSensor->getLatestPressure();
+            LOG(INFO)<<"當前壓力值"<<currentRawPressure;
+            // }
+
 
             // 2. 计算净压力 (当前值 - 初始零点)
             double netPressure = std::abs(currentRawPressure - s_pressureZeroOffset);
 
+
+
             // 3. 碰撞检测逻辑
-            if (netPressure > PRESSURE_COLLISION_THRESHOLD)
+            if ( netPressure > PRESSURE_COLLISION_THRESHOLD)
             {
-                LOG(INFO) << "检测到碰撞! 净压力: " << netPressure << " (阈值: " << PRESSURE_COLLISION_THRESHOLD << ")";
+                LOG(INFO) << "检测到碰撞! 净压力: " << currentRawPressure << " (阈值: " << PRESSURE_COLLISION_THRESHOLD << ")";
 
                 // A. 立即停止推进：将目标设为当前位置
                 targetDisp = currentDisp;
@@ -955,13 +1020,6 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 m_isLooping = false;
 
                 break;
-            }
-
-            // --- 角度逻辑 ---
-            if(rawTargetYaw > lastRawTargetYaw) {
-                targetYaw = lastRawTargetYaw + 5.0;
-            }else{
-                targetYaw = rawTargetYaw - 5.0;
             }
 
             LOG(INFO)<<"进入循环15";
@@ -980,14 +1038,16 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 16:
             targetRoll = 0.0;
             targetPitch = 0.0;
-            rawTargetYaw = -10.0;
+            targetYaw = -10.0;
             targetDisp = 10.0;
 
-            if(rawTargetYaw > lastRawTargetYaw) {
-                targetYaw = lastRawTargetYaw + 5.0;
-            }else{
-                targetYaw = rawTargetYaw - 5.0;
-            }
+            // if (rawTargetYaw > lastRawTargetYaw) {
+            //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            // } else if(rawTargetYaw < lastRawTargetYaw){
+            //     targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            // }else{
+            //     targetYaw = rawTargetYaw;
+            // }
             LOG(INFO)<<"进入循环16";
             if(reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)){
@@ -1002,8 +1062,16 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 }
                 double finalNetPressure = currentForce - s_pressureZeroOffset;
 
-
-                LOG(INFO) << "压力值: " << finalNetPressure;
+                // 打开文件，使用 ios::app (Append) 模式追加一行
+                std::ofstream outfile(s_currentCsvPath, std::ios::app);
+                if (outfile.is_open()) {
+                    // 格式：第几次循环, 压力值
+                    outfile << setCounter << "," << finalNetPressure << "\n";
+                    outfile.close();
+                    LOG(INFO) << "记录数据 [Cycle " << setCounter << "]: " << finalNetPressure;
+                } else {
+                    LOG(ERROR) << "写入数据失败: " << s_currentCsvPath;
+                }
 
                 lastRawTargetYaw = rawTargetYaw;
                 actionStep = 17;
@@ -1013,14 +1081,16 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 17:
             targetRoll = 0.0;
             targetPitch = 0.0;
-            rawTargetYaw = 10.0;
+            targetYaw = 10.0;
             targetDisp = 10.0;
 
-            if(rawTargetYaw > lastRawTargetYaw) {
-                targetYaw = lastRawTargetYaw + 5.0;
-            }else{
-                targetYaw = rawTargetYaw - 5.0;
-            }
+            // if (rawTargetYaw > lastRawTargetYaw) {
+            //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            // } else if(rawTargetYaw < lastRawTargetYaw){
+            //     targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            // }else{
+            //     targetYaw = rawTargetYaw;
+            // }
             LOG(INFO)<<"进入循环17";
             if(reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)){
@@ -1032,23 +1102,17 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 18:
             targetRoll = 0.0;
             targetPitch = 0.0;
-            rawTargetYaw = 20.0;
+            targetYaw = 20.0;
             targetDisp = 0.0;//传感器离开钳口
             LOG(INFO)<<"当前绝对位置"<<m_moonsTargetDisp;
-            // if (m_moonsTargetDisp > 0.0) {
-            //     m_moonsTargetDisp -= 0.05; // 每次循环后退 0.05mm
 
-            //     // 防止减过头变成负数
-            //     if (m_moonsTargetDisp < 0.0) {
-            //         m_moonsTargetDisp = 0.0;
-            //     }
+            // if (rawTargetYaw > lastRawTargetYaw) {
+            //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            // } else if(rawTargetYaw < lastRawTargetYaw){
+            //     targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            // }else{
+            //     targetYaw = rawTargetYaw;
             // }
-
-            if(rawTargetYaw > lastRawTargetYaw) {
-                targetYaw = lastRawTargetYaw + 5.0;
-            }else{
-                targetYaw = rawTargetYaw - 5.0;
-            }
             LOG(INFO)<<"进入循环18";
             if(reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)){
@@ -1061,15 +1125,17 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 19: // 所有动作完成，归零，拍照
             targetRoll  = 0.0;
             targetPitch = 0.0;
-            rawTargetYaw = 0.0; // 【名义目标】
+            targetYaw = 0.0; // 【名义目标】
             targetDisp = 0.0;
 
             // 【动态判断逻辑】
-            if (rawTargetYaw > lastRawTargetYaw) {
-                targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-            } else {
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
-            }
+            // if (rawTargetYaw > lastRawTargetYaw) {
+            //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            // } else if(rawTargetYaw < lastRawTargetYaw){
+            //     targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            // }else{
+            //     targetYaw = rawTargetYaw;
+            // }
              LOG(INFO)<<"进入循环19";
 
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
@@ -1112,7 +1178,6 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                     if (m_currentLoop >= m_totalLoops) {
                         m_isLooping = false;
                         actionStep = 0;
-                        actionComplete = true;
                         goToHold();
 
                     } else {
@@ -1253,12 +1318,6 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
 
     /* 计算单边 OpenAngle*/
     double openAngle_R = handlePoseCur.handlePoseR_OpenAngle;
-    // static int debugCounter = 0; // 静态计数器
-    // debugCounter++;
-    // // if (debugCounter % 200 == 0) // 每运行 200 次循环，打印一次日志 (防止刷屏)
-    // // {
-    // //     LOG(INFO) << "🔍 [Check Input] handlePoseR_OpenAngle = " << openAngle_R;
-    // // }
     double openAngle_R_new;
 
     openAngle_R_new = calculateNewOpenangle(openAngle_R);
