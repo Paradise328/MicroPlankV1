@@ -961,7 +961,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 14:
             targetRoll = 0.0;
             targetPitch = 0.0;
-            targetYaw = 45.0;
+            targetYaw = 30.0;
             targetDisp = 0.0;
 
             // if (rawTargetYaw > lastRawTargetYaw) {
@@ -983,7 +983,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         {
             targetRoll = 0.0;
             targetPitch = 0.0;
-            targetYaw = 45.0; // 保持角度
+            targetYaw = 30.0; // 保持角度
             targetDisp = 10.0;
 
 
@@ -1018,10 +1018,12 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 // A. 立即停止推进：将目标设为当前位置
                 targetDisp = currentDisp;
                 m_moonsTargetDisp = currentDisp;
+                actionStep = 0;
+                m_resetRequested = false;
 
                 m_isLooping = false;
 
-                break;
+                return;
             }
 
             LOG(INFO)<<"进入循环15";
