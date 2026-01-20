@@ -152,10 +152,10 @@ void RobotControl::loadEndeffectorConfig()
                 {
                     {
                         //Encoder per Degree;
-                        const toml::array& Arr_Tmp = *(endEffectorData["Instrument"]["CZQ"]["4MM"]["1"]
-                                                                      // ["CZQ"]
-                                                                      // ["3MM"]
-                                                                      // ["1"]
+                        const toml::array& Arr_Tmp = *(endEffectorData["Instrument"]/*["CZQ"]["4MM"]["1"]*/
+                                                                      ["CZQ"]
+                                                                      ["3MM"]
+                                                                      ["1"]
                                                                       ["EncoderPerDegree"]["Value"].as_array());
                         std::vector<double> encoderPerDegreeR;
                         encoderPerDegreeR.clear();
