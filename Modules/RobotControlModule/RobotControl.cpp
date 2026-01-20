@@ -774,7 +774,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 4: // 动作2：左右钳头开合30度（开合角到70度）
             targetRoll  = 0.0;
             targetPitch = 0.0;
-            targetYaw   = 0.0;
+            targetYaw   = 30.0;
             targetDisp = 0.0;
              LOG(INFO)<<"进入循环4";
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
@@ -852,9 +852,11 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
              LOG(INFO)<<"进入循环9";
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                              targetRoll, targetPitch, targetYaw,targetDisp)) {
-                 // if (setCounter%10==0){
-                    // triggerPhoto("Step9_30度", targetYaw);
-                // }
+                 // if(setCounter%10==0){
+
+                     // triggerPhoto("Step9_30度", targetYaw);
+                 // }
+
                 lastRawTargetYaw = rawTargetYaw;
                 actionStep = 10;
             }
