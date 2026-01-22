@@ -984,7 +984,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             targetRoll = 0.0;
             targetPitch = 0.0;
             targetYaw = 45.0; // 保持角度
-            targetDisp = 10.0;
+            targetDisp = 5.0;
 
 
             // // --- 角度逻辑 ---
@@ -1338,10 +1338,10 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
 
     /*计算 yaw 的绳长变化*/
 
-    double deltLength_beta_R_left_1 = cableLengths_3(delt_alpha_R, delt_beta_R, -openAngle_R_new);
-    double deltLength_beta_R_left_2 = cableLengths_3(delt_alpha_R, - delt_beta_R, openAngle_R_new);
-    double deltLength_beta_R_right_1 = cableLengths_3(-delt_alpha_R, delt_beta_R, openAngle_R_new);
-    double deltLength_beta_R_right_2 = cableLengths_3(-delt_alpha_R, - delt_beta_R, -openAngle_R_new);
+    double deltLength_beta_R_left_1 = cableLengths_3(delt_alpha_R, delt_beta_R, -openAngle_R_new);//七号电机
+    double deltLength_beta_R_left_2 = cableLengths_3(delt_alpha_R, - delt_beta_R, openAngle_R_new);//六号电机
+    double deltLength_beta_R_right_1 = cableLengths_3(-delt_alpha_R, delt_beta_R, openAngle_R_new);//五号电机
+    double deltLength_beta_R_right_2 = cableLengths_3(-delt_alpha_R, - delt_beta_R, -openAngle_R_new);//四号电机
 
     /*计算 gamma（roll）*/
 
