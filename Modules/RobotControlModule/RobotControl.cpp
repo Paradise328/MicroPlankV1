@@ -984,7 +984,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             targetRoll = 0.0;
             targetPitch = 0.0;
             targetYaw = 45.0; // 保持角度
-            targetDisp = 5.0;
+            targetDisp = 17.0;
 
 
             // // --- 角度逻辑 ---
@@ -1041,7 +1041,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             targetRoll = 0.0;
             targetPitch = 0.0;
             targetYaw = -10.0;
-            targetDisp = 10.0;
+            targetDisp = 17.0;
 
             // if (rawTargetYaw > lastRawTargetYaw) {
             //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
@@ -1084,7 +1084,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             targetRoll = 0.0;
             targetPitch = 0.0;
             targetYaw = 10.0;
-            targetDisp = 10.0;
+            targetDisp = 17.0;
 
             // if (rawTargetYaw > lastRawTargetYaw) {
             //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
