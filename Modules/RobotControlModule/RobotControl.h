@@ -141,12 +141,12 @@ public:
         m_isSystemTerminated(false),
         m_guidingArm1stOrder({0}),
         m_guidingArm2ndOrder({0}),
-        m_endeffectorConfiguration(EndeffectorConfiguration::fourMaxons),
-        m_endeffectorConfiguration_L(EndeffectorConfiguration::fourMaxons),
-        m_endeffectorConfiguration_R(EndeffectorConfiguration::fourMaxons),
-        // m_endeffectorConfiguration(EndeffectorConfiguration::sixMaxons),
-        // m_endeffectorConfiguration_L(EndeffectorConfiguration::sixMaxons),
-        // m_endeffectorConfiguration_R(EndeffectorConfiguration::sixMaxons),
+        // m_endeffectorConfiguration(EndeffectorConfiguration::fourMaxons),
+        // m_endeffectorConfiguration_L(EndeffectorConfiguration::fourMaxons),
+        // m_endeffectorConfiguration_R(EndeffectorConfiguration::fourMaxons),
+        m_endeffectorConfiguration(EndeffectorConfiguration::sixMaxons),
+        m_endeffectorConfiguration_L(EndeffectorConfiguration::sixMaxons),
+        m_endeffectorConfiguration_R(EndeffectorConfiguration::sixMaxons),
         m_filter_1storder_guiding(m_guidingArm1stOrder, 250.0, 60.0),
         m_filter_2ndorder_guiding(m_guidingArm2ndOrder, 250.0, 60.0)
     {
@@ -336,8 +336,8 @@ private:
     void                            applyGuidingArmDampingControl();
     void                            applyGuidingArmVelocityControl();
     double                          limitDelta(double delta,double maxDelta);
-    bool                            reachTarget(double currentRoll, double currentPitch, double currentYaw,double currentDisp,
-                     double targetRoll, double targetPitch, double targetYaw,double m_moonsTargetDisp);
+    bool                            reachTarget(double currentRoll, double currentPitch, double currentYaw,double currentDisp,double currentOpen,
+                                    double targetRoll, double targetPitch, double targetYaw,double m_moonsTargetDisp,double targetOpen);
     /* 控制模式 */
 
     EndeffectorConfiguration        m_endeffectorConfiguration;// = EndeffectorConfiguration::fourMaxons;
@@ -563,10 +563,12 @@ private:
     double m_TargetRollAngle = 0.0;
     double m_TargetPitchAngle = 0.0;
     double m_TargetYawAngle = 0.0;
+    double m_TargetOpenAngle = 0.0;
 
     double m_TargetRollAngle_pre = 0.0;
     double m_TargetPitchAngle_pre = 0.0;
     double m_TargetYawAngle_pre = 0.0;
+    double m_TargetOpenAngle_pre = 0.0;
 
         // ========= 动作循环 / 时间控制相关变量 =========
     int  m_totalLoops  = 0;        // 循环次数模式：目标循环数
