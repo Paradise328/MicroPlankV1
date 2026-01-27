@@ -627,8 +627,9 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
 
     static double lastRawTargetYaw = 0.0;
 
-    // 【新增 1】定义静态变量存储零点偏移量
-    static double s_pressureZeroOffset = 0.0;
+
+    static double s_zero1 = 0.0;
+    static double s_zero2 = 0.0;
 
     // 【新增 2】定义碰撞触发阈值 (单位取决于传感器校准，假设是 N 或 kg)
     // 请根据实际情况调整这个值！如果太灵敏就改大，太迟钝就改小
@@ -651,12 +652,13 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         m_handlePoseLastLoop_R.handlePoseR_Roll      = 0.0;
         m_handlePoseLastLoop_R.handlePoseR_OpenAngle = 0.0;
         if (m_pressureSensor && m_pressureSensor->isConnected()) {
-            // 读取当前值作为零点
-             m_pressureSensor->getLatestPressure();
-            LOG(INFO) << "⚖️ 压力传感器已归零 (Tare). 零点基准值: " << s_pressureZeroOffset;
+            s_zero1 = m_pressureSensor->getLatestPressure_1(); // 读通道1
+            s_zero2 = m_pressureSensor->getLatestPressure_2(); // 读通道2
+            LOG(INFO) << "⚖️ 归零完成. 基准值 P1:" << s_zero1 << " P2:" << s_zero2;
         } else {
-            s_pressureZeroOffset = 0.0;
-            LOG(WARNING) << "⚠️ 压力传感器未连接，无法归零，基准值设为 0";
+            s_zero1 = 0.0;
+            s_zero2 = 0.0;
+            LOG(WARNING) << "⚠️ 传感器未连接，无法归零";
         }
 
         //生成文件夹，记录压力趋势
@@ -998,22 +1000,20 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
 
 
             // 1. 获取当前实时压力
-            double currentRawPressure = 0.0;
-            // if (m_pressureSensor && m_pressureSensor->isConnected()) {
-             currentRawPressure = m_pressureSensor->getLatestPressure();
-            LOG(INFO)<<"當前壓力值"<<currentRawPressure;
-            // }
+            double curP1 = 0.0, curP2 = 0.0;
+            if (m_pressureSensor) {
+                curP1 = m_pressureSensor->getLatestPressure_1();
+                curP2 = m_pressureSensor->getLatestPressure_2();
+            }
 
-
-            // 2. 计算净压力 (当前值 - 初始零点)
-            double netPressure = std::abs(currentRawPressure - s_pressureZeroOffset);
-
+            double net1 = std::abs(curP1 - s_zero1);
+            double net2 = std::abs(curP2 - s_zero2);
 
 
             // 3. 碰撞检测逻辑
-            if ( netPressure > PRESSURE_COLLISION_THRESHOLD)
+            if ( net1 > PRESSURE_COLLISION_THRESHOLD || net2 > PRESSURE_COLLISION_THRESHOLD)
             {
-                LOG(INFO) << "检测到碰撞! 净压力: " << currentRawPressure << " (阈值: " << PRESSURE_COLLISION_THRESHOLD << ")";
+                LOG(INFO) << "检测到碰撞! 净压力1: " << net1 <<"净压力2:" << net2 << " (阈值: " << PRESSURE_COLLISION_THRESHOLD << ")";
 
                 // A. 立即停止推进：将目标设为当前位置
                 targetDisp = currentDisp;
@@ -1055,14 +1055,16 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                             targetRoll, targetPitch, targetYaw,targetDisp)){
 
                 // === [关键] 直接读取新传感器的数据 ===
-                float currentForce = 0.0f;
+                float currentForce_1 = 0.0f;
+                float currentForce_2 = 0.0f;
 
                 if (m_pressureSensor && m_pressureSensor->isConnected()) {
-                    currentForce = m_pressureSensor->getLatestPressure();
+                    currentForce_1 = m_pressureSensor->getLatestPressure_1();
+                    currentForce_2 = m_pressureSensor->getLatestPressure_2();
                 } else {
                     LOG(WARNING) << "压力传感器未连接！";
                 }
-                double finalNetPressure = currentForce - s_pressureZeroOffset;
+                double finalNetPressure = currentForce_1+currentForce_2 - (s_zero1 + s_zero2);
 
                 // 打开文件，使用 ios::app (Append) 模式追加一行
                 std::ofstream outfile(s_currentCsvPath, std::ios::app);

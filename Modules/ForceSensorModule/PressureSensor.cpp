@@ -5,7 +5,7 @@
 
 PressureSensor::PressureSensor()
     : ctx(nullptr), m_running(false), m_connected(false),
-    m_currentPressure(0.0f), m_scaleFactor(100.0f) // 默认假设有2位小数(除以100)
+    m_currentPressure_1(0.0f),m_currentPressure_2(0.0f), m_scaleFactor(100.0f) // 默认假设有2位小数(除以100)
 {
 }
 
@@ -40,7 +40,7 @@ bool PressureSensor::initDevice(const char* portName, int baudRate)
         return false;
     }
 
-    LOG(INFO) << "RDD-DG Pressure Sensor Connected on " << portName << " Baud:" << baudRate;
+    LOG(INFO) << "2-Channel Pressure Sensor Connected on " << portName;
     m_connected = true;
     m_running = true;
 
@@ -66,9 +66,13 @@ void PressureSensor::disconnectDevice()
     LOG(INFO) << "Pressure Sensor Disconnected";
 }
 
-float PressureSensor::getLatestPressure() const
+float PressureSensor::getLatestPressure_1() const
 {
-    return m_currentPressure.load();
+    return m_currentPressure_1.load();
+}
+float PressureSensor::getLatestPressure_2() const
+{
+    return m_currentPressure_2.load();
 }
 
 bool PressureSensor::isConnected() const
@@ -95,19 +99,20 @@ void PressureSensor::pollingLoop()
         int rc = modbus_read_registers(ctx, READ_ADDR, READ_LEN, tab_reg);
 
         if (rc != -1) {
-            // --- RDD-DG 数据解析 (根据截图验证) ---
-            // 截图返回: 01 03 04 [00 00] [00 00] ...
-            // 前两个字节是高位，后两个字节是低位
+            int32_t raw1 = (static_cast<int32_t>(tab_reg[0]) << 16) | tab_reg[1];
+            float val1 = static_cast<float>(raw1) / m_scaleFactor.load();
+            m_currentPressure_1.store(val1);
 
-            // 1. 拼接成 32位 整数 (Int32)
-            // tab_reg[0] 是高16位，tab_reg[1] 是低16位
-            int32_t rawValue = (static_cast<int32_t>(tab_reg[0]) << 16) | tab_reg[1];
+            // --- 解析通道 2 (后两个寄存器: tab_reg[2], tab_reg[3]) ---
+            int32_t raw2 = (static_cast<int32_t>(tab_reg[2]) << 16) | tab_reg[3];
+            float val2 = static_cast<float>(raw2) / m_scaleFactor.load();
+            m_currentPressure_2.store(val2);
 
-            // 2. 转换为物理值
-            // 如果 rawValue 是 2000，系数是 100.0，则结果是 20.00
-            float finalVal = static_cast<float>(rawValue) / m_scaleFactor.load();
-
-            m_currentPressure.store(finalVal);
+            // [调试日志] 偶尔打印一次看看两个值
+            static int logCnt = 0;
+            if (logCnt++ % 50 == 0) {
+                // LOG(INFO) << "P1: " << val1 << " | P2: " << val2;
+            }
 
         } else {
             // 读取失败，通常是因为超时或线松了
