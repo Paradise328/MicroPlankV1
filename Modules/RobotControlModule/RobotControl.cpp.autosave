@@ -1064,14 +1064,14 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 } else {
                     LOG(WARNING) << "压力传感器未连接！";
                 }
-                double finalNetPressure = currentForce_1 - currentForce_2 - (s_zero1 + s_zero2);
+                double finalNetPressure = - currentForce_1 - currentForce_2 - (s_zero1 + s_zero2);
                 LOG(INFO)<<"检测到的压力"<<currentForce_1<<  currentForce_2 << s_zero1 + s_zero2;
 
                 // 打开文件，使用 ios::app (Append) 模式追加一行
                 std::ofstream outfile(s_currentCsvPath, std::ios::app);
                 if (outfile.is_open()) {
                     // 格式：第几次循环, 压力值
-                    outfile << setCounter << "," << finalNetPressure << "\n";
+                    outfile << setCounter << "," << finalNetPressure << "\n" << "Force_1"<<currentForce_1;
                     outfile.close();
                     LOG(INFO) << "记录数据 [Cycle " << setCounter << "]: " << finalNetPressure;
                 } else {

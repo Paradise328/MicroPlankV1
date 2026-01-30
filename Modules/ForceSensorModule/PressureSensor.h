@@ -43,7 +43,7 @@ private:
 
     // RDD-DG 变送器参数 (根据截图确认)
     const int SLAVE_ID = 1;        // 01
-    const int READ_ADDR = 0x0050;  // 00 50 (寄存器起始地址)
+    const int READ_ADDR = 0x01C2;  // 00 50 (寄存器起始地址)
     const int READ_LEN = 4;        // 00 02 (读取2个寄存器 = 32位)
 };
 
