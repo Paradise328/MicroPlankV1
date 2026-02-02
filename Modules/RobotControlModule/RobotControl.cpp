@@ -671,7 +671,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
 
         std::ofstream outfile(s_currentCsvPath);
         if (outfile.is_open()) {
-            outfile << "Cycle,Pressure(Net)\n"; // 写入表头：循环次数, 净压力
+            outfile << "Cycle,Pressure(Net),Forcenet_1,Forcenet_2\n";
             outfile.close();
             LOG(INFO) << "📄 数据文件已创建: " << s_currentCsvPath;
         } else {
@@ -986,7 +986,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             targetRoll = 0.0;
             targetPitch = 0.0;
             rawTargetYaw = 45.0; // 保持角度
-            targetDisp = 16.0;
+            targetDisp = 17.0;
 
 
             // --- 角度逻辑 ---
@@ -1041,7 +1041,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             targetRoll = 0.0;
             targetPitch = 0.0;
             rawTargetYaw = -10.0;
-            targetDisp = 16.0;
+            targetDisp = 17.0;
 
             if (rawTargetYaw > lastRawTargetYaw) {
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
@@ -1064,16 +1064,27 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 } else {
                     LOG(WARNING) << "压力传感器未连接！";
                 }
-                double finalNetPressure = currentForce_1 - currentForce_2 - (s_zero1 + s_zero2);
-                LOG(INFO)<<"检测到的压力"<<currentForce_1<<  currentForce_2 << s_zero1 + s_zero2;
+
+                double netForce_1 = (currentForce_1 - s_zero1) / 0.18;
+                double netForce_2 = (currentForce_2 - s_zero2) / 0.67;
+
+                // 总压力等于两者的和
+                double finalNetPressure = netForce_1 + netForce_2;
+
+                LOG(INFO)<<"Force_1:"<<currentForce_1<<"Force_2:"<< currentForce_2 ;
 
                 // 打开文件，使用 ios::app (Append) 模式追加一行
                 std::ofstream outfile(s_currentCsvPath, std::ios::app);
                 if (outfile.is_open()) {
-                    // 格式：第几次循环, 压力值
-                    outfile << setCounter << "," << finalNetPressure << "\n";
+                    // === [修改] 格式：第几次循环, 总压力值, 分量1, 分量2 ===
+                    outfile << setCounter << ","
+                            << finalNetPressure << ","
+                            << netForce_1 << ","
+                            << netForce_2 << "\n";
+
                     outfile.close();
-                    LOG(INFO) << "记录数据 [Cycle " << setCounter << "]: " << finalNetPressure;
+                    LOG(INFO) << "记录数据 [Cycle " << setCounter << "]: Total:" << finalNetPressure
+                              << " Net1:" << netForce_1 << " Net2:" << netForce_2;
                 } else {
                     LOG(ERROR) << "写入数据失败: " << s_currentCsvPath;
                 }
@@ -1087,7 +1098,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             targetRoll = 0.0;
             targetPitch = 0.0;
             rawTargetYaw = 10.0;
-            targetDisp = 16.0;
+            targetDisp = 17.0;
 
             if (rawTargetYaw > lastRawTargetYaw) {
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
