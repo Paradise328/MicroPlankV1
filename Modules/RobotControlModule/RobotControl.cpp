@@ -1055,22 +1055,36 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                             targetRoll, targetPitch, targetYaw,targetDisp)){
 
                 // === [关键] 直接读取新传感器的数据 ===
-                float currentForce = 0.0f;
+                float currentForce_1 = 0.0f;
+                float currentForce_2 = 0.0f;
 
                 if (m_pressureSensor && m_pressureSensor->isConnected()) {
-                    currentForce = m_pressureSensor->getLatestPressure();
+                    currentForce_1 = m_pressureSensor->getLatestPressure_1();
+                    currentForce_2 = m_pressureSensor->getLatestPressure_2();
                 } else {
                     LOG(WARNING) << "压力传感器未连接！";
                 }
-                double finalNetPressure = currentForce - s_pressureZeroOffset;
+
+                double netForce_1 = (currentForce_1 - s_zero1) / 0.18;
+                double netForce_2 = (currentForce_2 - s_zero2) / 0.67;
+
+                // 总压力等于两者的和
+                double finalNetPressure = netForce_1 + netForce_2;
+
+                LOG(INFO)<<"Force_1:"<<currentForce_1<<"Force_2:"<< currentForce_2 ;
 
                 // 打开文件，使用 ios::app (Append) 模式追加一行
                 std::ofstream outfile(s_currentCsvPath, std::ios::app);
                 if (outfile.is_open()) {
-                    // 格式：第几次循环, 压力值
-                    outfile << setCounter << "," << finalNetPressure << "\n";
+                    // === [修改] 格式：第几次循环, 总压力值, 分量1, 分量2 ===
+                    outfile << setCounter << ","
+                            << finalNetPressure << ","
+                            << netForce_1 << ","
+                            << netForce_2 << "\n";
+
                     outfile.close();
-                    LOG(INFO) << "记录数据 [Cycle " << setCounter << "]: " << finalNetPressure;
+                    LOG(INFO) << "记录数据 [Cycle " << setCounter << "]: Total:" << finalNetPressure
+                              << " Net1:" << netForce_1 << " Net2:" << netForce_2;
                 } else {
                     LOG(ERROR) << "写入数据失败: " << s_currentCsvPath;
                 }
