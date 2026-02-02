@@ -1000,32 +1000,28 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
 
 
             // 1. 获取当前实时压力
-            double currentRawPressure = 0.0;
-            // if (m_pressureSensor && m_pressureSensor->isConnected()) {
-             currentRawPressure = m_pressureSensor->getLatestPressure();
-            LOG(INFO)<<"當前壓力值"<<currentRawPressure;
-            // }
+            double curP1 = 0.0, curP2 = 0.0;
+            if (m_pressureSensor) {
+                curP1 = m_pressureSensor->getLatestPressure_1();
+                curP2 = m_pressureSensor->getLatestPressure_2();
+            }
 
-
-            // 2. 计算净压力 (当前值 - 初始零点)
-            double netPressure = std::abs(currentRawPressure - s_pressureZeroOffset);
-
+            double net1 = std::abs(curP1 - s_zero1);
+            double net2 = std::abs(curP2 - s_zero2);
 
 
             // 3. 碰撞检测逻辑
-            if ( netPressure > PRESSURE_COLLISION_THRESHOLD)
+            if ( net1 > PRESSURE_COLLISION_THRESHOLD || net2 > PRESSURE_COLLISION_THRESHOLD)
             {
-                LOG(INFO) << "检测到碰撞! 净压力: " << currentRawPressure << " (阈值: " << PRESSURE_COLLISION_THRESHOLD << ")";
+                LOG(INFO) << "检测到碰撞! 净压力1: " << net1 <<"净压力2:" << net2 << " (阈值: " << PRESSURE_COLLISION_THRESHOLD << ")";
 
                 // A. 立即停止推进：将目标设为当前位置
                 targetDisp = currentDisp;
                 m_moonsTargetDisp = currentDisp;
-                actionStep = 0;
-                m_resetRequested = false;
 
                 m_isLooping = false;
 
-                return;
+                break;
             }
 
             LOG(INFO)<<"进入循环15";
