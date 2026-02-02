@@ -627,8 +627,9 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
 
     static double lastRawTargetYaw = 0.0;
 
-    // 【新增 1】定义静态变量存储零点偏移量
-    static double s_pressureZeroOffset = 0.0;
+
+    static double s_zero1 = 0.0;
+    static double s_zero2 = 0.0;
 
     // 【新增 2】定义碰撞触发阈值 (单位取决于传感器校准，假设是 N 或 kg)
     // 请根据实际情况调整这个值！如果太灵敏就改大，太迟钝就改小
@@ -651,12 +652,13 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         m_handlePoseLastLoop_R.handlePoseR_Roll      = 0.0;
         m_handlePoseLastLoop_R.handlePoseR_OpenAngle = 0.0;
         if (m_pressureSensor && m_pressureSensor->isConnected()) {
-            // 读取当前值作为零点
-             m_pressureSensor->getLatestPressure();
-            LOG(INFO) << "⚖️ 压力传感器已归零 (Tare). 零点基准值: " << s_pressureZeroOffset;
+            s_zero1 = m_pressureSensor->getLatestPressure_1(); // 读通道1
+            s_zero2 = m_pressureSensor->getLatestPressure_2(); // 读通道2
+            LOG(INFO) << "⚖️ 归零完成. 基准值 P1:" << s_zero1 << " P2:" << s_zero2;
         } else {
-            s_pressureZeroOffset = 0.0;
-            LOG(WARNING) << "⚠️ 压力传感器未连接，无法归零，基准值设为 0";
+            s_zero1 = 0.0;
+            s_zero2 = 0.0;
+            LOG(WARNING) << "⚠️ 传感器未连接，无法归零";
         }
 
         //生成文件夹，记录压力趋势
@@ -669,7 +671,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
 
         std::ofstream outfile(s_currentCsvPath);
         if (outfile.is_open()) {
-            outfile << "Cycle,Pressure(Net)\n"; // 写入表头：循环次数, 净压力
+            outfile << "Cycle,Pressure(Net),Forcenet_1,Forcenet_2\n";
             outfile.close();
             LOG(INFO) << "📄 数据文件已创建: " << s_currentCsvPath;
         } else {

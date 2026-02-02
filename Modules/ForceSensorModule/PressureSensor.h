@@ -20,8 +20,8 @@ public:
     void disconnectDevice();
 
     // 获取最新的压力值
-    float getLatestPressure() const;
-
+    float getLatestPressure_1() const;
+    float getLatestPressure_2() const;
     // 获取连接状态
     bool isConnected() const;
 
@@ -37,13 +37,15 @@ private:
     std::atomic<bool> m_connected;
     std::thread m_thread;
 
-    std::atomic<float> m_currentPressure;
+    std::atomic<float> m_currentPressure_1;
+    std::atomic<float> m_currentPressure_2;
     std::atomic<float> m_scaleFactor;
 
     // RDD-DG 变送器参数 (根据截图确认)
     const int SLAVE_ID = 1;        // 01
-    const int READ_ADDR = 0x0050;  // 00 50 (寄存器起始地址)
-    const int READ_LEN = 2;        // 00 02 (读取2个寄存器 = 32位)
+    const int READ_ADDR = 0x01C2;  // 00 50 (寄存器起始地址)
+    const int READ_LEN = 4;        // 00 02 (读取2个寄存器 = 32位)
 };
 
 #endif // PRESSURESENSOR_H
+
