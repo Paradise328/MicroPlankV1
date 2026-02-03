@@ -452,171 +452,6 @@ void RobotControl::startMotionByTime(double second)
     LOG(INFO) << "Start motion for " << second <<"second ";
 }
 
-// void RobotControl::targetPose(HandlePose& handlePoseCur)
-// {
-
-//     // 1. 定义状态机变量
-//     static int actionStep = 0;
-//     static bool actionComplete = false;
-
-//     // 2. 【新增】定义随机数生成器 (静态，只初始化一次)
-//     static std::random_device rd;
-//     static std::mt19937 gen(rd());
-//     // 定义随机范围：例如 -60度 到 +60度
-//     static std::uniform_real_distribution<> dis(30.0, 60.0);
-
-//     // 3. 【新增】存储当前的随机目标Yaw值
-//     static double currentRandomYaw = 0.0;
-//           【新增】存储上一步的名义目标，用于比较变大还是变小
-//       static double lastRawTargetYaw = 0.0;
-
-//     // 重置逻辑
-//     if (m_resetRequested) {
-//         actionStep = 0;
-//         actionComplete = false;
-//         m_TargetRollAngle_pre  = 0.0;
-//         m_TargetPitchAngle_pre = 0.0;
-//         m_TargetYawAngle_pre   = 0.0;
-
-//         // 重置时，先生成第一个随机数，供 Step 1 使用
-//         currentRandomYaw = dis(gen);
-//         lastRawTargetYaw = 0.0; // 初始记忆为0
-
-//         m_resetRequested = false;
-//     }
-
-//     // 获取当前角度
-//     double currentRoll  = m_TargetRollAngle_pre  * 180.0 / M_PI;
-//     double currentPitch = m_TargetPitchAngle_pre * 180.0 / M_PI;
-//     double currentYaw   = m_TargetYawAngle_pre   * 180.0 / M_PI;
-
-//     double RollAngle, PitchAngle, YawAngle;
-
-//     // 目标默认值
-//     double targetRoll  = currentRoll;
-//     double targetPitch = currentPitch;
-//     double targetYaw   = currentYaw;
-
-//     if (!m_isLooping) {
-//         return;
-//     }
-//     else {
-//         switch(actionStep)
-//         {
-//         case 0: // 初始状态：先回零
-//             targetRoll  = 0.0;
-//             targetPitch = 0.0;
-//             targetYaw   = 0.0; // 先回到 0 度
-
-//             if (reachTarget(currentRoll, currentPitch, currentYaw, targetRoll, targetPitch, targetYaw)) {
-//                 LOG(INFO) << "已回零，开始随机运动...";
-//                 // 生成第一步的随机角度
-//                 currentRandomYaw = dis(gen);
-//                 lastRawTargetYaw = 0.0;// 记录起点是0
-//                 actionStep = 1;
-//             }
-//             break;
-
-//             // ========================================================
-//             // ✅ 合并 Case 1 到 Case 13 (随机运动阶段)
-//             // ========================================================
-//         case 1 ... 13: // C++ 语法特性，表示 case 1 到 13 都执行这段
-//         {
-//             // 设置目标为生成的随机数
-//             targetRoll  = 0.0;
-//             targetPitch = 0.0;
-//             double rawTarget = currentRandomYaw; // 拿到当前想去的随机目标
-
-//             if (rawTarget > lastRawTargetYaw) {
-//               targetYaw = rawTarget + 5.0; // 比上一步大(张开)，再多张5度
-//               } else {
-//               targetYaw = rawTarget - 5.0; // 比上一步小(闭合)，再多闭5度
-//               }
-
-//             // 检查是否到达随机目标
-//             if (reachTarget(currentRoll, currentPitch, currentYaw, targetRoll, targetPitch, targetYaw))
-//             {
-//                 // 1. 拼接文件名：StepX_Random_45.2deg
-//                 std::string photoName = "Step" + std::to_string(actionStep) + "_Rand_" + std::to_string((int)currentRandomYaw);
-
-//                 // 2. 拍照
-//                 triggerPhoto(photoName);
-//                 LOG(INFO) << "📸 已到达随机角度: " << currentRandomYaw << " 度，拍照完成。";
-//                【关键】更新记忆：把这一步的名义目标(raw)存下来，供下一步比较
-//                 lastRawTargetYaw = rawTarget;
-
-//                 // 3. 生成下一步的随机角度 (供下一个 case 使用)
-//                 currentRandomYaw = dis(gen);
-
-//                 // 4. 进入下一步
-//                 actionStep++;
-//             }
-//             break;
-//         }
-
-//             // ========================================================
-//             // 结束阶段
-//             // ========================================================
-//         case 14: // 所有动作完成，回零
-//             targetRoll  = 0.0;
-//             targetPitch = 0.0;
-//             targetYaw   = -5.0; // 最后回到 0
-
-//             if (reachTarget(currentRoll, currentPitch, currentYaw, targetRoll, targetPitch, targetYaw)) {
-
-//                 triggerPhoto("Finished_ReturnZero");
-//                 lastRawTargetYaw = 0.0;
-
-//                 // 循环控制逻辑 (保持原样)
-//                 if (m_useTimeLimit) {
-//                     auto now = std::chrono::steady_clock::now();
-//                     double elapsed = std::chrono::duration<double>(now - m_motionStartTime).count();
-//                     if (elapsed >= m_targetDurationSec) {
-//                         m_isLooping = false;
-//                         actionStep = 0;
-//                         LOG(INFO) << "Time is up!";
-//                     } else {
-//                         actionStep = 0; // 重新开始
-//                         currentRandomYaw = dis(gen); // 重新生成新的随机数
-//                     }
-//                 } else {
-//                     m_currentLoop++;
-//                     if (m_currentLoop >= m_totalLoops) {
-//                         m_isLooping = false;
-//                         actionStep = 0;
-//                         actionComplete = true;
-//                         goToHold();
-//                     } else {
-//                         actionStep = 0; // 重新开始
-//                         currentRandomYaw = dis(gen); // 重新生成新的随机数
-//                     }
-//                 }
-//             }
-//             break;
-//         }
-//     }
-
-//     // --- 以下是平滑插值逻辑 (保持不变) ---
-//     const double SMOOTH_FACTOR = 0.02;
-//     RollAngle  = currentRoll  + (targetRoll  - currentRoll)  * SMOOTH_FACTOR;
-//     PitchAngle = currentPitch + (targetPitch - currentPitch) * SMOOTH_FACTOR;
-//     YawAngle   = currentYaw   + (targetYaw   - currentYaw)   * SMOOTH_FACTOR;
-
-//     // 吸附
-//     if(fabs(targetRoll - RollAngle) < 0.1) RollAngle = targetRoll;
-//     if(fabs(targetPitch - PitchAngle) < 0.1) PitchAngle = targetPitch;
-//     if(fabs(targetYaw - YawAngle) < 0.1) YawAngle = targetYaw;
-
-//     // 赋值
-//     handlePoseCur.handlePoseR_Roll      = RollAngle  / 180.0 * M_PI;
-//     handlePoseCur.handlePoseR_Elevation = PitchAngle / 180.0 * M_PI;
-//     handlePoseCur.handlePoseR_Arzimuth  = YawAngle   / 180.0 * M_PI;
-
-//     m_TargetRollAngle_pre  = handlePoseCur.handlePoseR_Roll;
-//     m_TargetPitchAngle_pre = handlePoseCur.handlePoseR_Elevation;
-//     m_TargetYawAngle_pre   = handlePoseCur.handlePoseR_Arzimuth;
-
-// }
 
 void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度的操作
 {
@@ -725,11 +560,16 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 0: // 初始状态
             targetRoll  = 0.0;
             targetPitch = 0.0;
-            targetYaw   = 0.0;
+            rawTargetYaw   = 0.0;
             targetDisp = 0.0;
             LOG(INFO)<<"进入循环";
-
-
+            if (rawTargetYaw > lastRawTargetYaw) {
+                targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            } else if(rawTargetYaw < lastRawTargetYaw){
+                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            }else{
+                targetYaw = rawTargetYaw;
+            }
             if (reachTarget(currentRoll, currentPitch, currentYaw, currentDisp,
                             targetRoll, targetPitch, targetYaw, targetDisp)) {
                 actionStep = 1;
@@ -739,8 +579,15 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 1: // 动作1：角度闭合（开合角负10度，俯仰角60度, 旋转轴顺时针70度）
             targetRoll  = 70.0;
             targetPitch = 60.0;
-            targetYaw   = 0.0;
+            rawTargetYaw   = 0.0;
             targetDisp = 0.0;
+            if (rawTargetYaw > lastRawTargetYaw) {
+                targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            } else if(rawTargetYaw < lastRawTargetYaw){
+                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            }else{
+                targetYaw = rawTargetYaw;
+            }
             LOG(INFO)<<"进入循环1";
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)) {
@@ -751,8 +598,15 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 2: // 动作1：旋转轴逆时针140度（70 -> -70）
             targetRoll  = -70.0;
             targetPitch = 60.0;
-            targetYaw   = 0.0;
+            rawTargetYaw   = 0.0;
             targetDisp = 0.0;
+            if (rawTargetYaw > lastRawTargetYaw) {
+                targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            } else if(rawTargetYaw < lastRawTargetYaw){
+                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            }else{
+                targetYaw = rawTargetYaw;
+            }
             LOG(INFO)<<"进入循环2";
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)) {
@@ -765,6 +619,13 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             targetPitch = 0.0;
             targetYaw   = 0.0;
             targetDisp = 0.0;
+            if (rawTargetYaw > lastRawTargetYaw) {
+                targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            } else if(rawTargetYaw < lastRawTargetYaw){
+                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            }else{
+                targetYaw = rawTargetYaw;
+            }
              LOG(INFO)<<"进入循环3";
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                              targetRoll, targetPitch, targetYaw,targetDisp)) {
@@ -776,8 +637,15 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 4: // 动作2：左右钳头开合30度（开合角到70度）
             targetRoll  = 0.0;
             targetPitch = 0.0;
-            targetYaw   = 30.0;
+            rawTargetYaw   = 30.0;
             targetDisp = 0.0;
+            if (rawTargetYaw > lastRawTargetYaw) {
+                targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            } else if(rawTargetYaw < lastRawTargetYaw){
+                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            }else{
+                targetYaw = rawTargetYaw;
+            }
              LOG(INFO)<<"进入循环4";
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                              targetRoll, targetPitch, targetYaw,targetDisp)) {
@@ -788,8 +656,15 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 5: // 动作2：回正（再闭合）
             targetRoll  = 0.0;
             targetPitch = 0.0;
-            targetYaw   = 0.0;
+            rawTargetYaw  = 0.0;
             targetDisp = 0.0;
+            if (rawTargetYaw > lastRawTargetYaw) {
+                targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            } else if(rawTargetYaw < lastRawTargetYaw){
+                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            }else{
+                targetYaw = rawTargetYaw;
+            }
              LOG(INFO)<<"进入循环5";
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                              targetRoll, targetPitch, targetYaw,targetDisp)) {
@@ -800,8 +675,15 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 6: // 动作3：角度闭合（开合角70度，俯仰角-60度, 旋转轴逆时针70度）
             targetRoll  = -70.0;
             targetPitch = -60.0;
-            targetYaw   = 0.0;
+            rawTargetYaw   = 0.0;
             targetDisp = 0.0;
+            if (rawTargetYaw > lastRawTargetYaw) {
+                targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            } else if(rawTargetYaw < lastRawTargetYaw){
+                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            }else{
+                targetYaw = rawTargetYaw;
+            }
              LOG(INFO)<<"进入循环6";
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                              targetRoll, targetPitch, targetYaw,targetDisp)) {
@@ -812,8 +694,15 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 7: // 动作3：旋转轴顺时针240度（-70 -> +70）
             targetRoll  = 70.0;
             targetPitch = -60.0;
-            targetYaw   = 0.0;
+            rawTargetYaw   = 0.0;
             targetDisp = 0.0;
+            if (rawTargetYaw > lastRawTargetYaw) {
+                targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            } else if(rawTargetYaw < lastRawTargetYaw){
+                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            }else{
+                targetYaw = rawTargetYaw;
+            }
              LOG(INFO)<<"进入循环7";
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                              targetRoll, targetPitch, targetYaw,targetDisp)) {
@@ -824,15 +713,21 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 8: // 动作4：回正（俯仰角回到0度，闭合）拍照
             targetRoll  = 0.0;
             targetPitch = 0.0;
-            targetYaw   = 0.0;
+            rawTargetYaw   = 0.0;
             targetDisp = 0.0;
+            if (rawTargetYaw > lastRawTargetYaw) {
+                targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+            } else if(rawTargetYaw < lastRawTargetYaw){
+                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+            }else{
+                targetYaw = rawTargetYaw;
+            }
              LOG(INFO)<<"进入循环8";
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                              targetRoll, targetPitch, targetYaw,targetDisp)) {
-                lastRawTargetYaw = 0.0;
-
-
-                 actionStep = 9;
+                   usleep(1000);
+                   triggerPhoto("Step8_回正", targetYaw);
+                   actionStep = 9;
              }
 
 
@@ -854,10 +749,9 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
              LOG(INFO)<<"进入循环9";
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                              targetRoll, targetPitch, targetYaw,targetDisp)) {
-                 // if(setCounter%10==0){
 
-                     // triggerPhoto("Step9_30度", targetYaw);
-                 // }
+
+                     triggerPhoto("Step9_30度", targetYaw);
 
                 lastRawTargetYaw = rawTargetYaw;
                 actionStep = 10;
@@ -880,10 +774,10 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             LOG(INFO)<<"进入循环10";
                 if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)){
-                // if(setCounter%10==0){
 
-                    // triggerPhoto("Step10_45度", targetYaw);
-                // }
+
+                    triggerPhoto("Step10_45度", targetYaw);
+
                 lastRawTargetYaw = rawTargetYaw;
                  actionStep = 11;
              }
@@ -904,9 +798,9 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             LOG(INFO)<<"进入循环11";
                 if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)){
-                // if(setCounter%10==0){
-                 // triggerPhoto("Step11_30度", targetYaw);
-                // }
+
+                 triggerPhoto("Step11_30度", targetYaw);
+
                 lastRawTargetYaw = rawTargetYaw;
                 actionStep = 12;
              }
@@ -928,9 +822,9 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             LOG(INFO)<<"进入循环12";
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)){
-                // if(setCounter%10==0){
-                // triggerPhoto("Step12_20度", targetYaw);
-                // }
+
+                triggerPhoto("Step12_20度", targetYaw);
+
                 lastRawTargetYaw = rawTargetYaw;
                 actionStep = 13;
             }
@@ -952,9 +846,9 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             LOG(INFO)<<"进入循环13";
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)){
-                // if(setCounter%10==0){
-                // triggerPhoto("Step13_10度", targetYaw);
-                // }
+
+                triggerPhoto("Step13_10度", targetYaw);
+
                 lastRawTargetYaw = rawTargetYaw;
                 actionStep = 14;
             }
@@ -1011,7 +905,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
 
 
             // 3. 碰撞检测逻辑
-            if ( net1 > PRESSURE_COLLISION_THRESHOLD || net2 > PRESSURE_COLLISION_THRESHOLD)
+            if ( net1/0.18 > PRESSURE_COLLISION_THRESHOLD || net2/0.67 > PRESSURE_COLLISION_THRESHOLD)
             {
                 LOG(INFO) << "检测到碰撞! 净压力1: " << net1 <<"净压力2:" << net2 << " (阈值: " << PRESSURE_COLLISION_THRESHOLD << ")";
 
@@ -1156,9 +1050,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
 
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)) {
-                 // if (setCounter % 10 == 0) {
-                     // triggerPhoto("Step8_回正", targetYaw);
-                 // }
+
                 lastRawTargetYaw = rawTargetYaw;
                 setCounter++;
 

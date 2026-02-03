@@ -5,7 +5,7 @@
 
 PressureSensor::PressureSensor()
     : ctx(nullptr), m_running(false), m_connected(false),
-    m_currentPressure_1(0.0f),m_currentPressure_2(0.0f), m_scaleFactor(100.0f) // 默认假设有2位小数(除以100)
+    m_currentPressure_1(0.000f),m_currentPressure_2(0.000f), m_scaleFactor(100000.0f) // 默认假设有2位小数(除以100)
 {
 }
 
