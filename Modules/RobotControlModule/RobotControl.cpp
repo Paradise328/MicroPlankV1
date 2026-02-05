@@ -979,7 +979,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 16:
             targetRoll = 0.0;
             targetPitch = 0.0;
-            rawTargetYaw = -20.0;
+            rawTargetYaw = -22.0;
             targetDisp = 17.0;
 
             if (rawTargetYaw > lastRawTargetYaw) {
