@@ -569,7 +569,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
@@ -590,7 +590,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
@@ -612,7 +612,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
@@ -634,7 +634,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
@@ -657,7 +657,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
@@ -679,7 +679,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
@@ -702,7 +702,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
@@ -724,7 +724,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
@@ -746,7 +746,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
@@ -774,7 +774,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
@@ -801,7 +801,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
@@ -827,7 +827,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
@@ -853,7 +853,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
@@ -879,7 +879,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
@@ -905,7 +905,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
@@ -931,7 +931,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
@@ -979,14 +979,14 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 16:
             targetRoll = 0.0;
             targetPitch = 0.0;
-            rawTargetYaw = -10.0;
+            rawTargetYaw = -20.0;
             targetDisp = 17.0;
 
             if (rawTargetYaw > lastRawTargetYaw) {
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
@@ -1045,7 +1045,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
@@ -1069,7 +1069,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
@@ -1094,7 +1094,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
                 lastRawTargetYawact = targetYaw;
             } else if(rawTargetYaw < lastRawTargetYaw){
-                targetYaw = rawTargetYaw - 5.0; // 变小 -> 减5度
+                targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
                 lastRawTargetYawact = targetYaw;
             }else{
                 targetYaw = lastRawTargetYawact;
