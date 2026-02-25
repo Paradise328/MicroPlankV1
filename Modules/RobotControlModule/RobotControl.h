@@ -134,7 +134,7 @@ public:
         m_motorDriver(motorDriver),
         m_domainController(domainController),
         m_messagePool(messagePool),
-        m_teleOperationdMode(TeleOperationMode::CSV_Mode),
+        m_teleOperationdMode(TeleOperationMode::CSP_Mode),
         m_ruckigPlanner_R(0.005),
         m_ruckigPlanner_L(0.005),
         m_flagControlThread(false),
