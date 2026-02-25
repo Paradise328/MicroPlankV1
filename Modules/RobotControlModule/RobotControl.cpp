@@ -153,6 +153,7 @@ void RobotControl::loadEndeffectorConfig()
                     {
                         //Encoder per Degree;
                         const toml::array& Arr_Tmp = *(endEffectorData["Instrument"]["CZQ"]["4MM"]["1"]
+
                                                                       ["EncoderPerDegree"]["Value"].as_array());
                         std::vector<double> encoderPerDegreeR;
                         encoderPerDegreeR.clear();
@@ -174,7 +175,9 @@ void RobotControl::loadEndeffectorConfig()
                         //Cable Compensation Ratio;
                         m_compRatio_R = 0.765;
                         m_compRatio_R = *(endEffectorData["Instrument"]
-                                                         ["CZQ"]["4MM"]["1"]
+                                                         [t_endEffectorInfoSplit_R[InstrumentType]]
+                                                         [t_endEffectorInfoSplit_R[InstrumentSize]]
+                                                         [t_endEffectorInfoSplit_R[InstrumentID]]
                                                          ["CompensationRatio"]["Value"].value<double>());
                         LOG(INFO) << "Load CompensationRatio Right = " << m_compRatio_R;
                     }
