@@ -153,9 +153,6 @@ void RobotControl::loadEndeffectorConfig()
                     {
                         //Encoder per Degree;
                         const toml::array& Arr_Tmp = *(endEffectorData["Instrument"]["CZQ"]["4MM"]["1"]
-                                                                      // ["CZQ"]
-                                                                      // ["3MM"]
-                                                                      // ["1"]
                                                                       ["EncoderPerDegree"]["Value"].as_array());
                         std::vector<double> encoderPerDegreeR;
                         encoderPerDegreeR.clear();
@@ -175,11 +172,9 @@ void RobotControl::loadEndeffectorConfig()
 
 
                         //Cable Compensation Ratio;
-                        m_compRatio_R = 0;
+                        m_compRatio_R = 0.765;
                         m_compRatio_R = *(endEffectorData["Instrument"]
-                                                         [t_endEffectorInfoSplit_R[InstrumentType]]
-                                                         [t_endEffectorInfoSplit_R[InstrumentSize]]
-                                                         [t_endEffectorInfoSplit_R[InstrumentID]]
+                                                         ["CZQ"]["4MM"]["1"]
                                                          ["CompensationRatio"]["Value"].value<double>());
                         LOG(INFO) << "Load CompensationRatio Right = " << m_compRatio_R;
                     }
@@ -1373,6 +1368,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     if(m_endeffectorConfiguration_R == EndeffectorConfiguration::fourMaxons){
 
         controlValueTmp_R[6] = -((delt_beta_R - delt_alpha_R * m_compRatio_R) - openAngle_R_new);
+        LOG(INFO)<<"轴6的角度是："<<delt_alpha_R<<":"<<delt_beta_R<<":"<<openAngle_R_new<<":"<<m_compRatio_R;
         controlValueTmp_R[7] = (delt_beta_R - delt_alpha_R * m_compRatio_R) + openAngle_R_new;
         controlValueTmp_R[8] = delt_alpha_R;
         controlValueTmp_R[9] = -delt_gamma_R;
