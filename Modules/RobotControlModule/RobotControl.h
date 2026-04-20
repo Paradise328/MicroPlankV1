@@ -141,12 +141,12 @@ public:
         m_isSystemTerminated(false),
         m_guidingArm1stOrder({0}),
         m_guidingArm2ndOrder({0}),
-        // m_endeffectorConfiguration(EndeffectorConfiguration::fourMaxons),
-        // m_endeffectorConfiguration_L(EndeffectorConfiguration::fourMaxons),
-        // m_endeffectorConfiguration_R(EndeffectorConfiguration::fourMaxons),
-        m_endeffectorConfiguration(EndeffectorConfiguration::sixMaxons),
-        m_endeffectorConfiguration_L(EndeffectorConfiguration::sixMaxons),
-        m_endeffectorConfiguration_R(EndeffectorConfiguration::sixMaxons),
+        m_endeffectorConfiguration(EndeffectorConfiguration::fourMaxons),
+        m_endeffectorConfiguration_L(EndeffectorConfiguration::fourMaxons),
+        m_endeffectorConfiguration_R(EndeffectorConfiguration::fourMaxons),
+        // m_endeffectorConfiguration(EndeffectorConfiguration::sixMaxons),
+        // m_endeffectorConfiguration_L(EndeffectorConfiguration::sixMaxons),
+        // m_endeffectorConfiguration_R(EndeffectorConfiguration::sixMaxons),
         m_filter_1storder_guiding(m_guidingArm1stOrder, 250.0, 60.0),
         m_filter_2ndorder_guiding(m_guidingArm2ndOrder, 250.0, 60.0)
     {
@@ -480,11 +480,11 @@ private:
     std::string                     m_configFilePath  = "/home/a/Desktop/codes/MikroPlanckV1/Config/EndeffectorData.toml";
     std::string                     m_robotConfigPath = "/home/a/Desktop/codes/MikroPlanckV1/Config/RobotData.toml";
 
-    // mutable std::string             m_endEffectorLeft   = "CZQ_4MM_1"; //在函數loadEndeffectorConfig()中改變器械的參數
-    // mutable std::string             m_endEffectorRight  = "CZQ_4MM_1";
+    mutable std::string             m_endEffectorLeft   = "CZQ_4MM_1"; //在函數loadEndeffectorConfig()中改變器械的參數
+    mutable std::string             m_endEffectorRight  = "CZQ_4MM_1";
 
-    mutable std::string             m_endEffectorLeft   = "CZQ_3MM_1";
-    mutable std::string             m_endEffectorRight  = "CZQ_3MM_1";
+    // mutable std::string             m_endEffectorLeft   = "CZQ_3MM_1";
+    // mutable std::string             m_endEffectorRight  = "CZQ_3MM_1";
 
     double                          m_initRotAroundY_L, m_initRotAroundX_L;  //Read From Toml
     double                          m_initRotAroundY_R, m_initRotAroundX_R;  //Read From Toml

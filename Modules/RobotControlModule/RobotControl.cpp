@@ -154,7 +154,7 @@ void RobotControl::loadEndeffectorConfig()
                         //Encoder per Degree;
                         const toml::array& Arr_Tmp = *(endEffectorData["Instrument"]/*["CZQ"]["4MM"]["1"]*/
                                                                       ["CZQ"]
-                                                                      ["3MM"]
+                                                                      ["4MM"]
                                                                       ["1"]
                                                                       ["EncoderPerDegree"]["Value"].as_array());
                         std::vector<double> encoderPerDegreeR;
@@ -584,7 +584,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 1: // 动作1：角度闭合（开合角负10度，俯仰角60度, 旋转轴顺时针70度）
             targetRoll  = 70.0;
             targetPitch = 60.0;
-            targetYaw   = 0.0;
+            targetYaw   = 0.0;//0.0
             targetDisp = 0.0;
             // if (rawTargetYaw > lastRawTargetYaw) {
             //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
@@ -606,7 +606,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 2: // 动作1：旋转轴逆时针140度（70 -> -70）
             targetRoll  = -70.0;
             targetPitch = 60.0;
-            targetYaw   = 0.0;
+            targetYaw   = 0.0;//0.0
             targetDisp = 0.0;
             // if (rawTargetYaw > lastRawTargetYaw) {
             //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
@@ -673,7 +673,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 5: // 动作2：回正（再闭合）
             targetRoll  = 0.0;
             targetPitch = 0.0;
-            targetYaw  = 0.0;
+            targetYaw  = 0.0;//0.0
             targetDisp = 0.0;
             // if (rawTargetYaw > lastRawTargetYaw) {
             //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
@@ -696,7 +696,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 6: // 动作3：角度闭合（开合角70度，俯仰角-60度, 旋转轴逆时针70度）
             targetRoll  = -70.0;
             targetPitch = -60.0;
-            targetYaw   = 0.0;
+            targetYaw   = 0.0;//0.0
             targetDisp = 0.0;
             // if (rawTargetYaw > lastRawTargetYaw) {
             //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
@@ -718,7 +718,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 7: // 动作3：旋转轴顺时针240度（-70 -> +70）
             targetRoll  = 70.0;
             targetPitch = -60.0;
-            targetYaw   = 0.0;
+            targetYaw   = 0.0;//0.0
             targetDisp = 0.0;
             // if (rawTargetYaw > lastRawTargetYaw) {
             //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
@@ -740,7 +740,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 8: // 动作4：回正（俯仰角回到0度，闭合）拍照
             targetRoll  = 0.0;
             targetPitch = 0.0;
-            targetYaw   = 0.0;
+            targetYaw   = 0.0;//0.0
             targetDisp = 0.0;
             // if (rawTargetYaw > lastRawTargetYaw) {
             //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
@@ -949,7 +949,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 16:
             targetRoll = 0.0;
             targetPitch = 0.0;
-            targetYaw = 0.0;
+            targetYaw = 0.0;//0.0
             targetDisp = 0.0;
 
             // if (rawTargetYaw > lastRawTargetYaw) {
@@ -1235,13 +1235,14 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
 
     handlePoseCur.handlePoseR_Roll      = RollAngle  / 180.0 * M_PI;//rotation角
     handlePoseCur.handlePoseR_Elevation = PitchAngle / 180.0 * M_PI;
-    // handlePoseCur.handlePoseR_Arzimuth  = YawAngle   / 180.0 * M_PI;//方位角。偏航角
+    handlePoseCur.handlePoseR_Arzimuth  = YawAngle   / 180.0 * M_PI;//方位角。偏航角
 
-    handlePoseCur.handlePoseR_OpenAngle = YawAngle / 180.0 * M_PI;
+    // handlePoseCur.handlePoseR_OpenAngle = YawAngle / 180.0 * M_PI;
 
     m_TargetRollAngle_pre  = handlePoseCur.handlePoseR_Roll;
     m_TargetPitchAngle_pre = handlePoseCur.handlePoseR_Elevation;
-    m_TargetYawAngle_pre   = handlePoseCur.handlePoseR_OpenAngle;
+    // m_TargetYawAngle_pre   = handlePoseCur.handlePoseR_OpenAngle;
+    m_TargetYawAngle_pre   = handlePoseCur.handlePoseR_Arzimuth;
 }
 
 // 辅助函数：限制角度增量
@@ -1332,15 +1333,22 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
 
     /* 计算单边 OpenAngle*/
     double openAngle_R = handlePoseCur.handlePoseR_OpenAngle;
+    // openAngle_R = 0;
     double openAngle_R_new;
 
     openAngle_R_new = calculateNewOpenangle(openAngle_R);
+    openAngle_R_new=0;
     // }
     /*计算 beta(yaw)*/
-    double beta_Org_R = m_handlePoseOrg_R.handlePoseR_OpenAngle;
-    double beta_Init_R = m_handlePoseInit_R.handlePoseR_OpenAngle;
-    double beta_Last_R = m_handlePoseLastLoop_R.handlePoseR_OpenAngle;
-    double beta_Cur_R = handlePoseCur.handlePoseR_OpenAngle;
+    // double beta_Org_R = m_handlePoseOrg_R.handlePoseR_OpenAngle;
+    // double beta_Init_R = m_handlePoseInit_R.handlePoseR_OpenAngle;
+    // double beta_Last_R = m_handlePoseLastLoop_R.handlePoseR_OpenAngle;
+    // double beta_Cur_R = handlePoseCur.handlePoseR_OpenAngle;
+
+    double beta_Org_R = m_handlePoseOrg_R.handlePoseR_Arzimuth;
+    double beta_Init_R = m_handlePoseInit_R.handlePoseR_Arzimuth;
+    double beta_Last_R = m_handlePoseLastLoop_R.handlePoseR_Arzimuth;
+    double beta_Cur_R = handlePoseCur.handlePoseR_Arzimuth;
 
     double delt_betaCur_R = (beta_Cur_R - beta_Init_R) * 180 / M_PI;
     double delt_betaInit_R = (beta_Init_R - beta_Last_R) * 180 / M_PI;
@@ -1349,7 +1357,6 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     m_delt_beta_R = delt_beta_R / 180 * M_PI;
 
     /*计算 yaw 的绳长变化*/
-
     double deltLength_beta_R_left_1 = cableLengths_3(delt_alpha_R, delt_beta_R, -openAngle_R_new);//七号电机
     double deltLength_beta_R_left_2 = cableLengths_3(delt_alpha_R, - delt_beta_R, openAngle_R_new);//六号电机
     double deltLength_beta_R_right_1 = cableLengths_3(-delt_alpha_R, delt_beta_R, openAngle_R_new);//五号电机
@@ -1370,7 +1377,7 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     // /*4轴器械*/
     if(m_endeffectorConfiguration_R == EndeffectorConfiguration::fourMaxons){
 
-        controlValueTmp_R[6] = -((delt_beta_R - delt_alpha_R * m_compRatio_R) - openAngle_R_new);
+        controlValueTmp_R[6] = -((delt_beta_R - delt_alpha_R * m_compRatio_R)- openAngle_R_new);
         controlValueTmp_R[7] = (delt_beta_R - delt_alpha_R * m_compRatio_R) + openAngle_R_new;
         controlValueTmp_R[8] = delt_alpha_R;
         controlValueTmp_R[9] = -delt_gamma_R;
@@ -1395,7 +1402,6 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     controlValueTmp_R[10] = m_moonsTargetDisp;
     controlValueTmp_R[11] = handlePoseCur.graspIndex_R;
 
-
     return controlValueTmp_R;
 }
 
@@ -1403,28 +1409,31 @@ double RobotControl::calculateNewOpenangle(double masterOpenangle){
     double newOpenangle;
 
     if(m_endeffectorConfiguration_R == EndeffectorConfiguration::fourMaxons){
-        if(masterOpenangle < -3){
-            // newOpenangle = masterOpenangle * 0.9286 + 1.286;/*-8*/
-            // newOpenangle = masterOpenangle * 1.2143 + 2.1428;/*-10*/
-            newOpenangle = masterOpenangle * 1.5 + 3;/*-12*/
-        }else if(masterOpenangle >= -3 && masterOpenangle< 7){
-            newOpenangle = 0.5 * masterOpenangle;
-        }else if(masterOpenangle >= 7){
-            // newOpenangle =  masterOpenangle * 1.269 - 5.3846;
-            newOpenangle =  masterOpenangle * masterOpenangle * 0.0592 - 0.2988 * masterOpenangle + 2.6908;
-        }
+        // if(masterOpenangle < -3){
+        //     // newOpenangle = masterOpenangle * 0.9286 + 1.286;/*-8*/
+        //     // newOpenangle = masterOpenangle * 1.2143 + 2.1428;/*-10*/
+        //     newOpenangle = masterOpenangle * 1.5 + 3;/*-12*/
+        // }else if(masterOpenangle >= -3 && masterOpenangle< 7){
+        //     newOpenangle = 0.5 * masterOpenangle;
+        // }else if(masterOpenangle >= 7){
+        //     // newOpenangle =  masterOpenangle * 1.269 - 5.3846;
+        //     newOpenangle =  masterOpenangle * masterOpenangle * 0.0592 - 0.2988 * masterOpenangle + 2.6908;
+        // }
+        newOpenangle = (masterOpenangle < 0) ? 0.018 * pow(masterOpenangle, 3)/2 : pow(masterOpenangle, 3)/600/2;
+
     }
 
 
     if(m_endeffectorConfiguration_R == EndeffectorConfiguration::sixMaxons){
-        if(masterOpenangle < -3){
-            newOpenangle = masterOpenangle * 3.8575 + 8.5714;//8.5714
-        }else if(masterOpenangle >= -3 && masterOpenangle< 7){
-            newOpenangle = 1.0 * masterOpenangle;
-        }else if(masterOpenangle >= 7){
-            newOpenangle =  masterOpenangle * 1.6429 - 4.5;//4.5
+        // if(masterOpenangle < -3){
+        //     newOpenangle = masterOpenangle * 3.8575 + 8.5714;//8.5714
+        // }else if(masterOpenangle >= -3 && masterOpenangle< 7){
+        //     newOpenangle = 1.0 * masterOpenangle;
+        // }else if(masterOpenangle >= 7){
+        //     newOpenangle =  masterOpenangle * 1.6429 - 4.5;//4.5
 
-        }
+        // }
+        newOpenangle = (masterOpenangle < 0) ? 0.018 * pow(masterOpenangle, 3) : pow(masterOpenangle, 3)/600;
     }
 
 
@@ -1575,6 +1584,8 @@ std::array<int, MotorNumPerSide> RobotControl::calculateTargetEncoder(const std:
             {
                 // targetEncoder[i] = static_cast<int>(controlValue_Cur[i] * m_kForcepPosition_small_R[13 - i]);//m_encoderPerDegree_6maxon_L
                 targetEncoder[i] = static_cast<int>(controlValue_Cur[i] * m_encoderPerDegree_6maxon_R[i - 4]);
+
+                // targetEncoder[i] = static_cast<int>(controlValue_Cur[i] * m_kForcepPosition_small_R[i - 4]);
             }
             targetEncoder[10] = m_moonsHomeOffsetPulses + static_cast<int>(controlValue_Cur[10] * 10000.0);
         }
@@ -1587,7 +1598,7 @@ std::array<int, MotorNumPerSide> RobotControl::calculateTargetEncoder(const std:
             targetEncoder[6]=static_cast<int>(controlValue_Cur[6]*m_encoderPerDegree_R[0]);
             targetEncoder[10] = m_moonsHomeOffsetPulses + static_cast<int>(controlValue_Cur[10] * 10000.0);
         }
-
+// LOG(INFO)<<std::dec<<"m_encoderPerDegree_6maxon_R: "<<m_encoderPerDegree_6maxon_R<<" targetEncoder5: "<<targetEncoder[5];
 
     }
     return targetEncoder;
@@ -2024,10 +2035,10 @@ void RobotControl::MaxonGoHome_(const char& side)//yu
             int32_t moonsTargetPos = m_motorDriver->getActualPos(MotorType::MOONS, 0, arm_0);
 
             // B. 设置初始目标为当前位置 (防止猛冲)
-            m_motorDriver->setTargetPos(MotorType::MOONS, 0, moonsTargetPos, arm_0);
+            // m_motorDriver->setTargetPos(MotorType::MOONS, 0, moonsTargetPos, arm_0);
 
             // C. 切换到 CSP 模式 (位置控制模式)
-            m_motorDriver->operationCSP(MotorType::MOONS, 0, arm_0);
+            // m_motorDriver->operationCSP(MotorType::MOONS, 0, arm_0);
 
             // LOG(INFO) << "Start Right Arm Homing! Moons Init Pos: " << moonsTargetPos;
 
@@ -2060,32 +2071,32 @@ void RobotControl::MaxonGoHome_(const char& side)//yu
 
                 // 【核心逻辑】手动控制 Moons 往后转
 
-                if(!isMoonsSensorTriggered)
-                {
-                    // 还没到位 -> 目标位置减小 (往后退)
-                    moonsTargetPos -= stepSize;
-                    // LOG(INFO) << "实时脉冲 " << moonsTargetPos;
+                // if(!isMoonsSensorTriggered)
+                // {
+                //     // 还没到位 -> 目标位置减小 (往后退)
+                //     moonsTargetPos -= stepSize;
+                //     // LOG(INFO) << "实时脉冲 " << moonsTargetPos;
 
-                    // 发送新的目标位置
-                    m_motorDriver->setTargetPos(MotorType::MOONS, 0, moonsTargetPos, arm_0);
+                //     // 发送新的目标位置
+                //     m_motorDriver->setTargetPos(MotorType::MOONS, 0, moonsTargetPos, arm_0);
 
-                }
-                else
-                {
-                    // 撞到了 (== false) -> 保持当前位置不动
-                    // 不再减小 moonsTargetPos，只是重复发送当前值让它锁住
-                    m_motorDriver->setTargetPos(MotorType::MOONS, 0, moonsTargetPos, arm_0);
+                // }
+                // else
+                // {
+                //     // 撞到了 (== false) -> 保持当前位置不动
+                //     // 不再减小 moonsTargetPos，只是重复发送当前值让它锁住
+                //     m_motorDriver->setTargetPos(MotorType::MOONS, 0, moonsTargetPos, arm_0);
 
-                    // 可以在这里清零编码器偏移量 (逻辑上的清零)
-                    // 但物理上先让它停住
-                }
+                //     // 可以在这里清零编码器偏移量 (逻辑上的清零)
+                //     // 但物理上先让它停住
+                // }
 
                 // --- 全部完成判断 ---
-                if(isMaxonReady && isMoonsSensorTriggered)
+                if(isMaxonReady/* && isMoonsSensorTriggered*/)
                 {
                     // 1. 记录归零完成时的编码器绝对值（脉冲）
                     // 假设这时候 moonsTargetPos 是 -97012 (这就是你的机械零点)
-                    m_moonsHomeOffsetPulses = moonsTargetPos;
+                    // m_moonsHomeOffsetPulses = moonsTargetPos;
 
                     // 2. 将控制目标重置为 0.0 (毫米)
                     m_moonsTargetDisp = 0.0;
