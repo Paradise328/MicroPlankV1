@@ -735,8 +735,8 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             break;
 
         case 1: // 动作1：角度闭合（开合角负10度，俯仰角60度, 旋转轴顺时针70度）
-            targetRoll  = 70.0;
-            targetPitch = 60.0;
+            targetRoll  = 60.0;
+            targetPitch = 50.0;
             targetYaw   = -5.0;
             targetDisp = 0.0;
             LOG(INFO)<<"进入循环1";
@@ -747,8 +747,8 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             break;
 
         case 2: // 动作1：旋转轴逆时针140度（70 -> -70）
-            targetRoll  = -70.0;
-            targetPitch = 60.0;
+            targetRoll  = -60.0;
+            targetPitch = 50.0;
             targetYaw   = -5.0;
             targetDisp = 0.0;
             LOG(INFO)<<"进入循环2";
@@ -796,8 +796,8 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             break;
 
         case 6: // 动作3：角度闭合（开合角70度，俯仰角-60度, 旋转轴逆时针70度）
-            targetRoll  = -70.0;
-            targetPitch = -60.0;
+            targetRoll  = -60.0;
+            targetPitch = -50.0;
             targetYaw   = -5.0;
             targetDisp = 0.0;
              LOG(INFO)<<"进入循环6";
@@ -808,9 +808,9 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             break;
 
         case 7: // 动作3：旋转轴顺时针240度（-70 -> +70）
-            targetRoll  = 70.0;
-            targetPitch = -60.0;
-            targetYaw   = -5.0;
+            targetRoll  = 60.0;
+            targetPitch = -50.0;
+            targetYaw   = 0.0;
             targetDisp = 0.0;
              LOG(INFO)<<"进入循环7";
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
