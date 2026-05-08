@@ -624,7 +624,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
     // LOG(INFO) << "targetPose is running in Thread ID: " << std::this_thread::get_id();
     static int actionStep = 0;           // 动作步骤 0~14
     static int setCounter = 1;
-
+    static bool isHoldTimerStarted = false;
     static double lastRawTargetYaw = 0.0;
 
     // 【新增 1】定义静态变量存储零点偏移量
@@ -639,8 +639,9 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
 
     // 如果刚刚调用了 startMotionLoop / startMotionDuration，可以用这个标志重置状态机
     if (m_resetRequested) {
-        actionStep     = 0;
+        actionStep     = -1;
         setCounter     = 1;
+        isHoldTimerStarted = false;
         lastRawTargetYaw = 0.0;
         m_moonsTargetDisp = 0.0;
         m_TargetRollAngle_pre  = 0.0;
@@ -720,6 +721,50 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
     else{
     switch(actionStep)
     {
+        case -1:
+        {
+            targetRoll  = 0.0;
+            targetPitch = 0.0;
+            targetYaw   = 30.0; // 目标偏航角设为 30
+            targetDisp  = 0.0;
+
+            static std::chrono::steady_clock::time_point holdStartTime;
+
+            // 首先判断电机是否已经转到了 30 度
+            if (reachTarget(currentRoll, currentPitch, currentYaw, currentDisp,
+                            targetRoll, targetPitch, targetYaw, targetDisp))
+            {
+                // 如果到位了，且还没开始计时，则记录当前时间
+                if (!isHoldTimerStarted) {
+                    holdStartTime = std::chrono::steady_clock::now();
+                    isHoldTimerStarted = true;
+                    LOG(INFO) << "✅ 已到达 30 度，开始 30 秒倒计时...";
+                }
+
+                // 检查是否经过了 30 秒
+                auto now = std::chrono::steady_clock::now();
+                double elapsedHold = std::chrono::duration<double>(now - holdStartTime).count();
+
+                // 每隔 5 秒打印一次倒计时进度 (可选，方便调试)
+                static int logCounter = 0;
+                if (logCounter++ % 1000 == 0) { // 假设循环是 5ms，1000次大概是5秒
+                    LOG(INFO) << "⏳ 保持中... 已过 " << elapsedHold << " 秒";
+                }
+
+                // 如果时间到了 30 秒
+                if (elapsedHold >= 30.0) {
+                    LOG(INFO) << "🎉 30 秒保持结束！正式开始循环动作！";
+                    isHoldTimerStarted = false; // 恢复标志位
+                    actionStep = 0;             // 进入正常的 case 0 循环
+                }
+            }
+            else
+            {
+                // 如果还在前往 30 度的路上，确保计时器不会被提前触发
+                isHoldTimerStarted = false;
+            }
+            break;
+        }
         case 0: // 初始状态
             targetRoll  = 0.0;
             targetPitch = 0.0;
