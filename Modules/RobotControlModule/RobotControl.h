@@ -214,7 +214,7 @@ private:
     int32_t                         m_moonsHomeOffsetPulses = 0; // 初始化为0
     const int COLLISION_CURRENT_THRESHOLD = 1000;// 【新增】碰撞电流阈值 (需要根据实际情况调试) 假设单位是 mA 或者 0.1% 额定电流。先设一个保护值，测出来正常运动是多少后再调整。
 
-
+    double                          m_open = 0;
 
     /*消息队列相关函数*/
     MessageQueue                    &m_messagePool;
