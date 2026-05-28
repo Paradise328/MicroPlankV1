@@ -741,98 +741,100 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             if (reachTarget(currentRoll, currentPitch, currentYaw, currentDisp,
                             targetRoll, targetPitch, targetYaw, targetDisp)) {
                 lastRawTargetYaw = rawTargetYaw;
-                actionStep = 1;
-            }
-            break;
 
-        case 1: // 动作1：角度闭合（开合角负10度，俯仰角60度, 旋转轴顺时针70度）
-            targetRoll  = 60.0;
-            targetPitch = 50.0;
-            targetYaw   = 0.0;
-            targetDisp  = 0.0;
-            // if (rawTargetYaw > lastRawTargetYaw) {
-            //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-            //     lastRawTargetYawact = targetYaw;
-            // } else if(rawTargetYaw < lastRawTargetYaw){
-            //     targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
-            //     lastRawTargetYawact = targetYaw;
-            // }else{
-            //     targetYaw = lastRawTargetYawact;
-            // }
-            // LOG(INFO)<<"进入循环1";
-            if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
-                            targetRoll, targetPitch, targetYaw,targetDisp)) {
-                lastRawTargetYaw = rawTargetYaw;
-                actionStep = 2;
-            }
-            break;
 
-        case 2: // 动作1：旋转轴逆时针140度（70 -> -70）
-            targetRoll  = -60.0;
-            targetPitch = 50.0;
-            targetYaw   = 0.0;
-            targetDisp  = 0.0;
-            // if (rawTargetYaw > lastRawTargetYaw) {
-            //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-            //     lastRawTargetYawact = targetYaw;
-            // } else if(rawTargetYaw < lastRawTargetYaw){
-            //     targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
-            //     lastRawTargetYawact = targetYaw;
-            // }else{
-            //     targetYaw = lastRawTargetYawact;
-            // }
-            // LOG(INFO)<<"进入循环2";
-            if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
-                            targetRoll, targetPitch, targetYaw,targetDisp)) {
-                lastRawTargetYaw = rawTargetYaw;
-                actionStep = 3;
-            }
-            break;
-
-        case 3: // 动作2：回正（俯仰角回到0度，开合闭合）
-            targetRoll  = -60.0;
-            targetPitch = -50.0;
-            targetYaw   = 0.0;
-            targetDisp  = 0.0;
-            // if (rawTargetYaw > lastRawTargetYaw) {
-            //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-            //     lastRawTargetYawact = targetYaw;
-            // } else if(rawTargetYaw < lastRawTargetYaw){
-            //     targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
-            //     lastRawTargetYawact = targetYaw;
-            // }else{
-            //     targetYaw = lastRawTargetYawact;
-            // }
-            // LOG(INFO)<<"进入循环3";
-            if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
-                            targetRoll, targetPitch, targetYaw,targetDisp)) {
-                lastRawTargetYaw = rawTargetYaw;
-
-                actionStep = 4;
-            }
-            break;
-
-        case 4: // 动作2：左右钳头开合30度（开合角到70度）
-            targetRoll  = 60.0;
-            targetPitch = -50.0;
-            targetYaw   = 0.0;
-            targetDisp  = 0.0;
-            // if (rawTargetYaw > lastRawTargetYaw) {
-            //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-            //     lastRawTargetYawact = targetYaw;
-            // } else if(rawTargetYaw < lastRawTargetYaw){
-            //     targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
-            //     lastRawTargetYawact = targetYaw;
-            // }else{
-            //     targetYaw = lastRawTargetYawact;
-            // }
-            // LOG(INFO)<<"进入循环4";
-            if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
-                            targetRoll, targetPitch, targetYaw,targetDisp)) {
-                lastRawTargetYaw = rawTargetYaw;
                 actionStep = 5;
             }
             break;
+
+        // case 1: // 动作1：角度闭合（开合角负10度，俯仰角60度, 旋转轴顺时针70度）
+        //     targetRoll  = 60.0;
+        //     targetPitch = 50.0;
+        //     targetYaw   = 0.0;
+        //     targetDisp  = 0.0;
+        //     // if (rawTargetYaw > lastRawTargetYaw) {
+        //     //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+        //     //     lastRawTargetYawact = targetYaw;
+        //     // } else if(rawTargetYaw < lastRawTargetYaw){
+        //     //     targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
+        //     //     lastRawTargetYawact = targetYaw;
+        //     // }else{
+        //     //     targetYaw = lastRawTargetYawact;
+        //     // }
+        //     // LOG(INFO)<<"进入循环1";
+        //     if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
+        //                     targetRoll, targetPitch, targetYaw,targetDisp)) {
+        //         lastRawTargetYaw = rawTargetYaw;
+        //         actionStep = 2;
+        //     }
+        //     break;
+
+        // case 2: // 动作1：旋转轴逆时针140度（70 -> -70）
+        //     targetRoll  = -60.0;
+        //     targetPitch = 50.0;
+        //     targetYaw   = 0.0;
+        //     targetDisp  = 0.0;
+        //     // if (rawTargetYaw > lastRawTargetYaw) {
+        //     //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+        //     //     lastRawTargetYawact = targetYaw;
+        //     // } else if(rawTargetYaw < lastRawTargetYaw){
+        //     //     targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
+        //     //     lastRawTargetYawact = targetYaw;
+        //     // }else{
+        //     //     targetYaw = lastRawTargetYawact;
+        //     // }
+        //     // LOG(INFO)<<"进入循环2";
+        //     if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
+        //                     targetRoll, targetPitch, targetYaw,targetDisp)) {
+        //         lastRawTargetYaw = rawTargetYaw;
+        //         actionStep = 3;
+        //     }
+        //     break;
+
+        // case 3: // 动作2：回正（俯仰角回到0度，开合闭合）
+        //     targetRoll  = -60.0;
+        //     targetPitch = -50.0;
+        //     targetYaw   = 0.0;
+        //     targetDisp  = 0.0;
+        //     // if (rawTargetYaw > lastRawTargetYaw) {
+        //     //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+        //     //     lastRawTargetYawact = targetYaw;
+        //     // } else if(rawTargetYaw < lastRawTargetYaw){
+        //     //     targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
+        //     //     lastRawTargetYawact = targetYaw;
+        //     // }else{
+        //     //     targetYaw = lastRawTargetYawact;
+        //     // }
+        //     // LOG(INFO)<<"进入循环3";
+        //     if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
+        //                     targetRoll, targetPitch, targetYaw,targetDisp)) {
+        //         lastRawTargetYaw = rawTargetYaw;
+
+        //         actionStep = 4;
+        //     }
+        //     break;
+
+        // case 4: // 动作2：左右钳头开合30度（开合角到70度）
+        //     targetRoll  = 60.0;
+        //     targetPitch = -50.0;
+        //     targetYaw   = 0.0;
+        //     targetDisp  = 0.0;
+        //     // if (rawTargetYaw > lastRawTargetYaw) {
+        //     //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
+        //     //     lastRawTargetYawact = targetYaw;
+        //     // } else if(rawTargetYaw < lastRawTargetYaw){
+        //     //     targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
+        //     //     lastRawTargetYawact = targetYaw;
+        //     // }else{
+        //     //     targetYaw = lastRawTargetYawact;
+        //     // }
+        //     // LOG(INFO)<<"进入循环4";
+        //     if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
+        //                     targetRoll, targetPitch, targetYaw,targetDisp)) {
+        //         lastRawTargetYaw = rawTargetYaw;
+        //         actionStep = 5;
+        //     }
+        //     break;
 
         // case 5: // 动作2：回正（再闭合）
         //     targetRoll  = 0.0;
@@ -1123,6 +1125,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             if (m_pressureSensor) {
                 curP1 = m_pressureSensor->getLatestPressure_1();
                 curP2 = m_pressureSensor->getLatestPressure_2();
+                             // LOG(INFO) <<  " Net1:" << curP1 << " Net2:" << curP2;
             }
 
             double net1 = std::abs(curP1 - s_zero1);
@@ -1184,6 +1187,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             if(reachTarget(currentRoll, currentPitch, currentYaw, currentDisp,
                             targetRoll, targetPitch, targetYaw, targetDisp))
             {
+
                 // ⏱️ 静态计时变量
                 static std::chrono::steady_clock::time_point holdStartTime;
                 static bool isTimerStarted = false;
