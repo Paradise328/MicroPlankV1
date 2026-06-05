@@ -1180,7 +1180,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         {
             targetRoll = 0.0;
             targetPitch = 0.0;
-            targetYaw = -8.0;
+            targetYaw = -10.0;
             targetDisp = 4.9;
 
             // 检查运动是否到位
