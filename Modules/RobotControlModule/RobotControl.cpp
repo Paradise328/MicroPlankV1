@@ -743,7 +743,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 lastRawTargetYaw = rawTargetYaw;
 
 
-                actionStep = 1;
+                actionStep = 5;
             }
             break;
 
@@ -836,283 +836,6 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             }
             break;
 
-        // case 5: // 动作2：回正（再闭合）
-        //     targetRoll  = 0.0;
-        //     targetPitch = 0.0;
-        //     targetYaw   = 0.0;
-        //     targetDisp  = 0.0;
-        //     // if (rawTargetYaw > lastRawTargetYaw) {
-        //     //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-        //     //     lastRawTargetYawact = targetYaw;
-        //     // } else if(rawTargetYaw < lastRawTargetYaw){
-        //     //     targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
-        //     //     lastRawTargetYawact = targetYaw;
-        //     // }else{
-        //     //     targetYaw = lastRawTargetYawact;
-        //     // }
-        //     // LOG(INFO)<<"进入循环5";
-        //     if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
-        //                     targetRoll, targetPitch, targetYaw,targetDisp)) {
-        //         lastRawTargetYaw = rawTargetYaw;
-
-        //         actionStep = 6;
-        //     }
-        //     break;
-
-        // case 6: // 动作3：角度闭合（开合角70度，俯仰角-60度, 旋转轴逆时针70度）
-        //     targetRoll  = 0.0;
-        //     targetPitch = 0.0;
-        //     targetYaw   = 30.0;
-        //     targetDisp  = 0.0;
-        //     // if (rawTargetYaw > lastRawTargetYaw) {
-        //     //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-        //     //     lastRawTargetYawact = targetYaw;
-        //     // } else if(rawTargetYaw < lastRawTargetYaw){
-        //     //     targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
-        //     //     lastRawTargetYawact = targetYaw;
-        //     // }else{
-        //     //     targetYaw = lastRawTargetYawact;
-        //     // }
-        //     // LOG(INFO)<<"进入循环6";
-        //     if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
-        //                     targetRoll, targetPitch, targetYaw,targetDisp)) {
-        //         lastRawTargetYaw = rawTargetYaw;
-        //         actionStep = 7;
-        //     }
-        //     break;
-
-        // case 7: // 动作3：旋转轴顺时针240度（-70 -> +70）
-        //     targetRoll  = 0.0;
-        //     targetPitch = 0.0;
-        //     targetYaw   = 0.0;
-        //     targetDisp  = 0.0;
-        //     // if (rawTargetYaw > lastRawTargetYaw) {
-        //     //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-        //     //     lastRawTargetYawact = targetYaw;
-        //     // } else if(rawTargetYaw < lastRawTargetYaw){
-        //     //     targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
-        //     //     lastRawTargetYawact = targetYaw;
-        //     // }else{
-        //     //     targetYaw = lastRawTargetYawact;
-        //     // }
-        //     // LOG(INFO)<<"进入循环7";
-        //     if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
-        //                     targetRoll, targetPitch, targetYaw,targetDisp)) {
-        //         lastRawTargetYaw = rawTargetYaw;
-        //         actionStep = 8;
-        //     }
-        //     break;
-
-        // // case 8: // 动作4：回正（俯仰角回到0度，闭合）拍照
-        // //     targetRoll  = 0.0;
-        // //     targetPitch = 0.0;
-        // //     targetYaw   = 20.0;
-        // //     targetDisp  = 0.0;
-        // //     // if (rawTargetYaw > lastRawTargetYaw) {
-        // //     //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-        // //     //     lastRawTargetYawact = targetYaw;
-        // //     // } else if(rawTargetYaw < lastRawTargetYaw){
-        // //     //     targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
-        // //     //     lastRawTargetYawact = targetYaw;
-        // //     // }else{
-        // //     //     targetYaw = lastRawTargetYawact;
-        // //     // }
-        // //     // LOG(INFO)<<"进入循环8";
-        // //     if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
-        // //                     targetRoll, targetPitch, targetYaw,targetDisp)) {
-        // //         lastRawTargetYaw = rawTargetYaw;
-
-        // //         triggerPhoto("Step8_0度", targetYaw);
-
-        // //         actionStep = 9;
-        // //     }
-
-
-        // //     break;
-
-        // // case 9: // 动作4：左右钳头开合10度，拍照
-        // //     targetRoll  = 0.0;
-        // //     targetPitch = 0.0;
-        // //     targetYaw   = 10.0; // 【名义目标】可随机输入
-        // //     targetDisp  = 0.0;
-        // //     // 【动态判断逻辑】
-        // //     // if (rawTargetYaw > lastRawTargetYaw) {
-        // //     //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-        // //     //     lastRawTargetYawact = targetYaw;
-        // //     // } else if(rawTargetYaw < lastRawTargetYaw){
-        // //     //     targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
-        // //     //     lastRawTargetYawact = targetYaw;
-        // //     // }else{
-        // //     //     targetYaw = lastRawTargetYawact;
-        // //     // }
-        // //     // LOG(INFO)<<"进入循环9";
-        // //     if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
-        // //                     targetRoll, targetPitch, targetYaw,targetDisp)) {
-
-
-        // //         triggerPhoto("Step9_10度", targetYaw);
-
-        // //         lastRawTargetYaw = rawTargetYaw;
-        // //         actionStep = 10;
-        // //     }
-        // //     break;
-
-        // // case 10://新动作5 继续张开20度，拍照
-        // //     targetRoll  = 0.0;
-        // //     targetPitch = 0.0;
-        // //     targetYaw   = 20.0; // 【名义目标】
-        // //     targetDisp  = 0.0;
-        // //     // 【动态判断逻辑】
-        // //     // if (rawTargetYaw > lastRawTargetYaw) {
-        // //     //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-        // //     //     lastRawTargetYawact = targetYaw;
-        // //     // } else if(rawTargetYaw < lastRawTargetYaw){
-        // //     //     targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
-        // //     //     lastRawTargetYawact = targetYaw;
-        // //     // }else{
-        // //     //     targetYaw = lastRawTargetYawact;
-        // //     // }
-        // //     // LOG(INFO)<<"进入循环10";
-        // //     if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
-        // //                     targetRoll, targetPitch, targetYaw,targetDisp)){
-
-
-        // //         triggerPhoto("Step10_20度", targetYaw);
-
-        // //         lastRawTargetYaw = rawTargetYaw;
-        // //         actionStep = 11;
-        // //     }
-        // //     break;
-        // // case 11://新动作 到30度，拍照
-        // //     targetRoll  = 0.0;
-        // //     targetPitch = 0.0;
-        // //     targetYaw = 30.0; // 【名义目标】
-        // //     targetDisp = 0.0;
-        // //     // 【动态判断逻辑】
-        // //     // if (rawTargetYaw > lastRawTargetYaw) {
-        // //     //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-        // //     //     lastRawTargetYawact = targetYaw;
-        // //     // } else if(rawTargetYaw < lastRawTargetYaw){
-        // //     //     targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
-        // //     //     lastRawTargetYawact = targetYaw;
-        // //     // }else{
-        // //     //     targetYaw = lastRawTargetYawact;
-        // //     // }
-        // //     // LOG(INFO)<<"进入循环11";
-        // //     if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
-        // //                     targetRoll, targetPitch, targetYaw,targetDisp)){
-
-        // //         triggerPhoto("Step11_30度", targetYaw);
-
-        // //         lastRawTargetYaw = rawTargetYaw;
-        // //         actionStep = 12;
-        // //     }
-        // //     break;
-
-        // // case 12://新动作 回到45度，拍照
-        // //     targetRoll  = 0.0;
-        // //     targetPitch = 0.0;
-        // //     targetYaw = 45.0; // 【名义目标】
-        // //     targetDisp = 0.0;
-        // //     // 【动态判断逻辑】
-        // //     // if (rawTargetYaw > lastRawTargetYaw) {
-        // //     //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-        // //     //     lastRawTargetYawact = targetYaw;
-        // //     // } else if(rawTargetYaw < lastRawTargetYaw){
-        // //     //     targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
-        // //     //     lastRawTargetYawact = targetYaw;
-        // //     // }else{
-        // //     //     targetYaw = lastRawTargetYawact;
-        // //     // }
-        // //     // LOG(INFO)<<"进入循环12";
-        // //     if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
-        // //                     targetRoll, targetPitch, targetYaw,targetDisp)){
-
-        // //         triggerPhoto("Step12_45度", targetYaw);
-
-        // //         lastRawTargetYaw = rawTargetYaw;
-        // //         actionStep = 13;
-        // //     }
-        // //     break;
-
-        // // case 13://新动作 回到30度，拍照
-        // //     targetRoll  = 0.0;
-        // //     targetPitch = 0.0;
-        // //     targetYaw = 30.0; // 【名义目标】
-        // //     targetDisp = 0.0;
-        // //     // 【动态判断逻辑】
-        // //     // if (rawTargetYaw > lastRawTargetYaw) {
-        // //     //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-        // //     //     lastRawTargetYawact = targetYaw;
-        // //     // } else if(rawTargetYaw < lastRawTargetYaw){
-        // //     //     targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
-        // //     //     lastRawTargetYawact = targetYaw;
-        // //     // }else{
-        // //     //     targetYaw = lastRawTargetYawact;
-        // //     // }
-        // //     // LOG(INFO)<<"进入循环13";
-        // //     if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
-        // //                     targetRoll, targetPitch, targetYaw,targetDisp)){
-
-        // //         triggerPhoto("Step13_30度", targetYaw);
-
-        // //         lastRawTargetYaw = rawTargetYaw;
-        // //         actionStep = 14;
-        // //     }
-        // //     break;
-
-        // // case 14:
-        // //     targetRoll = 0.0;
-        // //     targetPitch = 0.0;
-        // //     targetYaw = 20.0;
-        // //     targetDisp = 0.0;
-
-        // //     // if (rawTargetYaw > lastRawTargetYaw) {
-        // //     //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-        // //     //     lastRawTargetYawact = targetYaw;
-        // //     // } else if(rawTargetYaw < lastRawTargetYaw){
-        // //     //     targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
-        // //     //     lastRawTargetYawact = targetYaw;
-        // //     // }else{
-        // //     //     targetYaw = lastRawTargetYawact;
-        // //     // }
-        // //     // LOG(INFO)<<"进入循环14";
-        // //     if(reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
-        // //                     targetRoll, targetPitch, targetYaw,targetDisp)){
-
-        // //         triggerPhoto("Step14_20度", targetYaw);
-
-        // //         lastRawTargetYaw = rawTargetYaw;
-        // //         actionStep = 15;
-        // //     }
-        // //     break;
-
-        // // case 15:
-        // //     targetRoll = 0.0;
-        // //     targetPitch = 0.0;
-        // //     targetYaw = 10.0;
-        // //     targetDisp = 0.0;
-
-        // //     // if (rawTargetYaw > lastRawTargetYaw) {
-        // //     //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
-        // //     //     lastRawTargetYawact = targetYaw;
-        // //     // } else if(rawTargetYaw < lastRawTargetYaw){
-        // //     //     targetYaw = rawTargetYaw - 6.0; // 变小 -> 减5度
-        // //     //     lastRawTargetYawact = targetYaw;
-        // //     // }else{
-        // //     //     targetYaw = lastRawTargetYawact;
-        // //     // }
-        // //     // LOG(INFO)<<"进入循环15";
-        // //     if(reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
-        // //                     targetRoll, targetPitch, targetYaw,targetDisp)){
-
-        // //         triggerPhoto("Step15_10度", targetYaw);
-
-        // //         lastRawTargetYaw = rawTargetYaw;
-        // //         actionStep = 16;
-        // //     }
-        // //     break;
-
         case 5: // 推进并检测碰撞
         {
             targetRoll = 0.0;
@@ -1180,7 +903,13 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         {
             targetRoll = 0.0;
             targetPitch = 0.0;
-            targetYaw = -10.0;
+            double calculatedYaw = -3.0 - ((setCounter - 1) / 6) * 1.0;
+            // 限制极值，最大减到 -14.0 为止
+            if (calculatedYaw < -14.0) {
+                calculatedYaw = -14.0;
+            }
+            targetYaw = calculatedYaw;
+            // targetYaw = -10.0;
             targetDisp = 4.9;
 
             // 检查运动是否到位
@@ -1196,7 +925,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 if (!isTimerStarted) {
                     holdStartTime = std::chrono::steady_clock::now();
                     isTimerStarted = true;
-                    LOG(INFO) << "[Case 2] 运动已到位，开始 5 秒静止等待...";
+                    LOG(INFO) <<"当前Yaw值:（"<< targetYaw << "） [Case 2] 运动已到位，开始 5 秒静止等待...";
                 }
 
                 // 2. 计算当前已经保持了多少秒
@@ -1236,7 +965,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                                 << netForce_1 << ","
                                 << netForce_2 << "\n";
                         outfile.close();
-                        LOG(INFO) << "记录数据 [Cycle " << setCounter << "]: Total:" << finalNetPressure
+                        LOG(INFO) << std::dec <<"记录数据 [Cycle " << setCounter << "]: Total:" << finalNetPressure
                                   << " Net1:" << netForce_1 << " Net2:" << netForce_2;
                     } else {
                         LOG(ERROR) << "写入数据失败: " << s_currentCsvPath;
