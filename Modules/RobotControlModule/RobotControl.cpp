@@ -910,7 +910,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 calculatedYaw = -14.0;
             }
             targetYaw = calculatedYaw;
-            // targetYaw = -10.0;
+            // targetYaw = -9.0;
             targetDisp = 4.9;
 
             // 检查运动是否到位
@@ -952,7 +952,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                         LOG(WARNING) << "⚠️ 压力传感器未连接！";
                     }
 
-                    double netForce_1 = (currentForce_1 - s_zero1) / 0.18;
+                    double netForce_1 = (currentForce_1 - s_zero1) / 0.16;
                     double netForce_2 = (currentForce_2 - s_zero2) / 0.67;
                     double finalNetPressure = netForce_1 + netForce_2;
 
