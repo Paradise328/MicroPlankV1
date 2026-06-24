@@ -904,13 +904,13 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             targetRoll = 0.0;
             targetPitch = 0.0;
 
-            double calculatedYaw = -3.0 - ((setCounter-1)/6)*1.0;
-            // 限制极值，最大减到 -14.0 为止
-            if (calculatedYaw < -14.0) {
-                calculatedYaw = -14.0;
-            }
-            targetYaw = calculatedYaw;
-            // targetYaw = -9.0;
+            // double calculatedYaw = -3.0 - ((setCounter-1)/6)*1.0;
+            // // 限制极值，最大减到 -14.0 为止
+            // if (calculatedYaw < -14.0) {
+            //     calculatedYaw = -14.0;
+            // }
+            // targetYaw = calculatedYaw;
+            targetYaw = -10.0;
             targetDisp = 4.9;
 
             // 检查运动是否到位
