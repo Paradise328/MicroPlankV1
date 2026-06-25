@@ -743,7 +743,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 lastRawTargetYaw = rawTargetYaw;
 
 
-                actionStep = 5;
+                actionStep = 6;
             }
             break;
 
@@ -910,8 +910,8 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             //     calculatedYaw = -14.0;
             // }
             // targetYaw = calculatedYaw;
-            targetYaw = -10.0;
-            targetDisp = 4.9;
+            targetYaw = 0.0;//-10.0
+            targetDisp = 0.0;//4.9
 
             // 检查运动是否到位
             if(reachTarget(currentRoll, currentPitch, currentYaw, currentDisp,
@@ -939,7 +939,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 }
 
                 // 4. === [关键修改] 满足 5 秒时长后，仅进行【单次】读取与记录 ===
-                if (elapsedSeconds >= 5.0) {
+                if (elapsedSeconds >= 1.0) {
                     LOG(INFO) << "5 秒静止结束！开始读取稳定力值数据...";
 
                     float currentForce_1 = 0.0f;
@@ -976,7 +976,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                     isTimerStarted = false;
 
                     lastRawTargetYaw = rawTargetYaw;
-                    actionStep = 7;
+                    actionStep = 9;
                 }
             }
             break;
