@@ -743,7 +743,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 lastRawTargetYaw = rawTargetYaw;
 
 
-                actionStep = 6;
+                actionStep = 1;
             }
             break;
 
@@ -910,8 +910,8 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             //     calculatedYaw = -14.0;
             // }
             // targetYaw = calculatedYaw;
-            targetYaw = 0.0;//-10.0
-            targetDisp = 0.0;//4.9
+            targetYaw = -10.0;//-10.0
+            targetDisp = 4.9;//4.9
 
             // 检查运动是否到位
             if(reachTarget(currentRoll, currentPitch, currentYaw, currentDisp,
@@ -939,7 +939,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 }
 
                 // 4. === [关键修改] 满足 5 秒时长后，仅进行【单次】读取与记录 ===
-                if (elapsedSeconds >= 1.0) {
+                if (elapsedSeconds >= 5.0) {
                     LOG(INFO) << "5 秒静止结束！开始读取稳定力值数据...";
 
                     float currentForce_1 = 0.0f;
@@ -955,6 +955,11 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                     double netForce_1 = (currentForce_1 - s_zero1) / 0.16;
                     double netForce_2 = (currentForce_2 - s_zero2) / 0.67;
                     double finalNetPressure = netForce_1 + netForce_2;
+
+                    if (finalNetPressure <= 5.0){
+                        m_isLooping = false;
+                        actionStep = 0;
+                    }
 
                     LOG(INFO) << "Force_1: " << currentForce_1 << " Force_2: " << currentForce_2;
 
@@ -976,7 +981,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                     isTimerStarted = false;
 
                     lastRawTargetYaw = rawTargetYaw;
-                    actionStep = 9;
+                    actionStep = 7;
                 }
             }
             break;
@@ -2180,7 +2185,7 @@ void RobotControl::dealWithMsg()
                 setRobotControlMode(RobotControlMode::TeleOperation);
 
                 // startMotionLoop(10);
-                startMotionByTime(216000.0);
+                startMotionByTime(360000.0);
 
                 if((m_maxonCaliFinish_R==1)&&(m_maxonCaliFinish_L==1)&&(m_moonsCaliFinish_L==1)&&(m_moonsCaliFinish_R==1)){
                     // setRobotControlMode(RobotControlMode::TeleOperation);
