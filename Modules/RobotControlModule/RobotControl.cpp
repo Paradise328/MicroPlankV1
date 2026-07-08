@@ -743,7 +743,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 lastRawTargetYaw = rawTargetYaw;
 
 
-                actionStep = 1;
+                actionStep = 5;
             }
             break;
 
@@ -761,7 +761,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             // }else{
             //     targetYaw = lastRawTargetYawact;
             // }
-            // LOG(INFO)<<"进入循环1";
+            LOG(INFO)<<"进入循环1";
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)) {
                 lastRawTargetYaw = rawTargetYaw;
@@ -956,10 +956,10 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                     double netForce_2 = (currentForce_2 - s_zero2) / 0.67;
                     double finalNetPressure = netForce_1 + netForce_2;
 
-                    if (finalNetPressure <= 5.0){
-                        m_isLooping = false;
-                        actionStep = 0;
-                    }
+                    // if (finalNetPressure <= 5.0){
+                    //     m_isLooping = false;
+                    //     actionStep = 0;
+                    // }
 
                     LOG(INFO) << "Force_1: " << currentForce_1 << " Force_2: " << currentForce_2;
 
