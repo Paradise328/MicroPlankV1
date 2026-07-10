@@ -710,7 +710,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
     double targetPitch = currentPitch;
     double targetYaw   = currentYaw;
     double targetDisp  = m_moonsTargetDisp;
-    m_moonsTargetDisp  = currentDisp;
+    // m_moonsTargetDisp  = currentDisp;
     // 【新增】临时变量，存储当前这一步想要达到的“名义目标”
     double rawTargetYaw = 0.0;
 
@@ -1105,7 +1105,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         }
     }
 
-    const double LINEAR_STEP = 0.05; // 每次循环走 0.05mm (速度控制)
+    const double LINEAR_STEP = 0.01; // 每次循环走 0.05mm (速度控制)
 
     if (m_moonsTargetDisp < targetDisp)
     {

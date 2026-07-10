@@ -99,7 +99,7 @@ void RobotControl::goToHold()
         std::this_thread::sleep_for(std::chrono::milliseconds(100));//当前线程暂停 100 毫秒
         LOG(INFO)<<"FROM TeleOperation TO HOLD";
 
-        m_motorDriver->operationCSV(MotorType::MOONS, 0, arm_0);
+        m_motorDriver->operationCSP(MotorType::MOONS, 0, arm_0);
         m_motorDriver->operationCSP(MotorType::MAXON, 0, arm_0);
         m_motorDriver->operationCSP(MotorType::MAXON, 1, arm_0);
         m_motorDriver->operationCSP(MotorType::MAXON, 2, arm_0);
