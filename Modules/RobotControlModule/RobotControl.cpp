@@ -680,13 +680,13 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         }
         m_resetRequested = false;
     }
-
     // 当前角度（度）
     double currentRoll  = m_TargetRollAngle_pre  * 180.0 / M_PI;
     double currentPitch = m_TargetPitchAngle_pre * 180.0 / M_PI;
     double currentYaw   = m_TargetYawAngle_pre   * 180.0 / M_PI;
     auto encoderData = m_motorEncoderCur_R.load();
     int32_t moonsEncoderVal = encoderData[10];
+    // LOG(INFO)<<"moonsEncoderVal: "<<moonsEncoderVal;
     // if (m_pressureSensor && m_pressureSensor->isConnected()) {
     // double currentRawPressure = 0.0;
     // currentRawPressure = m_pressureSensor->getLatestPressure();
@@ -708,7 +708,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
     // 目标角度定义（度）
     double targetRoll  = currentRoll;
     double targetPitch = currentPitch;
-    double targetYaw   = currentYaw;
+    double targetYaw   = currentYaw/2;
     double targetDisp  = m_moonsTargetDisp;
     // m_moonsTargetDisp  = currentDisp;
     // 【新增】临时变量，存储当前这一步想要达到的“名义目标”
@@ -743,13 +743,13 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 lastRawTargetYaw = rawTargetYaw;
 
 
-                actionStep = 5;
+                actionStep = 1;
             }
             break;
 
         case 1: // 动作1：角度闭合（开合角负10度，俯仰角60度, 旋转轴顺时针70度）
             targetRoll  = 60.0;
-            targetPitch = 0.0;
+            targetPitch = 50.0;
             targetYaw   = 0.0;
             targetDisp  = 0.0;
             // if (rawTargetYaw > lastRawTargetYaw) {
@@ -762,8 +762,8 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             //     targetYaw = lastRawTargetYawact;
             // }
             LOG(INFO)<<"进入循环1";
-            if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
-                            targetRoll, targetPitch, targetYaw,targetDisp)) {
+            if (reachTarget(currentRoll, currentPitch, currentYaw, currentDisp,
+                            targetRoll, targetPitch, targetYaw, targetDisp)) {
                 lastRawTargetYaw = rawTargetYaw;
                 actionStep = 2;
             }
@@ -771,7 +771,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
 
         case 2: // 动作1：旋转轴逆时针140度（70 -> -70）
             targetRoll  = -60.0;
-            targetPitch = 0.0;
+            targetPitch = 50.0;
             targetYaw   = 0.0;
             targetDisp  = 0.0;
             // if (rawTargetYaw > lastRawTargetYaw) {
@@ -793,7 +793,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
 
         case 3: // 动作2：回正（俯仰角回到0度，开合闭合）
             targetRoll  = 60.0;
-            targetPitch = 0.0;
+            targetPitch = -50.0;
             targetYaw   = 0.0;
             targetDisp  = 0.0;
             // if (rawTargetYaw > lastRawTargetYaw) {
@@ -816,7 +816,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
 
         case 4: // 动作2：左右钳头开合30度（开合角到70度）
             targetRoll  = -60.0;
-            targetPitch = 0.0;
+            targetPitch = -50.0;
             targetYaw   = 0.0;
             targetDisp  = 0.0;
             // if (rawTargetYaw > lastRawTargetYaw) {
@@ -842,6 +842,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             targetPitch = 0.0;
             targetYaw = 45.0;
             targetDisp = 4.9;
+            // LOG(INFO)<<"开始推进111111111111111111111111111111111";
 
             // 1. 获取当前实时压力
             double curP1 = 0.0, curP2 = 0.0;
@@ -1121,6 +1122,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         // 防止超调
         if (m_moonsTargetDisp < targetDisp) m_moonsTargetDisp = targetDisp;
     }
+        // LOG(INFO)<<" targetDisp: "<<targetDisp<<" m_moonsTargetDisp: "<<m_moonsTargetDisp;
 
     const double SMOOTH_FACTOR = 0.02;
 
@@ -1144,6 +1146,126 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
     m_TargetPitchAngle_pre = handlePoseCur.handlePoseR_Elevation;
     m_TargetYawAngle_pre   = handlePoseCur.handlePoseR_OpenAngle;
 }
+
+double RobotControl::backlashCompensate(double raw_angle, const char& side) {
+
+    instrumentCompensate *m_instrument_tmp = NULL;
+    char armside;
+
+    double COMP_VAL;
+    size_t WINDOW_SIZE;
+    double EPS;
+    double DEAD_ZONE;
+    double TRANSITION_STEPS;
+
+    if(side == '1'){
+        m_instrument_tmp = &m_instrument_Left1;
+        armside = 'l';
+    }
+    else if(side == '2'){
+        m_instrument_tmp = &m_instrument_Left2;
+        armside = 'l';
+    }
+    else if(side == '3'){
+        m_instrument_tmp = &m_instrument_Left3;
+        armside = 'l';
+    }
+    else if(side == '4'){
+        m_instrument_tmp = &m_instrument_Left4;
+        armside = 'l';
+    }
+    else if(side == '5'){
+        m_instrument_tmp = &m_instrument_Right1;
+        armside = 'r';
+    }
+    else if(side == '6'){
+        m_instrument_tmp = &m_instrument_Right2;
+        armside = 'r';
+    }
+    else if(side == '7'){
+        m_instrument_tmp = &m_instrument_Right3;
+        armside = 'r';
+    }
+    else if(side == '8'){
+        m_instrument_tmp = &m_instrument_Right4;
+        armside = 'r';
+    }
+    if(armside == 'r'){
+        if(m_endeffectorConfiguration_R == EndeffectorConfiguration::sixMaxons){
+            COMP_VAL = COMP_VAL_3MM;
+            WINDOW_SIZE = WINDOW_SIZE_3MM;
+            EPS = EPS_3MM;
+            DEAD_ZONE = DEAD_ZONE_3MM;
+            TRANSITION_STEPS = TRANSITION_STEPS_3MM;
+        }
+        else if(m_endeffectorConfiguration_R == EndeffectorConfiguration::fourMaxons){
+            COMP_VAL = COMP_VAL_4MM;
+            WINDOW_SIZE = WINDOW_SIZE_4MM;
+            EPS = EPS_4MM;
+            DEAD_ZONE = DEAD_ZONE_4MM;
+            TRANSITION_STEPS = TRANSITION_STEPS_4MM;
+        }
+    }
+    else if(armside == 'l'){
+        if(m_endeffectorConfiguration_L == EndeffectorConfiguration::sixMaxons){
+            COMP_VAL = COMP_VAL_3MM;
+            WINDOW_SIZE = WINDOW_SIZE_3MM;
+            EPS = EPS_3MM;
+            DEAD_ZONE = DEAD_ZONE_3MM;
+            TRANSITION_STEPS = TRANSITION_STEPS_3MM;
+        }
+        else if(m_endeffectorConfiguration_L == EndeffectorConfiguration::fourMaxons){
+            COMP_VAL = COMP_VAL_4MM;
+            WINDOW_SIZE = WINDOW_SIZE_4MM;
+            EPS = EPS_4MM;
+            DEAD_ZONE = DEAD_ZONE_4MM;
+            TRANSITION_STEPS = TRANSITION_STEPS_4MM;
+        }
+    }
+
+    if(m_instrument_tmp != NULL){
+        m_instrument_tmp->m_openAngleDeque.push_back(raw_angle);
+        if (m_instrument_tmp->m_openAngleDeque.size() > WINDOW_SIZE) m_instrument_tmp->m_openAngleDeque.pop_front();
+
+        if (m_instrument_tmp->m_openAngleDeque.size() == WINDOW_SIZE) {
+            bool is_increasing = true, is_decreasing = true, window_valid = true;
+            for (size_t i = 1; i < WINDOW_SIZE; ++i) {
+                double diff = m_instrument_tmp->m_openAngleDeque[i] - m_instrument_tmp->m_openAngleDeque[i-1];
+                if(std::abs(diff)<=DEAD_ZONE){window_valid=false;break;}
+                if (diff <= EPS) is_increasing = false;  // 非严格递增
+                if (diff >= -EPS) is_decreasing = false; // 非严格递减
+            }
+            // 关键逻辑：只有在方向发生切换时，才更新补偿值
+            if(window_valid){
+                if (is_increasing && !m_instrument_tmp->dir) {
+                    m_instrument_tmp->dir = true;
+                    m_instrument_tmp->offset_target = COMP_VAL;
+                    m_instrument_tmp->offset_transition = TRANSITION_STEPS;
+                    LOG(INFO)<<"increase";
+                }
+                else if (is_decreasing && m_instrument_tmp->dir) {
+                    m_instrument_tmp->dir = false;
+                    m_instrument_tmp->offset_target = -COMP_VAL;
+                    m_instrument_tmp->offset_transition = TRANSITION_STEPS;
+                    LOG(INFO)<<"decrease";
+                }
+            }
+        }
+
+        if(m_instrument_tmp->offset_transition > 0){
+            double step = (m_instrument_tmp->offset_target - m_instrument_tmp->offset) / m_instrument_tmp->offset_transition;
+            m_instrument_tmp->offset += step;
+            m_instrument_tmp->offset_transition--;
+            if(m_instrument_tmp->offset_transition == 0){
+                m_instrument_tmp->offset = m_instrument_tmp->offset_target;
+            }
+        }
+
+        return raw_angle + m_instrument_tmp->offset;
+
+    }
+
+}
 // 辅助函数：限制角度增量
 double RobotControl::limitDelta(double delta, double maxDelta)
 {
@@ -1164,7 +1286,6 @@ bool RobotControl::reachTarget(double currentRoll, double currentPitch, double c
     bool pitchReached = fabs(currentPitch - targetPitch) < ANGLE_TOLERANCE;
     bool yawReached   = fabs(currentYaw   - targetYaw)   < ANGLE_TOLERANCE;
     bool DispReached  = fabs(currentDisp  - m_moonsTargetDisp) < DIST_TOLERANCE;
-
 
     if (!rollReached || !pitchReached || !yawReached || !DispReached) {
         return false;
@@ -1291,6 +1412,11 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     controlValueTmp_R[7] = -deltLength_beta_R_left_2;
     controlValueTmp_R[5] = -deltLength_beta_R_right_1;
     controlValueTmp_R[4] = -deltLength_beta_R_right_2;
+
+    controlValueTmp_R[7] = backlashCompensate(controlValueTmp_R[7], '1');
+    controlValueTmp_R[6] = backlashCompensate(controlValueTmp_R[6], '2');
+    controlValueTmp_R[5] = backlashCompensate(controlValueTmp_R[5], '3');
+    controlValueTmp_R[4] = backlashCompensate(controlValueTmp_R[4], '4');
 
     }
     controlValueTmp_R[10] = m_moonsTargetDisp;
@@ -2185,7 +2311,7 @@ void RobotControl::dealWithMsg()
                 setRobotControlMode(RobotControlMode::TeleOperation);
 
                 // startMotionLoop(10);
-                startMotionByTime(360000.0);
+                startMotionByTime(72000.0);
 
                 if((m_maxonCaliFinish_R==1)&&(m_maxonCaliFinish_L==1)&&(m_moonsCaliFinish_L==1)&&(m_moonsCaliFinish_R==1)){
                     // setRobotControlMode(RobotControlMode::TeleOperation);

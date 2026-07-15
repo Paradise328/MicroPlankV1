@@ -86,6 +86,16 @@ constexpr int Joint_DOF = 3;
 namespace msm = boost::msm;
 namespace mpl = boost::mpl;//Meta Programming Library
 
+struct instrumentCompensate
+{
+
+    std::deque<double> m_openAngleDeque;
+    double offset = 0.0;
+    bool dir = true;
+    int offset_transition = 0;
+    double offset_target = 0.0;
+};
+
 enum class GuidingArmState{
     INIT = 0x00,
     HOLD = 0x01,
@@ -335,6 +345,7 @@ private:
     void                            applyGuidingArmForceControl();
     void                            applyGuidingArmDampingControl();
     void                            applyGuidingArmVelocityControl();
+    double                          backlashCompensate(double raw_angle, const char& side);
     double                          limitDelta(double delta,double maxDelta);
     bool                            reachTarget(double currentRoll, double currentPitch, double currentYaw,double currentDisp,
                      double targetRoll, double targetPitch, double targetYaw,double m_moonsTargetDisp);
@@ -582,6 +593,29 @@ private:
 
     /*器械夹持角度计算*/
     double calculateNewOpenangle(double masterOpenangle);
+
+    /*角度补偿*/
+    /*器械夹持角度计算*/
+    const double COMP_VAL_3MM = 0.04;              // 4轴1.5，6轴0.05
+    const size_t WINDOW_SIZE_3MM = 6;             // 单调判定窗口大小
+    const double EPS_3MM = 1e-6;                  // 浮点比较容差
+    const double DEAD_ZONE_3MM = 0.005;//4轴0.04，6轴0.005
+    const double TRANSITION_STEPS_3MM = 7;
+
+    const double COMP_VAL_4MM = 1.5;              // 4轴1.5，6轴0.05
+    const size_t WINDOW_SIZE_4MM = 6;             // 单调判定窗口大小
+    const double EPS_4MM = 1e-6;                  // 浮点比较容差
+    const double DEAD_ZONE_4MM = 0.04;//4轴0.04，6轴0.005
+    const double TRANSITION_STEPS_4MM = 5;
+
+    instrumentCompensate m_instrument_Left1;
+    instrumentCompensate m_instrument_Left2;
+    instrumentCompensate m_instrument_Left3;
+    instrumentCompensate m_instrument_Left4;
+    instrumentCompensate m_instrument_Right1;
+    instrumentCompensate m_instrument_Right2;
+    instrumentCompensate m_instrument_Right3;
+    instrumentCompensate m_instrument_Right4;
 
     /*控制中所需计算部分*/
     std::atomic<HandlePose>         m_handlePose_Cur;
