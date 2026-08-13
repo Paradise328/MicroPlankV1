@@ -772,7 +772,8 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 2: // 动作1：旋转轴逆时针140度（70 -> -70）
             targetRoll  = -60.0;
             targetPitch = 50.0;
-            targetYaw   = 0.0;
+            // targetYaw   = 0.0;
+            targetYaw   = 20.0;
             targetDisp  = 0.0;
             // if (rawTargetYaw > lastRawTargetYaw) {
             //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
@@ -794,6 +795,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 3: // 动作2：回正（俯仰角回到0度，开合闭合）
             targetRoll  = 60.0;
             targetPitch = -50.0;
+            // targetYaw   = 0.0;
             targetYaw   = 0.0;
             targetDisp  = 0.0;
             // if (rawTargetYaw > lastRawTargetYaw) {
@@ -817,7 +819,8 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         case 4: // 动作2：左右钳头开合30度（开合角到70度）
             targetRoll  = -60.0;
             targetPitch = -50.0;
-            targetYaw   = 0.0;
+            // targetYaw   = 0.0;
+            targetYaw   = -14.0;
             targetDisp  = 0.0;
             // if (rawTargetYaw > lastRawTargetYaw) {
             //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
@@ -832,7 +835,9 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)) {
                 lastRawTargetYaw = rawTargetYaw;
-                actionStep = 5;
+                // actionStep = 5;//夹持力测试
+                /*pilao*/
+                actionStep = 8;//2小时预跑测试
             }
             break;
 
@@ -2311,7 +2316,7 @@ void RobotControl::dealWithMsg()
                 setRobotControlMode(RobotControlMode::TeleOperation);
 
                 // startMotionLoop(10);
-                startMotionByTime(72000.0);
+                startMotionByTime(7200.0);
 
                 if((m_maxonCaliFinish_R==1)&&(m_maxonCaliFinish_L==1)&&(m_moonsCaliFinish_L==1)&&(m_moonsCaliFinish_R==1)){
                     // setRobotControlMode(RobotControlMode::TeleOperation);
