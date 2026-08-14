@@ -152,7 +152,7 @@ void RobotControl::loadEndeffectorConfig()
                 {
                     {
                         //Encoder per Degree;
-                        const toml::array& Arr_Tmp = *(endEffectorData["Instrument"]["CZQ"]["4MM"]["1"]
+                        const toml::array& Arr_Tmp = *(endEffectorData["Instrument"]["CZQ"]["3MM"]["1"]
 
                                                                       ["EncoderPerDegree"]["Value"].as_array());
                         std::vector<double> encoderPerDegreeR;
@@ -743,7 +743,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 lastRawTargetYaw = rawTargetYaw;
 
 
-                actionStep = 1;
+                actionStep = 5;//1
             }
             break;
 
@@ -761,7 +761,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             // }else{
             //     targetYaw = lastRawTargetYawact;
             // }
-            LOG(INFO)<<"进入循环1";
+            // LOG(INFO)<<"进入循环1";
             if (reachTarget(currentRoll, currentPitch, currentYaw, currentDisp,
                             targetRoll, targetPitch, targetYaw, targetDisp)) {
                 lastRawTargetYaw = rawTargetYaw;
@@ -835,9 +835,9 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)) {
                 lastRawTargetYaw = rawTargetYaw;
-                // actionStep = 5;//夹持力测试
+                actionStep = 5;//夹持力测试
                 /*pilao*/
-                actionStep = 8;//2小时预跑测试
+                // actionStep = 8;//2小时预跑测试
             }
             break;
 
@@ -876,10 +876,31 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                                             targetRoll, targetPitch, targetYaw, targetDisp);
 
             if(isMotionDone && (std::abs(m_moonsTargetDisp - targetDisp) < 0.1)) {
+            //     static std::chrono::steady_clock::time_point holdStartTime;
+            //     static bool isTimerStarted = false;
+
+            //     // 1. 刚到位的第一帧，记录当前起始时间戳
+            //     if (!isTimerStarted) {
+            //         holdStartTime = std::chrono::steady_clock::now();
+            //         isTimerStarted = true;
+            //         LOG(INFO) <<"当前Yaw值:（"<< targetYaw << "） [Case 2] 运动已到位，开始 5 秒静止等待...";
+            //     }
+
+            //     // 2. 计算当前已经保持了多少秒
+            //     auto currentTime = std::chrono::steady_clock::now();
+            //     double elapsedSeconds = std::chrono::duration<double>(currentTime - holdStartTime).count();
+
+            //     static int printThrottle = 0;
+            //     if (printThrottle++ % 200 == 0) { // 5ms周期，200次约等于1秒
+            //         LOG(INFO) << "静止等待中... 已过 " << elapsedSeconds << " 秒";
+            //     }
+
+            //     // 4. === [关键修改] 满足 5 秒时长后，仅进行【单次】读取与记录 ===
+            //     if (elapsedSeconds >= 4.0) {//1.0
                 lastRawTargetYaw = rawTargetYaw;
                 actionStep = 6;
                 LOG(INFO) << "Step 1 Finished";
-            }
+                }
             break;
         }
         case 99:
@@ -945,7 +966,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 }
 
                 // 4. === [关键修改] 满足 5 秒时长后，仅进行【单次】读取与记录 ===
-                if (elapsedSeconds >= 5.0) {
+                if (elapsedSeconds >= 2.0) {//1.0
                     LOG(INFO) << "5 秒静止结束！开始读取稳定力值数据...";
 
                     float currentForce_1 = 0.0f;
@@ -957,8 +978,15 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                     } else {
                         LOG(WARNING) << "⚠️ 压力传感器未连接！";
                     }
+                    double netForce_1;
+                    if(currentForce_1 - s_zero1 == 0){
+                        netForce_1 = 0.0;
+                    }
+                    else{
+                        netForce_1 = (currentForce_1 - s_zero1) / 0.08 + 0.25;
+                    }
 
-                    double netForce_1 = (currentForce_1 - s_zero1) / 0.16;
+
                     double netForce_2 = (currentForce_2 - s_zero2) / 0.67;
                     double finalNetPressure = netForce_1 + netForce_2;
 
@@ -987,7 +1015,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                     isTimerStarted = false;
 
                     lastRawTargetYaw = rawTargetYaw;
-                    actionStep = 7;
+                    actionStep = 7;//7
                 }
             }
             break;

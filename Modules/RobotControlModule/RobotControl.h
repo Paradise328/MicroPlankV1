@@ -151,12 +151,12 @@ public:
         m_isSystemTerminated(false),
         m_guidingArm1stOrder({0}),
         m_guidingArm2ndOrder({0}),
-        m_endeffectorConfiguration(EndeffectorConfiguration::fourMaxons),
-        m_endeffectorConfiguration_L(EndeffectorConfiguration::fourMaxons),
-        m_endeffectorConfiguration_R(EndeffectorConfiguration::fourMaxons),
-        // m_endeffectorConfiguration(EndeffectorConfiguration::sixMaxons),
-        // m_endeffectorConfiguration_L(EndeffectorConfiguration::sixMaxons),
-        // m_endeffectorConfiguration_R(EndeffectorConfiguration::sixMaxons),
+        // m_endeffectorConfiguration(EndeffectorConfiguration::fourMaxons),
+        // m_endeffectorConfiguration_L(EndeffectorConfiguration::fourMaxons),
+        // m_endeffectorConfiguration_R(EndeffectorConfiguration::fourMaxons),
+        m_endeffectorConfiguration(EndeffectorConfiguration::sixMaxons),
+        m_endeffectorConfiguration_L(EndeffectorConfiguration::sixMaxons),
+        m_endeffectorConfiguration_R(EndeffectorConfiguration::sixMaxons),
         m_filter_1storder_guiding(m_guidingArm1stOrder, 250.0, 60.0),
         m_filter_2ndorder_guiding(m_guidingArm2ndOrder, 250.0, 60.0)
     {
