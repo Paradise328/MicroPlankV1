@@ -743,7 +743,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 lastRawTargetYaw = rawTargetYaw;
 
 
-                actionStep = 5;//1
+                actionStep = 1;//1
             }
             break;
 
@@ -835,9 +835,9 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)) {
                 lastRawTargetYaw = rawTargetYaw;
-                actionStep = 5;//夹持力测试
+                // actionStep = 5;//夹持力测试
                 /*pilao*/
-                // actionStep = 8;//2小时预跑测试
+                actionStep = 8;//2小时预跑测试
             }
             break;
 
