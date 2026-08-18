@@ -743,7 +743,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 lastRawTargetYaw = rawTargetYaw;
 
 
-                actionStep = 1;//1
+                actionStep = 5;//1
             }
             break;
 
@@ -937,7 +937,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             //     calculatedYaw = -14.0;
             // }
             // targetYaw = calculatedYaw;
-            targetYaw = -10.0;//-10.0
+            targetYaw = -18.0;//-10.0
             targetDisp = 4.9;//4.9
 
             // 检查运动是否到位
@@ -1274,13 +1274,13 @@ double RobotControl::backlashCompensate(double raw_angle, const char& side) {
                     m_instrument_tmp->dir = true;
                     m_instrument_tmp->offset_target = COMP_VAL;
                     m_instrument_tmp->offset_transition = TRANSITION_STEPS;
-                    LOG(INFO)<<"increase";
+                    // LOG(INFO)<<"increase";
                 }
                 else if (is_decreasing && m_instrument_tmp->dir) {
                     m_instrument_tmp->dir = false;
                     m_instrument_tmp->offset_target = -COMP_VAL;
                     m_instrument_tmp->offset_transition = TRANSITION_STEPS;
-                    LOG(INFO)<<"decrease";
+                    // LOG(INFO)<<"decrease";
                 }
             }
         }
@@ -2344,7 +2344,7 @@ void RobotControl::dealWithMsg()
                 setRobotControlMode(RobotControlMode::TeleOperation);
 
                 // startMotionLoop(10);
-                startMotionByTime(7200.0);
+                startMotionByTime(72000.0);
 
                 if((m_maxonCaliFinish_R==1)&&(m_maxonCaliFinish_L==1)&&(m_moonsCaliFinish_L==1)&&(m_moonsCaliFinish_R==1)){
                     // setRobotControlMode(RobotControlMode::TeleOperation);
