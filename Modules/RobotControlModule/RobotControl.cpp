@@ -835,9 +835,9 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)) {
                 lastRawTargetYaw = rawTargetYaw;
-                // actionStep = 5;//夹持力测试
+                actionStep = 5;//夹持力测试
                 /*pilao*/
-                actionStep = 8;//2小时预跑测试
+                // actionStep = 8;//2小时预跑测试
             }
             break;
 
@@ -931,13 +931,13 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             targetRoll = 0.0;
             targetPitch = 0.0;
 
-            // double calculatedYaw = -3.0 - ((setCounter-1)/6)*1.0;
-            // // 限制极值，最大减到 -14.0 为止
-            // if (calculatedYaw < -14.0) {
-            //     calculatedYaw = -14.0;
-            // }
-            // targetYaw = calculatedYaw;
-            targetYaw = -18.0;//-10.0
+            double calculatedYaw = -8.0 - ((setCounter-1)/6)*1.0;
+            // 限制极值，最大减到 -14.0 为止
+            if (calculatedYaw < -20.0) {
+                calculatedYaw = -20.0;
+            }
+            targetYaw = calculatedYaw;
+            // targetYaw = -20.0;//-10.0
             targetDisp = 4.9;//4.9
 
             // 检查运动是否到位
@@ -2344,7 +2344,7 @@ void RobotControl::dealWithMsg()
                 setRobotControlMode(RobotControlMode::TeleOperation);
 
                 // startMotionLoop(10);
-                startMotionByTime(72000.0);
+                startMotionByTime(61200.0);
 
                 if((m_maxonCaliFinish_R==1)&&(m_maxonCaliFinish_L==1)&&(m_moonsCaliFinish_L==1)&&(m_moonsCaliFinish_R==1)){
                     // setRobotControlMode(RobotControlMode::TeleOperation);
