@@ -262,7 +262,7 @@ private:
 
     void                            readMyInitData();
 
-    void                            loadEndeffectorConfig();
+    bool                            loadEndeffectorConfig(int axes = 6);
 
     void                            initiAllData();
 
@@ -590,6 +590,9 @@ private:
     bool m_isLooping   = false;    // 是否正在执行动作序列
     // UI requests are handed off to the control thread before changing motion state.
     std::atomic<int> m_pendingTestMode{-1};
+    std::atomic<int> m_pendingInstrumentAxes{0};
+    std::atomic<int> m_instrumentAxes{0}; // No Maxon axes accessed until explicitly selected.
+    qint64 m_lastTestElapsedSeconds = -1;
     std::atomic<bool> m_testBusy{false};
     std::atomic<bool> m_rightTestHomed{false};
     std::atomic<bool> m_rightTestHoming{false};

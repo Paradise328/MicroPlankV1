@@ -1,4 +1,5 @@
 #include "RobotControl.h"
+#include <algorithm>
 #include<chrono>
 #include <cmath>
 #include <thread>
@@ -127,69 +128,41 @@ void RobotControl::readMyInitData()
     initCamera();
 }
 
-void RobotControl::loadEndeffectorConfig()
+bool RobotControl::loadEndeffectorConfig(int axes)
 {
-    /*Read Instrument Information: Type, Size, ID*/
-    std::vector<std::string> t_endEffectorInfoSplit_L, t_endEffectorInfoSplit_R;
-    t_endEffectorInfoSplit_L = split(m_endEffectorLeft,"_");/*用_把需要的参数划分开，比如说 类型_尺寸_ID*/
-    t_endEffectorInfoSplit_R = split(m_endEffectorRight,"_");
-
-    LOG(INFO) << "________________READ MY INSTRUMENT DATA_________________";
-    LOG(INFO) << "Left Instrument Information: " << m_endEffectorLeft;
-    LOG(INFO) << "Right Instrument Information: " << m_endEffectorRight;
-
-     LOG(INFO)<<"m_endeffectorConfiguration_R: " <<static_cast<int>(m_endeffectorConfiguration_R)<<"m_endeffectorConfiguration_L: " <<static_cast<int>(m_endeffectorConfiguration_L);
-
+    if (axes != 4 && axes != 6) { return false; }
     try
     {
-        /*Load Left Endeffector Information*/
-        toml::table endEffectorData = toml::parse_file(m_configFilePath);//把toml文件复制到endEffectorData上
-        {
-
-            //Right Side
-            {
-                if(t_endEffectorInfoSplit_R[InstrumentType] != "None")
-                {
-                    {
-                        //Encoder per Degree;
-                        const toml::array& Arr_Tmp = *(endEffectorData["Instrument"]["CZQ"]["3MM"]["1"]
-
-                                                                      ["EncoderPerDegree"]["Value"].as_array());
-                        std::vector<double> encoderPerDegreeR;
-                        encoderPerDegreeR.clear();
-
-                        if(m_endeffectorConfiguration_R == EndeffectorConfiguration::sixMaxons){
-                            for(auto& element : Arr_Tmp) {encoderPerDegreeR.push_back(static_cast<double>(*(element.as_floating_point())));}
-                            for(int i = 0; i < encoderPerDegreeR.size();i++){m_encoderPerDegree_6maxon_R[i] = encoderPerDegreeR[i];}
-                            LOG(INFO) << "Load EncoderPerDegree Left: " << m_encoderPerDegree_6maxon_R[0] << " " << m_encoderPerDegree_6maxon_R[1] << " " << m_encoderPerDegree_6maxon_R[2] << " " << m_encoderPerDegree_6maxon_R[3]<< " " << m_encoderPerDegree_6maxon_R[4] << " " << m_encoderPerDegree_6maxon_R[5];
-                        }
-                        if(m_endeffectorConfiguration_R == EndeffectorConfiguration::fourMaxons){
-                            for(auto& element : Arr_Tmp) {encoderPerDegreeR.push_back(static_cast<double>(*(element.as_floating_point())));}
-                            for(int i = 0; i < encoderPerDegreeR.size();i++){m_encoderPerDegree_R[i] = encoderPerDegreeR[i];}
-                            LOG(INFO) << "Load EncoderPerDegree Right: " << m_encoderPerDegree_R[0] << " " << m_encoderPerDegree_R[1] << " " << m_encoderPerDegree_R[2] << " " << m_encoderPerDegree_R[3];
-                        }
-
-
-
-
-                        //Cable Compensation Ratio;
-                        m_compRatio_R = 0.765;
-                        m_compRatio_R = *(endEffectorData["Instrument"]
-                                                         [t_endEffectorInfoSplit_R[InstrumentType]]
-                                                         [t_endEffectorInfoSplit_R[InstrumentSize]]
-                                                         [t_endEffectorInfoSplit_R[InstrumentID]]
-                                                         ["CompensationRatio"]["Value"].value<double>());
-                        LOG(INFO) << "Load CompensationRatio Right = " << m_compRatio_R;
-                    }
-                }
-                LOG(INFO)<< "Successfully load the right Instrument Infomation: ";
-            }
+        const auto data = toml::parse_file(m_configFilePath);
+        const auto config = data["Instrument"]["CZQ"][axes == 4 ? "4MM" : "3MM"]["1"];
+        const auto* values = config["EncoderPerDegree"]["Value"].as_array();
+        if (!values || values->size() != static_cast<size_t>(axes)) {
+            LOG(ERROR) << "EncoderPerDegree count does not match selected axes: " << axes;
+            return false;
         }
+        std::array<double, 6> encoders{};
+        for (int i = 0; i < axes; ++i) {
+            const auto value = (*values)[i].value<double>();
+            if (!value || !std::isfinite(*value) || *value <= 0.0) { return false; }
+            encoders[i] = *value;
+        }
+        // The existing 3MM profile has no compensation entry; retain its original default.
+        const double compensation = config["CompensationRatio"]["Value"].value_or(0.765);
+        if (!std::isfinite(compensation) || compensation <= 0.0) { return false; }
+        // Commit only after the complete profile has been validated.
+        if (axes == 4) {
+            std::copy_n(encoders.begin(), 4, m_encoderPerDegree_R.begin());
+        } else {
+            m_encoderPerDegree_6maxon_R = encoders;
+        }
+        m_compRatio_R = compensation;
+        LOG(INFO) << "Loaded instrument profile, Maxon axes: " << axes;
+        return true;
     }
     catch (const toml::parse_error& err)
     {
-        std::cerr << "Parse error: " << err.what() << std::endl;
-        LOG(ERROR)<< "Parsing failed:\n" << err;
+        LOG(ERROR) << "Instrument configuration parse failed: " << err;
+        return false;
     }
 };
 
@@ -376,16 +349,54 @@ void RobotControl::control()
 {
     LOG(INFO) << "Control Thread Started (High Speed).";
     m_flagCommThread = true;
+    const auto publishElapsed = [this]() {
+        const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::steady_clock::now() - m_motionStartTime).count();
+        if (seconds != m_lastTestElapsedSeconds) {
+            m_lastTestElapsedSeconds = seconds;
+            SendInnerMsg(Module_Inner_E::Uiinterface,
+                static_cast<int>(UIAction_E::InstrumentTestElapsed), QString::number(static_cast<qlonglong>(seconds)));
+        }
+    };
 
     // while (m_flagControlThread && !m_isSystemTerminated)
     while (1)
     {
         // LOG(INFO)<<"TEL----------------------------";
+        const int requestedAxes = m_pendingInstrumentAxes.exchange(0);
+        if (requestedAxes == 4 || requestedAxes == 6) {
+            m_rightTestHomed.store(false);
+            if (loadEndeffectorConfig(requestedAxes)) {
+                const auto configuration = requestedAxes == 4
+                    ? EndeffectorConfiguration::fourMaxons : EndeffectorConfiguration::sixMaxons;
+                m_endeffectorConfiguration_R = configuration;
+                m_endeffectorConfiguration_L = configuration;
+                m_endeffectorConfiguration = configuration;
+                for (auto* compensation : {&m_instrument_Left1, &m_instrument_Left2,
+                        &m_instrument_Left3, &m_instrument_Left4, &m_instrument_Right1,
+                        &m_instrument_Right2, &m_instrument_Right3, &m_instrument_Right4}) {
+                    *compensation = instrumentCompensate{};
+                }
+                m_instrumentAxes.store(requestedAxes);
+                for (int axis = instrumentFirstMaxon(requestedAxes); axis < 6; ++axis) {
+                    m_motorDriver->operationCSP(MotorType::MAXON, axis, arm_0);
+                }
+                m_testBusy.store(false);
+                SendInnerMsg(Module_Inner_E::Uiinterface,
+                    static_cast<int>(UIAction_E::InstrumentAxesStatus), QString::number(requestedAxes));
+            } else {
+                m_instrumentAxes.store(0);
+                m_testBusy.store(false);
+                SendInnerMsg(Module_Inner_E::Uiinterface,
+                    static_cast<int>(UIAction_E::InstrumentAxesStatus), "failed");
+            }
+        }
         receiveMotorData();
         // auto start = std::chrono::high_resolution_clock::now();
 
         const int requestedMode = m_pendingTestMode.exchange(-1);
         if (requestedMode == -2) { // Stop is consumed by the same thread that sends motion commands.
+            if (m_isLooping) { publishElapsed(); }
             m_isLooping = false;
             // Replace the previous motion target with the latest measured positions.
             m_motorTargetEncoderLast_R = m_motorEncoderCur_R.load();
@@ -402,12 +413,15 @@ void RobotControl::control()
                 m_endeffectorConfiguration_R == EndeffectorConfiguration::fourMaxons);
             setRobotControlMode(RobotControlMode::TeleOperation);
             startMotionByTime(settings.durationSeconds);
+            m_lastTestElapsedSeconds = -1;
+            publishElapsed();
             SendInnerMsg(Module_Inner_E::Uiinterface,
                 static_cast<int>(UIAction_E::InstrumentTestStatus), "running");
         }
 
         if(m_flagInTeleoperation.load()){
             teleoperation();
+            if (m_testBusy.load()) { publishElapsed(); }
             if (m_testBusy.load() && !m_isLooping) {
                 // No further mapped command is sent after the sequence stops.
                 goToHold();
@@ -1573,12 +1587,9 @@ void RobotControl::receiveMotorData()
     std::array<int, MotorNumPerSide> motorEncoderData_L = {0};
     std::array<int, GuidingMotorNum> motorEncoderData_Guiding = {0};
 
-    motorEncoderData_R[4] = m_motorDriver->getActualPos(MotorType::MAXON, 0, arm_0);
-    motorEncoderData_R[5] = m_motorDriver->getActualPos(MotorType::MAXON, 1, arm_0);
-    motorEncoderData_R[6] = m_motorDriver->getActualPos(MotorType::MAXON, 2, arm_0);
-    motorEncoderData_R[7] = m_motorDriver->getActualPos(MotorType::MAXON, 3, arm_0);
-        motorEncoderData_R[8] = m_motorDriver->getActualPos(MotorType::MAXON, 4, arm_0);
-        motorEncoderData_R[9] = m_motorDriver->getActualPos(MotorType::MAXON, 5, arm_0);
+    for (int axis = instrumentFirstMaxon(m_instrumentAxes.load()); axis < 6; ++axis) {
+        motorEncoderData_R[4 + axis] = m_motorDriver->getActualPos(MotorType::MAXON, axis, arm_0);
+    }
         motorEncoderData_R[10] = m_motorDriver->getActualPos(MotorType::MOONS, 0, arm_0);
     //读取鸣志的实时电流 (使用 getActualCur)
     int16_t currentVal = m_motorDriver->getActualCur(MotorType::MOONS, 0, arm_0);
@@ -1594,34 +1605,25 @@ void RobotControl::receiveMotorData()
 
     std::array<int, MotorNumPerSide> motorErrorCode_R = {0};
 
-    motorErrorCode_R[4] = m_motorDriver->getErrorCode(MotorType::MAXON, 0, arm_0);
-    motorErrorCode_R[5] = m_motorDriver->getErrorCode(MotorType::MAXON, 1, arm_0);
-    motorErrorCode_R[6] = m_motorDriver->getErrorCode(MotorType::MAXON, 2, arm_0);
-    motorErrorCode_R[7] = m_motorDriver->getErrorCode(MotorType::MAXON, 3, arm_0);
-        motorErrorCode_R[8] = m_motorDriver->getErrorCode(MotorType::MAXON, 4, arm_0);
-        motorErrorCode_R[9] = m_motorDriver->getErrorCode(MotorType::MAXON, 5, arm_0);
+    for (int axis = instrumentFirstMaxon(m_instrumentAxes.load()); axis < 6; ++axis) {
+        motorErrorCode_R[4 + axis] = m_motorDriver->getErrorCode(MotorType::MAXON, axis, arm_0);
+    }
         motorErrorCode_R[10] = m_motorDriver->getErrorCode(MotorType::MOONS, 0, arm_0);
 
 
     std::array<int, MotorNumPerSide> motorStatusWord_R = {0};
 
-    motorStatusWord_R[4] = m_motorDriver->getStatusWord(MotorType::MAXON, 0, arm_0);
-    motorStatusWord_R[5] = m_motorDriver->getStatusWord(MotorType::MAXON, 1, arm_0);
-    motorStatusWord_R[6] = m_motorDriver->getStatusWord(MotorType::MAXON, 2, arm_0);
-    motorStatusWord_R[7] = m_motorDriver->getStatusWord(MotorType::MAXON, 3, arm_0);
-        motorStatusWord_R[8] = m_motorDriver->getStatusWord(MotorType::MAXON, 4, arm_0);
-        motorStatusWord_R[9] = m_motorDriver->getStatusWord(MotorType::MAXON, 5, arm_0);
+    for (int axis = instrumentFirstMaxon(m_instrumentAxes.load()); axis < 6; ++axis) {
+        motorStatusWord_R[4 + axis] = m_motorDriver->getStatusWord(MotorType::MAXON, axis, arm_0);
+    }
         motorStatusWord_R[10] = m_motorDriver->getStatusWord(MotorType::MOONS, 0, arm_0);
 
 
     std::array<int, MotorNumPerSide> motorOperationMode_R = {0};
 
-    motorOperationMode_R[4] =  m_motorDriver->getOperationMode(MotorType::MAXON, 0, arm_0);
-    motorOperationMode_R[5] =  m_motorDriver->getOperationMode(MotorType::MAXON, 1, arm_0);
-    motorOperationMode_R[6] =  m_motorDriver->getOperationMode(MotorType::MAXON, 2, arm_0);
-    motorOperationMode_R[7] =  m_motorDriver->getOperationMode(MotorType::MAXON, 3, arm_0);
-        motorOperationMode_R[8] =  m_motorDriver->getOperationMode(MotorType::MAXON, 4, arm_0);
-        motorOperationMode_R[9] =  m_motorDriver->getOperationMode(MotorType::MAXON, 5, arm_0);
+    for (int axis = instrumentFirstMaxon(m_instrumentAxes.load()); axis < 6; ++axis) {
+        motorOperationMode_R[4 + axis] = m_motorDriver->getOperationMode(MotorType::MAXON, axis, arm_0);
+    }
         motorOperationMode_R[10] =  m_motorDriver->getOperationMode(MotorType::MOONS, 0, arm_0);
 
 
@@ -1632,12 +1634,9 @@ void RobotControl::receiveMotorData()
     std::array<int, 7> motorInputs_Guiding = {0};
     std::array<int, MotorNumPerSide> motorInputs_R = {0};
 
-    motorInputs_R[4] = m_motorDriver->getDigitalInputs(MotorType::MAXON, 0, arm_0)[2];
-    motorInputs_R[5] = m_motorDriver->getDigitalInputs(MotorType::MAXON, 1, arm_0)[2];
-    motorInputs_R[6] = m_motorDriver->getDigitalInputs(MotorType::MAXON, 2, arm_0)[2];
-    motorInputs_R[7] = m_motorDriver->getDigitalInputs(MotorType::MAXON, 3, arm_0)[2];
-        motorInputs_R[8] = m_motorDriver->getDigitalInputs(MotorType::MAXON, 4, arm_0)[2];
-        motorInputs_R[9] = m_motorDriver->getDigitalInputs(MotorType::MAXON, 5, arm_0)[2];
+    for (int axis = instrumentFirstMaxon(m_instrumentAxes.load()); axis < 6; ++axis) {
+        motorInputs_R[4 + axis] = m_motorDriver->getDigitalInputs(MotorType::MAXON, axis, arm_0)[2];
+    }
         motorInputs_R[0] = m_motorDriver->getDigitalInputs(MotorType::MOONS, 0, arm_0)[6];
 
 
@@ -1669,12 +1668,9 @@ void RobotControl::sendMotorData(const std::array<int, MotorNumPerSide>& targetE
     // std::lock_guard(m_motorDriver->m_cyclicMutex);
 
 
-        m_motorDriver->setTargetPos(MotorType::MAXON, 0, targetEncoder_R[4], arm_0);
-        m_motorDriver->setTargetPos(MotorType::MAXON, 1, targetEncoder_R[5], arm_0);
-        m_motorDriver->setTargetPos(MotorType::MAXON, 2, targetEncoder_R[6], arm_0);
-        m_motorDriver->setTargetPos(MotorType::MAXON, 3, targetEncoder_R[7], arm_0);
-        m_motorDriver->setTargetPos(MotorType::MAXON, 4, targetEncoder_R[8], arm_0);
-        m_motorDriver->setTargetPos(MotorType::MAXON, 5, targetEncoder_R[9], arm_0);
+        for (int axis = instrumentFirstMaxon(m_instrumentAxes.load()); axis < 6; ++axis) {
+            m_motorDriver->setTargetPos(MotorType::MAXON, axis, targetEncoder_R[4 + axis], arm_0);
+        }
         m_motorDriver->setTargetPos(MotorType::MOONS, 0, targetEncoder_R[10], arm_0);
 
 
@@ -1974,6 +1970,8 @@ void RobotControl::setVoiceCommand()
 void RobotControl::MaxonGoHome_(const char& side)//yu
 {
     if(side == 'r'){
+        const int axes = m_instrumentAxes.load();
+        if (axes != 4 && axes != 6) { return; }
         m_flagInHold.store(false);
         usleep(50);
         m_motorTargetEncoderLast_R = {0};
@@ -1981,14 +1979,11 @@ void RobotControl::MaxonGoHome_(const char& side)//yu
         m_handlePoseLastLoop_R.initOrg_R();
         m_handlePoseOrg_R.initOrg_R();
 
-        std::thread calibration([this](){
+        std::thread calibration([this, axes](){
             LOG(INFO) << "👉 [CALIBRATION THREAD] ID: " << std::this_thread::get_id();
-            m_motorDriver->operationHOME(MotorType::MAXON, 0, arm_0);
-            m_motorDriver->operationHOME(MotorType::MAXON, 1, arm_0);
-            m_motorDriver->operationHOME(MotorType::MAXON, 2, arm_0);
-            m_motorDriver->operationHOME(MotorType::MAXON, 3, arm_0);
-            m_motorDriver->operationHOME(MotorType::MAXON, 4, arm_0);
-            m_motorDriver->operationHOME(MotorType::MAXON, 5, arm_0);
+            for (int axis = instrumentFirstMaxon(axes); axis < 6; ++axis) {
+                m_motorDriver->operationHOME(MotorType::MAXON, axis, arm_0);
+            }
             // m_motorDriver->operationHOME(MotorType::MOONS, 0, arm_0);
             int32_t moonsTargetPos = m_motorDriver->getActualPos(MotorType::MOONS, 0, arm_0);
 
@@ -2016,12 +2011,10 @@ void RobotControl::MaxonGoHome_(const char& side)//yu
                // LOG(INFO)<<"状态量"<<homeStatusTmp;
 
             // --- 判断 Maxon 是否完成 (4-9号) ---
-                bool isMaxonReady = (homeStatusTmp[4] == false &&
-                                     homeStatusTmp[5] == false &&
-                                     homeStatusTmp[6] == false &&
-                                     homeStatusTmp[7] == false &&
-                                     homeStatusTmp[8] == false &&
-                                     homeStatusTmp[9] == false);
+                bool isMaxonReady = true;
+                for (int axis = instrumentFirstMaxon(axes); axis < 6; ++axis) {
+                    isMaxonReady = isMaxonReady && homeStatusTmp[4 + axis] == false;
+                }
 
                 // --- 判断 Moons 是否完成 (10号) ---
                 // 你的条件：homeStatusTmp[10] == false 代表撞到了/到位了
@@ -2260,6 +2253,21 @@ void RobotControl::dealWithMsg()
                 setRobotControlMode(RobotControlMode::Hold);
                 break;
             }
+            case static_cast<int>(RobotControlAction_E::SelectInstrumentAxes):
+            {
+                bool ok = false;
+                const int axes = i.value().toInt(&ok);
+                if (!ok || (axes != 4 && axes != 6) || !m_flagControlThread.load()
+                    || m_testBusy.load() || m_rightTestHoming.load()) {
+                    SendInnerMsg(Module_Inner_E::Uiinterface,
+                        static_cast<int>(UIAction_E::InstrumentAxesStatus), "failed");
+                    break;
+                }
+                m_testBusy.store(true);
+                m_rightTestHomed.store(false);
+                m_pendingInstrumentAxes.store(axes);
+                break;
+            }
             case static_cast<int>(RobotControlAction_E::StartInstrumentTest):
             {
                 bool ok = false;
@@ -2268,7 +2276,7 @@ void RobotControl::dealWithMsg()
                     break; // Duplicate requests cannot restart a running sequence.
                 }
                 if (!ok || !isInstrumentTestMode(mode) || !m_flagControlThread.load()
-                    || !m_rightTestHomed.load()) {
+                    || m_instrumentAxes.load() == 0 || !m_rightTestHomed.load()) {
                     SendInnerMsg(Module_Inner_E::Uiinterface,
                         static_cast<int>(UIAction_E::InstrumentTestStatus), "rejected");
                     break;
@@ -2339,7 +2347,7 @@ void RobotControl::dealWithMsg()
                 char side = i.value().toUtf8().data()[0];
                 if(side == 'r')
                 {
-                    if (!m_flagControlThread.load() || m_testBusy.load()
+                    if (!m_flagControlThread.load() || m_instrumentAxes.load() == 0 || m_testBusy.load()
                         || m_rightTestHoming.exchange(true)) { break; }
                     m_rightTestHomed.store(false);
                     LOG(INFO)<<"Get INFO start Homing command in RobotControl: Right Instrument Homing!";

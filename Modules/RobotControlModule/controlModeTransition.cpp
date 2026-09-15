@@ -32,22 +32,16 @@ void RobotControl::goToHold()
         LOG(INFO) << "SWITCH TO HOLD ON MODE, previous Statis is: IN INIT STATUS";
 
         m_motorDriver->operationCSP(MotorType::MOONS, 0, arm_0);
-        m_motorDriver->operationCSP(MotorType::MAXON, 0, arm_0);
-        m_motorDriver->operationCSP(MotorType::MAXON, 1, arm_0);
-        m_motorDriver->operationCSP(MotorType::MAXON, 2, arm_0);
-        m_motorDriver->operationCSP(MotorType::MAXON, 3, arm_0);
-        m_motorDriver->operationCSP(MotorType::MAXON, 4, arm_0);
-        m_motorDriver->operationCSP(MotorType::MAXON, 5, arm_0);
+        for (int axis = instrumentFirstMaxon(m_instrumentAxes.load()); axis < 6; ++axis) {
+            m_motorDriver->operationCSP(MotorType::MAXON, axis, arm_0);
+        }
 
         std::array<int, MotorNumPerSide> errCode_R = {0};
 
         errCode_R[0] = m_motorDriver->getErrorCode(MotorType::MOONS, 0, arm_0);
-        errCode_R[4] = m_motorDriver->getErrorCode(MotorType::MAXON, 0, arm_0);
-        errCode_R[5] = m_motorDriver->getErrorCode(MotorType::MAXON, 1, arm_0);
-        errCode_R[6] = m_motorDriver->getErrorCode(MotorType::MAXON, 2, arm_0);
-        errCode_R[7] = m_motorDriver->getErrorCode(MotorType::MAXON, 3, arm_0);
-        errCode_R[8] = m_motorDriver->getErrorCode(MotorType::MAXON, 4, arm_0);
-        errCode_R[9] = m_motorDriver->getErrorCode(MotorType::MAXON, 5, arm_0);
+        for (int axis = instrumentFirstMaxon(m_instrumentAxes.load()); axis < 6; ++axis) {
+            errCode_R[4 + axis] = m_motorDriver->getErrorCode(MotorType::MAXON, axis, arm_0);
+        }
 
 
         LOG(INFO) << "Set Motor Status Finish, Error Code Right: " << std::hex <<errCode_R;
@@ -56,12 +50,9 @@ void RobotControl::goToHold()
         std::array<int, MotorNumPerSide> statusWord_R = {0};
 
         statusWord_R[0] = m_motorDriver->getStatusWord(MotorType::MOONS, 0, arm_0);
-        statusWord_R[4] = m_motorDriver->getStatusWord(MotorType::MAXON, 0, arm_0);
-        statusWord_R[5] = m_motorDriver->getStatusWord(MotorType::MAXON, 1, arm_0);
-        statusWord_R[6] = m_motorDriver->getStatusWord(MotorType::MAXON, 2, arm_0);
-        statusWord_R[7] = m_motorDriver->getStatusWord(MotorType::MAXON, 3, arm_0);
-        statusWord_R[8] = m_motorDriver->getStatusWord(MotorType::MAXON, 4, arm_0);
-        statusWord_R[9] = m_motorDriver->getStatusWord(MotorType::MAXON, 5, arm_0);
+        for (int axis = instrumentFirstMaxon(m_instrumentAxes.load()); axis < 6; ++axis) {
+            statusWord_R[4 + axis] = m_motorDriver->getStatusWord(MotorType::MAXON, axis, arm_0);
+        }
 
         LOG(INFO) << "Set Motor Status Finish, Status Word Right: " << std::hex <<statusWord_R;
 //        LOG(INFO) << "Set Motor Status Finish, Status Word Left: " << std::hex <<statusWord_L;
@@ -69,12 +60,9 @@ void RobotControl::goToHold()
         std::array<int, MotorNumPerSide> modeDisplay_R = {0};
 
         modeDisplay_R[0] = m_motorDriver->getOperationMode(MotorType::MOONS, 0, arm_0);
-        modeDisplay_R[4] = m_motorDriver->getOperationMode(MotorType::MAXON, 0, arm_0);
-        modeDisplay_R[5] = m_motorDriver->getOperationMode(MotorType::MAXON, 1, arm_0);
-        modeDisplay_R[6] = m_motorDriver->getOperationMode(MotorType::MAXON, 2, arm_0);
-        modeDisplay_R[7] = m_motorDriver->getOperationMode(MotorType::MAXON, 3, arm_0);
-        modeDisplay_R[8] = m_motorDriver->getOperationMode(MotorType::MAXON, 4, arm_0);
-        modeDisplay_R[9] = m_motorDriver->getOperationMode(MotorType::MAXON, 5, arm_0);
+        for (int axis = instrumentFirstMaxon(m_instrumentAxes.load()); axis < 6; ++axis) {
+            modeDisplay_R[4 + axis] = m_motorDriver->getOperationMode(MotorType::MAXON, axis, arm_0);
+        }
 
         SendInnerMsg(Module_Inner_E::Uiinterface,static_cast<int>(UIAction_E::RecvSystemBootSta),"Ok");
         break;
@@ -100,23 +88,17 @@ void RobotControl::goToHold()
         LOG(INFO)<<"FROM TeleOperation TO HOLD";
 
         m_motorDriver->operationCSP(MotorType::MOONS, 0, arm_0);
-        m_motorDriver->operationCSP(MotorType::MAXON, 0, arm_0);
-        m_motorDriver->operationCSP(MotorType::MAXON, 1, arm_0);
-        m_motorDriver->operationCSP(MotorType::MAXON, 2, arm_0);
-        m_motorDriver->operationCSP(MotorType::MAXON, 3, arm_0);
-        m_motorDriver->operationCSP(MotorType::MAXON, 4, arm_0);
-        m_motorDriver->operationCSP(MotorType::MAXON, 5, arm_0);
+        for (int axis = instrumentFirstMaxon(m_instrumentAxes.load()); axis < 6; ++axis) {
+            m_motorDriver->operationCSP(MotorType::MAXON, axis, arm_0);
+        }
 
 //        std::array<int, MotorNumPerSide> statusWord_l = {0};
         std::array<int, MotorNumPerSide> statusWord_r = {0};
 
         statusWord_r[0] = m_motorDriver->getStatusWord(MotorType::MOONS, 0, arm_0);
-        statusWord_r[4] = m_motorDriver->getStatusWord(MotorType::MAXON, 0, arm_0);
-        statusWord_r[5] = m_motorDriver->getStatusWord(MotorType::MAXON, 1, arm_0);
-        statusWord_r[6] = m_motorDriver->getStatusWord(MotorType::MAXON, 2, arm_0);
-        statusWord_r[7] = m_motorDriver->getStatusWord(MotorType::MAXON, 3, arm_0);
-        statusWord_r[8] = m_motorDriver->getStatusWord(MotorType::MAXON, 4, arm_0);
-        statusWord_r[9] = m_motorDriver->getStatusWord(MotorType::MAXON, 5, arm_0);
+        for (int axis = instrumentFirstMaxon(m_instrumentAxes.load()); axis < 6; ++axis) {
+            statusWord_r[4 + axis] = m_motorDriver->getStatusWord(MotorType::MAXON, axis, arm_0);
+        }
 
         LOG(INFO) << "Set Right Arm Motor Status Finish, Status Word: " << std::hex << statusWord_r;
 //        LOG(INFO) << "Set Left  Arm Motor Status Finish, Status Word: " << std::hex << statusWord_l;
@@ -125,12 +107,9 @@ void RobotControl::goToHold()
 //        std::array<int, MotorNumPerSide> modeDisplay_l = {0};
 
         modeDisplay_r[0] = m_motorDriver->getOperationMode(MotorType::MOONS, 0, arm_0);
-        modeDisplay_r[4] = m_motorDriver->getOperationMode(MotorType::MAXON, 0, arm_0);
-        modeDisplay_r[5] = m_motorDriver->getOperationMode(MotorType::MAXON, 1, arm_0);
-        modeDisplay_r[6] = m_motorDriver->getOperationMode(MotorType::MAXON, 2, arm_0);
-        modeDisplay_r[7] = m_motorDriver->getOperationMode(MotorType::MAXON, 3, arm_0);
-        modeDisplay_r[8] = m_motorDriver->getOperationMode(MotorType::MAXON, 4, arm_0);
-        modeDisplay_r[9] = m_motorDriver->getOperationMode(MotorType::MAXON, 5, arm_0);
+        for (int axis = instrumentFirstMaxon(m_instrumentAxes.load()); axis < 6; ++axis) {
+            modeDisplay_r[4 + axis] = m_motorDriver->getOperationMode(MotorType::MAXON, axis, arm_0);
+        }
 
         LOG(INFO) << "Set Right Arm Motor Data for Teleoperation Finish, Operation Display: " << modeDisplay_r;
 //        LOG(INFO) << "Set Left  Arm Motor Data for Teleoperation Finish, Operation Display: " << modeDisplay_l;
@@ -184,46 +163,34 @@ void RobotControl::goToTeleOperation()
         std::array<int, MotorNumPerSide> statusWord_R = {0};
 
         statusWord_R[0] = m_motorDriver->getStatusWord(MotorType::MOONS, 0, arm_0);
-        statusWord_R[4] = m_motorDriver->getStatusWord(MotorType::MAXON, 0, arm_0);
-        statusWord_R[5] = m_motorDriver->getStatusWord(MotorType::MAXON, 1, arm_0);
-        statusWord_R[6] = m_motorDriver->getStatusWord(MotorType::MAXON, 2, arm_0);
-        statusWord_R[7] = m_motorDriver->getStatusWord(MotorType::MAXON, 3, arm_0);
-        statusWord_R[8] = m_motorDriver->getStatusWord(MotorType::MAXON, 4, arm_0);
-        statusWord_R[9] = m_motorDriver->getStatusWord(MotorType::MAXON, 5, arm_0);
+        for (int axis = instrumentFirstMaxon(m_instrumentAxes.load()); axis < 6; ++axis) {
+            statusWord_R[4 + axis] = m_motorDriver->getStatusWord(MotorType::MAXON, axis, arm_0);
+        }
 
         usleep (50 * 1000);
 
         LOG(INFO) << "Go to Teleoperation start, Status Word of Right Arm: " << std::hex << statusWord_R;
         m_motorDriver->operationCSP(MotorType::MOONS, 0, arm_0);
-        m_motorDriver->operationCSP(MotorType::MAXON, 0, arm_0);
-        m_motorDriver->operationCSP(MotorType::MAXON, 1, arm_0);
-        m_motorDriver->operationCSP(MotorType::MAXON, 2, arm_0);
-        m_motorDriver->operationCSP(MotorType::MAXON, 3, arm_0);
-        m_motorDriver->operationCSP(MotorType::MAXON, 4, arm_0);
-        m_motorDriver->operationCSP(MotorType::MAXON, 5, arm_0);
+        for (int axis = instrumentFirstMaxon(m_instrumentAxes.load()); axis < 6; ++axis) {
+            m_motorDriver->operationCSP(MotorType::MAXON, axis, arm_0);
+        }
 
         usleep(50 * 1000);
 
         std::array<int, MotorNumPerSide> modeDisplay_R = {0};
 
         modeDisplay_R[0] = m_motorDriver->getOperationMode(MotorType::MOONS, 0, arm_0);
-        modeDisplay_R[4] = m_motorDriver->getOperationMode(MotorType::MAXON, 0, arm_0);
-        modeDisplay_R[5] = m_motorDriver->getOperationMode(MotorType::MAXON, 1, arm_0);
-        modeDisplay_R[6] = m_motorDriver->getOperationMode(MotorType::MAXON, 2, arm_0);
-        modeDisplay_R[7] = m_motorDriver->getOperationMode(MotorType::MAXON, 3, arm_0);
-        modeDisplay_R[8] = m_motorDriver->getOperationMode(MotorType::MAXON, 4, arm_0);
-        modeDisplay_R[9] = m_motorDriver->getOperationMode(MotorType::MAXON, 5, arm_0);
+        for (int axis = instrumentFirstMaxon(m_instrumentAxes.load()); axis < 6; ++axis) {
+            modeDisplay_R[4 + axis] = m_motorDriver->getOperationMode(MotorType::MAXON, axis, arm_0);
+        }
 
         usleep(50 * 1000);
         LOG(INFO) << "Set Operation Mode for Teleoperation Finish, Operation Display of Right Arm: " << std::hex << modeDisplay_R;
 
         statusWord_R[0] = m_motorDriver->getStatusWord(MotorType::MOONS, 0, arm_0);
-        statusWord_R[4] = m_motorDriver->getStatusWord(MotorType::MAXON, 0, arm_0);
-        statusWord_R[5] = m_motorDriver->getStatusWord(MotorType::MAXON, 1, arm_0);
-        statusWord_R[6] = m_motorDriver->getStatusWord(MotorType::MAXON, 2, arm_0);
-        statusWord_R[7] = m_motorDriver->getStatusWord(MotorType::MAXON, 3, arm_0);
-        statusWord_R[8] = m_motorDriver->getStatusWord(MotorType::MAXON, 4, arm_0);
-        statusWord_R[9] = m_motorDriver->getStatusWord(MotorType::MAXON, 5, arm_0);
+        for (int axis = instrumentFirstMaxon(m_instrumentAxes.load()); axis < 6; ++axis) {
+            statusWord_R[4 + axis] = m_motorDriver->getStatusWord(MotorType::MAXON, axis, arm_0);
+        }
 
         usleep (50 * 1000);
 

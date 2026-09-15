@@ -26,6 +26,7 @@ from PySide6.QtTest import QTest
 
 class FakeInterface(QObject):
     changed = Signal()
+    elapsedChanged = Signal()
 
     def __init__(self):
         super().__init__()
@@ -35,9 +36,31 @@ class FakeInterface(QObject):
         self.test_requests = []
         self.stop_requests = 0
         self.shutdown_requests = 0
+        self.axes_requests = []
+        self.axes = 0
+        self.elapsed = "00:00:00"
 
     testState = Property(int, lambda self: self.state, notify=changed)
     testStatus = Property(str, lambda self: self.status, notify=changed)
+    instrumentAxes = Property(int, lambda self: self.axes, notify=changed)
+    testElapsed = Property(str, lambda self: self.elapsed, notify=elapsedChanged)
+
+    @Slot(int)
+    def selectInstrumentAxes(self, axes):
+        if axes == self.axes:
+            return
+        self.axes_requests.append(axes)
+        self.axes = 0
+        self.set_state(7, "正在配置器械，请稍候…")
+
+    def acknowledge_axes(self, axes):
+        self.axes = axes
+        self.set_state(1, f"已选择{axes}轴器械，请先将器械归零。" if axes else "器械参数加载失败，请重新选择轴数。")
+
+    def set_elapsed(self, text):
+        self.elapsed = text
+        self.elapsedChanged.emit()
+        QTest.qWait(50)
 
     def set_state(self, state, text):
         self.state, self.status = state, text
@@ -53,6 +76,7 @@ class FakeInterface(QObject):
     def enterInstrumentTest(self, mode):
         self.test_requests.append(mode)
         self.set_state(4, "测试进行中，归零和模式切换已锁定。")
+        self.set_elapsed("00:00:00")
 
     @Slot()
     def stopInstrumentTest(self):
@@ -105,39 +129,66 @@ home = item("testHomeRightButton")
 enter = item("testEnterButton")
 stop = item("testStopButton")
 shutdown = item("testShutdownButton")
+axes_buttons = [item("testAxesButton" + str(n)) for n in (4, 6)]
+elapsed_label = item("testElapsedLabel")
 modes = [item("testModeButton" + str(i)) for i in range(3)]
 assert not home.property("enabled") and not enter.property("enabled")
 assert not stop.property("enabled")
 assert not shutdown.property("enabled")
+assert all(not b.property("enabled") for b in axes_buttons)
 assert all(not m.property("enabled") for m in modes)
 backend.set_state(1, "控制程序已就绪，请确认设备连接并将器械归零。")
-assert home.property("enabled") and not enter.property("enabled")
+assert not home.property("enabled") and not enter.property("enabled")
+assert elapsed_label.property("text") == "已测试 00:00:00"
+click(axes_buttons[0])
+assert backend.axes_requests == [4] and backend.state == 7
+assert all(not b.property("enabled") for b in [home, enter, shutdown] + axes_buttons + modes)
+backend.acknowledge_axes(0)
+assert not home.property("enabled"), "Bad profile must not allow homing"
+click(axes_buttons[0])
+backend.acknowledge_axes(4)
+assert axes_buttons[0].property("checked") and not axes_buttons[1].property("checked")
+assert home.property("enabled")
 assert home.property("text") == "器械归零"
 assert all(not m.property("enabled") for m in modes)
 click(home)
 assert backend.home_requests == 1 and not home.property("enabled")
 assert not shutdown.property("enabled")
+assert all(not b.property("enabled") for b in axes_buttons)
 assert all(not m.property("enabled") for m in modes)
 backend.set_state(3, "器械已归零，选择模式后即可进入测试。")
 assert not enter.property("enabled"), "Must select a mode first"
 
-for index in range(3):
+for index in range(6):
+    mode = index % 3
     if index:
         assert all(not m.property("enabled") for m in modes)
+        if index == 3:
+            click(axes_buttons[1])
+            assert backend.axes_requests[-1] == 6
+            backend.acknowledge_axes(6)
         click(home)
         backend.set_state(3, "器械已归零，选择模式后即可进入测试。")
         assert not enter.property("enabled"), "Rehoming must require a fresh mode selection"
-    click(modes[index])
-    assert window.property("selectedMode") == index
-    assert [m.property("checked") for m in modes] == [i == index for i in range(3)]
+    click(modes[mode])
+    assert window.property("selectedMode") == mode
+    assert [m.property("checked") for m in modes] == [i == mode for i in range(3)]
     # Clicking the same card must not deselect it.
-    click(modes[index])
-    assert modes[index].property("checked") and enter.property("enabled")
+    click(modes[mode])
+    assert modes[mode].property("checked") and enter.property("enabled")
     if index == 0:
         output = root / "output/test-ui-preview.png"
         assert window.grabWindow().save(str(output))
     click(enter)
-    assert backend.test_requests[-1] == index
+    assert backend.test_requests[-1] == mode
+    assert elapsed_label.property("text") == "已测试 00:00:00"
+    backend.set_elapsed("25:01:01")
+    assert elapsed_label.property("text") == "已测试 25:01:01"
+    assert all(not b.property("enabled") for b in axes_buttons)
+    selection_count = len(backend.axes_requests)
+    click(axes_buttons[0])
+    click(axes_buttons[1])
+    assert len(backend.axes_requests) == selection_count
     assert not enter.property("enabled") and not home.property("enabled")
     assert all(not m.property("enabled") for m in modes)
     click(enter)
@@ -152,7 +203,7 @@ for index in range(3):
     assert all(not control.property("enabled") for control in [home, enter, stop] + modes)
     click(stop)
     click(home)
-    click(modes[index])
+    click(modes[mode])
     click(enter)
     assert backend.stop_requests == index + 1, "Duplicate stop was not blocked"
     assert backend.home_requests == index + 1, "Homing must wait for the stop acknowledgement"
@@ -160,19 +211,31 @@ for index in range(3):
     backend.set_state(1, "测试已停止；请先将器械归零，再重新选择测试模式。")
     assert not enter.property("enabled") and home.property("enabled")
     assert all(not m.property("enabled") for m in modes)
-    click(modes[index])
+    click(modes[mode])
     click(enter)
     assert window.property("selectedMode") == -1
     assert len(backend.test_requests) == index + 1, "Restart before rehoming was not blocked"
+    assert elapsed_label.property("text") == "已测试 25:01:01", "Stopped duration must be retained"
 
 click(home)
 backend.set_state(3, "器械已归零，选择模式后即可进入测试。")
 click(modes[0])
+click(axes_buttons[0])
+assert backend.state == 7 and window.property("selectedMode") == -1
+assert not enter.property("enabled") and not home.property("enabled")
+backend.acknowledge_axes(4)
+assert not enter.property("enabled"), "Axis switch invalidates homing"
+click(home)
+backend.set_state(3, "器械已归零，选择模式后即可进入测试。")
+assert not enter.property("enabled")
+click(modes[0])
 click(enter)
-assert len(backend.test_requests) == 4
+assert len(backend.test_requests) == 7
+backend.set_elapsed("02:00:07")
 backend.set_state(1, "测试已完成；再次测试前，请重新归零。")
 assert home.property("enabled") and window.property("selectedMode") == -1
 assert all(not control.property("enabled") for control in [enter, stop] + modes)
+assert elapsed_label.property("text") == "已测试 02:00:07"
 
 backend.set_state(5, "收到异常信号，请使用硬件急停并检查设备。")
 assert not home.property("enabled") and not enter.property("enabled")
@@ -181,7 +244,7 @@ assert not stop.property("enabled")
 backend.set_state(3, "器械已归零，选择模式后即可进入测试。")
 window.resize(800, 640)
 QTest.qWait(100)
-for control in [home, enter, stop, shutdown] + modes:
+for control in [home, enter, stop, shutdown, elapsed_label] + axes_buttons + modes:
     top = control.mapToScene(QPointF(0, 0))
     bottom = control.mapToScene(QPointF(control.width(), control.height()))
     assert top.x() >= 0 and top.y() >= 0 and bottom.x() <= 800 and bottom.y() <= 640, control.objectName()
@@ -199,7 +262,7 @@ assert all(not control.property("enabled") for control in [home, enter, stop, sh
 click(shutdown)
 assert backend.shutdown_requests == 1, "Duplicate shutdown was not blocked"
 assert not warnings, "\n".join(warnings)
-print("PASS: QML load, 3 modes, stop/rehoming locks, shutdown confirmation/cancel/duplicate locks, 2 preview sizes")
+print("PASS: QML, 4/6-axis selection and rehoming, all 6 axis/mode combinations, elapsed display/reset/retention, stop/shutdown locks, 2 sizes")
 window.hide()
 engine.deleteLater()
 app.processEvents()

@@ -6,6 +6,10 @@ enum class InstrumentTestMode { PreRun = 0, GripForce = 1, Endurance = 2 };
 
 constexpr bool isInstrumentTestMode(int mode) { return mode >= 0 && mode <= 2; }
 
+// Preserve the existing wiring: four-axis targets occupy encoder slots 6..9
+// (Maxon 2..5); six-axis targets occupy slots 4..9 (Maxon 0..5).
+constexpr int instrumentFirstMaxon(int axes) { return axes == 4 ? 2 : (axes == 6 ? 0 : 6); }
+
 struct InstrumentTestSettings {
     double durationSeconds;
     int stepAfterZero;

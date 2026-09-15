@@ -17,7 +17,7 @@ Window {
     property int selectedMode: -1
     property bool shutdownRequested: false
     readonly property int testState: UIinterface.testState
-    readonly property bool busy: testState === 2 || testState === 4 || testState === 6
+    readonly property bool busy: testState === 2 || testState === 4 || testState === 6 || testState === 7
     onTestStateChanged: {
         if (testState !== 3 && testState !== 4) window.selectedMode = -1
     }
@@ -94,10 +94,10 @@ Window {
         enabled: !window.shutdownRequested
         width: Math.min(parent.width - 80, 1120)
         anchors.centerIn: parent
-        spacing: window.height < 720 ? 18 : 28
+        spacing: window.height < 760 ? 10 : 20
 
         ColumnLayout {
-            spacing: 10
+            spacing: window.height < 760 ? 6 : 10
             Text {
                 text: "INSTRUMENT TEST"
                 color: "#5BD7BD"
@@ -111,15 +111,52 @@ Window {
                 font.weight: Font.DemiBold
             }
             Text {
-                text: "器械归零 → 选择测试模式 → 进入测试"
+                text: "选择轴数 → 器械归零 → 选择测试模式 → 进入测试"
                 color: "#8C9FAE"
                 font.pixelSize: 15
             }
         }
 
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 12
+            Text {
+                text: "被测器械"
+                color: "#D6E1E8"
+                font.pixelSize: 16
+            }
+            Repeater {
+                model: [4, 6]
+                delegate: Button {
+                    id: axesButton
+                    objectName: "testAxesButton" + modelData
+                    implicitWidth: 180
+                    implicitHeight: 40
+                    text: modelData === 4 ? "四轴（4 Maxon）" : "六轴（6 Maxon）"
+                    checked: UIinterface.instrumentAxes === modelData
+                    enabled: window.testState === 1 || window.testState === 3
+                    onClicked: UIinterface.selectInstrumentAxes(modelData)
+                    contentItem: Text {
+                        text: axesButton.text
+                        color: axesButton.enabled ? "#DDF9F2" : "#71818C"
+                        font.pixelSize: 16
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    background: Rectangle {
+                        radius: 8
+                        color: axesButton.checked ? "#193C39" : "#15232D"
+                        border.width: axesButton.checked || axesButton.activeFocus ? 2 : 1
+                        border.color: axesButton.activeFocus ? "#E1FFF8" : (axesButton.checked ? "#5BD7BD" : "#2A3B46")
+                    }
+                }
+            }
+            Item { Layout.fillWidth: true }
+        }
+
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: 100
+            implicitHeight: window.height < 760 ? 80 : 100
             radius: 14
             color: "#15232D"
             border.color: "#263944"
@@ -144,7 +181,7 @@ Window {
                     implicitWidth: 160
                     implicitHeight: 48
                     text: UIinterface.testState === 2 ? "归零中…" : "器械归零"
-                    enabled: UIinterface.testState === 1 || UIinterface.testState === 3
+                    enabled: UIinterface.instrumentAxes > 0 && (UIinterface.testState === 1 || UIinterface.testState === 3)
                     onClicked: UIinterface.homeRightInstrument()
                     contentItem: Text {
                         text: homeButton.text
@@ -165,10 +202,20 @@ Window {
         ColumnLayout {
             Layout.fillWidth: true
             spacing: 14
-            Text {
-                text: "选择测试模式"
-                color: "#D6E1E8"
-                font.pixelSize: 17
+            RowLayout {
+                Layout.fillWidth: true
+                Text {
+                    Layout.fillWidth: true
+                    text: "选择测试模式"
+                    color: "#D6E1E8"
+                    font.pixelSize: 17
+                }
+                Text {
+                    objectName: "testElapsedLabel"
+                    text: "已测试 " + UIinterface.testElapsed
+                    color: "#5BD7BD"
+                    font.pixelSize: 17
+                }
             }
             RowLayout {
                 Layout.fillWidth: true

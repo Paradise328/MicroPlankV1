@@ -26,7 +26,8 @@ enum class _RobotControlAction_E
     MotorOff,
     Update_EndeffectorData,
     StartInstrumentTest = 0x100,
-    StopInstrumentTest = 0x102
+    StopInstrumentTest = 0x102,
+    SelectInstrumentAxes = 0x103
 };
 using RobotControlAction_E = enum _RobotControlAction_E;
 
@@ -89,7 +90,9 @@ enum class _UIAction_E
     FinishCalibrationOneSide,
     RecvSystemBootSta,
     RecvModuleStatus,
-    InstrumentTestStatus = 0x101
+    InstrumentTestStatus = 0x101,
+    InstrumentTestElapsed = 0x104,
+    InstrumentAxesStatus = 0x105
 
 };
 using UIAction_E = enum _UIAction_E;

@@ -62,6 +62,8 @@ class UIinterface: public QObject
     Q_PROPERTY(int level  READ getlevel WRITE setlevel NOTIFY LevelChanged)
     Q_PROPERTY(int testState READ testState NOTIFY testStatusChanged)
     Q_PROPERTY(QString testStatus READ testStatus NOTIFY testStatusChanged)
+    Q_PROPERTY(int instrumentAxes READ instrumentAxes NOTIFY testStatusChanged)
+    Q_PROPERTY(QString testElapsed READ testElapsed NOTIFY testElapsedChanged)
 //    Q_PROPERTY(bool handleEn  READ gethandleEn WRITE sethandleEn NOTIFY handleEnChanged)
 
 public:
@@ -99,9 +101,13 @@ public:
 //    Q_INVOKABLE void setMotorDriverStatus();
 
     Q_INVOKABLE void startSystem();
-    // 0 initializing, 1 needs homing, 2 homing, 3 ready, 4 starting/running, 5 fault.
+    // 0 initializing, 1 needs selection/homing, 2 homing, 3 ready, 4 starting/running,
+    // 5 fault, 6 stopping, 7 configuring instrument axes.
     int testState() const { return m_testState; }
     QString testStatus() const { return m_testStatus; }
+    int instrumentAxes() const { return m_instrumentAxes; }
+    QString testElapsed() const { return m_testElapsed; }
+    Q_INVOKABLE void selectInstrumentAxes(int axes);
     Q_INVOKABLE void homeRightInstrument();
     Q_INVOKABLE void enterInstrumentTest(int mode);
     Q_INVOKABLE void stopInstrumentTest();
@@ -177,6 +183,7 @@ public Q_SLOTS:
 
 signals:
     void testStatusChanged();
+    void testElapsedChanged();
 
     void startWholeSystemSignal();
 
@@ -188,6 +195,8 @@ signals:
 
 private:
     int m_testState = 0;
+    int m_instrumentAxes = 0;
+    QString m_testElapsed = QStringLiteral("00:00:00");
     QString m_testStatus = QStringLiteral("正在初始化设备，请稍候…");
     bool m_systemStartRequested = false;
     bool                    m_HandleEnable_L = false;

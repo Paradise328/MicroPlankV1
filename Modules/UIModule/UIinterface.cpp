@@ -201,9 +201,21 @@ void UIinterface::startSystem()
     emit startWholeSystemSignal();
 }
 
+void UIinterface::selectInstrumentAxes(int axes)
+{
+    if ((m_testState != 1 && m_testState != 3) || (axes != 4 && axes != 6)
+        || axes == m_instrumentAxes) { return; }
+    m_instrumentAxes = 0;
+    m_testState = 7;
+    m_testStatus = QStringLiteral("正在配置%1轴器械，请稍候…").arg(axes);
+    emit testStatusChanged();
+    SendInnerMsg(Module_Inner_E::RobotControl,
+        static_cast<int>(RobotControlAction_E::SelectInstrumentAxes), QString::number(axes));
+}
+
 void UIinterface::homeRightInstrument()
 {
-    if (m_testState != 1 && m_testState != 3) { return; }
+    if ((m_testState != 1 && m_testState != 3) || m_instrumentAxes == 0) { return; }
     m_testState = 2;
     m_testStatus = QStringLiteral("器械归零中，请勿触碰器械…");
     emit testStatusChanged();
@@ -213,7 +225,7 @@ void UIinterface::homeRightInstrument()
 
 void UIinterface::enterInstrumentTest(int mode)
 {
-    if (m_testState != 3 || !isInstrumentTestMode(mode)) { return; }
+    if (m_testState != 3 || m_instrumentAxes == 0 || !isInstrumentTestMode(mode)) { return; }
     m_testState = 4;
     m_testStatus = QStringLiteral("正在启动所选测试…");
     emit testStatusChanged();
@@ -243,7 +255,26 @@ void UIinterface::dealWithTestMsg()
         if (msg.Recver != Module_Inner_E::Uiinterface
             && msg.Recver != Module_Inner_E::MultipleModules) { continue; }
         for (auto i = msg.Request.constBegin(); i != msg.Request.constEnd(); ++i) {
-            if (i.key() == static_cast<int>(UIAction_E::RecvSystemBootSta)
+            if (i.key() == static_cast<int>(UIAction_E::InstrumentTestElapsed)) {
+                if (m_testState != 4 && m_testState != 6) { continue; }
+                bool ok = false;
+                const qint64 seconds = i.value().toLongLong(&ok);
+                if (!ok || seconds < 0) { continue; }
+                m_testElapsed = QStringLiteral("%1:%2:%3")
+                    .arg(seconds / 3600, 2, 10, QLatin1Char('0'))
+                    .arg((seconds / 60) % 60, 2, 10, QLatin1Char('0'))
+                    .arg(seconds % 60, 2, 10, QLatin1Char('0'));
+                emit testElapsedChanged();
+                continue;
+            } else if (i.key() == static_cast<int>(UIAction_E::InstrumentAxesStatus)) {
+                if (m_testState != 7) { continue; }
+                const int axes = i.value().toInt();
+                m_instrumentAxes = axes == 4 || axes == 6 ? axes : 0;
+                m_testState = 1;
+                m_testStatus = m_instrumentAxes == 0
+                    ? QStringLiteral("器械参数加载失败，请检查配置文件后重新选择轴数。")
+                    : QStringLiteral("已选择%1轴器械，请先将器械归零。").arg(m_instrumentAxes);
+            } else if (i.key() == static_cast<int>(UIAction_E::RecvSystemBootSta)
                 && m_testState == 0 && i.value() != "Ok") {
                 m_testState = 5;
                 m_testStatus = QStringLiteral("设备初始化失败，请检查连接并重启程序。");
@@ -252,11 +283,11 @@ void UIinterface::dealWithTestMsg()
                 m_testState = 3;
                 m_testStatus = QStringLiteral("器械已归零，选择模式后即可进入测试。");
             } else if (i.key() == static_cast<int>(UIAction_E::InstrumentTestStatus)) {
-                if (m_testState == 5) { continue; } // A fault must not be cleared by a late status.
+                if (m_testState == 5 || m_testState == 7) { continue; }
                 if (m_testState == 6 && i.value() != "stopped") { continue; }
                 if (i.value() == "initialized" && m_testState == 0) {
                     m_testState = 1;
-                    m_testStatus = QStringLiteral("控制程序已就绪，请确认设备连接并将器械归零。");
+                    m_testStatus = QStringLiteral("控制程序已就绪，请先选择被测器械的轴数。");
                 } else if (i.value() == "running") {
                     m_testState = 4;
                     m_testStatus = QStringLiteral("测试进行中，归零和模式切换已锁定。");
