@@ -35,6 +35,7 @@ LIBS += -lruckig                    # 链接 Ruckig 库
 SOURCES += \
         Modules/ForceSensorModule/ForceSensor.cpp \
         Modules/ForceSensorModule/PressureSensor.cpp \
+        Modules/ForceSensorModule/TorqueSensorArray.cpp \
         Modules/LoggerModule/easylogging++.cc \
         Modules/MasterModule/MasterConsole.cpp \
         Modules/MasterModule/MasterConsole_Lib/viper_transmitter.cpp \
@@ -71,6 +72,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     Modules/ForceSensorModule/ForceSensor.h \
     Modules/ForceSensorModule/PressureSensor.h \
+    Modules/ForceSensorModule/TorqueSensorArray.h \
     Modules/LoggerModule/easylogging++.h \
     Modules/MasterModule/MasterConsole.h \
     Modules/MasterModule/MasterConsole_Lib/viper_transmitter.h \
@@ -91,6 +93,7 @@ HEADERS += \
     Modules/MsgModule/threadsafequeue.h \
     Modules/RobotControlModule/DomainController.h \
     Modules/RobotControlModule/RobotControl.h \
+    Modules/RobotControlModule/InstrumentTestMode.h \
     Modules/SecurityModule/security.h \
     Modules/SystemUtilsModule/SystemUtils.h \
     Modules/UIModule/Audioplay.h \

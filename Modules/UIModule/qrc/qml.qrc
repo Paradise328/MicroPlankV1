@@ -5,6 +5,7 @@
         <file>../InitPage.qml</file>
         <file>../InOpreation.qml</file>
         <file>../main.qml</file>
+        <file>../TestPage.qml</file>
         <file>../PreOperation.qml</file>
         <file>../MainPage.qml</file>
     </qresource>

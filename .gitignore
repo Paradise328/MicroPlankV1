@@ -4,6 +4,7 @@
 /logs
 /galilCode
 /qtfolder
+/output
 
 # Prerequisites
 *.d

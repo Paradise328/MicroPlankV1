@@ -24,7 +24,8 @@ enum class _RobotControlAction_E
     StartEndEffectorMotorHoming,
     SwitchInstrumentAngle,
     MotorOff,
-    Update_EndeffectorData
+    Update_EndeffectorData,
+    StartInstrumentTest = 0x100
 };
 using RobotControlAction_E = enum _RobotControlAction_E;
 
@@ -86,7 +87,8 @@ enum class _UIAction_E
     SetPosScaling,
     FinishCalibrationOneSide,
     RecvSystemBootSta,
-    RecvModuleStatus
+    RecvModuleStatus,
+    InstrumentTestStatus = 0x101
 
 };
 using UIAction_E = enum _UIAction_E;

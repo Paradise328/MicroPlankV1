@@ -1,5 +1,8 @@
 ﻿#include "UIinterface.h"
 
+#include "../RobotControlModule/InstrumentTestMode.h"
+#include <QTimer>
+
 UIinterface::UIinterface(QGuiApplication &app,MessageQueue&  messagePool) :m_app(app),m_messagePool(messagePool)
 {
     m_Engine.rootContext()->setContextProperty("qmlLanguage", &m_qmlLanguage);
@@ -16,13 +19,11 @@ UIinterface::UIinterface(QGuiApplication &app,MessageQueue&  messagePool) :m_app
 
     LOG(INFO) << "Open UI ";
 
-    setQMLComponent();
-
-    setConnections();
-
-    setInitStatus();
-
-    connect(this,&UIinterface::DealMsgSignal,this,&UIinterface::dealWithMsg);
+    // No legacy operation widgets are loaded by the simplified test screen.
+    connect(this, &UIinterface::DealMsgSignal, this, &UIinterface::dealWithTestMsg,
+            Qt::QueuedConnection);
+    // MicroPlank must finish connecting startWholeSystemSignal first.
+    QTimer::singleShot(0, this, &UIinterface::startSystem);
 }
 
 void UIinterface::setQMLComponent()
@@ -195,7 +196,76 @@ void UIinterface::onRobotArmEnable_Clicked()
 
 void UIinterface::startSystem()
 {
+    if (m_systemStartRequested) { return; }
+    m_systemStartRequested = true;
     emit startWholeSystemSignal();
+}
+
+void UIinterface::homeRightInstrument()
+{
+    if (m_testState != 1 && m_testState != 3) { return; }
+    m_testState = 2;
+    m_testStatus = QStringLiteral("右器械归零中，请勿触碰器械…");
+    emit testStatusChanged();
+    SendInnerMsg(Module_Inner_E::RobotControl,
+        static_cast<int>(RobotControlAction_E::StartEndEffectorMotorHoming), "r");
+}
+
+void UIinterface::enterInstrumentTest(int mode)
+{
+    if (m_testState != 3 || !isInstrumentTestMode(mode)) { return; }
+    m_testState = 4;
+    m_testStatus = QStringLiteral("正在启动所选测试…");
+    emit testStatusChanged();
+    SendInnerMsg(Module_Inner_E::RobotControl,
+        static_cast<int>(RobotControlAction_E::StartInstrumentTest), QString::number(mode));
+}
+
+void UIinterface::dealWithTestMsg()
+{
+    while (true) {
+        Message_Inner_T msg;
+        {
+            QWriteLocker locker(&m_MsgGottenRWLock);
+            if (m_MsgGottenQueue.isEmpty()) { break; }
+            msg = m_MsgGottenQueue.dequeue();
+        }
+        if (msg.Recver != Module_Inner_E::Uiinterface
+            && msg.Recver != Module_Inner_E::MultipleModules) { continue; }
+        for (auto i = msg.Request.constBegin(); i != msg.Request.constEnd(); ++i) {
+            if (i.key() == static_cast<int>(UIAction_E::RecvSystemBootSta)
+                && m_testState == 0 && i.value() != "Ok") {
+                m_testState = 5;
+                m_testStatus = QStringLiteral("设备初始化失败，请检查连接并重启程序。");
+            } else if (i.key() == static_cast<int>(UIAction_E::FinishCalibration)
+                       && i.value() == "r" && m_testState == 2) {
+                m_testState = 3;
+                m_testStatus = QStringLiteral("右器械已归零，选择模式后即可进入测试。");
+            } else if (i.key() == static_cast<int>(UIAction_E::InstrumentTestStatus)) {
+                if (m_testState == 5) { continue; } // A fault must not be cleared by a late status.
+                if (i.value() == "initialized" && m_testState == 0) {
+                    m_testState = 1;
+                    m_testStatus = QStringLiteral("控制程序已就绪，请确认设备连接并将右器械归零。");
+                } else if (i.value() == "running") {
+                    m_testState = 4;
+                    m_testStatus = QStringLiteral("测试进行中，归零和模式切换已锁定。");
+                } else if (i.value() == "completed") {
+                    m_testState = 1;
+                    m_testStatus = QStringLiteral("测试已完成；再次测试前，请重新归零。");
+                } else if (i.value() == "collision") {
+                    m_testState = 1;
+                    m_testStatus = QStringLiteral("检测到碰撞，已退回并结束测试。请检查器械后重新归零。");
+                } else if (i.value() == "rejected") {
+                    m_testState = 1;
+                    m_testStatus = QStringLiteral("测试未启动，请确认设备状态并重新归零。");
+                } else { continue; }
+            } else if (i.key() == static_cast<int>(UIAction_E::Emergency)) {
+                m_testState = 5;
+                m_testStatus = QStringLiteral("收到异常信号，请使用硬件急停并检查设备。");
+            } else { continue; }
+            emit testStatusChanged();
+        }
+    }
 }
 
 void UIinterface::setRobotControlMode(int action)
@@ -1169,5 +1239,3 @@ void UIinterface::GetAmMsg(Message_Inner_T msg)
     m_MsgGottenRWLock.unlock();
     emit DealMsgSignal();
 }
-
-

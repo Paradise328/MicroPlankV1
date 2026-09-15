@@ -6,6 +6,8 @@
 #include "../SystemUtilsModule/SystemUtils.h"
 #include "../MathModule/lowpass_filter.h"
 #include "../ForceSensorModule/PressureSensor.h"
+#include "../ForceSensorModule/TorqueSensorArray.h"
+#include "InstrumentTestMode.h"
 #include "DomainController.h"
 #include "BlasControl/actuators_controler.h"
 #include "BlasControl/BLA_API.h"
@@ -242,7 +244,10 @@ private:
     void                            runCommunication();
 
     /*初始化数据*/
-    PressureSensor* m_pressureSensor;
+    PressureSensor* m_pressureSensor = nullptr;
+    TorqueSensorArray m_torqueSensorArray;
+    std::string m_torqueSensorPort = "/dev/ttyUSB1";
+    bool                            initTorqueSensorArray();
     void                            initCamera();
 
     void                            takePhotoTask(std::string stepName,double angle);// 【后台】实际执行拍照的函数
@@ -583,6 +588,13 @@ private:
     int  m_totalLoops  = 0;        // 循环次数模式：目标循环数
     int  m_currentLoop = 0;        // 已完成的循环次数
     bool m_isLooping   = false;    // 是否正在执行动作序列
+    // UI requests are handed off to the control thread before changing motion state.
+    std::atomic<int> m_pendingTestMode{-1};
+    std::atomic<bool> m_testBusy{false};
+    std::atomic<bool> m_rightTestHomed{false};
+    std::atomic<bool> m_rightTestHoming{false};
+    InstrumentTestMode m_testMode = InstrumentTestMode::PreRun;
+    bool m_testCollisionStopped = false;
     double m_targetDurationSec =0.0;
     bool   m_useTimeLimit     = false;   // true=按时间停止, false=按循环停止
     double m_totalDurationSec = 0.0;     // 时间模式：总运行秒数

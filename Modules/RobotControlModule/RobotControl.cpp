@@ -227,6 +227,38 @@ void RobotControl::initiAllData()
 
 }
 
+bool RobotControl::initTorqueSensorArray()
+{
+    if (m_torqueSensorArray.isConnected())
+        return true;
+
+    TorqueSensorArray::Config config;
+    config.portName = m_torqueSensorPort;
+    config.baudRate = 115200;
+    config.parity = 'N';
+    config.dataBits = 8;
+    config.stopBits = 1;
+    config.slaveId = 1;
+    config.pollPeriodMs = 10;
+    config.responseTimeoutMs = 50;
+    config.filterCutoffHz = 20.0;
+    config.staleTimeoutMs = 200;
+
+    if (!m_torqueSensorArray.initDevice(config)) {
+        LOG(WARNING) << "Torque sensor array is not connected on "
+                     << m_torqueSensorPort;
+        return false;
+    }
+
+    if (!m_torqueSensorArray.start()) {
+        LOG(ERROR) << "Failed to start torque sensor polling";
+        m_torqueSensorArray.disconnectDevice();
+        return false;
+    }
+
+    LOG(INFO) << "Torque sensor array started; channels 1-4 map to Maxon 0-3";
+    return true;
+}
 
 void RobotControl::initCamera()
 {
@@ -316,6 +348,10 @@ void RobotControl::triggerPhoto(std::string stepName, double angle)
 
 void RobotControl::startMyThreads()
 {
+    // Start sensor I/O only after RobotControl has been fully constructed.
+    // Failure is non-fatal while the torque hardware is not installed.
+    initTorqueSensorArray();
+
     goToHold();
 
     std::this_thread::sleep_for(std::chrono::milliseconds(4));
@@ -323,6 +359,9 @@ void RobotControl::startMyThreads()
     m_flagControlThread.store(true);
 
     startControlThread();
+
+    SendInnerMsg(Module_Inner_E::Uiinterface,
+        static_cast<int>(UIAction_E::InstrumentTestStatus), "initialized");
 
 }
 
@@ -345,8 +384,29 @@ void RobotControl::control()
         receiveMotorData();
         // auto start = std::chrono::high_resolution_clock::now();
 
+        const int requestedMode = m_pendingTestMode.exchange(-1);
+        if (isInstrumentTestMode(requestedMode)) {
+            m_testMode = static_cast<InstrumentTestMode>(requestedMode);
+            m_testCollisionStopped = false;
+            const auto settings = instrumentTestSettings(m_testMode,
+                m_endeffectorConfiguration_R == EndeffectorConfiguration::fourMaxons);
+            setRobotControlMode(RobotControlMode::TeleOperation);
+            startMotionByTime(settings.durationSeconds);
+            SendInnerMsg(Module_Inner_E::Uiinterface,
+                static_cast<int>(UIAction_E::InstrumentTestStatus), "running");
+        }
+
         if(m_flagInTeleoperation.load()){
             teleoperation();
+            if (m_testBusy.load() && !m_isLooping) {
+                // No further mapped command is sent after the sequence stops.
+                goToHold();
+                m_rightTestHomed.store(false);
+                m_testBusy.store(false);
+                SendInnerMsg(Module_Inner_E::Uiinterface,
+                    static_cast<int>(UIAction_E::InstrumentTestStatus),
+                    m_testCollisionStopped ? "collision" : "completed");
+            }
         }
         usleep(5*1000);
         // std::this_thread::sleep_until(start + std::chrono::milliseconds(5));
@@ -381,6 +441,9 @@ void RobotControl::teleoperation()
     int enableTagCur_R = m_enableTagCur_R;
 
     targetPose(handlePoseCur);
+    if (!m_isLooping) {
+        return;
+    }
 
     if(m_alignmentNumber_R != 0){
         enableTagCur_R = keepEnabling;
@@ -450,171 +513,6 @@ void RobotControl::startMotionByTime(double second)
     LOG(INFO) << "Start motion for " << second <<"second ";
 }
 
-// void RobotControl::targetPose(HandlePose& handlePoseCur)
-// {
-
-//     // 1. 定义状态机变量
-//     static int actionStep = 0;
-//     static bool actionComplete = false;
-
-//     // 2. 【新增】定义随机数生成器 (静态，只初始化一次)
-//     static std::random_device rd;
-//     static std::mt19937 gen(rd());
-//     // 定义随机范围：例如 -60度 到 +60度
-//     static std::uniform_real_distribution<> dis(30.0, 60.0);
-
-//     // 3. 【新增】存储当前的随机目标Yaw值
-//     static double currentRandomYaw = 0.0;
-//           【新增】存储上一步的名义目标，用于比较变大还是变小
-//       static double lastRawTargetYaw = 0.0;
-
-//     // 重置逻辑
-//     if (m_resetRequested) {
-//         actionStep = 0;
-//         actionComplete = false;
-//         m_TargetRollAngle_pre  = 0.0;
-//         m_TargetPitchAngle_pre = 0.0;
-//         m_TargetYawAngle_pre   = 0.0;
-
-//         // 重置时，先生成第一个随机数，供 Step 1 使用
-//         currentRandomYaw = dis(gen);
-//         lastRawTargetYaw = 0.0; // 初始记忆为0
-
-//         m_resetRequested = false;
-//     }
-
-//     // 获取当前角度
-//     double currentRoll  = m_TargetRollAngle_pre  * 180.0 / M_PI;
-//     double currentPitch = m_TargetPitchAngle_pre * 180.0 / M_PI;
-//     double currentYaw   = m_TargetYawAngle_pre   * 180.0 / M_PI;
-
-//     double RollAngle, PitchAngle, YawAngle;
-
-//     // 目标默认值
-//     double targetRoll  = currentRoll;
-//     double targetPitch = currentPitch;
-//     double targetYaw   = currentYaw;
-
-//     if (!m_isLooping) {
-//         return;
-//     }
-//     else {
-//         switch(actionStep)
-//         {
-//         case 0: // 初始状态：先回零
-//             targetRoll  = 0.0;
-//             targetPitch = 0.0;
-//             targetYaw   = 0.0; // 先回到 0 度
-
-//             if (reachTarget(currentRoll, currentPitch, currentYaw, targetRoll, targetPitch, targetYaw)) {
-//                 LOG(INFO) << "已回零，开始随机运动...";
-//                 // 生成第一步的随机角度
-//                 currentRandomYaw = dis(gen);
-//                 lastRawTargetYaw = 0.0;// 记录起点是0
-//                 actionStep = 1;
-//             }
-//             break;
-
-//             // ========================================================
-//             // ✅ 合并 Case 1 到 Case 13 (随机运动阶段)
-//             // ========================================================
-//         case 1 ... 13: // C++ 语法特性，表示 case 1 到 13 都执行这段
-//         {
-//             // 设置目标为生成的随机数
-//             targetRoll  = 0.0;
-//             targetPitch = 0.0;
-//             double rawTarget = currentRandomYaw; // 拿到当前想去的随机目标
-
-//             if (rawTarget > lastRawTargetYaw) {
-//               targetYaw = rawTarget + 5.0; // 比上一步大(张开)，再多张5度
-//               } else {
-//               targetYaw = rawTarget - 5.0; // 比上一步小(闭合)，再多闭5度
-//               }
-
-//             // 检查是否到达随机目标
-//             if (reachTarget(currentRoll, currentPitch, currentYaw, targetRoll, targetPitch, targetYaw))
-//             {
-//                 // 1. 拼接文件名：StepX_Random_45.2deg
-//                 std::string photoName = "Step" + std::to_string(actionStep) + "_Rand_" + std::to_string((int)currentRandomYaw);
-
-//                 // 2. 拍照
-//                 triggerPhoto(photoName);
-//                 LOG(INFO) << "📸 已到达随机角度: " << currentRandomYaw << " 度，拍照完成。";
-//                【关键】更新记忆：把这一步的名义目标(raw)存下来，供下一步比较
-//                 lastRawTargetYaw = rawTarget;
-
-//                 // 3. 生成下一步的随机角度 (供下一个 case 使用)
-//                 currentRandomYaw = dis(gen);
-
-//                 // 4. 进入下一步
-//                 actionStep++;
-//             }
-//             break;
-//         }
-
-//             // ========================================================
-//             // 结束阶段
-//             // ========================================================
-//         case 14: // 所有动作完成，回零
-//             targetRoll  = 0.0;
-//             targetPitch = 0.0;
-//             targetYaw   = -5.0; // 最后回到 0
-
-//             if (reachTarget(currentRoll, currentPitch, currentYaw, targetRoll, targetPitch, targetYaw)) {
-
-//                 triggerPhoto("Finished_ReturnZero");
-//                 lastRawTargetYaw = 0.0;
-
-//                 // 循环控制逻辑 (保持原样)
-//                 if (m_useTimeLimit) {
-//                     auto now = std::chrono::steady_clock::now();
-//                     double elapsed = std::chrono::duration<double>(now - m_motionStartTime).count();
-//                     if (elapsed >= m_targetDurationSec) {
-//                         m_isLooping = false;
-//                         actionStep = 0;
-//                         LOG(INFO) << "Time is up!";
-//                     } else {
-//                         actionStep = 0; // 重新开始
-//                         currentRandomYaw = dis(gen); // 重新生成新的随机数
-//                     }
-//                 } else {
-//                     m_currentLoop++;
-//                     if (m_currentLoop >= m_totalLoops) {
-//                         m_isLooping = false;
-//                         actionStep = 0;
-//                         actionComplete = true;
-//                         goToHold();
-//                     } else {
-//                         actionStep = 0; // 重新开始
-//                         currentRandomYaw = dis(gen); // 重新生成新的随机数
-//                     }
-//                 }
-//             }
-//             break;
-//         }
-//     }
-
-//     // --- 以下是平滑插值逻辑 (保持不变) ---
-//     const double SMOOTH_FACTOR = 0.02;
-//     RollAngle  = currentRoll  + (targetRoll  - currentRoll)  * SMOOTH_FACTOR;
-//     PitchAngle = currentPitch + (targetPitch - currentPitch) * SMOOTH_FACTOR;
-//     YawAngle   = currentYaw   + (targetYaw   - currentYaw)   * SMOOTH_FACTOR;
-
-//     // 吸附
-//     if(fabs(targetRoll - RollAngle) < 0.1) RollAngle = targetRoll;
-//     if(fabs(targetPitch - PitchAngle) < 0.1) PitchAngle = targetPitch;
-//     if(fabs(targetYaw - YawAngle) < 0.1) YawAngle = targetYaw;
-
-//     // 赋值
-//     handlePoseCur.handlePoseR_Roll      = RollAngle  / 180.0 * M_PI;
-//     handlePoseCur.handlePoseR_Elevation = PitchAngle / 180.0 * M_PI;
-//     handlePoseCur.handlePoseR_Arzimuth  = YawAngle   / 180.0 * M_PI;
-
-//     m_TargetRollAngle_pre  = handlePoseCur.handlePoseR_Roll;
-//     m_TargetPitchAngle_pre = handlePoseCur.handlePoseR_Elevation;
-//     m_TargetYawAngle_pre   = handlePoseCur.handlePoseR_Arzimuth;
-
-// }
 
 void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度的操作
 {
@@ -622,6 +520,8 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
     // LOG(INFO) << "targetPose is running in Thread ID: " << std::this_thread::get_id();
     static int actionStep = 0;           // 动作步骤 0~14
     static int setCounter = 1;
+    const auto testSettings = instrumentTestSettings(m_testMode,
+        m_endeffectorConfiguration_R == EndeffectorConfiguration::fourMaxons);
 
     static double lastRawTargetYaw = 0.0;
     static double lastRawTargetYawact = 0.0;
@@ -743,7 +643,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 lastRawTargetYaw = rawTargetYaw;
 
 
-                actionStep = 5;//1
+                actionStep = testSettings.stepAfterZero;
             }
             break;
 
@@ -820,7 +720,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             targetRoll  = -60.0;
             targetPitch = -50.0;
             // targetYaw   = 0.0;
-            targetYaw   = -14.0;
+            targetYaw   = testSettings.sweepYaw;
             targetDisp  = 0.0;
             // if (rawTargetYaw > lastRawTargetYaw) {
             //     targetYaw = rawTargetYaw + 5.0; // 变大 -> 加5度
@@ -835,9 +735,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             if (reachTarget(currentRoll, currentPitch, currentYaw,currentDisp,
                             targetRoll, targetPitch, targetYaw,targetDisp)) {
                 lastRawTargetYaw = rawTargetYaw;
-                actionStep = 5;//夹持力测试
-                /*pilao*/
-                // actionStep = 8;//2小时预跑测试
+                actionStep = testSettings.stepAfterSweep;
             }
             break;
 
@@ -923,6 +821,7 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
                 // 退回安全位置后，再安全地停止整个循环
                 m_isLooping = false;
                 actionStep = 0; // 重置状态，等待下一次整体启动
+                m_testCollisionStopped = true;
             }
             break;
         }
@@ -931,13 +830,13 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
             targetRoll = 0.0;
             targetPitch = 0.0;
 
-            double calculatedYaw = -8.0 - ((setCounter-1)/6)*1.0;
-            // 限制极值，最大减到 -14.0 为止
-            if (calculatedYaw < -20.0) {
-                calculatedYaw = -20.0;
-            }
-            targetYaw = calculatedYaw;
-            // targetYaw = -20.0;//-10.0
+            // double calculatedYaw = -8.0 - ((setCounter-1)/6)*1.0;
+            // // 限制极值，最大减到 -14.0 为止
+            // if (calculatedYaw < -20.0) {
+            //     calculatedYaw = -20.0;
+            // }
+            // targetYaw = calculatedYaw;
+            targetYaw = testSettings.gripYaw;
             targetDisp = 4.9;//4.9
 
             // 检查运动是否到位
@@ -2154,12 +2053,25 @@ void RobotControl::MaxonGoHome_(const char& side)//yu
                     m_maxonCaliFinish_R = 1;
                     m_moonsCaliFinish_R = 1;
 
+                    // Homing is complete and the mechanism is stationary.
+                    // Zero the four torque channels once here so homing loads
+                    // are not stored as the sensor zero point.
+                    if (!initTorqueSensorArray()) {
+                        LOG(WARNING) << "Skip torque sensor zero: sensor array is unavailable";
+                    } else if (!m_torqueSensorArray.zeroAll()) {
+                        LOG(ERROR) << "Torque sensor zero failed after right instrument homing";
+                    } else {
+                        LOG(INFO) << "Torque sensor channels 1-4 zeroed after right instrument homing";
+                    }
+
                     // ... (发送消息、Hold 等) ...
-                    SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(UIAction_E::FinishCalibration),"r");
                     m_flagInHold.store(true);
                     m_alignmentNumber_R = 0;
                     m_enableTagCur_R = 1;
                     initiAllData();
+                    m_rightTestHomed.store(true);
+                    m_rightTestHoming.store(false);
+                    SendInnerMsg(Module_Inner_E::Uiinterface, static_cast<int>(UIAction_E::FinishCalibration),"r");
 
                     LOG(INFO) << "Finish Homing! Zero Point Set at: " << moonsTargetPos;
                     break; // 退出 while 循环
@@ -2338,17 +2250,27 @@ void RobotControl::dealWithMsg()
                 setRobotControlMode(RobotControlMode::Hold);
                 break;
             }
+            case static_cast<int>(RobotControlAction_E::StartInstrumentTest):
+            {
+                bool ok = false;
+                const int mode = i.value().toInt(&ok);
+                if (m_testBusy.load() || m_rightTestHoming.load()) {
+                    break; // Duplicate requests cannot restart a running sequence.
+                }
+                if (!ok || !isInstrumentTestMode(mode) || !m_flagControlThread.load()
+                    || !m_rightTestHomed.load()) {
+                    SendInnerMsg(Module_Inner_E::Uiinterface,
+                        static_cast<int>(UIAction_E::InstrumentTestStatus), "rejected");
+                    break;
+                }
+                m_testBusy.store(true);
+                m_pendingTestMode.store(mode);
+                break;
+            }
             case static_cast<int>(RobotControlAction_E::GoToTeleOperationMode):
             {
-                LOG(INFO)<<"Get INFO Execuate Control Set in RobotControl: Go To TeleOperation";
-                setRobotControlMode(RobotControlMode::TeleOperation);
-
-                // startMotionLoop(10);
-                startMotionByTime(61200.0);
-
-                if((m_maxonCaliFinish_R==1)&&(m_maxonCaliFinish_L==1)&&(m_moonsCaliFinish_L==1)&&(m_moonsCaliFinish_R==1)){
-                    // setRobotControlMode(RobotControlMode::TeleOperation);
-                }
+                // Test-only UI must supply an explicit, validated mode.
+                LOG(WARNING) << "Use StartInstrumentTest with a selected test mode";
                 break;
             }
 
@@ -2395,9 +2317,13 @@ void RobotControl::dealWithMsg()
             }
 
             case static_cast<int>(RobotControlAction_E::StartEndEffectorMotorHoming):{
+                if (i.value().isEmpty()) { break; }
                 char side = i.value().toUtf8().data()[0];
                 if(side == 'r')
                 {
+                    if (!m_flagControlThread.load() || m_testBusy.load()
+                        || m_rightTestHoming.exchange(true)) { break; }
+                    m_rightTestHomed.store(false);
                     LOG(INFO)<<"Get INFO start Homing command in RobotControl: Right Instrument Homing!";
                     // MaxonGoHome('r');
                     MaxonGoHome_('r');

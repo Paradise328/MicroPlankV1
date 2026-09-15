@@ -60,6 +60,8 @@ class UIinterface: public QObject
 
     Q_PROPERTY(int* uiSignal READ getUISignal WRITE setUISignal NOTIFY uiSignalChanged )
     Q_PROPERTY(int level  READ getlevel WRITE setlevel NOTIFY LevelChanged)
+    Q_PROPERTY(int testState READ testState NOTIFY testStatusChanged)
+    Q_PROPERTY(QString testStatus READ testStatus NOTIFY testStatusChanged)
 //    Q_PROPERTY(bool handleEn  READ gethandleEn WRITE sethandleEn NOTIFY handleEnChanged)
 
 public:
@@ -97,6 +99,12 @@ public:
 //    Q_INVOKABLE void setMotorDriverStatus();
 
     Q_INVOKABLE void startSystem();
+    // 0 initializing, 1 needs homing, 2 homing, 3 ready, 4 starting/running, 5 fault.
+    int testState() const { return m_testState; }
+    QString testStatus() const { return m_testStatus; }
+    Q_INVOKABLE void homeRightInstrument();
+    Q_INVOKABLE void enterInstrumentTest(int mode);
+    void dealWithTestMsg();
 
     Q_INVOKABLE void setRobotControlMode(int action);
 
@@ -167,6 +175,7 @@ public Q_SLOTS:
 
 
 signals:
+    void testStatusChanged();
 
     void startWholeSystemSignal();
 
@@ -177,6 +186,9 @@ signals:
     void DealMsgSignal();
 
 private:
+    int m_testState = 0;
+    QString m_testStatus = QStringLiteral("正在初始化设备，请稍候…");
+    bool m_systemStartRequested = false;
     bool                    m_HandleEnable_L = false;
     bool                    m_HandleEnable_R = false;
     bool                    m_ArmEnable = false;

@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include "viper_usb.h"
 #include <string.h>
