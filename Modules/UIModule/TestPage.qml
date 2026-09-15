@@ -15,19 +15,83 @@ Window {
     color: "#0C151C"
 
     property int selectedMode: -1
-    readonly property bool busy: UIinterface.testState === 2 || UIinterface.testState === 4
+    property bool shutdownRequested: false
+    readonly property int testState: UIinterface.testState
+    readonly property bool busy: testState === 2 || testState === 4 || testState === 6
+    onTestStateChanged: {
+        if (testState !== 3 && testState !== 4) window.selectedMode = -1
+    }
     readonly property var modes: [
         { title: "器械预跑", duration: "02 小时", detail: "基础动作预跑，不进入夹持力采集步骤" },
-        { title: "夹持力测试", duration: "17 小时 · 沿用现有设置", detail: "执行夹持动作，读取并记录压力数据" },
+        { title: "夹持力测试（入库前力检测）", duration: "3.5mm负角度为-20°，4.5mm负角度为-10°", detail: "执行夹持动作，读取并记录压力数据" },
         { title: "器械耐久性测试", duration: "20 小时", detail: "完整动作循环，包含夹持力采集步骤" }
     ]
 
     // Closing the window is not a motor stop command.
     onClosing: {
-        if (busy) close.accepted = false
+        if (busy || shutdownRequested) close.accepted = false
+    }
+
+    Button {
+        id: shutdownButton
+        objectName: "testShutdownButton"
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.topMargin: 20
+        anchors.rightMargin: 40
+        width: 120
+        height: 40
+        text: window.shutdownRequested ? "正在关机…" : "关机"
+        enabled: !window.busy && window.testState !== 0 && !window.shutdownRequested
+        onClicked: shutdownDialog.open()
+        contentItem: Text {
+            text: shutdownButton.text
+            color: shutdownButton.enabled ? "#FFE8E4" : "#80949F"
+            font.pixelSize: 16
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+        background: Rectangle {
+            radius: 8
+            color: shutdownButton.down ? "#913D36" : "#3B292B"
+            border.color: shutdownButton.activeFocus ? "#FFE8E4" : "#85514D"
+        }
+    }
+
+    Dialog {
+        id: shutdownDialog
+        objectName: "testShutdownDialog"
+        x: (window.width - width) / 2
+        y: (window.height - height) / 2
+        width: 360
+        title: "确认关机？"
+        modal: true
+        focus: true
+        contentItem: Label {
+            text: "将关闭电机并退出控制程序。"
+            wrapMode: Text.WordWrap
+        }
+        footer: DialogButtonBox {
+            Button {
+                objectName: "testConfirmShutdownButton"
+                text: "确认关机"
+                DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+            }
+            Button {
+                objectName: "testCancelShutdownButton"
+                text: "取消"
+                DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+            }
+        }
+        onAccepted: {
+            if (!shutdownButton.enabled) return
+            window.shutdownRequested = true
+            UIinterface.onButton_PowerOff()
+        }
     }
 
     ColumnLayout {
+        enabled: !window.shutdownRequested
         width: Math.min(parent.width - 80, 1120)
         anchors.centerIn: parent
         spacing: window.height < 720 ? 18 : 28
@@ -47,7 +111,7 @@ Window {
                 font.weight: Font.DemiBold
             }
             Text {
-                text: "右器械归零 → 选择测试模式 → 进入测试"
+                text: "器械归零 → 选择测试模式 → 进入测试"
                 color: "#8C9FAE"
                 font.pixelSize: 15
             }
@@ -69,7 +133,7 @@ Window {
                 }
                 Text {
                     Layout.fillWidth: true
-                    text: UIinterface.testStatus
+                    text: window.shutdownRequested ? "正在关闭电机并退出控制程序…" : UIinterface.testStatus
                     color: "#D6E1E8"
                     font.pixelSize: 15
                     wrapMode: Text.WordWrap
@@ -79,7 +143,7 @@ Window {
                     objectName: "testHomeRightButton"
                     implicitWidth: 160
                     implicitHeight: 48
-                    text: UIinterface.testState === 2 ? "归零中…" : "右器械归零"
+                    text: UIinterface.testState === 2 ? "归零中…" : "器械归零"
                     enabled: UIinterface.testState === 1 || UIinterface.testState === 3
                     onClicked: UIinterface.homeRightInstrument()
                     contentItem: Text {
@@ -119,7 +183,7 @@ Window {
                         implicitHeight: 214
                         // Selection is owned by selectedMode, never by an independent toggle.
                         checked: window.selectedMode === index
-                        enabled: !window.busy && UIinterface.testState !== 5
+                        enabled: UIinterface.testState === 3
                         onClicked: window.selectedMode = index
                         Accessible.name: modelData.title + "，" + modelData.duration
                         background: Rectangle {
@@ -163,9 +227,11 @@ Window {
                                     wrapMode: Text.WordWrap
                                 }
                                 Text {
+                                    Layout.fillWidth: true
                                     text: modelData.duration
                                     color: "#5BD7BD"
                                     font.pixelSize: 13
+                                    wrapMode: Text.WordWrap
                                 }
                                 Text {
                                     Layout.fillWidth: true
@@ -205,13 +271,27 @@ Window {
             }
         }
 
-        Text {
+        Button {
+            id: stopButton
+            objectName: "testStopButton"
             Layout.fillWidth: true
-            text: "测试时长在完整循环结束时检查。运行前确认运动区域无干涉，硬件急停可用。"
-            color: "#7C929F"
-            font.pixelSize: 12
-            wrapMode: Text.WordWrap
-            horizontalAlignment: Text.AlignHCenter
+            implicitHeight: 48
+            text: UIinterface.testState === 6 ? "正在停止…" : "停止"
+            enabled: UIinterface.testState === 4
+            onClicked: UIinterface.stopInstrumentTest()
+            contentItem: Text {
+                text: stopButton.text
+                color: stopButton.enabled ? "#FFE8E4" : "#80949F"
+                font.pixelSize: 19
+                font.weight: Font.DemiBold
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
+            background: Rectangle {
+                radius: 10
+                color: stopButton.enabled ? (stopButton.down ? "#913D36" : "#B34F45") : "#263B43"
+                border.color: stopButton.activeFocus ? "#FFE8E4" : "transparent"
+            }
         }
     }
 }

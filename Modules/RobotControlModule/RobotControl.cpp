@@ -385,7 +385,17 @@ void RobotControl::control()
         // auto start = std::chrono::high_resolution_clock::now();
 
         const int requestedMode = m_pendingTestMode.exchange(-1);
-        if (isInstrumentTestMode(requestedMode)) {
+        if (requestedMode == -2) { // Stop is consumed by the same thread that sends motion commands.
+            m_isLooping = false;
+            // Replace the previous motion target with the latest measured positions.
+            m_motorTargetEncoderLast_R = m_motorEncoderCur_R.load();
+            sendMotorData(m_motorTargetEncoderLast_R);
+            goToHold();
+            m_rightTestHomed.store(false);
+            m_testBusy.store(false);
+            SendInnerMsg(Module_Inner_E::Uiinterface,
+                static_cast<int>(UIAction_E::InstrumentTestStatus), "stopped");
+        } else if (isInstrumentTestMode(requestedMode)) {
             m_testMode = static_cast<InstrumentTestMode>(requestedMode);
             m_testCollisionStopped = false;
             const auto settings = instrumentTestSettings(m_testMode,
@@ -2265,6 +2275,14 @@ void RobotControl::dealWithMsg()
                 }
                 m_testBusy.store(true);
                 m_pendingTestMode.store(mode);
+                break;
+            }
+            case static_cast<int>(RobotControlAction_E::StopInstrumentTest):
+            {
+                // Also acknowledge a stop racing with natural completion. Block restart/homing
+                // until control() has consumed it; -2 replaces any start still waiting there.
+                m_testBusy.store(true);
+                m_pendingTestMode.store(-2);
                 break;
             }
             case static_cast<int>(RobotControlAction_E::GoToTeleOperationMode):

@@ -205,7 +205,7 @@ void UIinterface::homeRightInstrument()
 {
     if (m_testState != 1 && m_testState != 3) { return; }
     m_testState = 2;
-    m_testStatus = QStringLiteral("右器械归零中，请勿触碰器械…");
+    m_testStatus = QStringLiteral("器械归零中，请勿触碰器械…");
     emit testStatusChanged();
     SendInnerMsg(Module_Inner_E::RobotControl,
         static_cast<int>(RobotControlAction_E::StartEndEffectorMotorHoming), "r");
@@ -219,6 +219,16 @@ void UIinterface::enterInstrumentTest(int mode)
     emit testStatusChanged();
     SendInnerMsg(Module_Inner_E::RobotControl,
         static_cast<int>(RobotControlAction_E::StartInstrumentTest), QString::number(mode));
+}
+
+void UIinterface::stopInstrumentTest()
+{
+    if (m_testState != 4) { return; }
+    m_testState = 6; // Keep homing and mode selection locked until control acknowledges the stop.
+    m_testStatus = QStringLiteral("正在停止测试，请稍候…");
+    emit testStatusChanged();
+    SendInnerMsg(Module_Inner_E::RobotControl,
+        static_cast<int>(RobotControlAction_E::StopInstrumentTest), "");
 }
 
 void UIinterface::dealWithTestMsg()
@@ -240,15 +250,19 @@ void UIinterface::dealWithTestMsg()
             } else if (i.key() == static_cast<int>(UIAction_E::FinishCalibration)
                        && i.value() == "r" && m_testState == 2) {
                 m_testState = 3;
-                m_testStatus = QStringLiteral("右器械已归零，选择模式后即可进入测试。");
+                m_testStatus = QStringLiteral("器械已归零，选择模式后即可进入测试。");
             } else if (i.key() == static_cast<int>(UIAction_E::InstrumentTestStatus)) {
                 if (m_testState == 5) { continue; } // A fault must not be cleared by a late status.
+                if (m_testState == 6 && i.value() != "stopped") { continue; }
                 if (i.value() == "initialized" && m_testState == 0) {
                     m_testState = 1;
-                    m_testStatus = QStringLiteral("控制程序已就绪，请确认设备连接并将右器械归零。");
+                    m_testStatus = QStringLiteral("控制程序已就绪，请确认设备连接并将器械归零。");
                 } else if (i.value() == "running") {
                     m_testState = 4;
                     m_testStatus = QStringLiteral("测试进行中，归零和模式切换已锁定。");
+                } else if (i.value() == "stopped" && m_testState == 6) {
+                    m_testState = 1;
+                    m_testStatus = QStringLiteral("测试已停止；请先将器械归零，再重新选择测试模式。");
                 } else if (i.value() == "completed") {
                     m_testState = 1;
                     m_testStatus = QStringLiteral("测试已完成；再次测试前，请重新归零。");

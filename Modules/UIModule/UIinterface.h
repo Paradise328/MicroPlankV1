@@ -104,6 +104,7 @@ public:
     QString testStatus() const { return m_testStatus; }
     Q_INVOKABLE void homeRightInstrument();
     Q_INVOKABLE void enterInstrumentTest(int mode);
+    Q_INVOKABLE void stopInstrumentTest();
     void dealWithTestMsg();
 
     Q_INVOKABLE void setRobotControlMode(int action);

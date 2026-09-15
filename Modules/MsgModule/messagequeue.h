@@ -25,7 +25,8 @@ enum class _RobotControlAction_E
     SwitchInstrumentAngle,
     MotorOff,
     Update_EndeffectorData,
-    StartInstrumentTest = 0x100
+    StartInstrumentTest = 0x100,
+    StopInstrumentTest = 0x102
 };
 using RobotControlAction_E = enum _RobotControlAction_E;
 
