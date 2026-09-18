@@ -92,7 +92,9 @@ enum class _UIAction_E
     RecvModuleStatus,
     InstrumentTestStatus = 0x101,
     InstrumentTestElapsed = 0x104,
-    InstrumentAxesStatus = 0x105
+    InstrumentAxesStatus = 0x105,
+    InstrumentForceBegin = 0x106,
+    InstrumentForceSample = 0x107
 
 };
 using UIAction_E = enum _UIAction_E;

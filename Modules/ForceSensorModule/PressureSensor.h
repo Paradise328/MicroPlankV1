@@ -4,6 +4,7 @@
 #include <atomic>
 #include <thread>
 #include <mutex>
+#include <chrono>
 #include <iostream>
 #include <modbus/modbus.h> // 必须安装 libmodbus-dev
 #include "../LoggerModule/easylogging++.h"
@@ -24,6 +25,19 @@ public:
     float getLatestPressure_2() const;
     // 获取连接状态
     bool isConnected() const;
+    struct Sample {
+        double first = 0.0;
+        double second = 0.0;
+        bool valid = false;
+        std::chrono::steady_clock::time_point received;
+    };
+    Sample latestSample() const {
+        std::lock_guard<std::mutex> lock(m_sampleMutex);
+        auto sample = m_sample;
+        sample.valid = sample.valid && m_connected.load()
+            && std::chrono::steady_clock::now() - sample.received < std::chrono::milliseconds(500);
+        return sample;
+    }
 
     // 设置小数位系数 (例如仪表显示2位小数，系数设为100.0)
     void setScaleFactor(float factor);
@@ -33,6 +47,8 @@ private:
     void pollingLoop();
 
     modbus_t* ctx;
+    mutable std::mutex m_sampleMutex;
+    Sample m_sample;
     std::atomic<bool> m_running;
     std::atomic<bool> m_connected;
     std::thread m_thread;
@@ -48,4 +64,3 @@ private:
 };
 
 #endif // PRESSURESENSOR_H
-

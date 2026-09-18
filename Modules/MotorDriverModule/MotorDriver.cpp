@@ -2141,6 +2141,17 @@ int MotorDriver::cyclicDataTransfer(){
 
 void MotorDriver::enableMotor(const MotorType& type, const int& index, const int& armNum){
 
+    // Refresh the cache from the drive: homing/mode changes can invalidate it.
+    const auto operationEnabled = [&]() {
+        return getErrorCode(type, index, armNum) == 0
+            && (getStatusWord(type, index, armNum) & 0x006f) == 0x0027;
+    };
+    if (type == MotorType::MOONS || type == MotorType::MAXON) {
+        const int slot = m_guidingJointMotorNum + armNum * m_motorNumPerArm + index
+            + (type == MotorType::MAXON ? m_endJointMotorNumPerArm + m_endGimbalMotorNumPerArm : 0);
+        m_jointEnabled[slot] = operationEnabled();
+    }
+
     switch(type){
         case MotorType::MOONS:{
             auto errCode = getErrorCode(type, index, armNum);
@@ -2186,8 +2197,9 @@ void MotorDriver::enableMotor(const MotorType& type, const int& index, const int
             usleep(50*1000);
             LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
 
-            m_jointEnabled[m_guidingJointMotorNum + armNum * m_motorNumPerArm + index] = true;
-            LOG(INFO) << "Successfully enable Moons motor " << index ;
+            const bool enabled = operationEnabled();
+            m_jointEnabled[m_guidingJointMotorNum + armNum * m_motorNumPerArm + index] = enabled;
+            LOG(INFO) << "Moons motor " << index << " operation enabled: " << enabled;
             break;
         }
         case MotorType::ZERO_ERR:{
@@ -2301,8 +2313,9 @@ void MotorDriver::enableMotor(const MotorType& type, const int& index, const int
             usleep(50*1000);
             LOG(INFO) << "4: the control word is: " << static_cast<int>(ControlCommand::ENABLE) <<  " " << "status word is: 0x " << std::hex << getStatusWord(type, index, armNum);
             //TODO
-            m_jointEnabled[m_guidingJointMotorNum + m_endJointMotorNumPerArm + m_endGimbalMotorNumPerArm + armNum * m_motorNumPerArm  + index] = true;
-            LOG(INFO) << "Successfully enable Maxon motor " << index << " on arm " << armNum;
+            const bool enabled = operationEnabled();
+            m_jointEnabled[m_guidingJointMotorNum + m_endJointMotorNumPerArm + m_endGimbalMotorNumPerArm + armNum * m_motorNumPerArm  + index] = enabled;
+            LOG(INFO) << "Maxon motor " << index << " on arm " << armNum << " operation enabled: " << enabled;
             break;
         }
         default:{

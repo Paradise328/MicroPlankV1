@@ -593,6 +593,9 @@ private:
     std::atomic<int> m_pendingInstrumentAxes{0};
     std::atomic<int> m_instrumentAxes{0}; // No Maxon axes accessed until explicitly selected.
     qint64 m_lastTestElapsedSeconds = -1;
+    double m_pressureZero1 = 0.0;
+    double m_pressureZero2 = 0.0;
+    bool m_pressureBaselineValid = false;
     std::atomic<bool> m_testBusy{false};
     std::atomic<bool> m_rightTestHomed{false};
     std::atomic<bool> m_rightTestHoming{false};

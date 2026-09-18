@@ -137,6 +137,7 @@ void RobotControl::goToHold()
 void RobotControl::goToTeleOperation()
 {
     auto curRobotControlMode = m_curRobotControlMode.load();
+    m_flagInTeleoperation.store(false);
 
     switch (static_cast<int>(curRobotControlMode))
     {
@@ -170,6 +171,8 @@ void RobotControl::goToTeleOperation()
         usleep (50 * 1000);
 
         LOG(INFO) << "Go to Teleoperation start, Status Word of Right Arm: " << std::hex << statusWord_R;
+        m_motorDriver->setTargetPos(MotorType::MOONS, 0,
+            m_motorDriver->getActualPos(MotorType::MOONS, 0, arm_0), arm_0);
         m_motorDriver->operationCSP(MotorType::MOONS, 0, arm_0);
         for (int axis = instrumentFirstMaxon(m_instrumentAxes.load()); axis < 6; ++axis) {
             m_motorDriver->operationCSP(MotorType::MAXON, axis, arm_0);
@@ -198,6 +201,40 @@ void RobotControl::goToTeleOperation()
         break;
 
     }
+    }
+
+    // Require actual drive readiness, not merely successful command submission.
+    QString failure;
+    for (int attempt = 0; attempt < 40; ++attempt) {
+        failure.clear();
+        const auto check = [&](MotorType type, int axis, const QString& name) {
+            const auto error = m_motorDriver->getErrorCode(type, axis, arm_0);
+            const auto status = m_motorDriver->getStatusWord(type, axis, arm_0);
+            const auto mode = m_motorDriver->getOperationMode(type, axis, arm_0);
+            if (error != 0 || (status & 0x006f) != 0x0027
+                || mode != static_cast<int>(OperationMode::CSP)) {
+                failure += QStringLiteral("%1: error=0x%2, status=0x%3, mode=%4; ")
+                    .arg(name).arg(error, 0, 16).arg(status, 0, 16).arg(mode);
+            }
+        };
+        check(MotorType::MOONS, 0, QStringLiteral("Moons 0"));
+        for (int axis = instrumentFirstMaxon(m_instrumentAxes.load()); axis < 6; ++axis) {
+            check(MotorType::MAXON, axis, QStringLiteral("Maxon %1").arg(axis));
+        }
+        if (failure.isEmpty()) { break; }
+        usleep(50 * 1000);
+    }
+    if (!failure.isEmpty()) {
+        m_isLooping = false;
+        m_flagInHold.store(false);
+        m_curRobotControlMode.store(RobotControlMode::Hold);
+        m_rightTestHomed.store(false);
+        m_testBusy.store(false);
+        LOG(ERROR) << "Test start blocked: " << failure.toStdString();
+        SendInnerMsg(Module_Inner_E::Uiinterface,
+            static_cast<int>(UIAction_E::InstrumentTestStatus),
+            QStringLiteral("motor_not_ready:") + failure);
+        return;
     }
 
     m_curRobotControlMode.store(RobotControlMode::TeleOperation);

@@ -2,6 +2,19 @@
 
 #include "../RobotControlModule/InstrumentTestMode.h"
 #include <QTimer>
+#include <QDir>
+#include <QDateTime>
+#include <QStandardPaths>
+#include <QUuid>
+
+QVariantList UIinterface::forcePlot(int channel, double start, double end, int columns) const
+{
+    QVariantList result;
+    for (const auto& p : m_forceHistory.plot(channel, start, end, columns)) {
+        result.append(QVariant(QVariantList{p.time, p.value, p.valid}));
+    }
+    return result;
+}
 
 UIinterface::UIinterface(QGuiApplication &app,MessageQueue&  messagePool) :m_app(app),m_messagePool(messagePool)
 {
@@ -207,7 +220,8 @@ void UIinterface::selectInstrumentAxes(int axes)
         || axes == m_instrumentAxes) { return; }
     m_instrumentAxes = 0;
     m_testState = 7;
-    m_testStatus = QStringLiteral("正在配置%1轴器械，请稍候…").arg(axes);
+    m_testStatus = QStringLiteral("正在配置%1器械，请稍候…")
+        .arg(axes == 4 ? QStringLiteral("4.5MM") : QStringLiteral("3.5MM"));
     emit testStatusChanged();
     SendInnerMsg(Module_Inner_E::RobotControl,
         static_cast<int>(RobotControlAction_E::SelectInstrumentAxes), QString::number(axes));
@@ -255,7 +269,67 @@ void UIinterface::dealWithTestMsg()
         if (msg.Recver != Module_Inner_E::Uiinterface
             && msg.Recver != Module_Inner_E::MultipleModules) { continue; }
         for (auto i = msg.Request.constBegin(); i != msg.Request.constEnd(); ++i) {
-            if (i.key() == static_cast<int>(UIAction_E::InstrumentTestElapsed)) {
+            if (i.key() == static_cast<int>(UIAction_E::InstrumentForceBegin)) {
+                bool ok = false;
+                const int mode = i.value().toInt(&ok);
+                if (!ok || !isInstrumentTestMode(mode) || (m_testState != 4 && m_testState != 6)) { continue; }
+                m_forceFile.close();
+                m_forceMode = mode;
+                m_forceHistory.reset(mode == 2);
+                m_forceValues.clear();
+                m_forceFlushCounter = 0;
+                m_forceRecordStatus.clear();
+                if (mode != 0) {
+                    const QString dir = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation)
+                        + QStringLiteral("/TestPhotos");
+                    const QString path = dir + QStringLiteral("/ForceTrace_")
+                        + QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss_zzz")
+                        + "_" + QUuid::createUuid().toString(QUuid::WithoutBraces) + ".csv";
+                    m_forceFile.setFileName(path);
+                    const QByteArray header = "elapsed_s,raw_1,raw_2,force_1,force_2,total_force,valid\n";
+                    if (QDir().mkpath(dir) && m_forceFile.open(QIODevice::WriteOnly)
+                        && m_forceFile.write(header) == header.size() && m_forceFile.flush()) {
+                        m_forceRecordStatus = QStringLiteral("10 Hz记录：") + path;
+                    } else {
+                        m_forceFile.close();
+                        m_forceRecordStatus = QStringLiteral("记录失败：无法创建数据文件，请检查目录权限及磁盘空间。");
+                    }
+                }
+                emit forceReset();
+                emit forceDataChanged();
+                continue;
+            } else if (i.key() == static_cast<int>(UIAction_E::InstrumentForceSample)) {
+                if ((m_testState != 4 && m_testState != 6) || m_forceMode < 1) { continue; }
+                const auto fields = i.value().split('|');
+                if (fields.size() != 6) { continue; }
+                double values[5];
+                bool parsed = true;
+                for (int n = 0; n < 5; ++n) {
+                    bool ok = false;
+                    values[n] = fields[n].toDouble(&ok);
+                    parsed = parsed && ok && std::isfinite(values[n]);
+                }
+                if (!parsed || values[0] < 0 || (fields[5] != "0" && fields[5] != "1")
+                    || (m_forceHistory.size() && values[0] <= m_forceHistory.endTime())) { continue; }
+                const bool valid = fields[5] == "1";
+                m_forceHistory.append({values[0], values[3], values[4], valid});
+                m_forceValues = valid ? QVariantList{values[3] + values[4], values[3], values[4]}
+                                      : QVariantList{};
+                if (m_forceFile.isOpen()) {
+                    // Keep invalid times as empty columns, never persist stale values as measurements.
+                    QString row = fields[0] + ",";
+                    row += valid ? fields[1] + "," + fields[2] + "," + fields[3] + "," + fields[4]
+                        + "," + QString::number(values[3] + values[4], 'g', 12) + ",1\n" : ",,,,,0\n";
+                    const auto bytes = row.toUtf8();
+                    if (m_forceFile.write(bytes) != bytes.size()
+                        || (++m_forceFlushCounter % 10 == 0 && !m_forceFile.flush())) {
+                        m_forceFile.close();
+                        m_forceRecordStatus = QStringLiteral("记录失败：数据未完整保存，请检查磁盘空间。");
+                    }
+                }
+                emit forceDataChanged();
+                continue;
+            } else if (i.key() == static_cast<int>(UIAction_E::InstrumentTestElapsed)) {
                 if (m_testState != 4 && m_testState != 6) { continue; }
                 bool ok = false;
                 const qint64 seconds = i.value().toLongLong(&ok);
@@ -273,7 +347,8 @@ void UIinterface::dealWithTestMsg()
                 m_testState = 1;
                 m_testStatus = m_instrumentAxes == 0
                     ? QStringLiteral("器械参数加载失败，请检查配置文件后重新选择轴数。")
-                    : QStringLiteral("已选择%1轴器械，请先将器械归零。").arg(m_instrumentAxes);
+                    : QStringLiteral("已选择%1器械，请先将器械归零。")
+                        .arg(m_instrumentAxes == 4 ? QStringLiteral("4.5MM") : QStringLiteral("3.5MM"));
             } else if (i.key() == static_cast<int>(UIAction_E::RecvSystemBootSta)
                 && m_testState == 0 && i.value() != "Ok") {
                 m_testState = 5;
@@ -281,7 +356,7 @@ void UIinterface::dealWithTestMsg()
             } else if (i.key() == static_cast<int>(UIAction_E::FinishCalibration)
                        && i.value() == "r" && m_testState == 2) {
                 m_testState = 3;
-                m_testStatus = QStringLiteral("器械已归零，选择模式后即可进入测试。");
+                m_testStatus = QStringLiteral("器械已归零，电机状态检查通过，选择模式后即可进入测试。");
             } else if (i.key() == static_cast<int>(UIAction_E::InstrumentTestStatus)) {
                 if (m_testState == 5 || m_testState == 7) { continue; }
                 if (m_testState == 6 && i.value() != "stopped") { continue; }
@@ -300,6 +375,10 @@ void UIinterface::dealWithTestMsg()
                 } else if (i.value() == "collision") {
                     m_testState = 1;
                     m_testStatus = QStringLiteral("检测到碰撞，已退回并结束测试。请检查器械后重新归零。");
+                } else if (i.value().startsWith(QStringLiteral("motor_not_ready:"))) {
+                    m_testState = 1;
+                    m_testStatus = QStringLiteral("电机未就绪，测试已禁止启动。请检查后重新归零。%1")
+                        .arg(i.value().mid(QStringLiteral("motor_not_ready:").size()));
                 } else if (i.value() == "rejected") {
                     m_testState = 1;
                     m_testStatus = QStringLiteral("测试未启动，请确认设备状态并重新归零。");
@@ -308,6 +387,13 @@ void UIinterface::dealWithTestMsg()
                 m_testState = 5;
                 m_testStatus = QStringLiteral("收到异常信号，请使用硬件急停并检查设备。");
             } else { continue; }
+            if (m_testState != 4 && m_testState != 6 && m_forceFile.isOpen()) {
+                if (!m_forceFile.flush()) {
+                    m_forceRecordStatus = QStringLiteral("记录失败：数据未完整保存，请检查磁盘空间。");
+                    emit forceDataChanged();
+                }
+                m_forceFile.close();
+            }
             emit testStatusChanged();
         }
     }

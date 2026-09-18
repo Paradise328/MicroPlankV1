@@ -70,6 +70,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
+    Modules/UIModule/ForceHistory.h \
     Modules/ForceSensorModule/ForceSensor.h \
     Modules/ForceSensorModule/PressureSensor.h \
     Modules/ForceSensorModule/TorqueSensorArray.h \

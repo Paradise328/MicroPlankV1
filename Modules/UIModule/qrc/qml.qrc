@@ -6,6 +6,8 @@
         <file>../InOpreation.qml</file>
         <file>../main.qml</file>
         <file>../TestPage.qml</file>
+        <file>../ForceChart.qml</file>
+        <file>../ForcePanel.qml</file>
         <file>../PreOperation.qml</file>
         <file>../MainPage.qml</file>
     </qresource>

@@ -16,6 +16,8 @@
 #include <QThread>
 #include <cstring>
 #include <QVariant>
+#include <QFile>
+#include "ForceHistory.h"
 #include "Modules/SystemUtilsModule/SystemUtils.h"
 //#include "Modules/MasterModule/MasterConsole.h"
 #include "Modules/MsgModule/messagequeue.h"
@@ -64,6 +66,10 @@ class UIinterface: public QObject
     Q_PROPERTY(QString testStatus READ testStatus NOTIFY testStatusChanged)
     Q_PROPERTY(int instrumentAxes READ instrumentAxes NOTIFY testStatusChanged)
     Q_PROPERTY(QString testElapsed READ testElapsed NOTIFY testElapsedChanged)
+    Q_PROPERTY(int forceMode READ forceMode NOTIFY forceReset)
+    Q_PROPERTY(double forceTime READ forceTime NOTIFY forceDataChanged)
+    Q_PROPERTY(QVariantList forceValues READ forceValues NOTIFY forceDataChanged)
+    Q_PROPERTY(QString forceRecordStatus READ forceRecordStatus NOTIFY forceDataChanged)
 //    Q_PROPERTY(bool handleEn  READ gethandleEn WRITE sethandleEn NOTIFY handleEnChanged)
 
 public:
@@ -107,6 +113,11 @@ public:
     QString testStatus() const { return m_testStatus; }
     int instrumentAxes() const { return m_instrumentAxes; }
     QString testElapsed() const { return m_testElapsed; }
+    int forceMode() const { return m_forceMode; }
+    double forceTime() const { return m_forceHistory.endTime(); }
+    QVariantList forceValues() const { return m_forceValues; }
+    QString forceRecordStatus() const { return m_forceRecordStatus; }
+    Q_INVOKABLE QVariantList forcePlot(int channel, double start, double end, int columns) const;
     Q_INVOKABLE void selectInstrumentAxes(int axes);
     Q_INVOKABLE void homeRightInstrument();
     Q_INVOKABLE void enterInstrumentTest(int mode);
@@ -184,6 +195,8 @@ public Q_SLOTS:
 signals:
     void testStatusChanged();
     void testElapsedChanged();
+    void forceReset();
+    void forceDataChanged();
 
     void startWholeSystemSignal();
 
@@ -197,6 +210,12 @@ private:
     int m_testState = 0;
     int m_instrumentAxes = 0;
     QString m_testElapsed = QStringLiteral("00:00:00");
+    int m_forceMode = -1;
+    ForceHistory m_forceHistory;
+    QVariantList m_forceValues;
+    QFile m_forceFile;
+    QString m_forceRecordStatus;
+    int m_forceFlushCounter = 0;
     QString m_testStatus = QStringLiteral("正在初始化设备，请稍候…");
     bool m_systemStartRequested = false;
     bool                    m_HandleEnable_L = false;

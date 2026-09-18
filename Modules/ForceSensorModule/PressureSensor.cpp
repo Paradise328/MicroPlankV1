@@ -98,7 +98,7 @@ void PressureSensor::pollingLoop()
         // 发送指令: 01 03 00 50 00 02 [CRC]
         int rc = modbus_read_registers(ctx, READ_ADDR, READ_LEN, tab_reg);
 
-        if (rc != -1) {
+        if (rc == READ_LEN) {
             int32_t raw1 = (static_cast<int32_t>(tab_reg[0]) << 16) | tab_reg[1];
             float val1 = static_cast<float>(raw1) / m_scaleFactor.load();
             m_currentPressure_1.store(val1);
@@ -107,6 +107,13 @@ void PressureSensor::pollingLoop()
             int32_t raw2 = (static_cast<int32_t>(tab_reg[2]) << 16) | tab_reg[3];
             float val2 = static_cast<float>(raw2) / m_scaleFactor.load();
             m_currentPressure_2.store(val2);
+            {
+                std::lock_guard<std::mutex> lock(m_sampleMutex);
+                m_sample.first = val1;
+                m_sample.second = val2;
+                m_sample.received = std::chrono::steady_clock::now();
+                m_sample.valid = std::isfinite(val1) && std::isfinite(val2);
+            }
 
             // [调试日志] 偶尔打印一次看看两个值
             static int logCnt = 0;
@@ -115,6 +122,10 @@ void PressureSensor::pollingLoop()
             }
 
         } else {
+            {
+                std::lock_guard<std::mutex> lock(m_sampleMutex);
+                m_sample.valid = false;
+            }
             // 读取失败，通常是因为超时或线松了
             LOG(WARNING) << "Modbus Read Failed";
         }

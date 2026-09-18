@@ -16,6 +16,11 @@ Window {
 
     property int selectedMode: -1
     property bool shutdownRequested: false
+    property bool showForcePlots: false
+    Connections {
+        target: UIinterface
+        function onForceReset() { window.showForcePlots = UIinterface.forceMode > 0 }
+    }
     readonly property int testState: UIinterface.testState
     readonly property bool busy: testState === 2 || testState === 4 || testState === 6 || testState === 7
     onTestStateChanged: {
@@ -63,24 +68,81 @@ Window {
         objectName: "testShutdownDialog"
         x: (window.width - width) / 2
         y: (window.height - height) / 2
-        width: 360
+        width: Math.min(420, window.width - 48)
+        padding: 24
         title: "确认关机？"
         modal: true
         focus: true
+        background: Rectangle {
+            color: "#15232D"
+            radius: 14
+            border.color: "#39635A"
+        }
+        Overlay.modal: Rectangle { color: "#B300080D" }
+        header: Label {
+            text: shutdownDialog.title
+            color: "#F0F5F7"
+            font.pixelSize: 23
+            font.weight: Font.DemiBold
+            leftPadding: 24
+            rightPadding: 24
+            topPadding: 24
+            bottomPadding: 4
+        }
         contentItem: Label {
             text: "将关闭电机并退出控制程序。"
+            color: "#8C9FAE"
+            font.pixelSize: 16
             wrapMode: Text.WordWrap
         }
         footer: DialogButtonBox {
+            spacing: 12
+            leftPadding: 24
+            rightPadding: 24
+            topPadding: 0
+            bottomPadding: 24
+            background: Item {}
             Button {
+                id: confirmShutdownButton
                 objectName: "testConfirmShutdownButton"
                 text: "确认关机"
+                implicitWidth: 144
+                implicitHeight: 46
                 DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+                contentItem: Text {
+                    text: confirmShutdownButton.text
+                    color: "#FFE8E4"
+                    font.pixelSize: 16
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                background: Rectangle {
+                    radius: 8
+                    color: confirmShutdownButton.down ? "#913D36"
+                        : (confirmShutdownButton.hovered ? "#593334" : "#3B292B")
+                    border.color: confirmShutdownButton.activeFocus ? "#FFE8E4" : "#85514D"
+                }
             }
             Button {
+                id: cancelShutdownButton
                 objectName: "testCancelShutdownButton"
                 text: "取消"
+                implicitWidth: 144
+                implicitHeight: 46
                 DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+                contentItem: Text {
+                    text: cancelShutdownButton.text
+                    color: "#DDF9F2"
+                    font.pixelSize: 16
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                background: Rectangle {
+                    radius: 8
+                    color: cancelShutdownButton.down ? "#265849"
+                        : (cancelShutdownButton.hovered ? "#264B45" : "#203B3A")
+                    border.color: cancelShutdownButton.activeFocus ? "#E1FFF8" : "#39635A"
+                }
             }
         }
         onAccepted: {
@@ -93,10 +155,12 @@ Window {
     ColumnLayout {
         enabled: !window.shutdownRequested
         width: Math.min(parent.width - 80, 1120)
-        anchors.centerIn: parent
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: window.showForcePlots ? Math.max(76, (parent.height - height) / 2) : (parent.height - height) / 2
         spacing: window.height < 760 ? 10 : 20
 
         ColumnLayout {
+            visible: !window.showForcePlots
             spacing: window.height < 760 ? 6 : 10
             Text {
                 text: "INSTRUMENT TEST"
@@ -118,6 +182,7 @@ Window {
         }
 
         RowLayout {
+            visible: !window.showForcePlots
             Layout.fillWidth: true
             spacing: 12
             Text {
@@ -132,7 +197,7 @@ Window {
                     objectName: "testAxesButton" + modelData
                     implicitWidth: 180
                     implicitHeight: 40
-                    text: modelData === 4 ? "四轴（4 Maxon）" : "六轴（6 Maxon）"
+                    text: modelData === 4 ? "4.5MM器械" : "3.5MM器械"
                     checked: UIinterface.instrumentAxes === modelData
                     enabled: window.testState === 1 || window.testState === 3
                     onClicked: UIinterface.selectInstrumentAxes(modelData)
@@ -199,7 +264,33 @@ Window {
             }
         }
 
+        RowLayout {
+            visible: UIinterface.forceMode > 0
+            Layout.fillWidth: true
+            Text {
+                text: "已测试 " + UIinterface.testElapsed
+                color: "#5BD7BD"
+                font.pixelSize: 17
+            }
+            Item { Layout.fillWidth: true }
+            Button {
+                objectName: "forceViewToggle"
+                text: window.showForcePlots ? "返回模式选择" : "查看力曲线"
+                enabled: UIinterface.testState !== 4 && UIinterface.testState !== 6
+                onClicked: window.showForcePlots = !window.showForcePlots
+                contentItem: Text { text: parent.text; color: parent.enabled ? "#DDF9F2" : "#71818C"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                background: Rectangle { radius: 6; color: "#203B3A"; border.color: "#39635A" }
+            }
+        }
+
+        ForcePanel {
+            visible: window.showForcePlots
+            Layout.fillWidth: true
+            compact: window.height < 760
+        }
+
         ColumnLayout {
+            visible: !window.showForcePlots
             Layout.fillWidth: true
             spacing: 14
             RowLayout {
@@ -297,6 +388,7 @@ Window {
 
         Button {
             id: enterButton
+            visible: !window.showForcePlots
             objectName: "testEnterButton"
             Layout.fillWidth: true
             implicitHeight: 60

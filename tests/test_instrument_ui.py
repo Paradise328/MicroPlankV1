@@ -6,6 +6,7 @@ Requires PySide6-Essentials (or a normal PySide6 installation).
 import argparse
 import os
 import sys
+import math
 from pathlib import Path
 
 parser = argparse.ArgumentParser()
@@ -27,6 +28,8 @@ from PySide6.QtTest import QTest
 class FakeInterface(QObject):
     changed = Signal()
     elapsedChanged = Signal()
+    forceReset = Signal()
+    forceDataChanged = Signal()
 
     def __init__(self):
         super().__init__()
@@ -39,11 +42,44 @@ class FakeInterface(QObject):
         self.axes_requests = []
         self.axes = 0
         self.elapsed = "00:00:00"
+        self.force_mode = -1
+        self.force_time = 0.0
+        self.force_values = []
+        self.force_samples = []
 
     testState = Property(int, lambda self: self.state, notify=changed)
     testStatus = Property(str, lambda self: self.status, notify=changed)
     instrumentAxes = Property(int, lambda self: self.axes, notify=changed)
     testElapsed = Property(str, lambda self: self.elapsed, notify=elapsedChanged)
+    forceMode = Property(int, lambda self: self.force_mode, notify=forceReset)
+    forceTime = Property(float, lambda self: self.force_time, notify=forceDataChanged)
+    forceValues = Property("QVariantList", lambda self: self.force_values, notify=forceDataChanged)
+    forceRecordStatus = Property(str, lambda self: "10 Hz记录：模拟数据，不连接硬件", notify=forceDataChanged)
+
+    @Slot(int, float, float, int, result="QVariantList")
+    def forcePlot(self, channel, start, end, columns):
+        samples = [p for p in self.force_samples if start <= p[0] <= end]
+        return [[t, f1 + f2 if channel == 0 else f1 if channel == 1 else f2, valid]
+                for t, f1, f2, valid in samples]
+
+    def begin_force(self, mode):
+        self.force_mode = mode
+        self.force_time = 0.0
+        self.force_values = []
+        self.force_samples = []
+        self.forceReset.emit()
+        self.forceDataChanged.emit()
+        QTest.qWait(50)
+
+    def feed_force(self, seconds, valid=True):
+        start = max(0, seconds - 300) if self.force_mode == 1 else 0
+        self.force_samples = [(start + (seconds - start) * i / 1000,
+                              2 + math.sin(i / 23), 1 + 0.7 * math.cos(i / 31),
+                              valid and not 480 < i < 500) for i in range(1001)]
+        self.force_time = seconds
+        self.force_values = [sum(self.force_samples[-1][1:3]), *self.force_samples[-1][1:3]] if valid else []
+        self.forceDataChanged.emit()
+        QTest.qWait(100)
 
     @Slot(int)
     def selectInstrumentAxes(self, axes):
@@ -55,7 +91,8 @@ class FakeInterface(QObject):
 
     def acknowledge_axes(self, axes):
         self.axes = axes
-        self.set_state(1, f"已选择{axes}轴器械，请先将器械归零。" if axes else "器械参数加载失败，请重新选择轴数。")
+        name = "4.5MM" if axes == 4 else "3.5MM"
+        self.set_state(1, f"已选择{name}器械，请先将器械归零。" if axes else "器械参数加载失败，请重新选择轴数。")
 
     def set_elapsed(self, text):
         self.elapsed = text
@@ -250,6 +287,55 @@ for control in [home, enter, stop, shutdown, elapsed_label] + axes_buttons + mod
     assert top.x() >= 0 and top.y() >= 0 and bottom.x() <= 800 and bottom.y() <= 640, control.objectName()
 assert window.grabWindow().save(str(root / "output/test-ui-preview-small.png"))
 
+# Exercise the actual QML chart layout and its history controls with synthetic input.
+backend.set_state(4, "测试进行中，归零和模式切换已锁定。")
+backend.begin_force(1)
+backend.feed_force(420)
+panel = item("forcePanel")
+assert window.property("showForcePlots") and panel.property("visible")
+assert panel.property("startTime") == 120 and panel.property("endTime") == 420
+assert not item("forceViewToggle").property("enabled")
+assert item("forceTotalChart").property("points") is not None
+for size in [(1280, 800), (800, 640)]:
+    window.resize(*size)
+    QTest.qWait(100)
+    for name in ["forceTotalChart", "forceSensor1Chart", "forceSensor2Chart", "testStopButton"]:
+        control = item(name)
+        top = control.mapToScene(QPointF(0, 0))
+        bottom = control.mapToScene(QPointF(control.width(), control.height()))
+        assert top.x() >= 0 and top.y() >= 0 and bottom.x() <= size[0] and bottom.y() <= size[1], name
+    assert window.grabWindow().save(str(root / f"output/force-grip-{size[0]}.png"))
+backend.feed_force(421, False)
+assert backend.force_values == []
+backend.begin_force(2)
+assert backend.force_time == 0 and backend.force_samples == []
+backend.feed_force(72000)
+assert panel.property("startTime") == 0 and panel.property("endTime") == 72000
+zoom = item("forceZoom")
+zoom.setProperty("currentIndex", 2)
+QTest.qWait(50)
+assert panel.property("startTime") == 71700
+panel.setProperty("seekStart", 3600)
+panel.setProperty("follow", False)
+QTest.qWait(50)
+assert panel.property("startTime") == 3600 and panel.property("endTime") == 3900
+backend.feed_force(72001)
+assert panel.property("startTime") == 3600, "Incoming samples must not move a historical viewport"
+click(item("forceFollow"))
+assert panel.property("startTime") == 71701
+zoom.setProperty("currentIndex", 0)
+QTest.qWait(50)
+assert window.grabWindow().save(str(root / "output/force-endurance.png"))
+backend.set_state(1, "测试已停止；请先将器械归零。")
+assert panel.property("visible") and backend.force_samples, "Stop must retain the trace"
+click(item("forceViewToggle"))
+assert not panel.property("visible") and not enter.property("enabled")
+click(item("forceViewToggle"))
+assert panel.property("visible")
+backend.begin_force(0)
+assert not panel.property("visible"), "Pre-run must hide and reset force charts"
+backend.set_state(3, "器械已归零。")
+
 assert shutdown.property("enabled")
 click(shutdown)
 assert backend.shutdown_requests == 0, "Shutdown must wait for confirmation"
@@ -262,7 +348,7 @@ assert all(not control.property("enabled") for control in [home, enter, stop, sh
 click(shutdown)
 assert backend.shutdown_requests == 1, "Duplicate shutdown was not blocked"
 assert not warnings, "\n".join(warnings)
-print("PASS: QML, 4/6-axis selection and rehoming, all 6 axis/mode combinations, elapsed display/reset/retention, stop/shutdown locks, 2 sizes")
+print("PASS: QML, axis/mode combinations, elapsed and stop/shutdown locks; force charts, 5-minute/full-history views, zoom/follow, invalid data, reset/retention, 2 sizes")
 window.hide()
 engine.deleteLater()
 app.processEvents()

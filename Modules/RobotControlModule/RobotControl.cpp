@@ -349,6 +349,7 @@ void RobotControl::control()
 {
     LOG(INFO) << "Control Thread Started (High Speed).";
     m_flagCommThread = true;
+    auto lastForcePublish = std::chrono::steady_clock::now();
     const auto publishElapsed = [this]() {
         const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(
             std::chrono::steady_clock::now() - m_motionStartTime).count();
@@ -412,7 +413,12 @@ void RobotControl::control()
             const auto settings = instrumentTestSettings(m_testMode,
                 m_endeffectorConfiguration_R == EndeffectorConfiguration::fourMaxons);
             setRobotControlMode(RobotControlMode::TeleOperation);
+            // goToTeleOperation reports the failed motor and clears busy on failure.
+            if (!m_flagInTeleoperation.load()) { continue; }
             startMotionByTime(settings.durationSeconds);
+            lastForcePublish = std::chrono::steady_clock::now() - std::chrono::milliseconds(100);
+            SendInnerMsg(Module_Inner_E::Uiinterface,
+                static_cast<int>(UIAction_E::InstrumentForceBegin), QString::number(requestedMode));
             m_lastTestElapsedSeconds = -1;
             publishElapsed();
             SendInnerMsg(Module_Inner_E::Uiinterface,
@@ -421,6 +427,25 @@ void RobotControl::control()
 
         if(m_flagInTeleoperation.load()){
             teleoperation();
+            const auto forceNow = std::chrono::steady_clock::now();
+            if (m_testBusy.load() && m_testMode != InstrumentTestMode::PreRun
+                && forceNow - lastForcePublish >= std::chrono::milliseconds(100)) {
+                lastForcePublish = forceNow;
+                const auto sample = m_pressureSensor ? m_pressureSensor->latestSample() : PressureSensor::Sample{};
+                const bool valid = sample.valid && m_pressureBaselineValid;
+                const double delta1 = sample.first - m_pressureZero1;
+                const double force1 = delta1 == 0.0 ? 0.0 : delta1 / 0.08 + 0.25;
+                const double force2 = (sample.second - m_pressureZero2) / 0.67;
+                const double elapsed = std::chrono::duration<double>(forceNow - m_motionStartTime).count();
+                // Invalid measurements are explicitly flagged; never plot held/stale values.
+                const QString payload = QString::number(elapsed, 'f', 3) + "|"
+                    + QString::number(sample.first, 'g', 12) + "|"
+                    + QString::number(sample.second, 'g', 12) + "|"
+                    + QString::number(force1, 'g', 12) + "|"
+                    + QString::number(force2, 'g', 12) + "|" + (valid ? "1" : "0");
+                SendInnerMsg(Module_Inner_E::Uiinterface,
+                    static_cast<int>(UIAction_E::InstrumentForceSample), payload);
+            }
             if (m_testBusy.load()) { publishElapsed(); }
             if (m_testBusy.load() && !m_isLooping) {
                 // No further mapped command is sent after the sequence stops.
@@ -551,8 +576,8 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
     static double lastRawTargetYawact = 0.0;
     static double retreatTargetDisp = 0.0;
 
-    static double s_zero1 = 0.0;
-    static double s_zero2 = 0.0;
+    double& s_zero1 = m_pressureZero1;
+    double& s_zero2 = m_pressureZero2;
 
 
     // 【新增 2】定义碰撞触发阈值 (单位取决于传感器校准，假设是 N 或 kg)
@@ -576,9 +601,11 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         m_handlePoseLastLoop_R.handlePoseR_Arzimuth  = 0.0;
         m_handlePoseLastLoop_R.handlePoseR_Roll      = 0.0;
         m_handlePoseLastLoop_R.handlePoseR_OpenAngle = 0.0;
-        if (m_pressureSensor && m_pressureSensor->isConnected()) {
-            s_zero1 = m_pressureSensor->getLatestPressure_1(); // 读通道1
-            s_zero2 = m_pressureSensor->getLatestPressure_2(); // 读通道2
+        const auto baseline = m_pressureSensor ? m_pressureSensor->latestSample() : PressureSensor::Sample{};
+        m_pressureBaselineValid = baseline.valid;
+        if (baseline.valid) {
+            s_zero1 = baseline.first;
+            s_zero2 = baseline.second;
             LOG(INFO) << "归零完成. 基准值 P1:" << s_zero1 << " P2:" << s_zero2;
         } else {
             s_zero1 = 0.0;
@@ -2045,6 +2072,44 @@ void RobotControl::MaxonGoHome_(const char& side)//yu
                 // --- 全部完成判断 ---
                 if(isMaxonReady && isMoonsSensorTriggered)
                 {
+                    // Hold the measured positions before leaving homing mode.
+                    m_motorDriver->setTargetPos(MotorType::MOONS, 0,
+                        m_motorDriver->getActualPos(MotorType::MOONS, 0, arm_0), arm_0);
+                    m_motorDriver->operationCSP(MotorType::MOONS, 0, arm_0);
+                    for (int axis = instrumentFirstMaxon(axes); axis < 6; ++axis) {
+                        m_motorDriver->operationCSP(MotorType::MAXON, axis, arm_0);
+                    }
+                    QString failure;
+                    for (int attempt = 0; attempt < 40; ++attempt) {
+                        failure.clear();
+                        const auto check = [&](MotorType type, int axis, const QString& name) {
+                            const auto error = m_motorDriver->getErrorCode(type, axis, arm_0);
+                            const auto status = m_motorDriver->getStatusWord(type, axis, arm_0);
+                            const auto mode = m_motorDriver->getOperationMode(type, axis, arm_0);
+                            if (error != 0 || (status & 0x006f) != 0x0027
+                                || mode != static_cast<int>(OperationMode::CSP)) {
+                                failure += QStringLiteral("%1: error=0x%2, status=0x%3, mode=%4; ")
+                                    .arg(name).arg(error, 0, 16).arg(status, 0, 16).arg(mode);
+                            }
+                        };
+                        check(MotorType::MOONS, 0, QStringLiteral("Moons 0"));
+                        for (int axis = instrumentFirstMaxon(axes); axis < 6; ++axis) {
+                            check(MotorType::MAXON, axis, QStringLiteral("Maxon %1").arg(axis));
+                        }
+                        if (failure.isEmpty()) { break; }
+                        usleep(50 * 1000);
+                    }
+                    if (!failure.isEmpty()) {
+                        m_maxonCaliFinish_R = 0;
+                        m_moonsCaliFinish_R = 0;
+                        m_rightTestHomed.store(false);
+                        m_rightTestHoming.store(false);
+                        LOG(ERROR) << "Motor not ready after homing: " << failure.toStdString();
+                        SendInnerMsg(Module_Inner_E::Uiinterface,
+                            static_cast<int>(UIAction_E::InstrumentTestStatus),
+                            QStringLiteral("motor_not_ready:") + failure);
+                        return;
+                    }
                     // 1. 记录归零完成时的编码器绝对值（脉冲）
                     // 假设这时候 moonsTargetPos 是 -97012 (这就是你的机械零点)
                     m_moonsHomeOffsetPulses = moonsTargetPos;
