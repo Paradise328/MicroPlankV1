@@ -190,6 +190,7 @@ void TorqueSensorArray::pollingLoop()
 {
     constexpr double pi = 3.14159265358979323846;
     auto nextWakeup = std::chrono::steady_clock::now();
+    auto nextLogTime = nextWakeup;
 
     while (m_running.load()) {
         nextWakeup += std::chrono::milliseconds(m_config.pollPeriodMs);
@@ -220,6 +221,27 @@ void TorqueSensorArray::pollingLoop()
             }
         } else {
             invalidateAll();
+        }
+
+        const auto logTime = std::chrono::steady_clock::now();
+        if (logTime >= nextLogTime) {
+            const auto samples = getAllTorques();
+            const std::uint64_t currentUs = nowUs();
+            for (std::size_t i = 0; i < ChannelCount; ++i) {
+                const Sample& sample = samples[i];
+                const bool valid = sample.valid &&
+                    currentUs - sample.timestampUs <=
+                        static_cast<std::uint64_t>(m_config.staleTimeoutMs) * 1000ULL;
+                if (valid) {
+                    LOG(INFO) << "Torque sensor CH" << (i + 1)
+                              << " raw=" << sample.rawValue
+                              << " valid=true sequence=" << sample.sequence;
+                } else {
+                    LOG(INFO) << "Torque sensor CH" << (i + 1)
+                              << " raw=N/A valid=false sequence=" << sample.sequence;
+                }
+            }
+            nextLogTime = logTime + std::chrono::seconds(1);
         }
 
         std::this_thread::sleep_until(nextWakeup);

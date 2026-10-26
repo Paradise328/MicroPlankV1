@@ -2002,14 +2002,61 @@ void RobotControl::MaxonGoHome_(const char& side)//yu
         m_flagInHold.store(false);
         usleep(50);
         m_motorTargetEncoderLast_R = {0};
-        // m_flagInTeleoperation.store(false);
+        m_flagInTeleoperation.store(false);
+        m_rightTestHomed.store(false);
+        m_maxonCaliFinish_R = 0;
+        m_moonsCaliFinish_R = 0;
         m_handlePoseLastLoop_R.initOrg_R();
         m_handlePoseOrg_R.initOrg_R();
 
         std::thread calibration([this, axes](){
             LOG(INFO) << "👉 [CALIBRATION THREAD] ID: " << std::this_thread::get_id();
+            const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
+            auto nextDiagnostic = std::chrono::steady_clock::now();
+            std::array<bool, 6> homeStarted{};
+            const auto abortHoming = [&](const QString& reason) {
+                m_flagInTeleoperation.store(false);
+                m_flagInHold.store(false);
+                // Request a drive quick stop, not a switch to CSP that could hide a failed home.
+                for (int axis = instrumentFirstMaxon(axes); axis < 6; ++axis) {
+                    if (m_motorDriver->setControlWord(MotorType::MAXON, axis,
+                            ControlCommand::QUICKSTOP, arm_0) != T_NOERROR) {
+                        LOG(ERROR) << "Homing quick-stop command failed for axis " << axis;
+                    }
+                }
+                if (m_motorDriver->setControlWord(MotorType::MOONS, 0,
+                        ControlCommand::QUICKSTOP, arm_0) != T_NOERROR) {
+                    LOG(ERROR) << "Homing quick-stop command failed for independent Moons axis";
+                }
+                m_maxonCaliFinish_R = 0;
+                m_moonsCaliFinish_R = 0;
+                m_rightTestHomed.store(false);
+                LOG(ERROR) << "Homing failed: " << reason.toStdString();
+                SendInnerMsg(Module_Inner_E::Uiinterface,
+                    static_cast<int>(UIAction_E::InstrumentTestStatus),
+                    QStringLiteral("motor_not_ready:") + reason);
+                m_rightTestHoming.store(false);
+            };
+            const auto interrupted = [&]() {
+                return !m_flagControlThread.load() || m_isSystemTerminated.load()
+                    || m_pendingTestMode.load() == -2 || m_testBusy.load()
+                    || m_flagInHold.load();
+            };
             for (int axis = instrumentFirstMaxon(axes); axis < 6; ++axis) {
+                if (interrupted()) {
+                    abortHoming(QStringLiteral("Homing cancelled during startup"));
+                    return;
+                }
                 m_motorDriver->operationHOME(MotorType::MAXON, axis, arm_0);
+                const auto status = m_motorDriver->getStatusWord(MotorType::MAXON, axis, arm_0);
+                const auto mode = m_motorDriver->getOperationMode(MotorType::MAXON, axis, arm_0);
+                // Observe this run in progress; never accept a leftover attained bit.
+                homeStarted[axis] = mode == static_cast<int>(OperationMode::HOME)
+                    && (status & 0x3400) == 0 && (status & 0x006f) == 0x0027;
+            }
+            if (interrupted()) {
+                abortHoming(QStringLiteral("Homing cancelled during startup"));
+                return;
             }
             // m_motorDriver->operationHOME(MotorType::MOONS, 0, arm_0);
             int32_t moonsTargetPos = m_motorDriver->getActualPos(MotorType::MOONS, 0, arm_0);
@@ -2033,14 +2080,51 @@ void RobotControl::MaxonGoHome_(const char& side)//yu
             // --------------------------------------------------------
             while(true)
             {
+                if (interrupted() || std::chrono::steady_clock::now() >= deadline) {
+                    abortHoming(QStringLiteral("Homing cancelled or exceeded 30 seconds"));
+                    return;
+                }
           // --- 获取状态 ---
                 auto homeStatusTmp = m_motorHomingStatus_R.load();
                // LOG(INFO)<<"状态量"<<homeStatusTmp;
 
             // --- 判断 Maxon 是否完成 (4-9号) ---
                 bool isMaxonReady = true;
+                const bool printDiagnostic = std::chrono::steady_clock::now() >= nextDiagnostic;
                 for (int axis = instrumentFirstMaxon(axes); axis < 6; ++axis) {
-                    isMaxonReady = isMaxonReady && homeStatusTmp[4 + axis] == false;
+                    const auto status = m_motorDriver->getStatusWord(MotorType::MAXON, axis, arm_0);
+                    const auto mode = m_motorDriver->getOperationMode(MotorType::MAXON, axis, arm_0);
+                    const auto error = m_motorDriver->getErrorCode(MotorType::MAXON, axis, arm_0);
+                    if (printDiagnostic) {
+                        LOG(INFO) << "Homing axis " << axis << " status=" << status
+                                  << " mode=" << mode << " error=" << error
+                                  << " input=" << homeStatusTmp[4 + axis]
+                                  << " pos=" << m_motorDriver->getActualPos(MotorType::MAXON, axis, arm_0)
+                                  << " started=" << homeStarted[axis];
+                    }
+                    if (error != 0 || (status & 0x2008) != 0
+                        || (status & 0x006f) != 0x0027
+                        || mode != static_cast<int>(OperationMode::HOME)) {
+                        abortHoming(QStringLiteral("Axis %1 HOME failure: status=0x%2 error=0x%3 mode=%4")
+                            .arg(axis).arg(status, 0, 16).arg(error, 0, 16).arg(mode));
+                        return;
+                    }
+                    if ((status & 0x3400) == 0) { homeStarted[axis] = true; }
+                    isMaxonReady = isMaxonReady && homeStarted[axis] && (status & 0x1000) != 0;
+                }
+                const auto moonsStatus = m_motorDriver->getStatusWord(MotorType::MOONS, 0, arm_0);
+                const auto moonsError = m_motorDriver->getErrorCode(MotorType::MOONS, 0, arm_0);
+                if (printDiagnostic) {
+                    LOG(INFO) << "Homing independent Moons axis status=" << moonsStatus
+                              << " error=" << moonsError << " input=" << homeStatusTmp[0]
+                              << " pos=" << m_motorDriver->getActualPos(MotorType::MOONS, 0, arm_0);
+                    nextDiagnostic = std::chrono::steady_clock::now() + std::chrono::seconds(1);
+                }
+                if (moonsError != 0 || (moonsStatus & 0x006f) != 0x0027
+                    || m_motorDriver->getOperationMode(MotorType::MOONS, 0, arm_0)
+                        != static_cast<int>(OperationMode::CSP)) {
+                    abortHoming(QStringLiteral("Independent Moons axis not ready during homing"));
+                    return;
                 }
 
                 // --- 判断 Moons 是否完成 (10号) ---
@@ -2077,10 +2161,18 @@ void RobotControl::MaxonGoHome_(const char& side)//yu
                         m_motorDriver->getActualPos(MotorType::MOONS, 0, arm_0), arm_0);
                     m_motorDriver->operationCSP(MotorType::MOONS, 0, arm_0);
                     for (int axis = instrumentFirstMaxon(axes); axis < 6; ++axis) {
+                        if (interrupted()) {
+                            abortHoming(QStringLiteral("Homing cancelled before CSP transition"));
+                            return;
+                        }
                         m_motorDriver->operationCSP(MotorType::MAXON, axis, arm_0);
                     }
                     QString failure;
                     for (int attempt = 0; attempt < 40; ++attempt) {
+                        if (interrupted()) {
+                            abortHoming(QStringLiteral("Homing cancelled during CSP validation"));
+                            return;
+                        }
                         failure.clear();
                         const auto check = [&](MotorType type, int axis, const QString& name) {
                             const auto error = m_motorDriver->getErrorCode(type, axis, arm_0);
@@ -2100,14 +2192,7 @@ void RobotControl::MaxonGoHome_(const char& side)//yu
                         usleep(50 * 1000);
                     }
                     if (!failure.isEmpty()) {
-                        m_maxonCaliFinish_R = 0;
-                        m_moonsCaliFinish_R = 0;
-                        m_rightTestHomed.store(false);
-                        m_rightTestHoming.store(false);
-                        LOG(ERROR) << "Motor not ready after homing: " << failure.toStdString();
-                        SendInnerMsg(Module_Inner_E::Uiinterface,
-                            static_cast<int>(UIAction_E::InstrumentTestStatus),
-                            QStringLiteral("motor_not_ready:") + failure);
+                        abortHoming(failure);
                         return;
                     }
                     // 1. 记录归零完成时的编码器绝对值（脉冲）
@@ -2117,13 +2202,13 @@ void RobotControl::MaxonGoHome_(const char& side)//yu
                     // 2. 将控制目标重置为 0.0 (毫米)
                     m_moonsTargetDisp = 0.0;
 
-                    // 3. 标记完成状态
-                    m_maxonCaliFinish_R = 1;
-                    m_moonsCaliFinish_R = 1;
-
                     // Homing is complete and the mechanism is stationary.
                     // Zero the four torque channels once here so homing loads
                     // are not stored as the sensor zero point.
+                    if (interrupted()) {
+                        abortHoming(QStringLiteral("Homing cancelled before sensor zero"));
+                        return;
+                    }
                     if (!initTorqueSensorArray()) {
                         LOG(WARNING) << "Skip torque sensor zero: sensor array is unavailable";
                     } else if (!m_torqueSensorArray.zeroAll()) {
@@ -2133,6 +2218,12 @@ void RobotControl::MaxonGoHome_(const char& side)//yu
                     }
 
                     // ... (发送消息、Hold 等) ...
+                    if (interrupted()) {
+                        abortHoming(QStringLiteral("Homing cancelled before completion"));
+                        return;
+                    }
+                    m_maxonCaliFinish_R = 1;
+                    m_moonsCaliFinish_R = 1;
                     m_flagInHold.store(true);
                     m_alignmentNumber_R = 0;
                     m_enableTagCur_R = 1;
