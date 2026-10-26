@@ -71,6 +71,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     Modules/UIModule/ForceHistory.h \
+    Modules/UIModule/ManualGripHistory.h \
+    Modules/RobotControlModule/ManualGripCommand.h \
     Modules/ForceSensorModule/ForceSensor.h \
     Modules/ForceSensorModule/PressureSensor.h \
     Modules/ForceSensorModule/TorqueSensorArray.h \

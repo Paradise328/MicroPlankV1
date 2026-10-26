@@ -5,6 +5,7 @@
 #include <thread>
 #include <random>
 #include <string>
+#include <limits>
 #include <sys/stat.h> // 用于 mkdir
 #include <sys/types.h>
 std::chrono::high_resolution_clock::time_point startTime;
@@ -350,6 +351,11 @@ void RobotControl::control()
     LOG(INFO) << "Control Thread Started (High Speed).";
     m_flagCommThread = true;
     auto lastForcePublish = std::chrono::steady_clock::now();
+    auto nextMotorTorqueLog = lastForcePublish;
+    auto lastManualPublish = lastForcePublish;
+    std::array<int, MotorNumPerSide> manualAnchor{};
+    std::array<double, ControlValueNum> manualOrigin{};
+    bool manualSession = false;
     const auto publishElapsed = [this]() {
         const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(
             std::chrono::steady_clock::now() - m_motionStartTime).count();
@@ -393,21 +399,110 @@ void RobotControl::control()
             }
         }
         receiveMotorData();
+        const auto diagnosticTime = std::chrono::steady_clock::now();
+        if (diagnosticTime >= nextMotorTorqueLog) {
+            const int axes = m_instrumentAxes.load();
+            if (axes == 4 || axes == 6) {
+                const auto encoders = m_motorEncoderCur_R.load();
+                const auto torques = m_torqueSensorArray.getAllTorques();
+                const auto nowUs = static_cast<std::uint64_t>(
+                    std::chrono::duration_cast<std::chrono::microseconds>(
+                        std::chrono::steady_clock::now().time_since_epoch()).count());
+                QString report = QStringLiteral("Motor/torque snapshot (latest caches, not synchronized):");
+                for (int axis = 0; axis < 6; ++axis) {
+                    const bool active = axis >= instrumentFirstMaxon(axes);
+                    report += QStringLiteral("\n  axis=%1 active=%2 encoder=%3")
+                        .arg(axis).arg(active ? 1 : 0)
+                        .arg(active ? QString::number(encoders[4 + axis]) : QStringLiteral("N/A"));
+                    if (axis < static_cast<int>(TorqueSensorArray::ChannelCount)) {
+                        const auto& sample = torques[axis];
+                        // Match the 200 ms stale timeout in initTorqueSensorArray().
+                        const bool valid = sample.valid && sample.timestampUs != 0
+                            && nowUs >= sample.timestampUs && nowUs - sample.timestampUs <= 200000ULL;
+                        report += QStringLiteral(" CH%1 raw=%2 valid=%3 sequence=%4")
+                            .arg(axis + 1)
+                            .arg(valid ? QString::number(sample.rawValue, 'f', 4) : QStringLiteral("N/A"))
+                            .arg(valid ? QStringLiteral("true") : QStringLiteral("false"))
+                            .arg(static_cast<qulonglong>(sample.sequence));
+                    } else {
+                        report += QStringLiteral(" torque=N/A (no mapped sensor)");
+                    }
+                }
+                LOG(INFO) << report.toStdString();
+            }
+            nextMotorTorqueLog = diagnosticTime + std::chrono::seconds(1);
+        }
         // auto start = std::chrono::high_resolution_clock::now();
 
         const int requestedMode = m_pendingTestMode.exchange(-1);
         if (requestedMode == -2) { // Stop is consumed by the same thread that sends motion commands.
+            m_manualGripActive.store(false);
+            m_pendingManualGripAngle.store(ManualGripCommand::NoRequest);
             if (m_isLooping) { publishElapsed(); }
             m_isLooping = false;
             // Replace the previous motion target with the latest measured positions.
             m_motorTargetEncoderLast_R = m_motorEncoderCur_R.load();
             sendMotorData(m_motorTargetEncoderLast_R);
-            goToHold();
+            if (manualSession) {
+                // Already in CSP (or quick-stopped on failure): do not re-enable
+                // the drives via goToHold() when acknowledging a manual stop.
+                m_curRobotControlMode.store(RobotControlMode::Hold);
+                m_flagInHold.store(true);
+                manualSession = false;
+            } else {
+                goToHold();
+            }
+            m_flagInTeleoperation.store(false);
             m_rightTestHomed.store(false);
             m_testBusy.store(false);
             SendInnerMsg(Module_Inner_E::Uiinterface,
                 static_cast<int>(UIAction_E::InstrumentTestStatus), "stopped");
+        } else if (requestedMode == -3) {
+            const double angle = m_pendingManualGripAngle.exchange(ManualGripCommand::NoRequest);
+            const int axes = m_instrumentAxes.load();
+            if (!ManualGripCommand::accepts(axes, angle) || !m_rightTestHomed.load()
+                || m_rightTestHoming.load() || !m_flagControlThread.load()
+                || m_isSystemTerminated.load()) {
+                m_testBusy.store(false);
+                m_rightTestHomed.store(false);
+                SendInnerMsg(Module_Inner_E::Uiinterface,
+                    static_cast<int>(UIAction_E::InstrumentTestStatus), "rejected");
+                continue;
+            }
+            manualSession = true;
+            setRobotControlMode(RobotControlMode::TeleOperation);
+            if (!m_flagInTeleoperation.load()) { continue; }
+            // Stop may have arrived while drive readiness was being checked.
+            if (m_pendingTestMode.load() == -2) { continue; }
+            receiveMotorData();
+            manualAnchor = m_motorEncoderCur_R.load();
+            m_handlePoseInit_R = HandlePose{};
+            m_handlePoseOrg_R = HandlePose{};
+            m_handlePoseLastLoop_R = HandlePose{};
+            m_alignmentNumber_R = 200;
+            for (auto* compensation : {&m_instrument_Left1, &m_instrument_Left2,
+                    &m_instrument_Left3, &m_instrument_Left4, &m_instrument_Right1, &m_instrument_Right2,
+                    &m_instrument_Right3, &m_instrument_Right4}) {
+                *compensation = instrumentCompensate{};
+            }
+            const HandlePose zeroPose{};
+            manualOrigin = motionMapping_R(zeroPose, manualAnchor);
+            m_manualGripTarget = angle;
+            m_manualGripCommand = 0.0;
+            m_motionStartTime = std::chrono::steady_clock::now();
+            m_manualGripLastStep = m_motionStartTime;
+            lastManualPublish = m_motionStartTime - std::chrono::milliseconds(100);
+            m_lastTestElapsedSeconds = -1;
+            m_isLooping = true;
+            m_manualGripActive.store(true);
+            SendInnerMsg(Module_Inner_E::Uiinterface,
+                static_cast<int>(UIAction_E::ManualGripBegin), QString::number(axes));
+            SendInnerMsg(Module_Inner_E::Uiinterface,
+                static_cast<int>(UIAction_E::InstrumentTestStatus), "running");
         } else if (isInstrumentTestMode(requestedMode)) {
+            manualSession = false;
+            m_manualGripActive.store(false);
+            m_pendingManualGripAngle.store(ManualGripCommand::NoRequest);
             m_testMode = static_cast<InstrumentTestMode>(requestedMode);
             m_testCollisionStopped = false;
             const auto settings = instrumentTestSettings(m_testMode,
@@ -425,7 +520,113 @@ void RobotControl::control()
                 static_cast<int>(UIAction_E::InstrumentTestStatus), "running");
         }
 
-        if(m_flagInTeleoperation.load()){
+        if (m_manualGripActive.load()) {
+            // Manual motion is exclusive: never enter the automatic test state machine.
+            if (m_pendingTestMode.load() == -2) { continue; }
+            const int axes = m_instrumentAxes.load();
+            QString failure;
+            const auto checkDrive = [&](MotorType type, int axis) {
+                const auto status = m_motorDriver->getStatusWord(type, axis, arm_0);
+                const auto error = m_motorDriver->getErrorCode(type, axis, arm_0);
+                const auto mode = m_motorDriver->getOperationMode(type, axis, arm_0);
+                if (error != 0 || (status & 0x006f) != 0x0027
+                    || mode != static_cast<int>(OperationMode::CSP)) {
+                    failure += QStringLiteral("type=%1 axis=%2 status=0x%3 error=0x%4 mode=%5; ")
+                        .arg(static_cast<int>(type)).arg(axis).arg(status, 0, 16).arg(error, 0, 16).arg(mode);
+                }
+            };
+            for (int axis = instrumentFirstMaxon(axes); axis < 6; ++axis) {
+                checkDrive(MotorType::MAXON, axis);
+            }
+            checkDrive(MotorType::MOONS, 0);
+            if (!m_flagControlThread.load() || m_isSystemTerminated.load()
+                || !m_flagInTeleoperation.load() || !m_rightTestHomed.load()) {
+                failure += QStringLiteral("Manual control is no longer enabled; ");
+            }
+            const double requestedAngle = m_pendingManualGripAngle.exchange(ManualGripCommand::NoRequest);
+            if (requestedAngle != ManualGripCommand::NoRequest) {
+                if (ManualGripCommand::accepts(axes, requestedAngle)) {
+                    m_manualGripTarget = requestedAngle;
+                } else {
+                    failure += QStringLiteral("Invalid manual angle; ");
+                }
+            }
+            const auto encoderSnapshot = m_motorEncoderCur_R.load();
+            auto targets = manualAnchor;
+            if (failure.isEmpty()) {
+                HandlePose pose{};
+                targetPose(pose);
+                const auto mapped = motionMapping_R(pose, encoderSnapshot);
+                for (int axis = instrumentFirstMaxon(axes); axis < 6; ++axis) {
+                    const double scale = axes == 4 ? m_encoderPerDegree_R[axis - 2]
+                                                  : m_encoderPerDegree_6maxon_R[axis];
+                    const double target = manualAnchor[4 + axis]
+                        + (mapped[4 + axis] - manualOrigin[4 + axis]) * scale;
+                    if (!std::isfinite(target) || target < std::numeric_limits<int>::min()
+                        || target > std::numeric_limits<int>::max()) {
+                        failure = QStringLiteral("Manual encoder target out of range");
+                        break;
+                    }
+                    targets[4 + axis] = static_cast<int>(target);
+                }
+            }
+            const auto manualNow = std::chrono::steady_clock::now();
+            if (manualNow - lastManualPublish >= std::chrono::milliseconds(100) || !failure.isEmpty()) {
+                lastManualPublish = manualNow;
+                const auto samples = m_torqueSensorArray.getAllTorques();
+                const auto sampleTime = std::chrono::steady_clock::now();
+                const auto nowUs = static_cast<std::uint64_t>(
+                    std::chrono::duration_cast<std::chrono::microseconds>(sampleTime.time_since_epoch()).count());
+                const double elapsed = std::chrono::duration<double>(manualNow - m_motionStartTime).count();
+                QStringList fields{QString::number(elapsed, 'f', 3), QString::number(m_manualGripTarget, 'g', 12),
+                    QString::number(m_manualGripCommand, 'g', 12), QString::number(axes)};
+                int encoderMask = 0;
+                for (int axis = 0; axis < 6; ++axis) {
+                    const bool valid = failure.isEmpty() && axis >= instrumentFirstMaxon(axes);
+                    fields << QString::number(valid ? encoderSnapshot[4 + axis] : 0);
+                    if (valid) { encoderMask |= (1 << axis); }
+                }
+                fields << QString::number(encoderMask);
+                int torqueMask = 0;
+                std::array<double, 4> ages{};
+                for (int channel = 0; channel < 4; ++channel) {
+                    const auto& sample = samples[channel];
+                    ages[channel] = sample.timestampUs != 0 && nowUs >= sample.timestampUs
+                        ? (nowUs - sample.timestampUs) / 1000.0 : -1.0;
+                    const bool valid = sample.valid && std::isfinite(sample.rawValue)
+                        && ages[channel] >= 0.0 && ages[channel] <= 200.0;
+                    fields << QString::number(valid ? sample.rawValue : 0.0, 'g', 12);
+                    if (valid) { torqueMask |= (1 << channel); }
+                }
+                fields << QString::number(torqueMask);
+                for (double age : ages) { fields << QString::number(age, 'f', 3); }
+                for (const auto& sample : samples) { fields << QString::number(static_cast<qulonglong>(sample.sequence)); }
+                fields << (failure.isEmpty() ? "1" : "0");
+                SendInnerMsg(Module_Inner_E::Uiinterface,
+                    static_cast<int>(UIAction_E::ManualGripSample), fields.join('|'));
+            }
+            if (!failure.isEmpty()) {
+                m_manualGripActive.store(false);
+                m_flagInTeleoperation.store(false);
+                m_flagInHold.store(false);
+                m_isLooping = false;
+                m_rightTestHomed.store(false);
+                m_pendingManualGripAngle.store(ManualGripCommand::NoRequest);
+                for (int axis = instrumentFirstMaxon(axes); axis < 6; ++axis) {
+                    m_motorDriver->setControlWord(MotorType::MAXON, axis, ControlCommand::QUICKSTOP, arm_0);
+                }
+                m_motorDriver->setControlWord(MotorType::MOONS, 0, ControlCommand::QUICKSTOP, arm_0);
+                m_testBusy.store(false);
+                LOG(ERROR) << "Manual grip stopped: " << failure.toStdString();
+                SendInnerMsg(Module_Inner_E::Uiinterface,
+                    static_cast<int>(UIAction_E::InstrumentTestStatus), QStringLiteral("motor_not_ready:") + failure);
+            } else if (m_pendingTestMode.load() != -2) {
+                // Keep the independent translation axis at its captured position.
+                sendMotorData(targets);
+                m_motorTargetEncoderLast_R = targets;
+                publishElapsed();
+            }
+        } else if(m_flagInTeleoperation.load()){
             teleoperation();
             const auto forceNow = std::chrono::steady_clock::now();
             if (m_testBusy.load() && m_testMode != InstrumentTestMode::PreRun
@@ -565,6 +766,19 @@ void RobotControl::startMotionByTime(double second)
 
 void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度的操作
 {
+    if (m_manualGripActive.load()) {
+        const auto now = std::chrono::steady_clock::now();
+        const double dt = std::chrono::duration<double>(now - m_manualGripLastStep).count();
+        m_manualGripLastStep = now;
+        m_manualGripCommand = ManualGripCommand::advance(m_manualGripCommand, m_manualGripTarget, dt);
+        // Preserve the existing test input convention (OpenAngle is also used for yaw).
+        // This is a command angle, not a measured jaw angle.
+        handlePoseCur.handlePoseR_Elevation = 0.0;
+        handlePoseCur.handlePoseR_Arzimuth = 0.0;
+        handlePoseCur.handlePoseR_Roll = 0.0;
+        handlePoseCur.handlePoseR_OpenAngle = m_manualGripCommand * M_PI / 180.0;
+        return;
+    }
 
     // LOG(INFO) << "targetPose is running in Thread ID: " << std::this_thread::get_id();
     static int actionStep = 0;           // 动作步骤 0~14
@@ -2439,6 +2653,27 @@ void RobotControl::dealWithMsg()
                 }
                 m_testBusy.store(true);
                 m_pendingTestMode.store(mode);
+                break;
+            }
+            case static_cast<int>(RobotControlAction_E::SetManualGripAngle):
+            {
+                bool ok = false;
+                const double angle = i.value().toDouble(&ok);
+                if (!ok || !ManualGripCommand::accepts(m_instrumentAxes.load(), angle)
+                    || !m_flagControlThread.load() || m_isSystemTerminated.load()
+                    || !m_rightTestHomed.load() || m_rightTestHoming.load()
+                    || m_pendingTestMode.load() == -2
+                    || (m_testBusy.load() && !m_manualGripActive.load())) {
+                    SendInnerMsg(Module_Inner_E::Uiinterface,
+                        static_cast<int>(UIAction_E::ManualGripRejected),
+                        QStringLiteral("手动夹持未执行：请检查角度范围、归零状态或等待当前操作结束。"));
+                    break;
+                }
+                m_pendingManualGripAngle.store(angle);
+                if (!m_manualGripActive.load()) {
+                    m_testBusy.store(true);
+                    m_pendingTestMode.store(-3);
+                }
                 break;
             }
             case static_cast<int>(RobotControlAction_E::StopInstrumentTest):

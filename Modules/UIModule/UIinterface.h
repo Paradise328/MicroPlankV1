@@ -18,6 +18,9 @@
 #include <QVariant>
 #include <QFile>
 #include "ForceHistory.h"
+#include "ManualGripHistory.h"
+#include <QElapsedTimer>
+#include <QTimer>
 #include "Modules/SystemUtilsModule/SystemUtils.h"
 //#include "Modules/MasterModule/MasterConsole.h"
 #include "Modules/MsgModule/messagequeue.h"
@@ -70,6 +73,12 @@ class UIinterface: public QObject
     Q_PROPERTY(double forceTime READ forceTime NOTIFY forceDataChanged)
     Q_PROPERTY(QVariantList forceValues READ forceValues NOTIFY forceDataChanged)
     Q_PROPERTY(QString forceRecordStatus READ forceRecordStatus NOTIFY forceDataChanged)
+    Q_PROPERTY(bool manualGripActive READ manualGripActive NOTIFY manualGripDataChanged)
+    Q_PROPERTY(bool manualGripHasData READ manualGripHasData NOTIFY manualGripDataChanged)
+    Q_PROPERTY(bool manualGripStale READ manualGripStale NOTIFY manualGripDataChanged)
+    Q_PROPERTY(int manualGripAxes READ manualGripAxes NOTIFY manualGripDataChanged)
+    Q_PROPERTY(double manualGripTime READ manualGripTime NOTIFY manualGripDataChanged)
+    Q_PROPERTY(QVariantList manualGripValues READ manualGripValues NOTIFY manualGripDataChanged)
 //    Q_PROPERTY(bool handleEn  READ gethandleEn WRITE sethandleEn NOTIFY handleEnChanged)
 
 public:
@@ -122,6 +131,14 @@ public:
     Q_INVOKABLE void homeRightInstrument();
     Q_INVOKABLE void enterInstrumentTest(int mode);
     Q_INVOKABLE void stopInstrumentTest();
+    Q_INVOKABLE void setManualGripAngle(double angle);
+    Q_INVOKABLE QVariantList manualGripPlot(int series, double start, double end, int columns) const;
+    bool manualGripActive() const { return m_manualGripActive; }
+    bool manualGripHasData() const { return m_manualGripHistory.size() != 0; }
+    bool manualGripStale() const;
+    int manualGripAxes() const { return m_manualGripAxes; }
+    double manualGripTime() const;
+    QVariantList manualGripValues() const;
     void dealWithTestMsg();
 
     Q_INVOKABLE void setRobotControlMode(int action);
@@ -197,6 +214,8 @@ signals:
     void testElapsedChanged();
     void forceReset();
     void forceDataChanged();
+    void manualGripReset();
+    void manualGripDataChanged();
 
     void startWholeSystemSignal();
 
@@ -208,6 +227,14 @@ signals:
 
 private:
     int m_testState = 0;
+    bool m_manualGripActive = false;
+    bool m_manualGripPending = false;
+    int m_manualGripAxes = 0;
+    ManualGripHistory m_manualGripHistory;
+    ManualGripHistory::Sample m_manualGripLatest;
+    std::array<double, 4> m_manualTorqueAgeMs{{-1, -1, -1, -1}};
+    QElapsedTimer m_manualGripReceipt;
+    QTimer* m_manualGripWatchdog = nullptr;
     int m_instrumentAxes = 0;
     QString m_testElapsed = QStringLiteral("00:00:00");
     int m_forceMode = -1;

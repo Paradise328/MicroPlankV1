@@ -17,9 +17,11 @@ Window {
     property int selectedMode: -1
     property bool shutdownRequested: false
     property bool showForcePlots: false
+    property bool showManualPlots: false
     Connections {
         target: UIinterface
-        function onForceReset() { window.showForcePlots = UIinterface.forceMode > 0 }
+        function onForceReset() { window.showForcePlots = UIinterface.forceMode > 0; window.showManualPlots = false }
+        function onManualGripReset() { window.showManualPlots = true; window.showForcePlots = false }
     }
     readonly property int testState: UIinterface.testState
     readonly property bool busy: testState === 2 || testState === 4 || testState === 6 || testState === 7
@@ -156,11 +158,11 @@ Window {
         enabled: !window.shutdownRequested
         width: Math.min(parent.width - 80, 1120)
         anchors.horizontalCenter: parent.horizontalCenter
-        y: window.showForcePlots ? Math.max(76, (parent.height - height) / 2) : (parent.height - height) / 2
-        spacing: window.height < 760 ? 10 : 20
+        y: window.showManualPlots ? 76 : (window.showForcePlots ? Math.max(76, (parent.height - height) / 2) : (parent.height - height) / 2)
+        spacing: window.showManualPlots ? 6 : (window.height < 760 ? 10 : 20)
 
         ColumnLayout {
-            visible: !window.showForcePlots
+            visible: !window.showForcePlots && !window.showManualPlots
             spacing: window.height < 760 ? 6 : 10
             Text {
                 text: "INSTRUMENT TEST"
@@ -182,7 +184,7 @@ Window {
         }
 
         RowLayout {
-            visible: !window.showForcePlots
+            visible: !window.showForcePlots && !window.showManualPlots
             Layout.fillWidth: true
             spacing: 12
             Text {
@@ -221,13 +223,13 @@ Window {
 
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: window.height < 760 ? 80 : 100
+            implicitHeight: window.showManualPlots ? 64 : (window.height < 760 ? 80 : 100)
             radius: 14
             color: "#15232D"
             border.color: "#263944"
             RowLayout {
                 anchors.fill: parent
-                anchors.margins: 24
+                anchors.margins: window.showManualPlots ? 8 : 24
                 spacing: 20
                 Rectangle {
                     width: 9; height: 9; radius: 5
@@ -265,7 +267,7 @@ Window {
         }
 
         RowLayout {
-            visible: UIinterface.forceMode > 0
+            visible: UIinterface.forceMode > 0 && !window.showManualPlots
             Layout.fillWidth: true
             Text {
                 text: "已测试 " + UIinterface.testElapsed
@@ -290,7 +292,56 @@ Window {
         }
 
         ColumnLayout {
-            visible: !window.showForcePlots
+            visible: window.showManualPlots
+            Layout.fillWidth: true
+            spacing: 4
+            RowLayout {
+                Layout.fillWidth: true
+                Text { text: "夹持指令角 / °"; color: "#D6E1E8"; font.pixelSize: 15 }
+                TextField {
+                    id: manualAngle
+                    objectName: "manualGripAngleInput"
+                    text: "0"
+                    Layout.preferredWidth: 110
+                    color: "#F0F5F7"; selectByMouse: true
+                    enabled: window.testState === 3 || (window.testState === 4 && UIinterface.manualGripActive)
+                    validator: DoubleValidator { bottom: UIinterface.instrumentAxes === 4 ? -10 : -20; top: 30; decimals: 3; notation: DoubleValidator.StandardNotation; locale: "C" }
+                    background: Rectangle { radius: 6; color: "#15232D"; border.color: manualAngle.activeFocus ? "#5BD7BD" : "#39635A" }
+                }
+                Button {
+                    id: manualApply
+                    objectName: "manualGripApplyButton"
+                    text: UIinterface.manualGripActive ? "执行新角度" : "执行"
+                    enabled: manualAngle.enabled && manualAngle.acceptableInput && manualAngle.text.trim().length > 0
+                             && isFinite(Number(manualAngle.text))
+                    onClicked: UIinterface.setManualGripAngle(Number(manualAngle.text))
+                    contentItem: Text { text: manualApply.text; color: manualApply.enabled ? "#DDF9F2" : "#71818C"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                    background: Rectangle { radius: 6; color: "#203B3A"; border.color: "#39635A" }
+                }
+                Item { Layout.fillWidth: true }
+                Button {
+                    id: manualBack
+                    objectName: "manualGripBackButton"
+                    text: "返回模式选择"; enabled: !window.busy
+                    onClicked: { window.showManualPlots = false; window.selectedMode = -1 }
+                    contentItem: Text { text: manualBack.text; color: manualBack.enabled ? "#DDF9F2" : "#71818C"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                    background: Rectangle { radius: 6; color: "#203B3A"; border.color: "#39635A" }
+                }
+            }
+            Text {
+                Layout.fillWidth: true
+                text: "沿用现有测试映射（含偏航耦合），非实测夹角；范围 " + (UIinterface.instrumentAxes === 4 ? "−10" : "−20") + "~30°，5°/s。范围并非机械安全额定值。"
+                wrapMode: Text.WordWrap; color: "#E8B66A"; font.pixelSize: 11
+            }
+        }
+        ManualGripPanel {
+            visible: window.showManualPlots
+            Layout.fillWidth: true
+            compact: window.height < 760
+        }
+
+        ColumnLayout {
+            visible: !window.showForcePlots && !window.showManualPlots
             Layout.fillWidth: true
             spacing: 14
             RowLayout {
@@ -318,7 +369,7 @@ Window {
                         objectName: "testModeButton" + index
                         Layout.fillWidth: true
                         Layout.preferredWidth: 1
-                        implicitHeight: 214
+                        implicitHeight: window.height < 760 ? 170 : 214
                         // Selection is owned by selectedMode, never by an independent toggle.
                         checked: window.selectedMode === index
                         enabled: UIinterface.testState === 3
@@ -387,13 +438,24 @@ Window {
         }
 
         Button {
+            objectName: "manualGripModeButton"
+            visible: !window.showForcePlots && !window.showManualPlots
+            Layout.fillWidth: true; implicitHeight: 38
+            text: "手动夹持测试 · 输入角度 / 查看扭力与编码器曲线"
+            enabled: window.testState === 3
+            onClicked: { window.selectedMode = 3; window.showManualPlots = true }
+            contentItem: Text { text: parent.text; color: parent.enabled ? "#DDF9F2" : "#71818C"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; font.pixelSize: 14 }
+            background: Rectangle { radius: 8; color: "#203B3A"; border.color: "#39635A" }
+        }
+
+        Button {
             id: enterButton
-            visible: !window.showForcePlots
+            visible: !window.showForcePlots && !window.showManualPlots
             objectName: "testEnterButton"
             Layout.fillWidth: true
             implicitHeight: 60
             text: UIinterface.testState === 4 ? "测试进行中…" : "进入测试"
-            enabled: UIinterface.testState === 3 && window.selectedMode >= 0
+            enabled: UIinterface.testState === 3 && window.selectedMode >= 0 && window.selectedMode < 3
             onClicked: UIinterface.enterInstrumentTest(window.selectedMode)
             contentItem: Text {
                 text: enterButton.text

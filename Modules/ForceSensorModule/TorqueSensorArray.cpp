@@ -4,6 +4,7 @@
 #include <cerrno>
 #include <cmath>
 #include <cstring>
+#include <iomanip>
 #include <limits>
 
 #include "../LoggerModule/easylogging++.h"
@@ -234,8 +235,8 @@ void TorqueSensorArray::pollingLoop()
                         static_cast<std::uint64_t>(m_config.staleTimeoutMs) * 1000ULL;
                 if (valid) {
                     LOG(INFO) << "Torque sensor CH" << (i + 1)
-                              << " raw=" << sample.rawValue
-                              << " valid=true sequence=" << sample.sequence;
+                              << " raw=" << std::fixed << std::setprecision(4) << sample.rawValue
+                              << " valid=true sequence=" << std::dec << sample.sequence;
                 } else {
                     LOG(INFO) << "Torque sensor CH" << (i + 1)
                               << " raw=N/A valid=false sequence=" << sample.sequence;
@@ -279,10 +280,10 @@ bool TorqueSensorArray::readAllChannels(std::array<double, ChannelCount>& values
 float TorqueSensorArray::decodeFloatInverse(std::uint16_t firstRegister,
                                             std::uint16_t secondRegister)
 {
-    // Manual states "Float Inverse / register swap": register order is CD AB.
+    // Register order AB CD: firstRegister contains the high 16 bits.
     const std::uint32_t bits =
-        (static_cast<std::uint32_t>(secondRegister) << 16U) |
-         static_cast<std::uint32_t>(firstRegister);
+        (static_cast<std::uint32_t>(firstRegister) << 16U) |
+         static_cast<std::uint32_t>(secondRegister);
     float value = 0.0F;
     static_assert(sizeof(value) == sizeof(bits), "Unexpected float size");
     std::memcpy(&value, &bits, sizeof(value));

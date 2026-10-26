@@ -257,6 +257,66 @@ void UIinterface::stopInstrumentTest()
         static_cast<int>(RobotControlAction_E::StopInstrumentTest), "");
 }
 
+void UIinterface::setManualGripAngle(double angle)
+{
+    if ((m_testState != 3 && !(m_testState == 4 && m_manualGripActive))
+        || (m_instrumentAxes != 4 && m_instrumentAxes != 6)) { return; }
+    const double minimum = m_instrumentAxes == 4 ? -10.0 : -20.0;
+    if (!std::isfinite(angle) || angle < minimum || angle > 30.0) {
+        m_testStatus = QStringLiteral("夹持指令角必须在 %1° 至 30° 范围内。").arg(minimum);
+        emit testStatusChanged();
+        return;
+    }
+    // Starting is acknowledged by ManualGripBegin. Do not mark the session active
+    // until control has accepted it, and never execute from a text-change handler.
+    if (m_testState == 3) {
+        m_manualGripPending = true;
+        m_testState = 4;
+        m_testStatus = QStringLiteral("正在启动手动夹持测试…");
+    } else {
+        m_testStatus = QStringLiteral("正在更新夹持指令角为 %1°…").arg(angle, 0, 'f', 2);
+    }
+    emit testStatusChanged();
+    SendInnerMsg(Module_Inner_E::RobotControl,
+        static_cast<int>(RobotControlAction_E::SetManualGripAngle), QString::number(angle, 'g', 17));
+}
+
+bool UIinterface::manualGripStale() const
+{
+    return m_manualGripActive && (!m_manualGripReceipt.isValid() || m_manualGripReceipt.elapsed() > 1000);
+}
+
+double UIinterface::manualGripTime() const
+{
+    return m_manualGripHistory.endTime() + (m_manualGripActive && m_manualGripReceipt.isValid()
+        ? m_manualGripReceipt.elapsed() / 1000.0 : 0.0);
+}
+
+QVariantList UIinterface::manualGripValues() const
+{
+    QVariantList values;
+    const bool live = m_manualGripActive && !manualGripStale() && manualGripHasData();
+    const double extraAge = m_manualGripReceipt.isValid() ? m_manualGripReceipt.elapsed() : 0;
+    for (std::size_t series = 0; series < ManualGripHistory::SeriesCount; ++series) {
+        bool valid = live && (m_manualGripLatest.validMask & (1U << series));
+        if (series >= 2 && series < 6) {
+            const double age = m_manualTorqueAgeMs[series - 2];
+            valid = valid && age >= 0.0 && age + extraAge <= 200.0;
+        }
+        values.append(valid ? QVariant(m_manualGripLatest.values[series]) : QVariant());
+    }
+    return values;
+}
+
+QVariantList UIinterface::manualGripPlot(int series, double start, double end, int columns) const
+{
+    QVariantList result;
+    for (const auto& point : m_manualGripHistory.plot(series, start, end, columns)) {
+        result.append(QVariant(QVariantList{point.time, point.value, point.valid}));
+    }
+    return result;
+}
+
 void UIinterface::dealWithTestMsg()
 {
     while (true) {
@@ -269,7 +329,89 @@ void UIinterface::dealWithTestMsg()
         if (msg.Recver != Module_Inner_E::Uiinterface
             && msg.Recver != Module_Inner_E::MultipleModules) { continue; }
         for (auto i = msg.Request.constBegin(); i != msg.Request.constEnd(); ++i) {
-            if (i.key() == static_cast<int>(UIAction_E::InstrumentForceBegin)) {
+            if (i.key() == static_cast<int>(UIAction_E::ManualGripBegin)) {
+                bool ok = false;
+                const int axes = i.value().toInt(&ok);
+                if (!ok || (axes != 4 && axes != 6) || axes != m_instrumentAxes
+                    || (m_testState != 4 && m_testState != 6)) { continue; }
+                m_manualGripAxes = axes;
+                m_manualGripPending = false;
+                m_manualGripActive = true;
+                m_manualGripHistory.reset();
+                m_manualGripLatest = ManualGripHistory::Sample{};
+                m_manualTorqueAgeMs.fill(-1.0);
+                m_manualGripReceipt.invalidate();
+                m_testElapsed = QStringLiteral("00:00:00");
+                if (!m_manualGripWatchdog) {
+                    m_manualGripWatchdog = new QTimer(this);
+                    m_manualGripWatchdog->setInterval(100);
+                    connect(m_manualGripWatchdog, &QTimer::timeout, this, [this]() {
+                        // Force fresh validity evaluation even when no messages arrive.
+                        if (m_manualGripActive) { emit manualGripDataChanged(); }
+                    });
+                }
+                m_manualGripWatchdog->start();
+                emit manualGripReset();
+                emit manualGripDataChanged();
+                emit testElapsedChanged();
+                continue;
+            } else if (i.key() == static_cast<int>(UIAction_E::ManualGripSample)) {
+                if (!m_manualGripActive || (m_testState != 4 && m_testState != 6)) { continue; }
+                const auto fields = i.value().split('|');
+                if (fields.size() != 25) { continue; }
+                std::array<double, 25> values{};
+                bool parsed = true;
+                for (int n = 0; n < 25; ++n) {
+                    bool ok = false;
+                    values[n] = fields[n].toDouble(&ok);
+                    parsed = parsed && ok && std::isfinite(values[n]);
+                }
+                if (!parsed || values[0] < 0.0 || values[3] != m_manualGripAxes
+                    || values[10] < 0 || values[10] > 63 || std::floor(values[10]) != values[10]
+                    || values[15] < 0 || values[15] > 15 || std::floor(values[15]) != values[15]
+                    || (values[24] != 0.0 && values[24] != 1.0)
+                    || (m_manualGripHistory.size() && values[0] <= m_manualGripHistory.endTime())) { continue; }
+                for (int ch = 0; ch < 4; ++ch) {
+                    parsed = parsed && values[16 + ch] >= -1.0 && values[20 + ch] >= 0.0
+                        && std::floor(values[20 + ch]) == values[20 + ch];
+                }
+                if (!parsed) { continue; }
+                ManualGripHistory::Sample sample;
+                sample.time = values[0];
+                sample.values[0] = values[1];
+                sample.values[1] = values[2];
+                sample.validMask = values[24] == 1.0 ? 3U : 0U;
+                const unsigned torqueMask = static_cast<unsigned>(values[15]);
+                const unsigned encoderMask = static_cast<unsigned>(values[10]);
+                for (int ch = 0; ch < 4; ++ch) {
+                    sample.values[ch + 2] = values[11 + ch];
+                    m_manualTorqueAgeMs[ch] = values[16 + ch];
+                    if ((torqueMask & (1U << ch)) && values[16 + ch] >= 0.0 && values[16 + ch] <= 200.0) {
+                        sample.validMask |= (1U << (ch + 2));
+                    }
+                }
+                for (int axis = 0; axis < 6; ++axis) {
+                    sample.values[axis + 6] = values[4 + axis];
+                    if ((encoderMask & (1U << axis)) && (m_manualGripAxes == 6 || axis >= 2)) {
+                        sample.validMask |= (1U << (axis + 6));
+                    }
+                }
+                m_manualGripHistory.append(sample);
+                m_manualGripLatest = sample;
+                m_manualGripReceipt.restart();
+                emit manualGripDataChanged();
+                continue;
+            } else if (i.key() == static_cast<int>(UIAction_E::ManualGripRejected)) {
+                // A rejected update does not stop a currently running session.
+                m_testStatus = i.value();
+                if (m_manualGripPending && !m_manualGripActive && m_testState == 4) {
+                    m_manualGripPending = false;
+                    m_testState = 1;
+                    m_testStatus += QStringLiteral(" 请确认设备状态后重新归零。");
+                }
+                emit testStatusChanged();
+                continue;
+            } else if (i.key() == static_cast<int>(UIAction_E::InstrumentForceBegin)) {
                 bool ok = false;
                 const int mode = i.value().toInt(&ok);
                 if (!ok || !isInstrumentTestMode(mode) || (m_testState != 4 && m_testState != 6)) { continue; }
@@ -365,7 +507,9 @@ void UIinterface::dealWithTestMsg()
                     m_testStatus = QStringLiteral("控制程序已就绪，请先选择被测器械的轴数。");
                 } else if (i.value() == "running") {
                     m_testState = 4;
-                    m_testStatus = QStringLiteral("测试进行中，归零和模式切换已锁定。");
+                    m_testStatus = m_manualGripActive
+                        ? QStringLiteral("手动夹持测试中；修改输入后点击执行更新角度，停止后须重新归零。")
+                        : QStringLiteral("测试进行中，归零和模式切换已锁定。");
                 } else if (i.value() == "stopped" && m_testState == 6) {
                     m_testState = 1;
                     m_testStatus = QStringLiteral("测试已停止；请先将器械归零，再重新选择测试模式。");
@@ -387,6 +531,12 @@ void UIinterface::dealWithTestMsg()
                 m_testState = 5;
                 m_testStatus = QStringLiteral("收到异常信号，请使用硬件急停并检查设备。");
             } else { continue; }
+            if (m_testState != 4 && m_testState != 6) { m_manualGripPending = false; }
+            if (m_testState != 4 && m_testState != 6 && m_manualGripActive) {
+                m_manualGripActive = false;
+                if (m_manualGripWatchdog) { m_manualGripWatchdog->stop(); }
+                emit manualGripDataChanged();
+            }
             if (m_testState != 4 && m_testState != 6 && m_forceFile.isOpen()) {
                 if (!m_forceFile.flush()) {
                     m_forceRecordStatus = QStringLiteral("记录失败：数据未完整保存，请检查磁盘空间。");

@@ -27,7 +27,8 @@ enum class _RobotControlAction_E
     Update_EndeffectorData,
     StartInstrumentTest = 0x100,
     StopInstrumentTest = 0x102,
-    SelectInstrumentAxes = 0x103
+    SelectInstrumentAxes = 0x103,
+    SetManualGripAngle = 0x108
 };
 using RobotControlAction_E = enum _RobotControlAction_E;
 
@@ -94,7 +95,10 @@ enum class _UIAction_E
     InstrumentTestElapsed = 0x104,
     InstrumentAxesStatus = 0x105,
     InstrumentForceBegin = 0x106,
-    InstrumentForceSample = 0x107
+    InstrumentForceSample = 0x107,
+    ManualGripBegin = 0x109,
+    ManualGripSample = 0x10a,
+    ManualGripRejected = 0x10b
 
 };
 using UIAction_E = enum _UIAction_E;

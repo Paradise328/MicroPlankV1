@@ -30,6 +30,8 @@ class FakeInterface(QObject):
     elapsedChanged = Signal()
     forceReset = Signal()
     forceDataChanged = Signal()
+    manualGripReset = Signal()
+    manualGripDataChanged = Signal()
 
     def __init__(self):
         super().__init__()
@@ -46,6 +48,12 @@ class FakeInterface(QObject):
         self.force_time = 0.0
         self.force_values = []
         self.force_samples = []
+        self.manual_active = False
+        self.manual_time = 0.0
+        self.manual_values = []
+        self.manual_samples = []
+        self.manual_stale = False
+        self.manual_requests = []
 
     testState = Property(int, lambda self: self.state, notify=changed)
     testStatus = Property(str, lambda self: self.status, notify=changed)
@@ -55,6 +63,41 @@ class FakeInterface(QObject):
     forceTime = Property(float, lambda self: self.force_time, notify=forceDataChanged)
     forceValues = Property("QVariantList", lambda self: self.force_values, notify=forceDataChanged)
     forceRecordStatus = Property(str, lambda self: "10 Hz记录：模拟数据，不连接硬件", notify=forceDataChanged)
+    manualGripActive = Property(bool, lambda self: self.manual_active, notify=manualGripDataChanged)
+    manualGripHasData = Property(bool, lambda self: bool(self.manual_samples), notify=manualGripDataChanged)
+    manualGripStale = Property(bool, lambda self: self.manual_stale, notify=manualGripDataChanged)
+    manualGripAxes = Property(int, lambda self: self.axes, notify=manualGripDataChanged)
+    manualGripTime = Property(float, lambda self: self.manual_time, notify=manualGripDataChanged)
+    manualGripValues = Property("QVariantList", lambda self: self.manual_values, notify=manualGripDataChanged)
+
+    @Slot(float)
+    def setManualGripAngle(self, angle):
+        if self.state != 3 and not (self.state == 4 and self.manual_active):
+            return
+        if not math.isfinite(angle) or not (-10 if self.axes == 4 else -20) <= angle <= 30:
+            return
+        self.manual_requests.append(angle)
+        if not self.manual_active:
+            self.manual_active = True
+            self.manualGripReset.emit()
+        self.set_state(4, "手动夹持进行中")
+        self.manualGripDataChanged.emit()
+
+    @Slot(int, float, float, int, result="QVariantList")
+    def manualGripPlot(self, series, start, end, columns):
+        return [[t, values[series], valid and not (self.axes == 4 and series in (6, 7))]
+                for t, values, valid in self.manual_samples if start <= t <= end]
+
+    def feed_manual(self, seconds, valid=True):
+        self.manual_time = seconds
+        self.manual_samples = [(max(0, seconds - 300) + 300 * i / 1000,
+                                [5, 4.5] + [-.23 + .01 * math.sin(i / 20 + ch) for ch in range(4)]
+                                + [1000 * axis + i for axis in range(6)], valid and not 480 < i < 500)
+                               for i in range(1001)]
+        self.manual_values = self.manual_samples[-1][1] if valid else [None] * 12
+        self.manual_stale = not valid
+        self.manualGripDataChanged.emit()
+        QTest.qWait(100)
 
     @Slot(int, float, float, int, result="QVariantList")
     def forcePlot(self, channel, start, end, columns):
@@ -336,6 +379,57 @@ backend.begin_force(0)
 assert not panel.property("visible"), "Pre-run must hide and reset force charts"
 backend.set_state(3, "器械已归零。")
 
+manual_mode = item("manualGripModeButton")
+click(manual_mode)
+assert window.property("showManualPlots")
+manual_input = item("manualGripAngleInput")
+manual_apply = item("manualGripApplyButton")
+manual_back = item("manualGripBackButton")
+assert manual_apply.property("enabled")
+manual_input.setProperty("text", "5")
+QTest.qWait(50)
+assert not backend.manual_requests, "Typing must never issue motion"
+click(manual_apply)
+assert backend.manual_requests == [5] and backend.manual_active
+assert not manual_back.property("enabled") and stop.property("enabled")
+for invalid in ["31", "-21", "nan", "inf", "", " "]:
+    manual_input.setProperty("text", invalid)
+    QTest.qWait(20)
+    assert not manual_apply.property("enabled"), invalid
+manual_input.setProperty("text", "-5")
+QTest.qWait(20)
+click(manual_apply)
+assert backend.manual_requests == [5, -5]
+for axes in [4, 6]:
+    backend.axes = axes
+    backend.changed.emit()
+    backend.feed_manual(420)
+    for size in [(1280, 800), (800, 640)]:
+        window.resize(*size)
+        QTest.qWait(100)
+        names = ["manualGripAngleInput", "manualGripApplyButton", "testStopButton",
+                 "manualCanvas0", "manualCanvas2", "manualCanvas8" if axes == 4 else "manualCanvas6"]
+        for name in names:
+            control = item(name)
+            top = control.mapToScene(QPointF(0, 0))
+            bottom = control.mapToScene(QPointF(control.width(), control.height()))
+            assert top.x() >= 0 and top.y() >= 0 and bottom.x() <= size[0] and bottom.y() <= size[1], (name, size, top, bottom)
+        assert window.grabWindow().save(str(root / f"output/manual-grip-{axes}-{size[0]}.png"))
+backend.feed_manual(421, False)
+assert "失效" in item("manualGripDataStatus").property("text")
+click(stop)
+assert not manual_apply.property("enabled")
+backend.manual_active = False
+backend.manualGripDataChanged.emit()
+backend.set_state(1, "已停止，请重新归零")
+assert not manual_apply.property("enabled") and home.property("enabled")
+assert backend.manual_samples, "Stop must retain the plotted trace"
+click(manual_back)
+assert not window.property("showManualPlots") and not manual_mode.property("enabled")
+click(home)
+assert backend.state == 2 and not manual_mode.property("enabled")
+backend.set_state(3, "器械已归零。")
+
 assert shutdown.property("enabled")
 click(shutdown)
 assert backend.shutdown_requests == 0, "Shutdown must wait for confirmation"
@@ -348,7 +442,7 @@ assert all(not control.property("enabled") for control in [home, enter, stop, sh
 click(shutdown)
 assert backend.shutdown_requests == 1, "Duplicate shutdown was not blocked"
 assert not warnings, "\n".join(warnings)
-print("PASS: QML, axis/mode combinations, elapsed and stop/shutdown locks; force charts, 5-minute/full-history views, zoom/follow, invalid data, reset/retention, 2 sizes")
+print("PASS: QML, automatic modes and force charts; manual execute/update/limits/stop/rehoming, stale data, 4/6-axis charts, 2 sizes")
 window.hide()
 engine.deleteLater()
 app.processEvents()

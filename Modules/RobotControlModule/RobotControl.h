@@ -8,6 +8,7 @@
 #include "../ForceSensorModule/PressureSensor.h"
 #include "../ForceSensorModule/TorqueSensorArray.h"
 #include "InstrumentTestMode.h"
+#include "ManualGripCommand.h"
 #include "DomainController.h"
 #include "BlasControl/actuators_controler.h"
 #include "BlasControl/BLA_API.h"
@@ -590,6 +591,11 @@ private:
     bool m_isLooping   = false;    // 是否正在执行动作序列
     // UI requests are handed off to the control thread before changing motion state.
     std::atomic<int> m_pendingTestMode{-1};
+    std::atomic<double> m_pendingManualGripAngle{ManualGripCommand::NoRequest};
+    std::atomic<bool> m_manualGripActive{false};
+    double m_manualGripTarget = 0.0; // Only written by control().
+    double m_manualGripCommand = 0.0;
+    std::chrono::steady_clock::time_point m_manualGripLastStep;
     std::atomic<int> m_pendingInstrumentAxes{0};
     std::atomic<int> m_instrumentAxes{0}; // No Maxon axes accessed until explicitly selected.
     qint64 m_lastTestElapsedSeconds = -1;

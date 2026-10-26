@@ -8,6 +8,8 @@
         <file>../TestPage.qml</file>
         <file>../ForceChart.qml</file>
         <file>../ForcePanel.qml</file>
+        <file>../ManualGripChart.qml</file>
+        <file>../ManualGripPanel.qml</file>
         <file>../PreOperation.qml</file>
         <file>../MainPage.qml</file>
     </qresource>
