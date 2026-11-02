@@ -591,10 +591,11 @@ private:
     bool m_isLooping   = false;    // 是否正在执行动作序列
     // UI requests are handed off to the control thread before changing motion state.
     std::atomic<int> m_pendingTestMode{-1};
-    std::atomic<double> m_pendingManualGripAngle{ManualGripCommand::NoRequest};
+    // Publish all four angles together; never combine fields from different requests.
+    std::atomic<ManualGripCommand::Pose> m_pendingManualGripPose{ManualGripCommand::noRequest()};
     std::atomic<bool> m_manualGripActive{false};
-    double m_manualGripTarget = 0.0; // Only written by control().
-    double m_manualGripCommand = 0.0;
+    ManualGripCommand::Pose m_manualGripTarget{}; // Only written by control().
+    ManualGripCommand::Pose m_manualGripCommand{};
     std::chrono::steady_clock::time_point m_manualGripLastStep;
     std::atomic<int> m_pendingInstrumentAxes{0};
     std::atomic<int> m_instrumentAxes{0}; // No Maxon axes accessed until explicitly selected.
@@ -688,7 +689,7 @@ private:
 
     /*通过主手目标位置解算各轴转动角度*/
     std::array<double, ControlValueNum>          motionMapping_L(const HandlePose& handlePoseCur, const std::array<int, MotorNumPerSide>& motorPositionCur_L);
-    std::array<double, ControlValueNum>          motionMapping_R(const HandlePose& handlePoseCur, const std::array<int, MotorNumPerSide>& motorPositionCur_R);
+    std::array<double, ControlValueNum>          motionMapping_R(const HandlePose& handlePoseCur, const std::array<int, MotorNumPerSide>& motorPositionCur_R, bool independentManualAngles = false);
 
     std::array<double, ControlValueNum>          test_motionMapping_L(const HandlePose& handlePoseCur, const std::array<int, MotorNumPerSide>& motorPositionCur_L);
     std::array<double, ControlValueNum>          test_motionMapping_R(const HandlePose& handlePoseCur, const std::array<int, MotorNumPerSide>& motorPositionCur_R);

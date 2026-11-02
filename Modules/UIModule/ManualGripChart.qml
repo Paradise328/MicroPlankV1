@@ -15,7 +15,7 @@ Rectangle {
     border.color: "#2A3B46"
     function refresh() { refreshTimer.restart() }
     function updatePlot() {
-        if (!visible || width < 1) return
+        if (!visible || width < 1 || !series) return
         var data = []
         for (var i = 0; i < series.length; ++i)
             data.push(UIinterface.manualGripPlot(series[i], rangeStart, rangeEnd, Math.max(1, Math.floor(width - 105))))
@@ -23,8 +23,9 @@ Rectangle {
         plot.requestPaint()
     }
     function valueText(index) {
+        if (!latest || !series || index < 0 || index >= series.length) return "—"
         var v = latest[series[index]]
-        return v === null || v === undefined || !isFinite(Number(v)) ? "—" : Number(v).toFixed(series[index] >= 6 ? 0 : 3)
+        return v === null || v === undefined || !isFinite(Number(v)) ? "—" : Number(v).toFixed(series[index] >= 6 && series[index] <= 11 ? 0 : 3)
     }
     function timeText(t) { return Math.floor(t / 60) + ":" + ("0" + Math.floor(t % 60)).slice(-2) }
     onSeriesChanged: refresh()
@@ -44,13 +45,13 @@ Rectangle {
         anchors.top: parent.top; anchors.right: parent.right
         anchors.topMargin: 7; anchors.rightMargin: 10; spacing: 9
         Repeater {
-            model: chart.series.length
-            Text { text: chart.labels[index] + " " + chart.valueText(index); color: chart.colors[index]; font.pixelSize: chart.width < 850 ? 10 : 12 }
+            model: chart.series ? chart.series.length : 0
+            Text { text: (chart.labels && chart.labels[index] ? chart.labels[index] : "") + " " + chart.valueText(index); color: chart.colors && chart.colors[index] ? chart.colors[index] : "#D9E4EA"; font.pixelSize: chart.width < 850 ? 10 : 12 }
         }
     }
     Canvas {
         id: plot
-        objectName: "manualCanvas" + chart.series[0]
+        objectName: "manualCanvas" + (chart.series && chart.series.length ? chart.series[0] : -1)
         anchors.fill: parent; anchors.topMargin: 27; anchors.bottomMargin: 3
         onHeightChanged: requestPaint()
         onPaint: {
@@ -68,7 +69,8 @@ Rectangle {
                     low = Math.min(low, p[1]); high = Math.max(high, p[1])
                 }
             }
-            var padding = Math.max(chart.series[0] >= 6 ? 1 : 0.001, (high - low) * 0.12)
+            var encoderSeries = chart.series && chart.series[0] >= 6 && chart.series[0] <= 11
+            var padding = Math.max(encoderSeries ? 1 : 0.001, (high - low) * 0.12)
             low -= padding; high += padding
             ctx.font = "10px sans-serif"; ctx.textAlign = "right"
             for (var tick = 0; tick < 3; ++tick) {
@@ -76,7 +78,7 @@ Rectangle {
                 ctx.strokeStyle = "#2A3B46"; ctx.lineWidth = 1
                 ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(right, y); ctx.stroke()
                 ctx.fillStyle = "#93A8B6"
-                ctx.fillText((high - (high - low) * tick / 2).toFixed(chart.series[0] >= 6 ? 0 : 3), left - 5, y + 3)
+                ctx.fillText((high - (high - low) * tick / 2).toFixed(encoderSeries ? 0 : 3), left - 5, y + 3)
             }
             ctx.textAlign = "left"; ctx.fillText(chart.timeText(chart.rangeStart), left, height - 3)
             ctx.textAlign = "right"; ctx.fillText(chart.timeText(chart.rangeEnd) + " 分:秒", right, height - 3)

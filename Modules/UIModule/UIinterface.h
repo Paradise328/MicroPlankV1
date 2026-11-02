@@ -131,7 +131,7 @@ public:
     Q_INVOKABLE void homeRightInstrument();
     Q_INVOKABLE void enterInstrumentTest(int mode);
     Q_INVOKABLE void stopInstrumentTest();
-    Q_INVOKABLE void setManualGripAngle(double angle);
+    Q_INVOKABLE void setManualGripAngle(double angle, double yaw, double pitch, double roll);
     Q_INVOKABLE QVariantList manualGripPlot(int series, double start, double end, int columns) const;
     bool manualGripActive() const { return m_manualGripActive; }
     bool manualGripHasData() const { return m_manualGripHistory.size() != 0; }

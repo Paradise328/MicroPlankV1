@@ -437,7 +437,7 @@ void RobotControl::control()
         const int requestedMode = m_pendingTestMode.exchange(-1);
         if (requestedMode == -2) { // Stop is consumed by the same thread that sends motion commands.
             m_manualGripActive.store(false);
-            m_pendingManualGripAngle.store(ManualGripCommand::NoRequest);
+            m_pendingManualGripPose.store(ManualGripCommand::noRequest());
             if (m_isLooping) { publishElapsed(); }
             m_isLooping = false;
             // Replace the previous motion target with the latest measured positions.
@@ -458,9 +458,9 @@ void RobotControl::control()
             SendInnerMsg(Module_Inner_E::Uiinterface,
                 static_cast<int>(UIAction_E::InstrumentTestStatus), "stopped");
         } else if (requestedMode == -3) {
-            const double angle = m_pendingManualGripAngle.exchange(ManualGripCommand::NoRequest);
+            const auto angles = m_pendingManualGripPose.exchange(ManualGripCommand::noRequest());
             const int axes = m_instrumentAxes.load();
-            if (!ManualGripCommand::accepts(axes, angle) || !m_rightTestHomed.load()
+            if (!ManualGripCommand::accepts(axes, angles) || !m_rightTestHomed.load()
                 || m_rightTestHoming.load() || !m_flagControlThread.load()
                 || m_isSystemTerminated.load()) {
                 m_testBusy.store(false);
@@ -486,9 +486,9 @@ void RobotControl::control()
                 *compensation = instrumentCompensate{};
             }
             const HandlePose zeroPose{};
-            manualOrigin = motionMapping_R(zeroPose, manualAnchor);
-            m_manualGripTarget = angle;
-            m_manualGripCommand = 0.0;
+            manualOrigin = motionMapping_R(zeroPose, manualAnchor, true);
+            m_manualGripTarget = angles;
+            m_manualGripCommand = ManualGripCommand::Pose{};
             m_motionStartTime = std::chrono::steady_clock::now();
             m_manualGripLastStep = m_motionStartTime;
             lastManualPublish = m_motionStartTime - std::chrono::milliseconds(100);
@@ -502,7 +502,7 @@ void RobotControl::control()
         } else if (isInstrumentTestMode(requestedMode)) {
             manualSession = false;
             m_manualGripActive.store(false);
-            m_pendingManualGripAngle.store(ManualGripCommand::NoRequest);
+            m_pendingManualGripPose.store(ManualGripCommand::noRequest());
             m_testMode = static_cast<InstrumentTestMode>(requestedMode);
             m_testCollisionStopped = false;
             const auto settings = instrumentTestSettings(m_testMode,
@@ -543,10 +543,10 @@ void RobotControl::control()
                 || !m_flagInTeleoperation.load() || !m_rightTestHomed.load()) {
                 failure += QStringLiteral("Manual control is no longer enabled; ");
             }
-            const double requestedAngle = m_pendingManualGripAngle.exchange(ManualGripCommand::NoRequest);
-            if (requestedAngle != ManualGripCommand::NoRequest) {
-                if (ManualGripCommand::accepts(axes, requestedAngle)) {
-                    m_manualGripTarget = requestedAngle;
+            const auto requestedAngles = m_pendingManualGripPose.exchange(ManualGripCommand::noRequest());
+            if (requestedAngles[0] != ManualGripCommand::NoRequest) {
+                if (ManualGripCommand::accepts(axes, requestedAngles)) {
+                    m_manualGripTarget = requestedAngles;
                 } else {
                     failure += QStringLiteral("Invalid manual angle; ");
                 }
@@ -556,7 +556,7 @@ void RobotControl::control()
             if (failure.isEmpty()) {
                 HandlePose pose{};
                 targetPose(pose);
-                const auto mapped = motionMapping_R(pose, encoderSnapshot);
+                const auto mapped = motionMapping_R(pose, encoderSnapshot, true);
                 for (int axis = instrumentFirstMaxon(axes); axis < 6; ++axis) {
                     const double scale = axes == 4 ? m_encoderPerDegree_R[axis - 2]
                                                   : m_encoderPerDegree_6maxon_R[axis];
@@ -578,8 +578,8 @@ void RobotControl::control()
                 const auto nowUs = static_cast<std::uint64_t>(
                     std::chrono::duration_cast<std::chrono::microseconds>(sampleTime.time_since_epoch()).count());
                 const double elapsed = std::chrono::duration<double>(manualNow - m_motionStartTime).count();
-                QStringList fields{QString::number(elapsed, 'f', 3), QString::number(m_manualGripTarget, 'g', 12),
-                    QString::number(m_manualGripCommand, 'g', 12), QString::number(axes)};
+                QStringList fields{QString::number(elapsed, 'f', 3), QString::number(m_manualGripTarget[0], 'g', 12),
+                    QString::number(m_manualGripCommand[0], 'g', 12), QString::number(axes)};
                 int encoderMask = 0;
                 for (int axis = 0; axis < 6; ++axis) {
                     const bool valid = failure.isEmpty() && axis >= instrumentFirstMaxon(axes);
@@ -602,6 +602,11 @@ void RobotControl::control()
                 for (double age : ages) { fields << QString::number(age, 'f', 3); }
                 for (const auto& sample : samples) { fields << QString::number(static_cast<qulonglong>(sample.sequence)); }
                 fields << (failure.isEmpty() ? "1" : "0");
+                // Keep the original 25 fields stable, then append independent orientations.
+                for (std::size_t axis = 1; axis < m_manualGripTarget.size(); ++axis) {
+                    fields << QString::number(m_manualGripTarget[axis], 'g', 12)
+                           << QString::number(m_manualGripCommand[axis], 'g', 12);
+                }
                 SendInnerMsg(Module_Inner_E::Uiinterface,
                     static_cast<int>(UIAction_E::ManualGripSample), fields.join('|'));
             }
@@ -611,7 +616,7 @@ void RobotControl::control()
                 m_flagInHold.store(false);
                 m_isLooping = false;
                 m_rightTestHomed.store(false);
-                m_pendingManualGripAngle.store(ManualGripCommand::NoRequest);
+                m_pendingManualGripPose.store(ManualGripCommand::noRequest());
                 for (int axis = instrumentFirstMaxon(axes); axis < 6; ++axis) {
                     m_motorDriver->setControlWord(MotorType::MAXON, axis, ControlCommand::QUICKSTOP, arm_0);
                 }
@@ -771,12 +776,12 @@ void RobotControl::targetPose(HandlePose& handlePoseCur)//每次循环对角度�
         const double dt = std::chrono::duration<double>(now - m_manualGripLastStep).count();
         m_manualGripLastStep = now;
         m_manualGripCommand = ManualGripCommand::advance(m_manualGripCommand, m_manualGripTarget, dt);
-        // Preserve the existing test input convention (OpenAngle is also used for yaw).
-        // This is a command angle, not a measured jaw angle.
-        handlePoseCur.handlePoseR_Elevation = 0.0;
-        handlePoseCur.handlePoseR_Arzimuth = 0.0;
-        handlePoseCur.handlePoseR_Roll = 0.0;
-        handlePoseCur.handlePoseR_OpenAngle = m_manualGripCommand * M_PI / 180.0;
+        // Independent command angles, not measured jaw orientation. OpenAngle is
+        // the angle of ONE jaw; negative values retain the clamping command range.
+        handlePoseCur.handlePoseR_Elevation = m_manualGripCommand[2] * M_PI / 180.0;
+        handlePoseCur.handlePoseR_Arzimuth = m_manualGripCommand[1] * M_PI / 180.0;
+        handlePoseCur.handlePoseR_Roll = m_manualGripCommand[3] * M_PI / 180.0;
+        handlePoseCur.handlePoseR_OpenAngle = m_manualGripCommand[0] * M_PI / 180.0;
         return;
     }
 
@@ -1525,7 +1530,7 @@ void RobotControl::runCommunication()
 
 
 
-std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePose& handlePoseCur, const std::array<int, MotorNumPerSide>& motorPositionCur_R)
+std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePose& handlePoseCur, const std::array<int, MotorNumPerSide>& motorPositionCur_R, bool independentManualAngles)
 
 {
     std::array<double, ControlValueNum> controlValueTmp_R = {0};
@@ -1552,13 +1557,16 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     double openAngle_R = handlePoseCur.handlePoseR_OpenAngle;
     double openAngle_R_new;
 
-    openAngle_R_new = calculateNewOpenangle(openAngle_R);
+    // Manual input is already a single-jaw angle: no legacy master-grip remapping.
+    // Keep the old automatic/teleoperation path exactly as before.
+    openAngle_R_new = independentManualAngles ? openAngle_R * 180.0 / M_PI
+                                             : calculateNewOpenangle(openAngle_R);
     // }
     /*计算 beta(yaw)*/
-    double beta_Org_R = m_handlePoseOrg_R.handlePoseR_OpenAngle;
-    double beta_Init_R = m_handlePoseInit_R.handlePoseR_OpenAngle;
-    double beta_Last_R = m_handlePoseLastLoop_R.handlePoseR_OpenAngle;
-    double beta_Cur_R = handlePoseCur.handlePoseR_OpenAngle;
+    double beta_Org_R = independentManualAngles ? m_handlePoseOrg_R.handlePoseR_Arzimuth : m_handlePoseOrg_R.handlePoseR_OpenAngle;
+    double beta_Init_R = independentManualAngles ? m_handlePoseInit_R.handlePoseR_Arzimuth : m_handlePoseInit_R.handlePoseR_OpenAngle;
+    double beta_Last_R = independentManualAngles ? m_handlePoseLastLoop_R.handlePoseR_Arzimuth : m_handlePoseLastLoop_R.handlePoseR_OpenAngle;
+    double beta_Cur_R = independentManualAngles ? handlePoseCur.handlePoseR_Arzimuth : handlePoseCur.handlePoseR_OpenAngle;
 
     double delt_betaCur_R = (beta_Cur_R - beta_Init_R) * 180 / M_PI;
     double delt_betaInit_R = (beta_Init_R - beta_Last_R) * 180 / M_PI;
@@ -1588,6 +1596,8 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     // /*4轴器械*/
     if(m_endeffectorConfiguration_R == EndeffectorConfiguration::fourMaxons){
 
+        // Retain existing drive/winding polarities. Motor-space signs are not
+        // physical jaw rotation signs; verify paired motor directions on the rig.
         controlValueTmp_R[6] = -((delt_beta_R - delt_alpha_R * m_compRatio_R) - openAngle_R_new);
         // LOG(INFO)<<"轴6的角度是："<<delt_alpha_R<<":"<<delt_beta_R<<":"<<openAngle_R_new<<":"<<m_compRatio_R;
         controlValueTmp_R[7] = (delt_beta_R - delt_alpha_R * m_compRatio_R) + openAngle_R_new;
@@ -2657,9 +2667,17 @@ void RobotControl::dealWithMsg()
             }
             case static_cast<int>(RobotControlAction_E::SetManualGripAngle):
             {
-                bool ok = false;
-                const double angle = i.value().toDouble(&ok);
-                if (!ok || !ManualGripCommand::accepts(m_instrumentAxes.load(), angle)
+                const auto fields = i.value().split('|');
+                ManualGripCommand::Pose angles{};
+                bool parsed = fields.size() == static_cast<int>(angles.size());
+                if (parsed) {
+                    for (std::size_t axis = 0; axis < angles.size(); ++axis) {
+                        bool ok = false;
+                        angles[axis] = fields[static_cast<int>(axis)].toDouble(&ok);
+                        parsed = parsed && ok;
+                    }
+                }
+                if (!parsed || !ManualGripCommand::accepts(m_instrumentAxes.load(), angles)
                     || !m_flagControlThread.load() || m_isSystemTerminated.load()
                     || !m_rightTestHomed.load() || m_rightTestHoming.load()
                     || m_pendingTestMode.load() == -2
@@ -2669,7 +2687,7 @@ void RobotControl::dealWithMsg()
                         QStringLiteral("手动夹持未执行：请检查角度范围、归零状态或等待当前操作结束。"));
                     break;
                 }
-                m_pendingManualGripAngle.store(angle);
+                m_pendingManualGripPose.store(angles);
                 if (!m_manualGripActive.load()) {
                     m_testBusy.store(true);
                     m_pendingTestMode.store(-3);

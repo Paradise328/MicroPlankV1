@@ -70,13 +70,17 @@ class FakeInterface(QObject):
     manualGripTime = Property(float, lambda self: self.manual_time, notify=manualGripDataChanged)
     manualGripValues = Property("QVariantList", lambda self: self.manual_values, notify=manualGripDataChanged)
 
-    @Slot(float)
-    def setManualGripAngle(self, angle):
+    @Slot(float, float, float, float)
+    def setManualGripAngle(self, angle, yaw, pitch, roll):
         if self.state != 3 and not (self.state == 4 and self.manual_active):
             return
-        if not math.isfinite(angle) or not (-10 if self.axes == 4 else -20) <= angle <= 30:
+        pose = (angle, yaw, pitch, roll)
+        if self.axes not in (4, 6) or not all(math.isfinite(value) for value in pose):
             return
-        self.manual_requests.append(angle)
+        if not ((-10 if self.axes == 4 else -20) <= angle <= 20
+                and abs(yaw) <= 80 and abs(pitch) <= 50 and abs(roll) <= 60):
+            return
+        self.manual_requests.append(pose)
         if not self.manual_active:
             self.manual_active = True
             self.manualGripReset.emit()
@@ -92,9 +96,10 @@ class FakeInterface(QObject):
         self.manual_time = seconds
         self.manual_samples = [(max(0, seconds - 300) + 300 * i / 1000,
                                 [5, 4.5] + [-.23 + .01 * math.sin(i / 20 + ch) for ch in range(4)]
-                                + [1000 * axis + i for axis in range(6)], valid and not 480 < i < 500)
+                                + [1000 * axis + i for axis in range(6)]
+                                + [15, 14.125, -10, -9.375, 30, 29.625], valid and not 480 < i < 500)
                                for i in range(1001)]
-        self.manual_values = self.manual_samples[-1][1] if valid else [None] * 12
+        self.manual_values = self.manual_samples[-1][1] if valid else [None] * 18
         self.manual_stale = not valid
         self.manualGripDataChanged.emit()
         QTest.qWait(100)
@@ -383,31 +388,56 @@ manual_mode = item("manualGripModeButton")
 click(manual_mode)
 assert window.property("showManualPlots")
 manual_input = item("manualGripAngleInput")
+manual_inputs = [manual_input, item("manualYawAngleInput"), item("manualPitchAngleInput"), item("manualRollAngleInput")]
 manual_apply = item("manualGripApplyButton")
 manual_back = item("manualGripBackButton")
+angle_selector = item("manualAngleSelector")
+angle_chart = item("manualAngleChart")
 assert manual_apply.property("enabled")
-manual_input.setProperty("text", "5")
+for field, value in zip(manual_inputs, (5, 15, -10, 30)):
+    field.setProperty("text", str(value))
 QTest.qWait(50)
 assert not backend.manual_requests, "Typing must never issue motion"
 click(manual_apply)
-assert backend.manual_requests == [5] and backend.manual_active
+assert backend.manual_requests == [(5, 15, -10, 30)] and backend.manual_active
 assert not manual_back.property("enabled") and stop.property("enabled")
-for invalid in ["31", "-21", "nan", "inf", "", " "]:
-    manual_input.setProperty("text", invalid)
-    QTest.qWait(20)
-    assert not manual_apply.property("enabled"), invalid
-manual_input.setProperty("text", "-5")
+for field, minimum, maximum in zip(manual_inputs, (-20, -80, -50, -60), (20, 80, 50, 60)):
+    previous = field.property("text")
+    for invalid in [str(maximum + .001), str(minimum - .001), "nan", "inf", "-inf", "", " "]:
+        field.setProperty("text", invalid)
+        QTest.qWait(20)
+        assert not manual_apply.property("enabled"), (field.objectName(), invalid)
+        click(manual_apply)
+        assert len(backend.manual_requests) == 1, "An invalid field must block the complete pose"
+    field.setProperty("text", previous)
+for field, value in zip(manual_inputs, (-5, -25, 12, 45)):
+    field.setProperty("text", str(value))
 QTest.qWait(20)
+assert backend.manual_requests == [(5, 15, -10, 30)], "Editing a running command must not execute it"
 click(manual_apply)
-assert backend.manual_requests == [5, -5]
+assert backend.manual_requests == [(5, 15, -10, 30), (-5, -25, 12, 45)]
 for axes in [4, 6]:
     backend.axes = axes
     backend.changed.emit()
+    minimum = -10 if axes == 4 else -20
+    manual_input.setProperty("text", str(minimum - .001))
+    QTest.qWait(20)
+    assert not manual_apply.property("enabled"), "Opening minimum must follow the instrument type"
+    for pose in [(minimum, -80, -50, -60), (20, 80, 50, 60)]:
+        for field, value in zip(manual_inputs, pose):
+            field.setProperty("text", str(value))
+        QTest.qWait(20)
+        assert manual_apply.property("enabled"), (axes, pose)
+        previous_count = len(backend.manual_requests)
+        click(manual_apply)
+        assert len(backend.manual_requests) == previous_count + 1 and backend.manual_requests[-1] == pose
     backend.feed_manual(420)
     for size in [(1280, 800), (800, 640)]:
         window.resize(*size)
+        angle_selector.setProperty("currentIndex", 0)
         QTest.qWait(100)
-        names = ["manualGripAngleInput", "manualGripApplyButton", "testStopButton",
+        names = ["manualGripAngleInput", "manualYawAngleInput", "manualPitchAngleInput", "manualRollAngleInput",
+                 "manualAngleSelector", "manualGripApplyButton", "testStopButton",
                  "manualCanvas0", "manualCanvas2", "manualCanvas8" if axes == 4 else "manualCanvas6"]
         for name in names:
             control = item(name)
@@ -415,14 +445,37 @@ for axes in [4, 6]:
             bottom = control.mapToScene(QPointF(control.width(), control.height()))
             assert top.x() >= 0 and top.y() >= 0 and bottom.x() <= size[0] and bottom.y() <= size[1], (name, size, top, bottom)
         assert window.grabWindow().save(str(root / f"output/manual-grip-{axes}-{size[0]}.png"))
+        for index, pair, expected in [(1, [12, 13], "14.125"), (2, [14, 15], "-9.375"), (3, [16, 17], "29.625")]:
+            angle_selector.setProperty("currentIndex", index)
+            QTest.qWait(80)
+            series = angle_chart.property("series")
+            series = series.toVariant() if hasattr(series, "toVariant") else series
+            assert series == pair, (index, series)
+            canvas = item("manualCanvas" + str(pair[0]))
+            assert canvas.property("visible") and canvas.height() > 0
+            # Orientation values must retain decimal precision, not encoder integer formatting.
+            visible_texts = []
+            descendants = [angle_chart]
+            while descendants:
+                child = descendants.pop()
+                visible_texts.append(str(child.property("text")))
+                descendants.extend(child.childItems())
+            assert any(expected in text for text in visible_texts), (index, visible_texts)
+        assert window.grabWindow().save(str(root / f"output/manual-roll-{axes}-{size[0]}.png"))
 backend.feed_manual(421, False)
 assert "失效" in item("manualGripDataStatus").property("text")
 click(stop)
 assert not manual_apply.property("enabled")
+assert all(not field.property("enabled") for field in manual_inputs)
 backend.manual_active = False
 backend.manualGripDataChanged.emit()
 backend.set_state(1, "已停止，请重新归零")
 assert not manual_apply.property("enabled") and home.property("enabled")
+request_count = len(backend.manual_requests)
+for field in manual_inputs:
+    field.setProperty("text", "0")
+click(manual_apply)
+assert len(backend.manual_requests) == request_count, "Stopped pose must not restart without homing"
 assert backend.manual_samples, "Stop must retain the plotted trace"
 click(manual_back)
 assert not window.property("showManualPlots") and not manual_mode.property("enabled")
@@ -442,7 +495,7 @@ assert all(not control.property("enabled") for control in [home, enter, stop, sh
 click(shutdown)
 assert backend.shutdown_requests == 1, "Duplicate shutdown was not blocked"
 assert not warnings, "\n".join(warnings)
-print("PASS: QML, automatic modes and force charts; manual execute/update/limits/stop/rehoming, stale data, 4/6-axis charts, 2 sizes")
+print("PASS: QML, automatic modes and force charts; four-angle atomic submission/update/limits, stop/rehoming, stale data, angle selection/precision, 4/6-axis charts, 2 sizes")
 window.hide()
 engine.deleteLater()
 app.processEvents()

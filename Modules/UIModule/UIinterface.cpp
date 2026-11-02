@@ -1,6 +1,7 @@
 ﻿#include "UIinterface.h"
 
 #include "../RobotControlModule/InstrumentTestMode.h"
+#include "../RobotControlModule/ManualGripCommand.h"
 #include <QTimer>
 #include <QDir>
 #include <QDateTime>
@@ -257,13 +258,14 @@ void UIinterface::stopInstrumentTest()
         static_cast<int>(RobotControlAction_E::StopInstrumentTest), "");
 }
 
-void UIinterface::setManualGripAngle(double angle)
+void UIinterface::setManualGripAngle(double angle, double yaw, double pitch, double roll)
 {
     if ((m_testState != 3 && !(m_testState == 4 && m_manualGripActive))
         || (m_instrumentAxes != 4 && m_instrumentAxes != 6)) { return; }
     const double minimum = m_instrumentAxes == 4 ? -10.0 : -20.0;
-    if (!std::isfinite(angle) || angle < minimum || angle > 30.0) {
-        m_testStatus = QStringLiteral("夹持指令角必须在 %1° 至 30° 范围内。").arg(minimum);
+    const ManualGripCommand::Pose angles{{angle, yaw, pitch, roll}};
+    if (!ManualGripCommand::accepts(m_instrumentAxes, angles)) {
+        m_testStatus = QStringLiteral("角度超限：单片开合 %1°～20°，偏航 ±80°，俯仰 ±50°，旋转 ±60°。").arg(minimum);
         emit testStatusChanged();
         return;
     }
@@ -274,11 +276,14 @@ void UIinterface::setManualGripAngle(double angle)
         m_testState = 4;
         m_testStatus = QStringLiteral("正在启动手动夹持测试…");
     } else {
-        m_testStatus = QStringLiteral("正在更新夹持指令角为 %1°…").arg(angle, 0, 'f', 2);
+        m_testStatus = QStringLiteral("正在更新：单片开合 %1°，偏航 %2°，俯仰 %3°，旋转 %4°…")
+            .arg(angle, 0, 'f', 2).arg(yaw, 0, 'f', 2).arg(pitch, 0, 'f', 2).arg(roll, 0, 'f', 2);
     }
     emit testStatusChanged();
+    QStringList fields;
+    for (double value : angles) { fields << QString::number(value, 'g', 17); }
     SendInnerMsg(Module_Inner_E::RobotControl,
-        static_cast<int>(RobotControlAction_E::SetManualGripAngle), QString::number(angle, 'g', 17));
+        static_cast<int>(RobotControlAction_E::SetManualGripAngle), fields.join('|'));
 }
 
 bool UIinterface::manualGripStale() const
@@ -358,10 +363,10 @@ void UIinterface::dealWithTestMsg()
             } else if (i.key() == static_cast<int>(UIAction_E::ManualGripSample)) {
                 if (!m_manualGripActive || (m_testState != 4 && m_testState != 6)) { continue; }
                 const auto fields = i.value().split('|');
-                if (fields.size() != 25) { continue; }
-                std::array<double, 25> values{};
+                if (fields.size() != 31) { continue; }
+                std::array<double, 31> values{};
                 bool parsed = true;
-                for (int n = 0; n < 25; ++n) {
+                for (int n = 0; n < 31; ++n) {
                     bool ok = false;
                     values[n] = fields[n].toDouble(&ok);
                     parsed = parsed && ok && std::isfinite(values[n]);
@@ -381,6 +386,10 @@ void UIinterface::dealWithTestMsg()
                 sample.values[0] = values[1];
                 sample.values[1] = values[2];
                 sample.validMask = values[24] == 1.0 ? 3U : 0U;
+                for (int series = 12; series < 18; ++series) {
+                    sample.values[series] = values[25 + series - 12];
+                    if (values[24] == 1.0) { sample.validMask |= (1U << series); }
+                }
                 const unsigned torqueMask = static_cast<unsigned>(values[15]);
                 const unsigned encoderMask = static_cast<unsigned>(values[10]);
                 for (int ch = 0; ch < 4; ++ch) {

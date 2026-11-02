@@ -158,7 +158,7 @@ Window {
         enabled: !window.shutdownRequested
         width: Math.min(parent.width - 80, 1120)
         anchors.horizontalCenter: parent.horizontalCenter
-        y: window.showManualPlots ? 76 : (window.showForcePlots ? Math.max(76, (parent.height - height) / 2) : (parent.height - height) / 2)
+        y: window.showManualPlots ? (window.height < 760 ? 68 : 76) : (window.showForcePlots ? Math.max(76, (parent.height - height) / 2) : (parent.height - height) / 2)
         spacing: window.showManualPlots ? 6 : (window.height < 760 ? 10 : 20)
 
         ColumnLayout {
@@ -223,7 +223,7 @@ Window {
 
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: window.showManualPlots ? 64 : (window.height < 760 ? 80 : 100)
+            implicitHeight: window.showManualPlots ? (window.height < 760 ? 56 : 64) : (window.height < 760 ? 80 : 100)
             radius: 14
             color: "#15232D"
             border.color: "#263944"
@@ -292,36 +292,88 @@ Window {
         }
 
         ColumnLayout {
+            id: manualControls
             visible: window.showManualPlots
             Layout.fillWidth: true
             spacing: 4
-            RowLayout {
+            readonly property bool validAngles: manualAngle.enabled
+                && [manualAngle, manualYaw, manualPitch, manualRoll].every(function(field) {
+                    return field.acceptableInput && field.text.trim().length > 0 && isFinite(Number(field.text))
+                })
+            GridLayout {
                 Layout.fillWidth: true
-                Text { text: "夹持指令角 / °"; color: "#D6E1E8"; font.pixelSize: 15 }
+                columns: 8
+                columnSpacing: 8
+                Text { text: "开合(单片)/°"; color: "#D6E1E8"; font.pixelSize: 13 }
                 TextField {
                     id: manualAngle
                     objectName: "manualGripAngleInput"
                     text: "0"
-                    Layout.preferredWidth: 110
+                    Layout.fillWidth: true; Layout.preferredWidth: 76
+                    Layout.preferredHeight: window.height < 760 ? 32 : 38
                     color: "#F0F5F7"; selectByMouse: true
                     enabled: window.testState === 3 || (window.testState === 4 && UIinterface.manualGripActive)
-                    validator: DoubleValidator { bottom: UIinterface.instrumentAxes === 4 ? -10 : -20; top: 30; decimals: 3; notation: DoubleValidator.StandardNotation; locale: "C" }
+                    validator: DoubleValidator { bottom: UIinterface.instrumentAxes === 4 ? -10 : -20; top: 20; decimals: 3; notation: DoubleValidator.StandardNotation; locale: "C" }
                     background: Rectangle { radius: 6; color: "#15232D"; border.color: manualAngle.activeFocus ? "#5BD7BD" : "#39635A" }
                 }
+                Text { text: "偏航/°"; color: "#D6E1E8"; font.pixelSize: 13 }
+                TextField {
+                    id: manualYaw
+                    objectName: "manualYawAngleInput"
+                    text: "0"
+                    Layout.fillWidth: true; Layout.preferredWidth: 76
+                    Layout.preferredHeight: window.height < 760 ? 32 : 38
+                    color: "#F0F5F7"; selectByMouse: true
+                    enabled: manualAngle.enabled
+                    validator: DoubleValidator { bottom: -80; top: 80; decimals: 3; notation: DoubleValidator.StandardNotation; locale: "C" }
+                    background: Rectangle { radius: 6; color: "#15232D"; border.color: manualYaw.activeFocus ? "#5BD7BD" : "#39635A" }
+                }
+                Text { text: "俯仰/°"; color: "#D6E1E8"; font.pixelSize: 13 }
+                TextField {
+                    id: manualPitch
+                    objectName: "manualPitchAngleInput"
+                    text: "0"
+                    Layout.fillWidth: true; Layout.preferredWidth: 76
+                    Layout.preferredHeight: window.height < 760 ? 32 : 38
+                    color: "#F0F5F7"; selectByMouse: true
+                    enabled: manualAngle.enabled
+                    validator: DoubleValidator { bottom: -50; top: 50; decimals: 3; notation: DoubleValidator.StandardNotation; locale: "C" }
+                    background: Rectangle { radius: 6; color: "#15232D"; border.color: manualPitch.activeFocus ? "#5BD7BD" : "#39635A" }
+                }
+                Text { text: "旋转/°"; color: "#D6E1E8"; font.pixelSize: 13 }
+                TextField {
+                    id: manualRoll
+                    objectName: "manualRollAngleInput"
+                    text: "0"
+                    Layout.fillWidth: true; Layout.preferredWidth: 76
+                    Layout.preferredHeight: window.height < 760 ? 32 : 38
+                    color: "#F0F5F7"; selectByMouse: true
+                    enabled: manualAngle.enabled
+                    validator: DoubleValidator { bottom: -60; top: 60; decimals: 3; notation: DoubleValidator.StandardNotation; locale: "C" }
+                    background: Rectangle { radius: 6; color: "#15232D"; border.color: manualRoll.activeFocus ? "#5BD7BD" : "#39635A" }
+                }
+            }
+            RowLayout {
+                Layout.fillWidth: true
                 Button {
                     id: manualApply
                     objectName: "manualGripApplyButton"
                     text: UIinterface.manualGripActive ? "执行新角度" : "执行"
-                    enabled: manualAngle.enabled && manualAngle.acceptableInput && manualAngle.text.trim().length > 0
-                             && isFinite(Number(manualAngle.text))
-                    onClicked: UIinterface.setManualGripAngle(Number(manualAngle.text))
+                    Layout.preferredHeight: window.height < 760 ? 32 : 38
+                    enabled: manualControls.validAngles
+                    onClicked: UIinterface.setManualGripAngle(Number(manualAngle.text), Number(manualYaw.text), Number(manualPitch.text), Number(manualRoll.text))
                     contentItem: Text { text: manualApply.text; color: manualApply.enabled ? "#DDF9F2" : "#71818C"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                     background: Rectangle { radius: 6; color: "#203B3A"; border.color: "#39635A" }
                 }
-                Item { Layout.fillWidth: true }
+                Text {
+                    Layout.fillWidth: true
+                    text: "开合 " + (UIinterface.instrumentAxes === 4 ? "−10" : "−20") + "~20° · 偏航 ±80° · 俯仰 ±50° · 旋转 ±60°"
+                    wrapMode: Text.WordWrap; color: "#93A8B6"; font.pixelSize: 11
+                }
                 Button {
                     id: manualBack
                     objectName: "manualGripBackButton"
+                    Layout.preferredHeight: window.height < 760 ? 32 : 38
                     text: "返回模式选择"; enabled: !window.busy
                     onClicked: { window.showManualPlots = false; window.selectedMode = -1 }
                     contentItem: Text { text: manualBack.text; color: manualBack.enabled ? "#DDF9F2" : "#71818C"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
@@ -330,7 +382,7 @@ Window {
             }
             Text {
                 Layout.fillWidth: true
-                text: "沿用现有测试映射（含偏航耦合），非实测夹角；范围 " + (UIinterface.instrumentAxes === 4 ? "−10" : "−20") + "~30°，5°/s。范围并非机械安全额定值。"
+                text: "开合为单片夹爪指令角，非实测；四角可叠加，点击执行才运动，各指令≤5°/s。组合行程需实机确认。"
                 wrapMode: Text.WordWrap; color: "#E8B66A"; font.pixelSize: 11
             }
         }
@@ -441,7 +493,7 @@ Window {
             objectName: "manualGripModeButton"
             visible: !window.showForcePlots && !window.showManualPlots
             Layout.fillWidth: true; implicitHeight: 38
-            text: "手动夹持测试 · 输入角度 / 查看扭力与编码器曲线"
+            text: "手动夹持测试 · 开合 / 偏航 / 俯仰 / 旋转"
             enabled: window.testState === 3
             onClicked: { window.selectedMode = 3; window.showManualPlots = true }
             contentItem: Text { text: parent.text; color: parent.enabled ? "#DDF9F2" : "#71818C"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; font.pixelSize: 14 }
@@ -476,7 +528,7 @@ Window {
             id: stopButton
             objectName: "testStopButton"
             Layout.fillWidth: true
-            implicitHeight: 48
+            implicitHeight: window.showManualPlots && window.height < 760 ? 44 : 48
             text: UIinterface.testState === 6 ? "正在停止…" : "停止"
             enabled: UIinterface.testState === 4
             onClicked: UIinterface.stopInstrumentTest()

@@ -1,10 +1,12 @@
-// c++ -std=c++17 -O2 tests/manual_grip_test.cpp -o /tmp/manual-grip-test
+// c++ -std=c++17 -O2 -pthread tests/manual_grip_test.cpp -latomic -o /tmp/manual-grip-test
 // Pure control-envelope/history checks: no Qt, serial port or motors are loaded.
 #include "../Modules/RobotControlModule/ManualGripCommand.h"
 #include "../Modules/UIModule/ManualGripHistory.h"
+#include <atomic>
 #include <cassert>
 #include <iostream>
 #include <limits>
+#include <thread>
 
 namespace {
 bool near(double first, double second) { return std::abs(first - second) < 1e-9; }
@@ -12,7 +14,7 @@ ManualGripHistory::Sample sample(double time, double value = 1.0) {
     ManualGripHistory::Sample result;
     result.time = time;
     result.values.fill(value);
-    result.validMask = 0x0FFF;
+    result.validMask = (1U << ManualGripHistory::SeriesCount) - 1U;
     return result;
 }
 }
@@ -20,16 +22,34 @@ ManualGripHistory::Sample sample(double time, double value = 1.0) {
 int main() {
     const double nan = std::numeric_limits<double>::quiet_NaN();
     const double inf = std::numeric_limits<double>::infinity();
-    assert(ManualGripCommand::accepts(4, -10) && ManualGripCommand::accepts(4, 30));
-    assert(ManualGripCommand::accepts(6, -20) && ManualGripCommand::accepts(6, 30));
+    using Pose = ManualGripCommand::Pose;
+    assert(ManualGripCommand::accepts(4, -10) && ManualGripCommand::accepts(4, 20));
+    assert(ManualGripCommand::accepts(6, -20) && ManualGripCommand::accepts(6, 20));
     assert(!ManualGripCommand::accepts(4, -10.001));
     assert(!ManualGripCommand::accepts(6, -20.001));
     for (const int axes : {4, 6}) {
-        assert(!ManualGripCommand::accepts(axes, 30.001));
+        assert(!ManualGripCommand::accepts(axes, 20.001));
         assert(!ManualGripCommand::accepts(axes, nan));
         assert(!ManualGripCommand::accepts(axes, inf));
         assert(!ManualGripCommand::accepts(axes, -inf));
-        assert(!ManualGripCommand::accepts(axes, ManualGripCommand::NoRequest));
+        assert(!ManualGripCommand::accepts(axes, ManualGripCommand::noRequest()));
+        const Pose minimum{{axes == 4 ? -10.0 : -20.0, -80.0, -50.0, -60.0}};
+        const Pose maximum{{20.0, 80.0, 50.0, 60.0}};
+        assert(ManualGripCommand::accepts(axes, minimum));
+        assert(ManualGripCommand::accepts(axes, maximum));
+        for (std::size_t axis = 0; axis < minimum.size(); ++axis) {
+            auto invalid = minimum;
+            invalid[axis] -= 0.001;
+            assert(!ManualGripCommand::accepts(axes, invalid));
+            invalid = maximum;
+            invalid[axis] += 0.001;
+            assert(!ManualGripCommand::accepts(axes, invalid));
+            for (double bad : {nan, inf, -inf}) {
+                invalid = Pose{};
+                invalid[axis] = bad;
+                assert(!ManualGripCommand::accepts(axes, invalid));
+            }
+        }
     }
     for (const int axes : {-1, 0, 3, 5, 7}) {
         assert(!ManualGripCommand::accepts(axes, 0));
@@ -50,12 +70,54 @@ int main() {
     }
     assert(near(angle, -20));
 
+    const Pose target{{20.0, -80.0, 50.0, -60.0}};
+    Pose command{};
+    const auto firstStep = ManualGripCommand::advance(command, target, 10.0);
+    assert(near(firstStep[0], .1) && near(firstStep[1], -.1)
+        && near(firstStep[2], .1) && near(firstStep[3], -.1));
+    assert(ManualGripCommand::advance(command, target, -1.0) == command);
+    for (int i = 0; i < 2000; ++i) {
+        const auto next = ManualGripCommand::advance(command, target, .02);
+        for (std::size_t axis = 0; axis < command.size(); ++axis) {
+            assert(std::abs(next[axis] - command[axis]) <= .100000001);
+            assert(std::abs(target[axis] - next[axis]) <= std::abs(target[axis] - command[axis]));
+        }
+        command = next;
+    }
+    assert(command == target);
+
+    // A control cycle must consume one complete pose, never mixed fields from
+    // consecutive UI submissions. Publication can overwrite older requests.
+    const Pose absent = ManualGripCommand::noRequest();
+    std::atomic<Pose> pending{absent};
+    std::atomic<bool> done{false};
+    std::thread producer([&]() {
+        for (int i = 1; i <= 10000; ++i) {
+            const double value = i;
+            pending.store(Pose{{value, value + 1, value + 2, value + 3}});
+        }
+        done.store(true);
+    });
+    do {
+        const Pose received = pending.exchange(absent);
+        if (received == absent) { continue; }
+        assert(received[1] == received[0] + 1);
+        assert(received[2] == received[0] + 2);
+        assert(received[3] == received[0] + 3);
+    } while (!done.load());
+    producer.join();
+    const Pose last = pending.exchange(absent);
+    assert(last == absent || (last[1] == last[0] + 1 && last[2] == last[0] + 2 && last[3] == last[0] + 3));
+    assert(pending.exchange(absent) == absent);
+
     ManualGripHistory history;
+    static_assert(ManualGripHistory::SeriesCount == 18, "Four angle pairs plus torque and encoder series");
     assert(history.size() == 0 && history.endTime() == 0);
     for (int i = 0; i <= 4200; ++i) {
         auto point = sample(i / 10.0);
         point.values[2] = i == 3501 ? 100.0 : -0.23;
         point.values[11] = i;
+        point.values[17] = -12.345;
         assert(history.append(point));
     }
     assert(history.size() == 3001 && near(history.endTime(), 420));
@@ -67,6 +129,8 @@ int main() {
     assert(peak);
     const auto encoders = history.plot(11, 419, 420, 100);
     assert(encoders.back().value == 4200 && encoders.back().valid);
+    const auto roll = history.plot(17, 419, 420, 100);
+    assert(near(roll.back().value, -12.345) && roll.back().valid);
 
     const auto previousSize = history.size();
     for (const double time : {-1.0, 420.0, 419.0, nan, inf}) {
@@ -74,7 +138,7 @@ int main() {
     }
     assert(history.size() == previousSize);
     assert(history.plot(-1, 0, 420, 400).empty());
-    assert(history.plot(12, 0, 420, 400).empty());
+    assert(history.plot(18, 0, 420, 400).empty());
     assert(history.plot(0, 0, 0, 400).empty());
     assert(history.plot(0, nan, 420, 400).empty());
     assert(history.plot(0, 0, inf, 400).empty());
@@ -82,12 +146,16 @@ int main() {
     auto invalid = sample(420.1);
     invalid.values[2] = nan;
     invalid.values[3] = inf;
+    invalid.values[16] = inf;
     invalid.validMask &= ~(1U << 4);
+    invalid.validMask &= ~(1U << 17);
     assert(history.append(invalid));
     assert(!history.plot(2, 420.1, 420.2, 10).front().valid);
     assert(!history.plot(3, 420.1, 420.2, 10).front().valid);
     assert(!history.plot(4, 420.1, 420.2, 10).front().valid);
     assert(history.plot(5, 420.1, 420.2, 10).front().valid);
+    assert(!history.plot(16, 420.1, 420.2, 10).front().valid);
+    assert(!history.plot(17, 420.1, 420.2, 10).front().valid);
     assert(history.append(sample(420.2)));
     const auto gap = history.plot(2, 420, 420.2, 1);
     assert(gap.size() >= 3 && gap.front().valid && gap.back().valid);
@@ -104,6 +172,6 @@ int main() {
     // A misconfigured high-rate producer still has bounded memory.
     for (int i = 0; i < 5000; ++i) { assert(history.append(sample(i / 1000.0))); }
     assert(history.size() == 3001);
-    std::cout << "PASS: angle limits, invalid commands, slew/no overshoot; 12-series history, "
+    std::cout << "PASS: four-angle limits, invalid commands, pose slew/no overshoot, coherent atomic handoff; 18-series history, "
                  "5-minute/time+count bounds, peaks, invalid samples and dropped-frame gaps\n";
 }

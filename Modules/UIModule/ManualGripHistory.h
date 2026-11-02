@@ -9,14 +9,15 @@
 #include <vector>
 
 // Independent of Qt and display resolution. Indices: angles 0..1, torques 2..5,
-// actual encoder positions 6..11. No invalid sample may connect two valid runs.
+// actual encoder positions 6..11; yaw/pitch/roll target-command pairs 12..17.
+// No invalid sample may connect two valid runs.
 class ManualGripHistory {
 public:
-    static constexpr std::size_t SeriesCount = 12;
+    static constexpr std::size_t SeriesCount = 18;
     struct Sample {
         double time = 0.0;
         std::array<double, SeriesCount> values{};
-        std::uint16_t validMask = 0;
+        std::uint32_t validMask = 0;
     };
     struct Point { double time, value; bool valid; };
 
