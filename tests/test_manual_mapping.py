@@ -76,16 +76,36 @@ int main() {
     RobotControl r;
     std::array<int, MotorNumPerSide> enc{};
     auto open=r.motionMapping_R(pose(20),enc,true);
-    assert(near(open[6],20) && near(open[7],20));
+    assert(near(open[6],20) && near(open[7],-20));
     assert(near(r.m_delt_beta_R,0)); // pure opening must not inject yaw
     auto yaw=r.motionMapping_R(pose(0,30),enc,true);
-    assert(near(yaw[6],-30) && near(yaw[7],30)); // retain existing DRIVE polarity
+    assert(near(yaw[6],30) && near(yaw[7],30)); // pure yaw moves both axes together
+    auto negativeYaw=r.motionMapping_R(pose(0,-30),enc,true);
+    assert(near(negativeYaw[6],-30) && near(negativeYaw[7],-30));
     auto both=r.motionMapping_R(pose(20,30),enc,true);
-    assert(near(both[6],-10) && near(both[7],50));
-    assert(near((both[7]-both[6])/2,30) && near((both[7]+both[6])/2,20));
+    assert(near(both[6],50) && near(both[7],10));
+    assert(near((both[6]+both[7])/2,30) && near((both[6]-both[7])/2,20));
     auto mixed=r.motionMapping_R(pose(-10,-80,50,-60),enc,true);
-    assert(near(mixed[6],82.5) && near(mixed[7],-102.5));
+    assert(near(mixed[6],-102.5) && near(mixed[7],-82.5));
     assert(near(mixed[8],50) && near(mixed[9],60));
+    // Check the requested joint-space contract across the input envelope:
+    // yaw is the jaw midpoint, opening is half their separation. These are
+    // modeled angles; this test does not measure hardware jaw directions.
+    for(double grip : {-10.,-2.,0.,10.,20.}) for(double y : {-80.,-5.,0.,5.,80.})
+    for(double pitch : {-50.,0.,50.}) for(double roll : {-60.,0.,60.}) {
+        auto v=r.motionMapping_R(pose(grip,y,pitch,roll),enc,true);
+        assert(near((v[6]+v[7])/2 + pitch*r.m_compRatio_R,y));
+        assert(near((v[6]-v[7])/2,grip));
+        assert(near(v[8],pitch) && near(v[9],-roll));
+        assert(near(v[4],0) && near(v[5],0));
+    }
+    // Changing yaw with a fixed opening moves both jaws equally; changing
+    // opening with fixed yaw moves them oppositely without shifting midpoint.
+    auto held=r.motionMapping_R(pose(8,5,10),enc,true);
+    auto turn=r.motionMapping_R(pose(8,6,10),enc,true);
+    auto widen=r.motionMapping_R(pose(9,5,10),enc,true);
+    assert(near(turn[6]-held[6],1) && near(turn[7]-held[7],1));
+    assert(near(widen[6]-held[6],1) && near(widen[7]-held[7],-1));
     r.m_endeffectorConfiguration_R=EndeffectorConfiguration::sixMaxons;
     for (double grip : {-20.,0.,20.}) for (double y : {-80.,0.,80.})
     for (double pitch : {-50.,0.,50.}) for (double roll : {-60.,0.,60.}) {

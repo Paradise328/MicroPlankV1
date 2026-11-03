@@ -1596,11 +1596,18 @@ std::array<double, ControlValueNum> RobotControl::motionMapping_R(const HandlePo
     // /*4轴器械*/
     if(m_endeffectorConfiguration_R == EndeffectorConfiguration::fourMaxons){
 
-        // Retain existing drive/winding polarities. Motor-space signs are not
-        // physical jaw rotation signs; verify paired motor directions on the rig.
-        controlValueTmp_R[6] = -((delt_beta_R - delt_alpha_R * m_compRatio_R) - openAngle_R_new);
-        // LOG(INFO)<<"轴6的角度是："<<delt_alpha_R<<":"<<delt_beta_R<<":"<<openAngle_R_new<<":"<<m_compRatio_R;
-        controlValueTmp_R[7] = (delt_beta_R - delt_alpha_R * m_compRatio_R) + openAngle_R_new;
+        if (independentManualAngles) {
+            // Slots 6/7 are instrument axes 2/3. Their mean commands yaw;
+            // half their difference commands the single-jaw opening angle.
+            // Pitch compensation shifts both jaws without changing opening.
+            const double compensatedYaw = delt_beta_R - delt_alpha_R * m_compRatio_R;
+            controlValueTmp_R[6] = compensatedYaw + openAngle_R_new;
+            controlValueTmp_R[7] = compensatedYaw - openAngle_R_new;
+        } else {
+            // Preserve the existing automatic test mapping.
+            controlValueTmp_R[6] = -((delt_beta_R - delt_alpha_R * m_compRatio_R) - openAngle_R_new);
+            controlValueTmp_R[7] = (delt_beta_R - delt_alpha_R * m_compRatio_R) + openAngle_R_new;
+        }
         controlValueTmp_R[8] = delt_alpha_R;
         controlValueTmp_R[9] = -delt_gamma_R;
 
