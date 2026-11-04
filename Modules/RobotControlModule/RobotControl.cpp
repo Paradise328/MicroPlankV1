@@ -6,6 +6,10 @@
 #include <random>
 #include <string>
 #include <limits>
+#include <stdexcept>
+#include <QDateTime>
+#include <QDir>
+#include <QUuid>
 #include <sys/stat.h> // 用于 mkdir
 #include <sys/types.h>
 std::chrono::high_resolution_clock::time_point startTime;
@@ -254,69 +258,88 @@ void RobotControl::initCamera()
     }
 }
 
-// 2. 后台拍照任务 (这个函数会在单独线程跑，不仅不卡，还可以清空缓存)
+RobotControl::~RobotControl()
+{
+    // Keep the camera and message queue reference alive until capture completes.
+    if (m_photoThread.joinable()) {
+        m_photoThread.join();
+    }
+}
+
+// Capture and disk I/O run on a worker, independently of motor control.
 void RobotControl::takePhotoTask(std::string stepName, double angle)
 {
-    if(!m_camera.isOpened())
-    {
-        m_isTakingPhoto.store(false);
-        return;
-    }
-
-    cv::Mat frame;
-    // 连续读几次清空缓存，确保拍到的是最新的
-    m_camera.read(frame);
-    m_camera.read(frame);
-
-    if(m_camera.read(frame))
-    {
-        // 1. 确定基础路径
-        std::string basePath = "/home/a/Desktop/TestPhotos/";
-
-        // 2. 根据角度决定子文件夹
-        // 使用 abs() 取绝对值，防止负角度（如 -10度）判断错误
-        std::string subFolder;
-        if (std::abs(angle) > 9.999) { // 加一点点容差，避免浮点数精度问题
-            subFolder = "Angle_Over_20/";   // 大于30度
-        } else {
-            subFolder = "Angle_Under_20/";  // 小于等于30度
+    QString result;
+    try {
+        if (!m_camera.isOpened()) {
+            throw std::runtime_error("相机未连接或未成功打开。");
+        }
+        cv::Mat frame;
+        m_camera.read(frame);
+        m_camera.read(frame);
+        if (!m_camera.read(frame) || frame.empty()) {
+            throw std::runtime_error("无法读取相机画面，请检查相机连接。");
         }
 
-        std::string fullSaveDir = basePath + subFolder;
-
-        // // 3. 自动创建文件夹 (Linux 命令)
-        // // mkdir -p 可以确保父目录不存在时自动创建，且文件夹已存在时不报错
-        // std::string cmd = "mkdir -p " + fullSaveDir;
-        // system(cmd.c_str());
-
-        // 4. 生成带时间戳的文件名
-        auto now = std::chrono::system_clock::now();
-        auto now_c = std::chrono::system_clock::to_time_t(now);
-        std::stringstream ss;
-        // 路径拼起来： /home/a/Desktop/TestPhotos/Angle_Under_30/StepX_123456.jpg
-        ss << fullSaveDir << stepName << "_" << now_c << ".jpg";
-
-        // 5. 保存
-        cv::imwrite(ss.str(), frame);
-        LOG(INFO) << "Photo Saved to: " << ss.str() << " (Angle: " << angle << ")";
+        // Preserve the existing base directory, folder names and angle split.
+        const QString basePath = QStringLiteral("/home/a/Desktop/TestPhotos/");
+        const QString subFolder = std::abs(angle) > 9.999
+            ? QStringLiteral("Angle_Over_20/") : QStringLiteral("Angle_Under_20/");
+        const QString fullSaveDir = basePath + subFolder;
+        if (!QDir().mkpath(fullSaveDir)) {
+            throw std::runtime_error("无法创建照片目录，请检查目录权限。");
+        }
+        const QString path = fullSaveDir + QString::fromStdString(stepName) + "_"
+            + QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss_zzz") + "_"
+            + QUuid::createUuid().toString(QUuid::WithoutBraces) + ".jpg";
+        if (!cv::imwrite(path.toStdString(), frame)) {
+            throw std::runtime_error("照片写入失败，请检查目录权限与磁盘空间。");
+        }
+        LOG(INFO) << "Photo Saved to: " << path.toStdString() << " (Command angle: " << angle << ")";
+        result = QStringLiteral("saved|") + path;
+    } catch (const cv::Exception& error) {
+        LOG(ERROR) << "Photo capture failed: " << error.what();
+        result = QStringLiteral("error|相机读取或图像保存异常，请检查相机和保存目录。");
+    } catch (const std::exception& error) {
+        LOG(ERROR) << "Photo capture failed: " << error.what();
+        result = QStringLiteral("error|") + QString::fromUtf8(error.what());
+    } catch (...) {
+        LOG(ERROR) << "Photo capture failed with an unknown exception";
+        result = QStringLiteral("error|拍照失败，请检查相机和保存目录。");
     }
-    else
-    {
-        LOG(WARNING) << "Camera read frame failed.";
-    }
-
     m_isTakingPhoto.store(false);
+    SendInnerMsg(Module_Inner_E::Uiinterface,
+        static_cast<int>(UIAction_E::ManualGripPhotoResult), result);
 }
 
 // 3. 触发接口
 void RobotControl::triggerPhoto(std::string stepName, double angle)
 {
+    if (m_isSystemTerminated.load()) {
+        SendInnerMsg(Module_Inner_E::Uiinterface,
+            static_cast<int>(UIAction_E::ManualGripPhotoResult),
+            QStringLiteral("error|程序正在关闭，无法拍照。"));
+        return;
+    }
     bool expected = false;
-    if(m_isTakingPhoto.compare_exchange_strong(expected, true))
-    {
-        LOG(INFO) << "Triggering Photo for " << stepName << " at angle: " << angle;
-        // 将 angle 传递给后台线程
-        std::thread(&RobotControl::takePhotoTask, this, stepName, angle).detach();
+    if (!m_isTakingPhoto.compare_exchange_strong(expected, true)) {
+        SendInnerMsg(Module_Inner_E::Uiinterface,
+            static_cast<int>(UIAction_E::ManualGripPhotoResult),
+            QStringLiteral("error|相机正在拍照，请等待本次拍摄完成。"));
+        return;
+    }
+    try {
+        if (m_photoThread.joinable()) {
+            m_photoThread.join();
+        }
+        LOG(INFO) << "Triggering Photo for " << stepName << " at command angle: " << angle;
+        m_photoThread = std::thread(&RobotControl::takePhotoTask, this, stepName, angle);
+    } catch (const std::exception& error) {
+        m_isTakingPhoto.store(false);
+        LOG(ERROR) << "Unable to start photo capture: " << error.what();
+        SendInnerMsg(Module_Inner_E::Uiinterface,
+            static_cast<int>(UIAction_E::ManualGripPhotoResult),
+            QStringLiteral("error|无法启动拍照任务，请稍后重试。"));
     }
 }
 
@@ -2699,6 +2722,36 @@ void RobotControl::dealWithMsg()
                     m_testBusy.store(true);
                     m_pendingTestMode.store(-3);
                 }
+                break;
+            }
+            case static_cast<int>(RobotControlAction_E::CaptureManualGripPhoto):
+            {
+                const auto fields = i.value().split('|');
+                ManualGripCommand::Pose angles{};
+                bool parsed = fields.size() == static_cast<int>(angles.size());
+                if (parsed) {
+                    for (std::size_t axis = 0; axis < angles.size(); ++axis) {
+                        bool ok = false;
+                        angles[axis] = fields[static_cast<int>(axis)].toDouble(&ok);
+                        parsed = parsed && ok;
+                    }
+                }
+                if (!parsed || !ManualGripCommand::accepts(m_instrumentAxes.load(), angles)
+                    || !m_flagControlThread.load() || m_isSystemTerminated.load()
+                    || !m_rightTestHomed.load() || m_rightTestHoming.load()
+                    || m_pendingTestMode.load() != -1
+                    || (m_testBusy.load() && !m_manualGripActive.load())) {
+                    SendInnerMsg(Module_Inner_E::Uiinterface,
+                        static_cast<int>(UIAction_E::ManualGripPhotoResult),
+                        QStringLiteral("error|当前状态无法拍照，请等待手动夹持就绪。"));
+                    break;
+                }
+                // These are the last commanded angles received by the UI,
+                // not measured jaw angles or angles synchronized to exposure.
+                const QString name = QStringLiteral("ManualGrip_CmdG_%1_Y_%2_P_%3_R_%4")
+                    .arg(angles[0], 0, 'f', 3).arg(angles[1], 0, 'f', 3)
+                    .arg(angles[2], 0, 'f', 3).arg(angles[3], 0, 'f', 3);
+                triggerPhoto(name.toStdString(), angles[0]);
                 break;
             }
             case static_cast<int>(RobotControlAction_E::StopInstrumentTest):

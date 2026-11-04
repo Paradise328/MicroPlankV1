@@ -286,6 +286,47 @@ void UIinterface::setManualGripAngle(double angle, double yaw, double pitch, dou
         static_cast<int>(RobotControlAction_E::SetManualGripAngle), fields.join('|'));
 }
 
+void UIinterface::captureManualGripPhoto()
+{
+    if (m_manualPhotoBusy) { return; }
+    if ((m_testState != 3 && !(m_testState == 4 && m_manualGripActive))
+        || (m_instrumentAxes != 4 && m_instrumentAxes != 6)) {
+        m_manualPhotoStatus = QStringLiteral("拍照未执行：请等待手动夹持就绪。");
+        emit manualPhotoChanged();
+        return;
+    }
+    ManualGripCommand::Pose angles{};
+    if (m_manualGripActive) {
+        if (!manualGripHasData() || manualGripStale()) {
+            m_manualPhotoStatus = QStringLiteral("拍照未执行：请等待新的角度数据。");
+            emit manualPhotoChanged();
+            return;
+        }
+        // Snapshot the last accepted commanded angles, not unexecuted UI edits.
+        const std::array<std::size_t, 4> series{{1, 13, 15, 17}};
+        for (std::size_t axis = 0; axis < angles.size(); ++axis) {
+            if (!(m_manualGripLatest.validMask & (1U << series[axis]))) {
+                m_manualPhotoStatus = QStringLiteral("拍照未执行：当前指令角数据无效。");
+                emit manualPhotoChanged();
+                return;
+            }
+            angles[axis] = m_manualGripLatest.values[series[axis]];
+        }
+    }
+    if (!ManualGripCommand::accepts(m_instrumentAxes, angles)) {
+        m_manualPhotoStatus = QStringLiteral("拍照未执行：当前指令角数据无效。");
+        emit manualPhotoChanged();
+        return;
+    }
+    m_manualPhotoBusy = true;
+    m_manualPhotoStatus = QStringLiteral("正在拍照…");
+    emit manualPhotoChanged();
+    QStringList fields;
+    for (double angle : angles) { fields << QString::number(angle, 'g', 17); }
+    SendInnerMsg(Module_Inner_E::RobotControl,
+        static_cast<int>(RobotControlAction_E::CaptureManualGripPhoto), fields.join('|'));
+}
+
 bool UIinterface::manualGripStale() const
 {
     return m_manualGripActive && (!m_manualGripReceipt.isValid() || m_manualGripReceipt.elapsed() > 1000);
@@ -419,6 +460,17 @@ void UIinterface::dealWithTestMsg()
                     m_testStatus += QStringLiteral(" 请确认设备状态后重新归零。");
                 }
                 emit testStatusChanged();
+                continue;
+            } else if (i.key() == static_cast<int>(UIAction_E::ManualGripPhotoResult)) {
+                const int separator = i.value().indexOf('|');
+                if (separator < 0) { continue; }
+                const QString status = i.value().left(separator);
+                const QString detail = i.value().mid(separator + 1);
+                if (status != "saved" && status != "error") { continue; }
+                m_manualPhotoBusy = false;
+                m_manualPhotoStatus = (status == "saved" ? QStringLiteral("照片已保存：")
+                                                         : QStringLiteral("拍照失败：")) + detail;
+                emit manualPhotoChanged();
                 continue;
             } else if (i.key() == static_cast<int>(UIAction_E::InstrumentForceBegin)) {
                 bool ok = false;

@@ -28,7 +28,8 @@ enum class _RobotControlAction_E
     StartInstrumentTest = 0x100,
     StopInstrumentTest = 0x102,
     SelectInstrumentAxes = 0x103,
-    SetManualGripAngle = 0x108
+    SetManualGripAngle = 0x108,
+    CaptureManualGripPhoto = 0x10c
 };
 using RobotControlAction_E = enum _RobotControlAction_E;
 
@@ -98,7 +99,8 @@ enum class _UIAction_E
     InstrumentForceSample = 0x107,
     ManualGripBegin = 0x109,
     ManualGripSample = 0x10a,
-    ManualGripRejected = 0x10b
+    ManualGripRejected = 0x10b,
+    ManualGripPhotoResult = 0x10d
 
 };
 using UIAction_E = enum _UIAction_E;

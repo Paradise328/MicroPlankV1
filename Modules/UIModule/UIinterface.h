@@ -79,6 +79,8 @@ class UIinterface: public QObject
     Q_PROPERTY(int manualGripAxes READ manualGripAxes NOTIFY manualGripDataChanged)
     Q_PROPERTY(double manualGripTime READ manualGripTime NOTIFY manualGripDataChanged)
     Q_PROPERTY(QVariantList manualGripValues READ manualGripValues NOTIFY manualGripDataChanged)
+    Q_PROPERTY(bool manualPhotoBusy READ manualPhotoBusy NOTIFY manualPhotoChanged)
+    Q_PROPERTY(QString manualPhotoStatus READ manualPhotoStatus NOTIFY manualPhotoChanged)
 //    Q_PROPERTY(bool handleEn  READ gethandleEn WRITE sethandleEn NOTIFY handleEnChanged)
 
 public:
@@ -132,6 +134,9 @@ public:
     Q_INVOKABLE void enterInstrumentTest(int mode);
     Q_INVOKABLE void stopInstrumentTest();
     Q_INVOKABLE void setManualGripAngle(double angle, double yaw, double pitch, double roll);
+    Q_INVOKABLE void captureManualGripPhoto();
+    bool manualPhotoBusy() const { return m_manualPhotoBusy; }
+    QString manualPhotoStatus() const { return m_manualPhotoStatus; }
     Q_INVOKABLE QVariantList manualGripPlot(int series, double start, double end, int columns) const;
     bool manualGripActive() const { return m_manualGripActive; }
     bool manualGripHasData() const { return m_manualGripHistory.size() != 0; }
@@ -216,6 +221,7 @@ signals:
     void forceDataChanged();
     void manualGripReset();
     void manualGripDataChanged();
+    void manualPhotoChanged();
 
     void startWholeSystemSignal();
 
@@ -229,6 +235,8 @@ private:
     int m_testState = 0;
     bool m_manualGripActive = false;
     bool m_manualGripPending = false;
+    bool m_manualPhotoBusy = false;
+    QString m_manualPhotoStatus;
     int m_manualGripAxes = 0;
     ManualGripHistory m_manualGripHistory;
     ManualGripHistory::Sample m_manualGripLatest;

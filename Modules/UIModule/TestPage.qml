@@ -36,7 +36,7 @@ Window {
 
     // Closing the window is not a motor stop command.
     onClosing: {
-        if (busy || shutdownRequested) close.accepted = false
+        if (busy || UIinterface.manualPhotoBusy || shutdownRequested) close.accepted = false
     }
 
     Button {
@@ -49,7 +49,7 @@ Window {
         width: 120
         height: 40
         text: window.shutdownRequested ? "正在关机…" : "关机"
-        enabled: !window.busy && window.testState !== 0 && !window.shutdownRequested
+        enabled: !window.busy && !UIinterface.manualPhotoBusy && window.testState !== 0 && !window.shutdownRequested
         onClicked: shutdownDialog.open()
         contentItem: Text {
             text: shutdownButton.text
@@ -365,6 +365,18 @@ Window {
                     contentItem: Text { text: manualApply.text; color: manualApply.enabled ? "#DDF9F2" : "#71818C"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                     background: Rectangle { radius: 6; color: "#203B3A"; border.color: "#39635A" }
                 }
+                Button {
+                    id: manualPhoto
+                    objectName: "manualGripPhotoButton"
+                    text: UIinterface.manualPhotoBusy ? "拍照中…" : "拍照"
+                    Layout.preferredHeight: window.height < 760 ? 32 : 38
+                    enabled: !UIinterface.manualPhotoBusy && (window.testState === 3
+                        || (window.testState === 4 && UIinterface.manualGripActive
+                            && UIinterface.manualGripHasData && !UIinterface.manualGripStale))
+                    onClicked: UIinterface.captureManualGripPhoto()
+                    contentItem: Text { text: manualPhoto.text; color: manualPhoto.enabled ? "#DDF9F2" : "#71818C"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                    background: Rectangle { radius: 6; color: "#203B3A"; border.color: "#39635A" }
+                }
                 Text {
                     Layout.fillWidth: true
                     text: "开合 " + (UIinterface.instrumentAxes === 4 ? "−10" : "−20") + "~20° · 偏航 ±80° · 俯仰 ±50° · 旋转 ±60°"
@@ -378,6 +390,27 @@ Window {
                     onClicked: { window.showManualPlots = false; window.selectedMode = -1 }
                     contentItem: Text { text: manualBack.text; color: manualBack.enabled ? "#DDF9F2" : "#71818C"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                     background: Rectangle { radius: 6; color: "#203B3A"; border.color: "#39635A" }
+                }
+            }
+            Text {
+                id: manualPhotoStatus
+                objectName: "manualGripPhotoStatus"
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                Layout.preferredHeight: 18
+                Layout.maximumHeight: 18
+                text: UIinterface.manualPhotoStatus || "照片保存到原照片目录。"
+                color: "#93A8B6"; font.pixelSize: 11
+                elide: Text.ElideRight
+                MouseArea { id: manualPhotoStatusHover; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.NoButton }
+                ToolTip {
+                    id: manualPhotoTip
+                    objectName: "manualGripPhotoTooltip"
+                    visible: manualPhotoStatusHover.containsMouse
+                    delay: 500
+                    text: manualPhotoStatus.text
+                    width: Math.min(implicitWidth, manualPhotoStatus.width)
+                    contentItem: Text { text: manualPhotoTip.text; color: "#D6E1E8"; font.pixelSize: 11; wrapMode: Text.WrapAnywhere }
                 }
             }
             Text {

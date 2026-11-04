@@ -32,6 +32,7 @@ class FakeInterface(QObject):
     forceDataChanged = Signal()
     manualGripReset = Signal()
     manualGripDataChanged = Signal()
+    manualPhotoChanged = Signal()
 
     def __init__(self):
         super().__init__()
@@ -54,6 +55,9 @@ class FakeInterface(QObject):
         self.manual_samples = []
         self.manual_stale = False
         self.manual_requests = []
+        self.manual_photo_busy = False
+        self.manual_photo_status = ""
+        self.manual_photo_requests = []
 
     testState = Property(int, lambda self: self.state, notify=changed)
     testStatus = Property(str, lambda self: self.status, notify=changed)
@@ -69,6 +73,31 @@ class FakeInterface(QObject):
     manualGripAxes = Property(int, lambda self: self.axes, notify=manualGripDataChanged)
     manualGripTime = Property(float, lambda self: self.manual_time, notify=manualGripDataChanged)
     manualGripValues = Property("QVariantList", lambda self: self.manual_values, notify=manualGripDataChanged)
+    manualPhotoBusy = Property(bool, lambda self: self.manual_photo_busy, notify=manualPhotoChanged)
+    manualPhotoStatus = Property(str, lambda self: self.manual_photo_status, notify=manualPhotoChanged)
+
+    @Slot()
+    def captureManualGripPhoto(self):
+        if self.manual_photo_busy or self.axes not in (4, 6):
+            return
+        if self.state == 3:
+            commanded = (0, 0, 0, 0)
+        elif self.state == 4 and self.manual_active and self.manual_samples and not self.manual_stale:
+            commanded = tuple(self.manual_values[index] for index in (1, 13, 15, 17))
+        else:
+            return
+        self.manual_photo_requests.append(commanded)
+        self.manual_photo_busy = True
+        self.manual_photo_status = "正在拍照…"
+        self.manualPhotoChanged.emit()
+
+    def finish_manual_photo(self, saved_path=None, error=None):
+        assert self.manual_photo_busy
+        assert bool(saved_path) != bool(error)
+        self.manual_photo_busy = False
+        self.manual_photo_status = "照片已保存：" + saved_path if saved_path else "拍照失败：" + error
+        self.manualPhotoChanged.emit()
+        QTest.qWait(50)
 
     @Slot(float, float, float, float)
     def setManualGripAngle(self, angle, yaw, pitch, roll):
@@ -390,10 +419,22 @@ assert window.property("showManualPlots")
 manual_input = item("manualGripAngleInput")
 manual_inputs = [manual_input, item("manualYawAngleInput"), item("manualPitchAngleInput"), item("manualRollAngleInput")]
 manual_apply = item("manualGripApplyButton")
+manual_photo = item("manualGripPhotoButton")
+manual_photo_status = item("manualGripPhotoStatus")
+manual_photo_tip = window.findChild(QObject, "manualGripPhotoTooltip")
+assert manual_photo_tip is not None
 manual_back = item("manualGripBackButton")
 angle_selector = item("manualAngleSelector")
 angle_chart = item("manualAngleChart")
 assert manual_apply.property("enabled")
+assert manual_photo.property("enabled"), "A homed instrument may be photographed before the first move"
+click(manual_photo)
+assert backend.manual_photo_requests == [(0, 0, 0, 0)]
+assert not manual_photo.property("enabled") and manual_photo.property("text") == "拍照中…"
+assert manual_apply.property("enabled"), "A photo must not lock angle execution"
+assert not shutdown.property("enabled") and not window.close(), "Shutdown/close must wait for photo completion"
+click(manual_photo)
+assert len(backend.manual_photo_requests) == 1, "A duplicate photo click must be ignored"
 for field, value in zip(manual_inputs, (5, 15, -10, 30)):
     field.setProperty("text", str(value))
 QTest.qWait(50)
@@ -401,6 +442,12 @@ assert not backend.manual_requests, "Typing must never issue motion"
 click(manual_apply)
 assert backend.manual_requests == [(5, 15, -10, 30)] and backend.manual_active
 assert not manual_back.property("enabled") and stop.property("enabled")
+photo_path = "/home/a/Desktop/TestPhotos/Angle_Under_20/ManualGrip_" + "Command_0_" * 18 + "1730700000000.jpg"
+backend.finish_manual_photo(saved_path=photo_path)
+assert photo_path in manual_photo_status.property("text")
+assert not manual_photo.property("enabled"), "A started manual session must wait for its first sample"
+backend.feed_manual(1)
+assert manual_photo.property("enabled")
 for field, minimum, maximum in zip(manual_inputs, (-20, -80, -50, -60), (20, 80, 50, 60)):
     previous = field.property("text")
     for invalid in [str(maximum + .001), str(minimum - .001), "nan", "inf", "-inf", "", " "]:
@@ -410,12 +457,23 @@ for field, minimum, maximum in zip(manual_inputs, (-20, -80, -50, -60), (20, 80,
         click(manual_apply)
         assert len(backend.manual_requests) == 1, "An invalid field must block the complete pose"
     field.setProperty("text", previous)
+click(manual_photo)
+assert backend.manual_photo_requests[-1] == (4.5, 14.125, -9.375, 29.625)
+photo_command = backend.manual_photo_requests[-1]
 for field, value in zip(manual_inputs, (-5, -25, 12, 45)):
     field.setProperty("text", str(value))
 QTest.qWait(20)
 assert backend.manual_requests == [(5, 15, -10, 30)], "Editing a running command must not execute it"
 click(manual_apply)
 assert backend.manual_requests == [(5, 15, -10, 30), (-5, -25, 12, 45)]
+assert not manual_photo.property("enabled") and stop.property("enabled")
+assert backend.manual_photo_requests[-1] == photo_command, "Editing/applying new angles must retain request-time photo angles"
+backend.finish_manual_photo(error="未检测到摄像头")
+assert "未检测到摄像头" in manual_photo_status.property("text") and manual_photo.property("enabled")
+click(manual_photo)
+assert len(backend.manual_photo_requests) == 3, "A failed photo must allow a fresh request"
+backend.finish_manual_photo(saved_path=photo_path)
+assert manual_photo.property("enabled") and photo_path in manual_photo_status.property("text")
 for axes in [4, 6]:
     backend.axes = axes
     backend.changed.emit()
@@ -437,13 +495,24 @@ for axes in [4, 6]:
         angle_selector.setProperty("currentIndex", 0)
         QTest.qWait(100)
         names = ["manualGripAngleInput", "manualYawAngleInput", "manualPitchAngleInput", "manualRollAngleInput",
-                 "manualAngleSelector", "manualGripApplyButton", "testStopButton",
+                 "manualAngleSelector", "manualGripApplyButton", "manualGripPhotoButton", "manualGripPhotoStatus", "testStopButton",
                  "manualCanvas0", "manualCanvas2", "manualCanvas8" if axes == 4 else "manualCanvas6"]
         for name in names:
             control = item(name)
             top = control.mapToScene(QPointF(0, 0))
             bottom = control.mapToScene(QPointF(control.width(), control.height()))
             assert top.x() >= 0 and top.y() >= 0 and bottom.x() <= size[0] and bottom.y() <= size[1], (name, size, top, bottom)
+        assert manual_photo_status.property("truncated"), "A long saved path must elide within the manual layout"
+        assert manual_photo_status.height() <= 18
+        assert manual_photo.mapToScene(QPointF(0, 0)).x() >= manual_apply.mapToScene(QPointF(manual_apply.width(), 0)).x()
+        assert manual_photo.mapToScene(QPointF(0, 0)).y() == manual_apply.mapToScene(QPointF(0, 0)).y()
+        hover = manual_photo_status.mapToScene(QPointF(manual_photo_status.width() / 2, manual_photo_status.height() / 2))
+        QTest.mouseMove(window, hover.toPoint())
+        QTest.qWait(600)
+        assert manual_photo_tip.property("visible") and photo_path in manual_photo_tip.property("text")
+        assert manual_photo_tip.property("width") <= manual_photo_status.width()
+        QTest.mouseMove(window, QPointF(1, 1).toPoint())
+        QTest.qWait(50)
         assert window.grabWindow().save(str(root / f"output/manual-grip-{axes}-{size[0]}.png"))
         for index, pair, expected in [(1, [12, 13], "14.125"), (2, [14, 15], "-9.375"), (3, [16, 17], "29.625")]:
             angle_selector.setProperty("currentIndex", index)
@@ -464,9 +533,32 @@ for axes in [4, 6]:
         assert window.grabWindow().save(str(root / f"output/manual-roll-{axes}-{size[0]}.png"))
 backend.feed_manual(421, False)
 assert "失效" in item("manualGripDataStatus").property("text")
+assert not manual_photo.property("enabled"), "Stale manual data must block a photo request"
+photo_count = len(backend.manual_photo_requests)
+click(manual_photo)
+assert len(backend.manual_photo_requests) == photo_count
+backend.feed_manual(422)
+backend.manual_active = False
+backend.manualGripDataChanged.emit()
+QTest.qWait(20)
+assert not manual_photo.property("enabled"), "Automatic tests must not enable the manual photo action"
+backend.manual_active = True
+backend.manualGripDataChanged.emit()
+for state in (0, 1, 2, 5, 6, 7):
+    backend.set_state(state, "拍照不可用状态")
+    assert not manual_photo.property("enabled"), state
+    click(manual_photo)
+assert len(backend.manual_photo_requests) == photo_count
+backend.set_state(4, "手动夹持进行中")
+assert manual_photo.property("enabled")
+click(manual_photo)
+assert stop.property("enabled"), "Photo capture must keep the stop action available"
 click(stop)
 assert not manual_apply.property("enabled")
 assert all(not field.property("enabled") for field in manual_inputs)
+assert backend.state == 6 and backend.manual_photo_busy
+backend.finish_manual_photo(error="照片写入失败")
+assert not manual_photo.property("enabled") and "照片写入失败" in manual_photo_status.property("text")
 backend.manual_active = False
 backend.manualGripDataChanged.emit()
 backend.set_state(1, "已停止，请重新归零")
@@ -495,7 +587,7 @@ assert all(not control.property("enabled") for control in [home, enter, stop, sh
 click(shutdown)
 assert backend.shutdown_requests == 1, "Duplicate shutdown was not blocked"
 assert not warnings, "\n".join(warnings)
-print("PASS: QML, automatic modes and force charts; four-angle atomic submission/update/limits, stop/rehoming, stale data, angle selection/precision, 4/6-axis charts, 2 sizes")
+print("PASS: QML, automatic modes and force charts; four-angle submission/update/limits, manual photo busy/success/failure/retry/stale-state guards, concurrent angle/stop actions, 4/6-axis charts, 2 sizes")
 window.hide()
 engine.deleteLater()
 app.processEvents()

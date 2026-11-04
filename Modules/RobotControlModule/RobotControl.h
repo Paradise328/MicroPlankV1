@@ -172,6 +172,8 @@ public:
         // openTorqueSensor();
     }
 
+    ~RobotControl() override;
+
     void                            GetAmMsg(Message_Inner_T msg);
 
     MotorDriver*                    getMyMotorDriver(){return m_motorDriver;}
@@ -222,7 +224,8 @@ private:
     cv::VideoWriter                 m_videoWriter;
     std::atomic<bool>               m_isRecording;
     std::thread                     m_videoThread;
-    std::atomic<bool>               m_isTakingPhoto;
+    std::atomic<bool>               m_isTakingPhoto{false};
+    std::thread                     m_photoThread;
     std::atomic<int>                m_moonsActualCurrent = {0}; // 【新增】存储鸣志的实时电流
     int32_t                         m_moonsHomeOffsetPulses = 0; // 初始化为0
     const int COLLISION_CURRENT_THRESHOLD = 1000;// 【新增】碰撞电流阈值 (需要根据实际情况调试) 假设单位是 mA 或者 0.1% 额定电流。先设一个保护值，测出来正常运动是多少后再调整。
